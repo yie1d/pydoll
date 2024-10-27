@@ -1,5 +1,6 @@
 import asyncio
 from typing import Callable
+import json
 
 import aiohttp
 import websockets
@@ -12,6 +13,8 @@ class ConnectionHandler:
     This class manages the connection to the browser and the associated page,
     providing methods to execute commands and register event callbacks.
     """
+    BROWSER_JSON_URL = 'http://localhost:9222/json'
+    BROWSER_VERSION_URL = 'http://localhost:9222/json/version'
 
     def __init__(self):
         """
@@ -25,6 +28,7 @@ class ConnectionHandler:
         self._connection = None
         self._event_callbacks = {}
         self._id = 1
+        self._pending_commands: dict[int, asyncio.Future] = {}
 
     @property
     async def page_ws_address(self) -> str:
@@ -67,27 +71,48 @@ class ConnectionHandler:
         Returns:
             Connection: The active WebSocket connection to the page.
         """
-        if not self._connection:
-            self._connection = await self._connect_to_page()
+        if not self._connection or self._connection.closed:
+            try:
+                self._connection = await self._connect_to_page()
+            except Exception as exc:
+                raise Exception(f'Failed to connect to page: {exc}')
+
         return self._connection
 
-    async def execute_command(self, command):
+    async def execute_command(self, command: dict) -> dict:
         """
         Sends a command to the connected WebSocket.
 
         Args:
             command (dict): The command to send, which should be a dictionary
                             with the necessary parameters.
+        
+        Returns:
+            dict: The response received from the WebSocket.
 
         Raises:
             ValueError: If the command is invalid.
         """
+        if not isinstance(command, dict):
+            raise ValueError('Command must be a dictionary')
+        
         command['id'] = self._id
         command_str = str(command).replace("'", '"')
-        self._id += 1
-        await self.connection.send(command_str)
 
-    async def _connect_to_page(self):
+        future = asyncio.Future()
+        self._pending_commands[self._id] = future
+        self._id += 1
+
+        connection = await self.connection
+        await connection.send(command_str)
+
+        response: str = await future
+        del self._pending_commands[command['id']]
+        parsed_response = response.encode('utf-8').decode('unicode_escape')
+        return json.loads(parsed_response)
+
+
+    async def _connect_to_page(self) -> websockets.WebSocketClientProtocol:
         """
         Establishes a WebSocket connection to the current page.
 
@@ -102,7 +127,7 @@ class ConnectionHandler:
         asyncio.create_task(self._receive_events())
         return connection
 
-    async def register_callback(self, event_name: str, callback: Callable):
+    async def register_callback(self, event_name: str, callback: Callable) -> None:
         """
         Registers a callback function for a specific event.
 
@@ -119,22 +144,42 @@ class ConnectionHandler:
 
     async def _receive_events(self):
         """
-        Continuously listens for incoming events from the WebSocket connection.
+        Continuously listens for messages from the WebSocket connection.
 
-        Processes incoming messages and triggers registered
-        callbacks based on the event type.
+        This method processes incoming messages in an infinite loop. If a message corresponds to a pending command
+        (identified by its 'id'), it completes the associated `Future`. Otherwise, it treats the message as an event
+        and calls `_handle_event` for processing.
+
+        Exceptions during message reception are caught, and relevant messages are printed if the connection is closed
+        or if other errors occur.
+
+        Raises:
+            websockets.ConnectionClosed: If the WebSocket connection is closed during message reception.
+            Exception: For other unforeseen errors.
+
+        Example:
+            await self._receive_events()
         """
         try:
             while True:
-                message = await self.connection.recv()
-                event = message.encode('utf-8').decode('unicode_escape')
-                await self._handle_event(event)
-        except websockets.ConnectionClosed:
-            print('Connection closed')
-        except Exception as exc:
-            print(f'Error while receiving event: {exc}')
+                connection = await self.connection
+                message = await connection.recv()  # Await a message from the WebSocket
+                event = message.encode('utf-8').decode('unicode_escape')  # Decode the message
+                event_json = json.loads(event)  # Parse the message into a JSON object
 
-    async def _handle_event(self, event):
+                # Handle pending command response
+                if 'id' in event_json and event_json['id'] in self._pending_commands:
+                    self._pending_commands[event_json['id']].set_result(event)  # Complete the Future
+                    continue
+
+                await self._handle_event(event)  # Process the event
+        except websockets.ConnectionClosed:
+            print('Connection closed')  # Handle connection closure
+        except Exception as exc:
+            print(f'Error while receiving event: {exc}')  # Handle other exceptions
+
+
+    async def _handle_event(self, event: dict):
         """
         Handles an incoming event by executing the corresponding callback.
 
@@ -150,7 +195,7 @@ class ConnectionHandler:
                 callback(event)
 
     @staticmethod
-    async def _get_page_ws_address():
+    async def _get_page_ws_address() -> str:
         """
         Asynchronously retrieves the WebSocket address for the current page.
 
@@ -164,7 +209,7 @@ class ConnectionHandler:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    'http://localhost:9222/json'
+                    ConnectionHandler.BROWSER_JSON_URL
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
@@ -179,7 +224,7 @@ class ConnectionHandler:
             raise ValueError(f'Failed to get page ws address: {e}')
 
     @staticmethod
-    async def _get_browser_ws_address():
+    async def _get_browser_ws_address() -> str:
         """
         Asynchronously retrieves the WebSocket address for the browser.
 
@@ -193,7 +238,7 @@ class ConnectionHandler:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    'http://localhost:9222/json/version'
+                    ConnectionHandler.BROWSER_VERSION_URL
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
