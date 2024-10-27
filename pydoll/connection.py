@@ -70,6 +70,9 @@ class ConnectionHandler:
 
         Returns:
             Connection: The active WebSocket connection to the page.
+        
+        Raises:
+            Exception: If the connection fails to establish.
         """
         if not self._connection or self._connection.closed:
             try:
