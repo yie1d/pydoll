@@ -2,12 +2,14 @@ import asyncio
 import os
 import subprocess
 from typing import Callable
+from abc import ABC, abstractmethod
 
 from pydoll.browser.options import Options
+from pydoll.commands.browser import BrowserCommands
 from pydoll.connection import ConnectionHandler
 
 
-class Browser:
+class Browser(ABC):
     """
     A class to manage a browser instance for automated interactions.
 
@@ -20,7 +22,7 @@ class Browser:
         Initializes the Browser instance.
 
         Args:
-            options (Options | None): An instance of the Options class to 
+            options (Options | None): An instance of the Options class to
             configure the browser. If None, default options will be used.
         """
         self.options = self._initialize_options(options)
@@ -34,13 +36,12 @@ class Browser:
         Returns:
             subprocess.Popen: The process object for the started browser.
         """
-        args_str = ' '.join(self.options.arguments)
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
         return subprocess.Popen(
-            f'{binary_location} --remote-debugging-port=9222 {args_str}',
-            shell=True,
+            [binary_location, '--remote-debugging-port=9222', *self.options.arguments],
+            stdout=subprocess.PIPE,
         )
 
     def stop(self):
@@ -52,22 +53,19 @@ class Browser:
         """
         if self._is_browser_running():
             self.process.terminate()
-            self._execute_sync_command({'method': 'Browser.close'})
+            self._execute_sync_command(BrowserCommands.CLOSE)
         else:
             raise ValueError('Browser is not running')
 
     def get_screenshot(self, path: str):
         """
-        Captures a screenshot of the current page and saves it to the specified path.
+        Captures a screenshot of the current page and saves
+        it to the specified path.
 
         Args:
             path (str): The file path where the screenshot will be saved.
         """
-        command = {
-            'method': 'Page.captureScreenshot',
-            'params': {'format': 'png'},
-        }
-        response = self._execute_sync_command(command)
+        response = self._execute_sync_command(BrowserCommands.SCREENSHOT)
         image_bytes = response['result']['data'].encode('utf-8')
         with open(path, 'wb') as file:
             file.write(image_bytes)
@@ -77,8 +75,8 @@ class Browser:
         Registers an event callback for a specific event.
 
         Args:
-            event_name (str): The name of the event to listen for.
-            callback (Callable): The function to be called when the event occurs.
+            event_name (str): Name of the event to listen for.
+            callback (Callable): function to be called when the event occurs.
         """
         asyncio.run(
             self.connection_handler.register_callback(event_name, callback)
@@ -90,7 +88,7 @@ class Browser:
 
         Raises:
             ValueError: If the browser fails to start.
-        
+
         Returns:
             subprocess.Popen: The process object for the started browser.
         """
@@ -99,16 +97,14 @@ class Browser:
             raise ValueError('Failed to start browser')
         return process
 
+    @abstractmethod
     def _get_default_binary_location(self) -> str:
         """
         Retrieves the default location of the browser binary.
 
         This method must be implemented by subclasses.
-
-        Raises:
-            NotImplementedError: This method must be implemented.
         """
-        raise NotImplementedError('Method must be implemented')
+        pass
 
     def _is_browser_running(self):
         """
@@ -168,4 +164,3 @@ class Browser:
         if not isinstance(options, Options):
             raise ValueError('Invalid options')
         return options
-

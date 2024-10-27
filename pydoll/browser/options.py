@@ -10,7 +10,7 @@ class Options:
         """
         Initializes the Options instance.
 
-        Sets up an empty list for command-line arguments and a string 
+        Sets up an empty list for command-line arguments and a string
         for the binary location of the browser.
         """
         self._arguments = []

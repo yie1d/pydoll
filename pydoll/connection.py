@@ -17,7 +17,7 @@ class ConnectionHandler:
         """
         Initializes the ConnectionHandler instance.
 
-        Sets up the internal state including WebSocket addresses, 
+        Sets up the internal state including WebSocket addresses,
         connection instance, event callbacks, and command ID.
         """
         self._page_ws_address = None
@@ -31,8 +31,8 @@ class ConnectionHandler:
         """
         Asynchronously retrieves the WebSocket address for the current page.
 
-        If the address has not been fetched yet, it will call the internal method
-        to obtain it. 
+        If the address has not been fetched yet,
+        it will call the internal method to obtain it.
 
         Returns:
             str: The WebSocket address of the page.
@@ -46,8 +46,8 @@ class ConnectionHandler:
         """
         Asynchronously retrieves the WebSocket address for the browser.
 
-        If the address has not been fetched yet, it will call the internal method
-        to obtain it.
+        If the address has not been fetched yet, it will call
+        the internal method to obtain it.
 
         Returns:
             str: The WebSocket address of the browser.
@@ -91,7 +91,7 @@ class ConnectionHandler:
         """
         Establishes a WebSocket connection to the current page.
 
-        Initiates the connection using the page's WebSocket address 
+        Initiates the connection using the page's WebSocket address
         and starts listening for incoming events.
 
         Returns:
@@ -107,8 +107,8 @@ class ConnectionHandler:
         Registers a callback function for a specific event.
 
         Args:
-            event_name (str): The name of the event to register the callback for.
-            callback (Callable): The callback function to execute when the event occurs.
+            event_name (str): Name of the event to register the callback for.
+            callback (Callable): Function to execute when the event occurs.
 
         Raises:
             ValueError: If the callback is not callable.
@@ -121,7 +121,8 @@ class ConnectionHandler:
         """
         Continuously listens for incoming events from the WebSocket connection.
 
-        Processes incoming messages and triggers registered callbacks based on the event type.
+        Processes incoming messages and triggers registered
+        callbacks based on the event type.
         """
         try:
             while True:
@@ -130,8 +131,8 @@ class ConnectionHandler:
                 await self._handle_event(event)
         except websockets.ConnectionClosed:
             print('Connection closed')
-        except Exception as e:
-            print(f'Error while receiving event: {e}')
+        except Exception as exc:
+            print(f'Error while receiving event: {exc}')
 
     async def _handle_event(self, event):
         """
@@ -162,7 +163,9 @@ class ConnectionHandler:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get('http://localhost:9222/json') as response:
+                async with session.get(
+                    'http://localhost:9222/json'
+                ) as response:
                     response.raise_for_status()
                     data = await response.json()
                     return [
@@ -189,7 +192,9 @@ class ConnectionHandler:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get('http://localhost:9222/json/version') as response:
+                async with session.get(
+                    'http://localhost:9222/json/version'
+                ) as response:
                     response.raise_for_status()
                     data = await response.json()
                     return data['webSocketDebuggerUrl']
