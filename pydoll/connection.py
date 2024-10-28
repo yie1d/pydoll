@@ -1,6 +1,6 @@
 import asyncio
-from typing import Callable
 import json
+from typing import Callable
 
 import aiohttp
 import websockets
@@ -13,6 +13,7 @@ class ConnectionHandler:
     This class manages the connection to the browser and the associated page,
     providing methods to execute commands and register event callbacks.
     """
+
     BROWSER_JSON_URL = 'http://localhost:9222/json'
     BROWSER_VERSION_URL = 'http://localhost:9222/json/version'
 
@@ -70,7 +71,7 @@ class ConnectionHandler:
 
         Returns:
             Connection: The active WebSocket connection to the page.
-        
+
         Raises:
             Exception: If the connection fails to establish.
         """
@@ -89,7 +90,7 @@ class ConnectionHandler:
         Args:
             command (dict): The command to send, which should be a dictionary
                             with the necessary parameters.
-        
+
         Returns:
             dict: The response received from the WebSocket.
 
@@ -98,7 +99,7 @@ class ConnectionHandler:
         """
         if not isinstance(command, dict):
             raise ValueError('Command must be a dictionary')
-        
+
         command['id'] = self._id
         command_str = str(command).replace("'", '"')
 
@@ -113,7 +114,6 @@ class ConnectionHandler:
         del self._pending_commands[command['id']]
         parsed_response = response.encode('utf-8').decode('unicode_escape')
         return json.loads(parsed_response)
-
 
     async def _connect_to_page(self) -> websockets.WebSocketClientProtocol:
         """
@@ -130,7 +130,9 @@ class ConnectionHandler:
         asyncio.create_task(self._receive_events())
         return connection
 
-    async def register_callback(self, event_name: str, callback: Callable) -> None:
+    async def register_callback(
+        self, event_name: str, callback: Callable
+    ) -> None:
         """
         Registers a callback function for a specific event.
 
@@ -142,45 +144,50 @@ class ConnectionHandler:
             ValueError: If the callback is not callable.
         """
         if not callable(callback):
-            raise ValueError('Invalid callback')
+            raise ValueError('Callback must be a callable function')
         self._event_callbacks[event_name] = callback
 
     async def _receive_events(self):
         """
         Continuously listens for messages from the WebSocket connection.
 
-        This method processes incoming messages in an infinite loop. If a message corresponds to a pending command
-        (identified by its 'id'), it completes the associated `Future`. Otherwise, it treats the message as an event
-        and calls `_handle_event` for processing.
-
-        Exceptions during message reception are caught, and relevant messages are printed if the connection is closed
-        or if other errors occur.
+        This method processes incoming messages in an infinite loop.
+        If a message corresponds to a pending command (identified by its 'id'),
+        it completes the associated `Future`.
+        Otherwise, it treats the message as an event and
+        calls `_handle_event` for processing.
 
         Raises:
-            websockets.ConnectionClosed: If the WebSocket connection is closed during message reception.
+            websockets.ConnectionClosed: If the WebSocket connection is closed.
             Exception: For other unforeseen errors.
-
-        Example:
-            await self._receive_events()
         """
         try:
             while True:
                 connection = await self.connection
-                message = await connection.recv()  # Await a message from the WebSocket
-                event = message.encode('utf-8').decode('unicode_escape')  # Decode the message
-                event_json = json.loads(event)  # Parse the message into a JSON object
-
-                # Handle pending command response
-                if 'id' in event_json and event_json['id'] in self._pending_commands:
-                    self._pending_commands[event_json['id']].set_result(event)  # Complete the Future
+                message = await connection.recv()
+                event = message.encode('utf-8').decode('unicode_escape')
+                try:
+                    event_json = json.loads(event)
+                except json.JSONDecodeError:
                     continue
 
-                await self._handle_event(event)  # Process the event
-        except websockets.ConnectionClosed:
-            print('Connection closed')  # Handle connection closure
-        except Exception as exc:
-            print(f'Error while receiving event: {exc}')  # Handle other exceptions
+                # Handle pending command response
+                if (
+                    'id' in event_json
+                    and event_json['id'] in self._pending_commands
+                ):
+                    print(f'Received response: {event}')
+                    self._pending_commands[event_json['id']].set_result(event)
+                    continue
 
+                await self._handle_event(event_json)
+        except websockets.ConnectionClosed:
+            print('Connection closed')
+        except Exception as exc:
+            import traceback
+
+            print(traceback.format_exc())
+            print(f'Error while receiving event: {exc}')
 
     async def _handle_event(self, event: dict):
         """
