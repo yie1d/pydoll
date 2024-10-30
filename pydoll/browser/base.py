@@ -11,6 +11,7 @@ from pydoll.commands.page import PageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
 from pydoll.utils import decode_image_to_bytes
+from pydoll.events.page import PageEvents
 
 
 class Browser(ABC):
@@ -40,6 +41,7 @@ class Browser(ABC):
         Returns:
             subprocess.Popen: The process object for the started browser.
         """
+        await self._enable_page_events()
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
@@ -53,11 +55,6 @@ class Browser(ABC):
         )
         if not await self._is_browser_running():
             raise ValueError('Failed to start browser')
-
-    async def enable_page_events(self):
-        await self.connection_handler.execute_command(
-            PageCommands.enable_page()
-        )
 
     async def stop(self):
         """
@@ -94,12 +91,20 @@ class Browser(ABC):
             url (str): The URL to navigate to.
         """
         await self._execute_command(PageCommands.go_to(url))
+        try:
+            await self._wait_page_loaded()
+        except asyncio.TimeoutError:
+            raise TimeoutError('Page load timed out')
 
     async def refresh(self):
         """
         Refreshes the current page in the browser.
         """
         await self._execute_command(PageCommands.refresh())
+        try:
+            await self._wait_page_loaded()
+        except asyncio.TimeoutError:
+            raise TimeoutError('Page refresh timed out')
 
     async def get_window_id(self):
         """
@@ -154,16 +159,6 @@ class Browser(ABC):
         with open(path, 'wb') as file:
             file.write(pdf_bytes)
 
-    async def _get_root_node_id(self):
-        response = await self._execute_command(DomCommands.dom_document())
-        return response['result']['root']['nodeId']
-
-    async def _describe_node(self, node_id: int):
-        response = await self._execute_command(
-            DomCommands.describe_node(node_id)
-        )
-        return response['result']['node']
-
     async def find_element(self, by: DomCommands.SelectorType, value: str):
         """
         Finds an element on the current page using the specified selector.
@@ -183,7 +178,7 @@ class Browser(ABC):
         node_description = await self._describe_node(target_node_id)
         return WebElement(node_description, self.connection_handler)
 
-    async def on(self, event_name: str, callback: Callable):
+    async def on(self, event_name: str, callback: Callable, temporary: bool = False):
         """
         Registers an event callback for a specific event.
 
@@ -191,7 +186,7 @@ class Browser(ABC):
             event_name (str): Name of the event to listen for.
             callback (Callable): function to be called when the event occurs.
         """
-        await self.connection_handler.register_callback(event_name, callback)
+        await self.connection_handler.register_callback(event_name, callback, temporary)
 
     async def _is_browser_running(self):
         """
@@ -232,7 +227,49 @@ class Browser(ABC):
             The response from executing the command.
         """
         return await self.connection_handler.execute_command(command)
+    
+    async def _get_root_node_id(self):
+        """
+        Retrieves the root node ID of the current page.
 
+        Returns:
+            int: The ID of the root node.
+        """
+        response = await self._execute_command(DomCommands.dom_document())
+        return response['result']['root']['nodeId']
+
+    async def _describe_node(self, node_id: int):
+        """
+        Describes a node on the current page.
+
+        Args:
+            node_id (int): The ID of the node to describe.
+        
+        Returns:
+            dict: The description of the node.
+        """
+        response = await self._execute_command(
+            DomCommands.describe_node(node_id)
+        )
+        return response['result']['node']
+    
+    async def _wait_page_loaded(self):
+        """
+        Waits for the page to finish loading.
+
+        Raises:
+            asyncio.TimeoutError: If the page load times
+            out after 300 seconds.
+        """
+        page_loaded = asyncio.Event()
+        await self.on(PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True)
+        asyncio.wait_for(page_loaded.wait(), timeout=300)
+    
+    async def _enable_page_events(self):
+        await self.connection_handler.execute_command(
+            PageCommands.enable_page()
+        )
+    
     @staticmethod
     def _validate_browser_path(path: str):
         """
