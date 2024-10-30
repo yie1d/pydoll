@@ -14,29 +14,6 @@ mais ativa.
 - [ ] Melhorar documentação.
 - [ ] Adicionar funcionalidade de clique com posição randômica.
 - [ ] Implementar padrão Singleton para a classe `ConnectionHandler`.
-- [ ] Adicionar factory para `WebElement`, criando subclasses, por exemplo:
-
-```python
-class ElementFactory:
-    @staticmethod
-    def create_element(node: dict, connection_handler: ConnectionHandler) -> WebElement:
-
-        if node['nodeName'] == 'BUTTON':
-            return ButtonElement(node, connection_handler)
-        elif node['nodeName'] == 'INPUT':
-            return InputElement(node, connection_handler)
-        else:
-            return WebElement(node, connection_handler)
-
-class ButtonElement(WebElement):
-    def click(self):
-        print("Clicking the button")
-
-class InputElement(WebElement):
-    def send_keys(self, text: str):
-        print("Sending keys to input")
-```
-
 - [ ] Fazer melhoria no sistema de atributos de `WebElement`:
 
 ```python
