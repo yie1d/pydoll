@@ -131,7 +131,7 @@ class ConnectionHandler:
         return connection
 
     async def register_callback(
-        self, event_name: str, callback: Callable
+        self, event_name: str, callback: Callable, temporary: bool = False
     ) -> None:
         """
         Registers a callback function for a specific event.
@@ -139,6 +139,7 @@ class ConnectionHandler:
         Args:
             event_name (str): Name of the event to register the callback for.
             callback (Callable): Function to execute when the event occurs.
+            temporary (bool): Whether the callback should be removed after use.
 
         Raises:
             ValueError: If the callback is not callable.
@@ -146,6 +147,7 @@ class ConnectionHandler:
         if not callable(callback):
             raise ValueError('Callback must be a callable function')
         self._event_callbacks[event_name] = callback
+        self._event_callbacks[event_name]['temporary'] = temporary
 
     async def _receive_events(self):
         """
@@ -201,6 +203,8 @@ class ConnectionHandler:
             callback = self._event_callbacks[event_name]
             if asyncio.iscoroutinefunction(callback):
                 await callback(event)
+                if callback['temporary']:
+                    del self._event_callbacks[event_name]
             else:
                 callback(event)
 
