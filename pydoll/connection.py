@@ -112,8 +112,7 @@ class ConnectionHandler:
 
         response: str = await future
         del self._pending_commands[command['id']]
-        parsed_response = response.encode('utf-8').decode('unicode_escape')
-        return json.loads(parsed_response)
+        return json.loads(response)
 
     async def _connect_to_page(self) -> websockets.WebSocketClientProtocol:
         """
@@ -146,7 +145,8 @@ class ConnectionHandler:
         """
         if not callable(callback):
             raise ValueError('Callback must be a callable function')
-        self._event_callbacks[event_name] = callback
+        self._event_callbacks[event_name] = {}
+        self._event_callbacks[event_name]['callback'] = callback
         self._event_callbacks[event_name]['temporary'] = temporary
 
     async def _receive_events(self):
@@ -166,8 +166,7 @@ class ConnectionHandler:
         try:
             while True:
                 connection = await self.connection
-                message = await connection.recv()
-                event = message.encode('utf-8').decode('unicode_escape')
+                event = await connection.recv()
                 try:
                     event_json = json.loads(event)
                 except json.JSONDecodeError:
@@ -200,10 +199,10 @@ class ConnectionHandler:
         """
         event_name = event['method']
         if event_name in self._event_callbacks:
-            callback = self._event_callbacks[event_name]
+            callback = self._event_callbacks[event_name]['callback']
             if asyncio.iscoroutinefunction(callback):
                 await callback(event)
-                if callback['temporary']:
+                if self._event_callbacks[event_name]['temporary']:
                     del self._event_callbacks[event_name]
             else:
                 callback(event)
