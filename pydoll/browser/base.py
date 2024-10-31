@@ -41,7 +41,6 @@ class Browser(ABC):
         Returns:
             subprocess.Popen: The process object for the started browser.
         """
-        await self._enable_page_events()
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
@@ -55,6 +54,7 @@ class Browser(ABC):
         )
         if not await self._is_browser_running():
             raise ValueError('Failed to start browser')
+        await self._enable_page_events()
 
     async def stop(self):
         """
@@ -263,7 +263,7 @@ class Browser(ABC):
         """
         page_loaded = asyncio.Event()
         await self.on(PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True)
-        asyncio.wait_for(page_loaded.wait(), timeout=300)
+        await asyncio.wait_for(page_loaded.wait(), timeout=300)
     
     async def _enable_page_events(self):
         await self.connection_handler.execute_command(
