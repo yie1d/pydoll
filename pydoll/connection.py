@@ -101,7 +101,7 @@ class ConnectionHandler:
             raise ValueError('Command must be a dictionary')
 
         command['id'] = self._id
-        command_str = str(command).replace("'", '"')
+        command_str = json.dumps(command)
 
         future = asyncio.Future()
         self._pending_commands[self._id] = future

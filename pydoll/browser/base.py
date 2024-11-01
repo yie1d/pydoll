@@ -3,6 +3,7 @@ import os
 import subprocess
 from abc import ABC, abstractmethod
 from typing import Callable
+import json
 
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
@@ -56,6 +57,19 @@ class Browser(ABC):
             raise ValueError('Failed to start browser')
         await self._enable_page_events()
 
+    async def execute_js_script(self, script: str):
+        """
+        Executes a JavaScript script in the browser.
+
+        Args:
+            script (str): The JavaScript script to execute.
+
+        Returns:
+            The response from executing the script.
+        """
+        command = {'method': 'Runtime.evaluate', 'params': {'expression': script, 'returnByValue': True}}
+        return await self._execute_command(command)
+    
     async def stop(self):
         """
         Stops the running browser process.

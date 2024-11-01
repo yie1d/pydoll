@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
@@ -46,9 +47,13 @@ class WebElement:
 
             setattr(self, key, value)
 
-    async def click(self):
+    async def click(self, x_offset: int = 0, y_offset: int = 0):
         element_bounds = await self.bounds
         position_to_click = self._calculate_center(element_bounds)
+        position_to_click = (
+            position_to_click[0] + x_offset,
+            position_to_click[1] + y_offset
+        )
         press_command = InputCommands.mouse_press(*position_to_click)
         release_command = InputCommands.mouse_release(*position_to_click)
         await self._connection_handler.execute_command(press_command)
