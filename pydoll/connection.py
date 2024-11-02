@@ -385,3 +385,35 @@ class ConnectionHandler:
                         f'Failed to resend command {command_id}: {exc}'
                     )
                     raise exc
+
+    def clear_callbacks(self):
+        """
+        Clears all registered event callbacks.
+
+        Removes all event callbacks from the internal dictionary.
+        """
+        self._event_callbacks = {}
+        logger.info('All event callbacks cleared.')
+    
+    def close(self):
+        """
+        Closes the WebSocket connection.
+
+        Closes the WebSocket connection and clears all event callbacks.
+        """
+        self.clear_callbacks()
+        self._connection.close()
+        logger.info('WebSocket connection closed.')
+    
+    def __repr__(self):
+        return f'ConnectionHandler(port={self._connection_port})'
+
+    def __str__(self):
+        return f'ConnectionHandler(port={self._connection_port})'
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
