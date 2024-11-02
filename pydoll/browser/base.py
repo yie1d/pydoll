@@ -3,7 +3,8 @@ import os
 import subprocess
 from abc import ABC, abstractmethod
 from typing import Callable
-import json
+from tempfile import TemporaryDirectory
+from datetime import datetime
 
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
@@ -11,8 +12,8 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.page import PageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
-from pydoll.utils import decode_image_to_bytes
 from pydoll.events.page import PageEvents
+from pydoll.utils import decode_image_to_bytes
 
 
 class Browser(ABC):
@@ -34,6 +35,7 @@ class Browser(ABC):
         self.connection_handler = ConnectionHandler()
         self.options = self._initialize_options(options)
         self.process = None
+        self.temp_dirs = []
 
     async def start(self) -> None:
         """
@@ -45,6 +47,15 @@ class Browser(ABC):
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
+        temp_dir_suffix = datetime.now().strftime('%Y%m%d%H%M%S')
+        temp_dir = TemporaryDirectory(temp_dir_suffix)
+        self.temp_dirs.append(temp_dir)
+        
+        if '--user-data-dir' not in self.options.arguments:
+            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
+            self.options.arguments.append('--no-first-run')
+            self.options.arguments.append('--no-default-browser-check')
+        
         self.process = subprocess.Popen(
             [
                 binary_location,
@@ -67,9 +78,12 @@ class Browser(ABC):
         Returns:
             The response from executing the script.
         """
-        command = {'method': 'Runtime.evaluate', 'params': {'expression': script, 'returnByValue': True}}
+        command = {
+            'method': 'Runtime.evaluate',
+            'params': {'expression': script, 'returnByValue': True},
+        }
         return await self._execute_command(command)
-    
+
     async def stop(self):
         """
         Stops the running browser process.
@@ -192,7 +206,9 @@ class Browser(ABC):
         node_description = await self._describe_node(target_node_id)
         return WebElement(node_description, self.connection_handler)
 
-    async def on(self, event_name: str, callback: Callable, temporary: bool = False):
+    async def on(
+        self, event_name: str, callback: Callable, temporary: bool = False
+    ):
         """
         Registers an event callback for a specific event.
 
@@ -200,7 +216,9 @@ class Browser(ABC):
             event_name (str): Name of the event to listen for.
             callback (Callable): function to be called when the event occurs.
         """
-        await self.connection_handler.register_callback(event_name, callback, temporary)
+        await self.connection_handler.register_callback(
+            event_name, callback, temporary
+        )
 
     async def _is_browser_running(self):
         """
@@ -241,7 +259,7 @@ class Browser(ABC):
             The response from executing the command.
         """
         return await self.connection_handler.execute_command(command)
-    
+
     async def _get_root_node_id(self):
         """
         Retrieves the root node ID of the current page.
@@ -258,7 +276,7 @@ class Browser(ABC):
 
         Args:
             node_id (int): The ID of the node to describe.
-        
+
         Returns:
             dict: The description of the node.
         """
@@ -266,7 +284,7 @@ class Browser(ABC):
             DomCommands.describe_node(node_id)
         )
         return response['result']['node']
-    
+
     async def _wait_page_loaded(self):
         """
         Waits for the page to finish loading.
@@ -276,14 +294,16 @@ class Browser(ABC):
             out after 300 seconds.
         """
         page_loaded = asyncio.Event()
-        await self.on(PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True)
+        await self.on(
+            PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
+        )
         await asyncio.wait_for(page_loaded.wait(), timeout=300)
-    
+
     async def _enable_page_events(self):
         await self.connection_handler.execute_command(
             PageCommands.enable_page()
         )
-    
+
     @staticmethod
     def _validate_browser_path(path: str):
         """
