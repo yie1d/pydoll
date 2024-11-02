@@ -25,6 +25,9 @@ class ConnectionHandler:
         """
         Initializes the ConnectionHandler instance.
 
+        Args:
+            connection_port (int): The port to connect to the browser.
+
         Sets up the internal state including WebSocket addresses,
         connection instance, event callbacks, and command ID.
         """
@@ -43,6 +46,12 @@ class ConnectionHandler:
 
     @property
     async def page_ws_address(self) -> str:
+        """
+        Retrieves the WebSocket address of the browser page.
+
+        Returns:
+            str: The WebSocket address of the browser page.
+        """
         if not self._page_ws_address:
             logger.info('Fetching WebSocket address for the page.')
             self._page_ws_address = await self._get_page_ws_address()
@@ -53,6 +62,12 @@ class ConnectionHandler:
 
     @property
     async def browser_ws_address(self) -> str:
+        """
+        Retrieves the WebSocket address of the browser.
+
+        Returns:
+            str: The WebSocket address of the browser.
+        """
         if not self._browser_ws_address:
             logger.info('Fetching WebSocket address for the browser.')
             self._browser_ws_address = await self._get_browser_ws_address()
@@ -63,6 +78,15 @@ class ConnectionHandler:
 
     @property
     async def connection(self) -> websockets.WebSocketClientProtocol:
+        """
+        Establishes and returns the WebSocket connection to the page.
+
+        Returns:
+            websockets.WebSocketClientProtocol: The active WebSocket connection.
+        
+        Raises:
+            Exception: If the connection fails.
+        """
         if not self._connection or self._connection.closed:
             try:
                 logger.info('Establishing WebSocket connection to the page.')
@@ -74,6 +98,20 @@ class ConnectionHandler:
         return self._connection
 
     async def execute_command(self, command: dict, timeout: int = 10) -> dict:
+        """
+        Sends a command to the browser and awaits its response.
+
+        Args:
+            command (dict): The command to send, structured as a dictionary.
+            timeout (int, optional): Time in seconds to wait for a response. Defaults to 10.
+
+        Returns:
+            dict: The response from the browser.
+
+        Raises:
+            ValueError: If the command is not a dictionary.
+            TimeoutError: If the command execution exceeds the timeout.
+        """
         if not isinstance(command, dict):
             logger.error('Command must be a dictionary.')
             raise ValueError('Command must be a dictionary')
@@ -101,6 +139,14 @@ class ConnectionHandler:
             raise TimeoutError('Command execution timed out')
 
     async def _connect_to_page(self) -> websockets.WebSocketClientProtocol:
+        """
+        Establishes a WebSocket connection to the browser page.
+
+        Returns:
+            websockets.WebSocketClientProtocol: The WebSocket connection.
+
+        Initiates a task to listen for events from the page WebSocket.
+        """
         ws_address = await self.page_ws_address
         connection = await websockets.connect(ws_address)
         logger.info(f'Connected to page WebSocket at {ws_address}')
@@ -110,6 +156,17 @@ class ConnectionHandler:
     async def register_callback(
         self, event_name: str, callback: Callable, temporary: bool = False
     ) -> None:
+        """
+        Registers a callback function for a specific event.
+
+        Args:
+            event_name (str): The name of the event to register.
+            callback (Callable): The function to call when the event is received.
+            temporary (bool, optional): If True, the callback will be removed after one use. Defaults to False.
+
+        Raises:
+            ValueError: If the callback is not callable.
+        """
         if not callable(callback):
             logger.error('Callback must be a callable function.')
             raise ValueError('Callback must be a callable function')
@@ -125,6 +182,11 @@ class ConnectionHandler:
         self._callback_id += 1
 
     async def _receive_events(self):
+        """
+        Listens for incoming events from the WebSocket connection and processes them.
+
+        Matches responses to pending commands and handles events based on registered callbacks.
+        """
         try:
             while True:
                 connection = await self.connection
@@ -153,6 +215,12 @@ class ConnectionHandler:
             logger.error(f'Error while receiving event: {exc}', exc_info=True)
 
     async def _handle_event(self, event: dict):
+        """
+        Processes a received event and triggers the appropriate callback(s).
+
+        Args:
+            event (dict): The event data in dictionary form.
+        """
         event_name = event.get('method')
         
         if event_name:
@@ -179,6 +247,15 @@ class ConnectionHandler:
                     )
 
     async def _get_page_ws_address(self) -> str:
+        """
+        Fetches the WebSocket address for the browser page.
+
+        Returns:
+            str: The WebSocket address for the page.
+
+        Raises:
+            ValueError: If the address cannot be fetched due to network errors or missing data.
+        """
         try:
             async with aiohttp.ClientSession() as session:
                 
@@ -211,6 +288,15 @@ class ConnectionHandler:
             raise ValueError(f'Failed to get page ws address: {e}')
 
     async def _get_browser_ws_address(self) -> str:
+        """
+        Fetches the WebSocket address for the browser instance.
+
+        Returns:
+            str: The WebSocket address for the browser.
+
+        Raises:
+            ValueError: If the address cannot be fetched due to network errors or missing data.
+        """
         try:
             async with aiohttp.ClientSession() as session:
                 
@@ -237,6 +323,11 @@ class ConnectionHandler:
             raise ValueError(f'Failed to get browser ws address: {e}')
 
     async def _monitor_connection(self):
+        """
+        Monitors the WebSocket connection and attempts to reconnect if it is lost.
+
+        Retries the connection up to a maximum number of attempts and resends pending commands upon reconnection.
+        """
         attempts = 0
         
         while attempts < self._reconnect_max_attempts:
@@ -263,6 +354,11 @@ class ConnectionHandler:
         )
 
     async def _resend_pending_commands(self):
+        """
+        Resends commands that were pending when the connection was lost.
+
+        Ensures that commands waiting for a response are re-sent upon reconnection.
+        """
         for command_id, future in self._pending_commands.items():
             if not future.done():
                 try:
