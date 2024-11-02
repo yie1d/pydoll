@@ -6,6 +6,8 @@ from typing import Callable
 import aiohttp
 import websockets
 
+from pydoll import exceptions
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -20,7 +22,7 @@ class ConnectionHandler:
 
     BROWSER_JSON_URL = 'http://localhost:port/json'
     BROWSER_VERSION_URL = 'http://localhost:port/json/version'
-    
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -38,7 +40,9 @@ class ConnectionHandler:
         Sets up the internal state including WebSocket addresses,
         connection instance, event callbacks, and command ID.
         """
-        if not hasattr(self, '_initialized'):  # Ensure init is called only once
+        if not hasattr(
+            self, '_initialized'
+        ):  # Ensure init is called only once
             self._initialized = True
             self._connection_port = connection_port
             self._page_ws_address = None
@@ -92,7 +96,7 @@ class ConnectionHandler:
 
         Returns:
             websockets.WebSocketClientProtocol: The active WebSocket connection.
-        
+
         Raises:
             Exception: If the connection fails.
         """
@@ -103,7 +107,9 @@ class ConnectionHandler:
                 logger.info('WebSocket connection established.')
             except Exception as exc:
                 logger.error(f'Failed to connect to page: {exc}')
-                raise Exception(f'Failed to connect to page: {exc}')
+                raise exceptions.ConnectionFailed(
+                    f'Failed to connect to page: {exc}'
+                )
         return self._connection
 
     async def execute_command(self, command: dict, timeout: int = 10) -> dict:
@@ -123,7 +129,7 @@ class ConnectionHandler:
         """
         if not isinstance(command, dict):
             logger.error('Command must be a dictionary.')
-            raise ValueError('Command must be a dictionary')
+            raise exceptions.InvalidCommand('Command must be a dictionary')
 
         command['id'] = self._id
         command_str = json.dumps(command)
@@ -178,7 +184,9 @@ class ConnectionHandler:
         """
         if not callable(callback):
             logger.error('Callback must be a callable function.')
-            raise ValueError('Callback must be a callable function')
+            raise exceptions.InvalidCallback(
+                'Callback must be a callable function'
+            )
 
         self._event_callbacks[self._callback_id] = {
             'event': event_name,
@@ -203,7 +211,7 @@ class ConnectionHandler:
                 try:
                     event_json = json.loads(event)
                 except json.JSONDecodeError:
-                    logger.warning('Received malformed JSON message.')
+                    logger.warning(f'Received malformed JSON message: {event}')
                     continue
 
                 if (
@@ -231,7 +239,7 @@ class ConnectionHandler:
             event (dict): The event data in dictionary form.
         """
         event_name = event.get('method')
-        
+
         if event_name:
             logger.info(f"Handling event '{event_name}'")
         else:
@@ -239,16 +247,14 @@ class ConnectionHandler:
 
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
-            
             if callback_data['event'] == event_name:
-                
                 callback_func = callback_data['callback']
-                
+
                 if asyncio.iscoroutinefunction(callback_func):
                     await callback_func(event)
                 else:
                     callback_func(event)
-                
+
                 if callback_data['temporary']:
                     del self._event_callbacks[callback_id]
                     logger.info(
@@ -267,11 +273,11 @@ class ConnectionHandler:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                
                 async with session.get(
-                    ConnectionHandler.BROWSER_JSON_URL.replace('port', str(self._connection_port))
+                    ConnectionHandler.BROWSER_JSON_URL.replace(
+                        'port', str(self._connection_port)
+                    )
                 ) as response:
-                    
                     response.raise_for_status()
                     data = await response.json()
                     ws_address = [
@@ -279,22 +285,24 @@ class ConnectionHandler:
                         for current_data in data
                         if current_data['url'] == 'chrome://newtab/'
                     ][0]
-                    logger.info(
-                        'Page WebSocket address fetched successfully.'
-                    )
+                    logger.info('Page WebSocket address fetched successfully.')
                     return ws_address
-        
+
         except aiohttp.ClientError as e:
             logger.error(
                 'Failed to fetch page WebSocket address due to network error.'
             )
-            raise ValueError(f'Failed to get page ws address: {e}')
-        
+            raise exceptions.NetworkError(
+                f'Failed to get page ws address: {e}'
+            )
+
         except (KeyError, IndexError) as e:
             logger.error(
                 'Failed to get page WebSocket address due to missing data.'
             )
-            raise ValueError(f'Failed to get page ws address: {e}')
+            raise exceptions.InvalidResponse(
+                f'Failed to get page ws address: {e}'
+            )
 
     async def _get_browser_ws_address(self) -> str:
         """
@@ -308,9 +316,10 @@ class ConnectionHandler:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                
                 async with session.get(
-                    ConnectionHandler.BROWSER_VERSION_URL.replace('port', str(self._connection_port))
+                    ConnectionHandler.BROWSER_VERSION_URL.replace(
+                        'port', str(self._connection_port)
+                    )
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
@@ -318,18 +327,22 @@ class ConnectionHandler:
                         'Browser WebSocket address fetched successfully.'
                     )
                     return data['webSocketDebuggerUrl']
-        
+
         except aiohttp.ClientError as e:
             logger.error(
                 'Failed to fetch browser WebSocket address due to network error.'
             )
-            raise ValueError(f'Failed to get browser ws address: {e}')
-        
+            raise exceptions.NetworkError(
+                f'Failed to get browser ws address: {e}'
+            )
+
         except KeyError as e:
             logger.error(
                 'Failed to get browser WebSocket address due to missing data.'
             )
-            raise ValueError(f'Failed to get browser ws address: {e}')
+            raise exceptions.InvalidResponse(
+                f'Failed to get browser ws address: {e}'
+            )
 
     async def _monitor_connection(self):
         """
@@ -338,7 +351,7 @@ class ConnectionHandler:
         Retries the connection up to a maximum number of attempts and resends pending commands upon reconnection.
         """
         attempts = 0
-        
+
         while attempts < self._reconnect_max_attempts:
             if self._connection is None or self._connection.closed:
                 try:
@@ -352,13 +365,13 @@ class ConnectionHandler:
                     )
                     await asyncio.sleep(self._reconnect_delay)
                     attempts += 1
-            
+
             await asyncio.sleep(1)
 
         logger.error(
             'Failed to reconnect to WebSocket after maximum attempts.'
         )
-        raise Exception(
+        raise exceptions.ReconnectionFailed(
             'Failed to reconnect to WebSocket after multiple attempts.'
         )
 
@@ -377,14 +390,14 @@ class ConnectionHandler:
                     }
                     command_str = json.dumps(command)
                     await self._connection.send(command_str)
-                    logger.info(
-                        f'Resent pending command with ID {command_id}'
-                    )
+                    logger.info(f'Resent pending command with ID {command_id}')
                 except Exception as exc:
                     logger.error(
                         f'Failed to resend command {command_id}: {exc}'
                     )
-                    raise exc
+                    raise exceptions.ResendCommandFailed(
+                        f'Failed to resend command {command_id}'
+                    )
 
     def clear_callbacks(self):
         """
@@ -394,7 +407,7 @@ class ConnectionHandler:
         """
         self._event_callbacks = {}
         logger.info('All event callbacks cleared.')
-    
+
     def close(self):
         """
         Closes the WebSocket connection.
@@ -404,16 +417,16 @@ class ConnectionHandler:
         self.clear_callbacks()
         self._connection.close()
         logger.info('WebSocket connection closed.')
-    
+
     def __repr__(self):
         return f'ConnectionHandler(port={self._connection_port})'
 
     def __str__(self):
         return f'ConnectionHandler(port={self._connection_port})'
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False

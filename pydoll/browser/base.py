@@ -2,13 +2,13 @@ import asyncio
 import os
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Callable
-from tempfile import TemporaryDirectory
-from datetime import datetime
 from random import randint
+from tempfile import TemporaryDirectory
+from typing import Callable
 
 import aiofiles
 
+from pydoll import exceptions
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
@@ -27,7 +27,9 @@ class Browser(ABC):
     and register event callbacks.
     """
 
-    def __init__(self, options: Options | None = None, connection_port: int = None):
+    def __init__(
+        self, options: Options | None = None, connection_port: int = None
+    ):
         """
         Initializes the Browser instance.
 
@@ -35,7 +37,9 @@ class Browser(ABC):
             options (Options | None): An instance of the Options class to
             configure the browser. If None, default options will be used.
         """
-        self._connection_port = connection_port if connection_port else randint(9223, 9322)
+        self._connection_port = (
+            connection_port if connection_port else randint(9223, 9322)
+        )
         self.connection_handler = ConnectionHandler(self._connection_port)
         self.options = self._initialize_options(options)
         self.process = None
@@ -43,7 +47,7 @@ class Browser(ABC):
 
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
         for temp_dir in self.temp_dirs:
@@ -62,12 +66,12 @@ class Browser(ABC):
         )
 
         temp_dir = self._get_temp_dir()
-        
+
         if '--user-data-dir' not in self.options.arguments:
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
             self.options.arguments.append('--no-first-run')
             self.options.arguments.append('--no-default-browser-check')
-        
+
         self.process = subprocess.Popen(
             [
                 binary_location,
@@ -77,7 +81,7 @@ class Browser(ABC):
             stdout=subprocess.PIPE,
         )
         if not await self._is_browser_running():
-            raise ValueError('Failed to start browser')
+            raise exceptions.BrowserNotRunning('Failed to start browser')
         await self._enable_page_events()
 
     async def execute_js_script(self, script: str):
@@ -107,7 +111,7 @@ class Browser(ABC):
             self.process.terminate()
             await self._execute_command(BrowserCommands.CLOSE)
         else:
-            raise ValueError('Browser is not running')
+            raise exceptions.BrowserNotRunning('Browser is not running')
 
     async def get_screenshot(self, path: str):
         """
@@ -364,7 +368,7 @@ class Browser(ABC):
         temp_dir = TemporaryDirectory()
         self.temp_dirs.append(temp_dir)
         return temp_dir
-    
+
     @abstractmethod
     def _get_default_binary_location(self) -> str:
         """
