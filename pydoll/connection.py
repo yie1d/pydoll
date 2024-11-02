@@ -20,6 +20,13 @@ class ConnectionHandler:
 
     BROWSER_JSON_URL = 'http://localhost:port/json'
     BROWSER_VERSION_URL = 'http://localhost:port/json/version'
+    
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(ConnectionHandler, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self, connection_port: int):
         """
@@ -31,18 +38,20 @@ class ConnectionHandler:
         Sets up the internal state including WebSocket addresses,
         connection instance, event callbacks, and command ID.
         """
-        self._connection_port = connection_port
-        self._page_ws_address = None
-        self._browser_ws_address = None
-        self._connection = None
-        self._event_callbacks = {}
-        self._id = 1
-        self._callback_id = 1
-        self._reconnect_delay = 5
-        self._reconnect_max_attempts = 5
-        self._pending_commands: dict[int, asyncio.Future] = {}
-        asyncio.create_task(self._monitor_connection())
-        logger.info('ConnectionHandler initialized.')
+        if not hasattr(self, '_initialized'):  # Ensure init is called only once
+            self._initialized = True
+            self._connection_port = connection_port
+            self._page_ws_address = None
+            self._browser_ws_address = None
+            self._connection = None
+            self._event_callbacks = {}
+            self._id = 1
+            self._callback_id = 1
+            self._reconnect_delay = 5
+            self._reconnect_max_attempts = 5
+            self._pending_commands: dict[int, asyncio.Future] = {}
+            asyncio.create_task(self._monitor_connection())
+            logger.info('ConnectionHandler initialized.')
 
     @property
     async def page_ws_address(self) -> str:
