@@ -7,7 +7,7 @@ PyDoll é uma biblioteca pensada em automatizar navegadores baseados no Chromium
 
 # TODO List
 
-- [ ] Implementar sistema de portas randômicas, para possibilitar
+- [x] Implementar sistema de portas randômicas, para possibilitar
 abertura de vários browsers.
 - [ ] Criar exceptions personalizadas.
 - [ ] Adicionar sistema para verificar se o clique foi realizado 
@@ -17,11 +17,11 @@ mais ativa.
 - [ ] Mapear eventos para `Page`, `Browser`, `Network`, etc.
 - [ ] Implementar sistema de proxy.
 - [x] Criar uma pasta temporária para o AppData do navegador.
-- [ ] Substituir leitura e escrita de arquivos por uma biblioteca async.
+- [x] Substituir leitura e escrita de arquivos por uma biblioteca async.
 - [ ] Melhorar documentação.
 - [ ] Adicionar funcionalidade de clique com posição randômica.
-- [ ] Implementar padrão Singleton para a classe `ConnectionHandler`.
-- [ ] Fazer melhoria no sistema de atributos de `WebElement`:
+- [x] Implementar padrão Singleton para a classe `ConnectionHandler`.
+- [x] Fazer melhoria no sistema de atributos de `WebElement`:
 
 ```python
 class WebElement:
