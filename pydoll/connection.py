@@ -29,6 +29,7 @@ class ConnectionHandler:
         self._connection = None
         self._event_callbacks = {}
         self._id = 1
+        self._callback_id = 1
         self._pending_commands: dict[int, asyncio.Future] = {}
 
     @property
@@ -145,9 +146,12 @@ class ConnectionHandler:
         """
         if not callable(callback):
             raise ValueError('Callback must be a callable function')
-        self._event_callbacks[event_name] = {}
-        self._event_callbacks[event_name]['callback'] = callback
-        self._event_callbacks[event_name]['temporary'] = temporary
+        self._event_callbacks[self._callback_id] = {
+            'event': event_name,
+            'callback': callback,
+            'temporary': temporary,
+        }
+        self._callback_id += 1
 
     async def _receive_events(self):
         """
@@ -198,14 +202,16 @@ class ConnectionHandler:
             event (dict): The event data received from the WebSocket.
         """
         event_name = event['method']
-        if event_name in self._event_callbacks:
-            callback = self._event_callbacks[event_name]['callback']
-            if asyncio.iscoroutinefunction(callback):
-                await callback(event)
-                if self._event_callbacks[event_name]['temporary']:
-                    del self._event_callbacks[event_name]
-            else:
-                callback(event)
+        event_callbacks = self._event_callbacks.copy()
+        for callback_id, callback_data in event_callbacks.items():
+            if callback_data['event'] == event_name:
+                callback_func = callback_data['callback']
+                if asyncio.iscoroutinefunction(callback_func):
+                    await callback_func(event)
+                else:
+                    callback_func(event)
+                if callback_data['temporary']:
+                    del self._event_callbacks[callback_id]
 
     @staticmethod
     async def _get_page_ws_address() -> str:
