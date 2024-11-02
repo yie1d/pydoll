@@ -1,5 +1,4 @@
 import asyncio
-import random
 
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
@@ -24,6 +23,57 @@ class WebElement:
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
         return f'{self.__class__.__name__}({attrs})'
 
+    def _def_attributes(self):
+        attr = self._node['attributes']
+        for i in range(0, len(attr), 2):
+            key = attr[i]
+            key = key if key != 'class' else 'class_name'
+            value = attr[i + 1]
+            self._attributes[key] = value
+            
+    @property
+    def class_name(self) -> str:
+        """
+        Retrieves the class name of the
+        element.
+
+        Returns:
+            str: The class name of the
+            element.
+
+        """
+        return self._attributes.get('class')
+    
+    @property
+    def id(self) -> str:
+        """
+        Retrieves the id of the element.
+
+        Returns:
+            str: The id of the element.
+        """
+        return self._attributes.get('id')
+
+    @property
+    def tag_name(self) -> str:
+        """
+        Retrieves the tag name of the element.
+
+        Returns:
+            str: The tag name of the element.
+        """
+        return self._node.get('nodeName')
+
+    @property
+    def text(self) -> str:
+        """
+        Retrieves the text of the element.
+
+        Returns:
+            str: The text of the element.
+        """
+        return self._node.get('nodeValue')
+
     @property
     async def bounds(self) -> list:
         """
@@ -36,23 +86,25 @@ class WebElement:
             DomCommands.box_model(self._node['nodeId'])
         )
         return response['result']['model']['content']
+    
+    def get_attribute(self, name: str) -> str:
+        """
+        Retrieves the attribute value of the element.
 
-    def _def_attributes(self):
-        attr = self._node['attributes']
-        for i in range(0, len(attr), 2):
-            key = attr[i]
-            key = key if key != 'class' else 'class_name'
-            value = attr[i + 1]
-            self._attributes[key] = value
+        Args:
+            name (str): The name of the attribute.
 
-            setattr(self, key, value)
+        Returns:
+            str: The value of the attribute.
+        """
+        return self._attributes.get(name)
 
     async def click(self, x_offset: int = 0, y_offset: int = 0):
         element_bounds = await self.bounds
         position_to_click = self._calculate_center(element_bounds)
         position_to_click = (
             position_to_click[0] + x_offset,
-            position_to_click[1] + y_offset
+            position_to_click[1] + y_offset,
         )
         press_command = InputCommands.mouse_press(*position_to_click)
         release_command = InputCommands.mouse_release(*position_to_click)
