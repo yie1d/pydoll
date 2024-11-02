@@ -18,16 +18,17 @@ class ConnectionHandler:
     providing methods to execute commands and register event callbacks.
     """
 
-    BROWSER_JSON_URL = 'http://localhost:9222/json'
-    BROWSER_VERSION_URL = 'http://localhost:9222/json/version'
+    BROWSER_JSON_URL = 'http://localhost:port/json'
+    BROWSER_VERSION_URL = 'http://localhost:port/json/version'
 
-    def __init__(self):
+    def __init__(self, connection_port: int):
         """
         Initializes the ConnectionHandler instance.
 
         Sets up the internal state including WebSocket addresses,
         connection instance, event callbacks, and command ID.
         """
+        self._connection_port = connection_port
         self._page_ws_address = None
         self._browser_ws_address = None
         self._connection = None
@@ -177,13 +178,12 @@ class ConnectionHandler:
                         f'Removed temporary callback with ID {callback_id}'
                     )
 
-    @staticmethod
-    async def _get_page_ws_address() -> str:
+    async def _get_page_ws_address(self) -> str:
         try:
             async with aiohttp.ClientSession() as session:
                 
                 async with session.get(
-                    ConnectionHandler.BROWSER_JSON_URL
+                    ConnectionHandler.BROWSER_JSON_URL.replace('port', str(self._connection_port))
                 ) as response:
                     
                     response.raise_for_status()
@@ -210,13 +210,12 @@ class ConnectionHandler:
             )
             raise ValueError(f'Failed to get page ws address: {e}')
 
-    @staticmethod
-    async def _get_browser_ws_address() -> str:
+    async def _get_browser_ws_address(self) -> str:
         try:
             async with aiohttp.ClientSession() as session:
                 
                 async with session.get(
-                    ConnectionHandler.BROWSER_VERSION_URL
+                    ConnectionHandler.BROWSER_VERSION_URL.replace('port', str(self._connection_port))
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()

@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 from tempfile import TemporaryDirectory
 from datetime import datetime
+from random import randint
 
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
@@ -24,7 +25,7 @@ class Browser(ABC):
     and register event callbacks.
     """
 
-    def __init__(self, options: Options | None = None):
+    def __init__(self, options: Options | None = None, connection_port: int = None):
         """
         Initializes the Browser instance.
 
@@ -32,7 +33,8 @@ class Browser(ABC):
             options (Options | None): An instance of the Options class to
             configure the browser. If None, default options will be used.
         """
-        self.connection_handler = ConnectionHandler()
+        self._connection_port = connection_port if connection_port else randint(9223, 9322)
+        self.connection_handler = ConnectionHandler(self._connection_port)
         self.options = self._initialize_options(options)
         self.process = None
         self.temp_dirs = []
@@ -59,7 +61,7 @@ class Browser(ABC):
         self.process = subprocess.Popen(
             [
                 binary_location,
-                '--remote-debugging-port=9222',
+                f'--remote-debugging-port={self._connection_port}',
                 *self.options.arguments,
             ],
             stdout=subprocess.PIPE,
