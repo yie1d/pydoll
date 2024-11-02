@@ -1,9 +1,13 @@
 import asyncio
 import json
+import logging
 from typing import Callable
 
 import aiohttp
 import websockets
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class ConnectionHandler:
@@ -30,143 +34,96 @@ class ConnectionHandler:
         self._event_callbacks = {}
         self._id = 1
         self._callback_id = 1
+        self._reconnect_delay = 5
+        self._reconnect_max_attempts = 5
         self._pending_commands: dict[int, asyncio.Future] = {}
+        asyncio.create_task(self._monitor_connection())
+        logger.info('ConnectionHandler initialized.')
 
     @property
     async def page_ws_address(self) -> str:
-        """
-        Asynchronously retrieves the WebSocket address for the current page.
-
-        If the address has not been fetched yet,
-        it will call the internal method to obtain it.
-
-        Returns:
-            str: The WebSocket address of the page.
-        """
         if not self._page_ws_address:
+            logger.info('Fetching WebSocket address for the page.')
             self._page_ws_address = await self._get_page_ws_address()
+            logger.info(
+                f'Page WebSocket address obtained: {self._page_ws_address}'
+            )
         return self._page_ws_address
 
     @property
     async def browser_ws_address(self) -> str:
-        """
-        Asynchronously retrieves the WebSocket address for the browser.
-
-        If the address has not been fetched yet, it will call
-        the internal method to obtain it.
-
-        Returns:
-            str: The WebSocket address of the browser.
-        """
         if not self._browser_ws_address:
+            logger.info('Fetching WebSocket address for the browser.')
             self._browser_ws_address = await self._get_browser_ws_address()
+            logger.info(
+                f'Browser WebSocket address obtained: {self._browser_ws_address}'
+            )
         return self._browser_ws_address
 
     @property
     async def connection(self) -> websockets.WebSocketClientProtocol:
-        """
-        Asynchronously establishes a connection to the page WebSocket.
-
-        If the connection has not been established yet, it will call the method
-        to connect to the page.
-
-        Returns:
-            Connection: The active WebSocket connection to the page.
-
-        Raises:
-            Exception: If the connection fails to establish.
-        """
         if not self._connection or self._connection.closed:
             try:
+                logger.info('Establishing WebSocket connection to the page.')
                 self._connection = await self._connect_to_page()
+                logger.info('WebSocket connection established.')
             except Exception as exc:
+                logger.error(f'Failed to connect to page: {exc}')
                 raise Exception(f'Failed to connect to page: {exc}')
-
         return self._connection
 
-    async def execute_command(self, command: dict) -> dict:
-        """
-        Sends a command to the connected WebSocket.
-
-        Args:
-            command (dict): The command to send, which should be a dictionary
-                            with the necessary parameters.
-
-        Returns:
-            dict: The response received from the WebSocket.
-
-        Raises:
-            ValueError: If the command is invalid.
-        """
+    async def execute_command(self, command: dict, timeout: int = 10) -> dict:
         if not isinstance(command, dict):
+            logger.error('Command must be a dictionary.')
             raise ValueError('Command must be a dictionary')
 
         command['id'] = self._id
         command_str = json.dumps(command)
-
         future = asyncio.Future()
         self._pending_commands[self._id] = future
         self._id += 1
 
         connection = await self.connection
         await connection.send(command_str)
+        logger.info(f'Sent command with ID {command["id"]}: {command}')
 
-        response: str = await future
-        del self._pending_commands[command['id']]
-        return json.loads(response)
+        try:
+            response: str = await asyncio.wait_for(future, timeout)
+            del self._pending_commands[command['id']]
+            logger.info(f'Received response for command ID {command["id"]}')
+            return json.loads(response)
+        except asyncio.TimeoutError:
+            del self._pending_commands[command['id']]
+            logger.warning(
+                f'Command execution timed out for ID {command["id"]}'
+            )
+            raise TimeoutError('Command execution timed out')
 
     async def _connect_to_page(self) -> websockets.WebSocketClientProtocol:
-        """
-        Establishes a WebSocket connection to the current page.
-
-        Initiates the connection using the page's WebSocket address
-        and starts listening for incoming events.
-
-        Returns:
-            Connection: The active WebSocket connection to the page.
-        """
         ws_address = await self.page_ws_address
         connection = await websockets.connect(ws_address)
+        logger.info(f'Connected to page WebSocket at {ws_address}')
         asyncio.create_task(self._receive_events())
         return connection
 
     async def register_callback(
         self, event_name: str, callback: Callable, temporary: bool = False
     ) -> None:
-        """
-        Registers a callback function for a specific event.
-
-        Args:
-            event_name (str): Name of the event to register the callback for.
-            callback (Callable): Function to execute when the event occurs.
-            temporary (bool): Whether the callback should be removed after use.
-
-        Raises:
-            ValueError: If the callback is not callable.
-        """
         if not callable(callback):
+            logger.error('Callback must be a callable function.')
             raise ValueError('Callback must be a callable function')
+
         self._event_callbacks[self._callback_id] = {
             'event': event_name,
             'callback': callback,
             'temporary': temporary,
         }
+        logger.info(
+            f"Registered callback for event '{event_name}' with ID {self._callback_id}"
+        )
         self._callback_id += 1
 
     async def _receive_events(self):
-        """
-        Continuously listens for messages from the WebSocket connection.
-
-        This method processes incoming messages in an infinite loop.
-        If a message corresponds to a pending command (identified by its 'id'),
-        it completes the associated `Future`.
-        Otherwise, it treats the message as an event and
-        calls `_handle_event` for processing.
-
-        Raises:
-            websockets.ConnectionClosed: If the WebSocket connection is closed.
-            Exception: For other unforeseen errors.
-        """
         try:
             while True:
                 connection = await self.connection
@@ -174,95 +131,153 @@ class ConnectionHandler:
                 try:
                     event_json = json.loads(event)
                 except json.JSONDecodeError:
+                    logger.warning('Received malformed JSON message.')
                     continue
 
-                # Handle pending command response
                 if (
                     'id' in event_json
                     and event_json['id'] in self._pending_commands
                 ):
-                    print(f'Received response: {event}')
+                    logger.info(
+                        f'Received response for pending command ID {event_json["id"]}'
+                    )
                     self._pending_commands[event_json['id']].set_result(event)
                     continue
 
+                logger.info(f'Received event: {event_json["method"]}')
                 await self._handle_event(event_json)
         except websockets.ConnectionClosed:
-            print('Connection closed')
+            logger.warning('WebSocket connection closed.')
         except Exception as exc:
-            import traceback
-
-            print(traceback.format_exc())
-            print(f'Error while receiving event: {exc}')
+            logger.error(f'Error while receiving event: {exc}', exc_info=True)
 
     async def _handle_event(self, event: dict):
-        """
-        Handles an incoming event by executing the corresponding callback.
+        event_name = event.get('method')
+        
+        if event_name:
+            logger.info(f"Handling event '{event_name}'")
+        else:
+            logger.warning('Event without a method received.')
 
-        Args:
-            event (dict): The event data received from the WebSocket.
-        """
-        event_name = event['method']
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
+            
             if callback_data['event'] == event_name:
+                
                 callback_func = callback_data['callback']
+                
                 if asyncio.iscoroutinefunction(callback_func):
                     await callback_func(event)
                 else:
                     callback_func(event)
+                
                 if callback_data['temporary']:
                     del self._event_callbacks[callback_id]
+                    logger.info(
+                        f'Removed temporary callback with ID {callback_id}'
+                    )
 
     @staticmethod
     async def _get_page_ws_address() -> str:
-        """
-        Asynchronously retrieves the WebSocket address for the current page.
-
-        Returns:
-            str: The WebSocket address of the page.
-
-        Raises:
-            ValueError: If unable to fetch the address due to network errors
-                         or missing data.
-        """
         try:
             async with aiohttp.ClientSession() as session:
+                
                 async with session.get(
                     ConnectionHandler.BROWSER_JSON_URL
                 ) as response:
+                    
                     response.raise_for_status()
                     data = await response.json()
-                    return [
+                    ws_address = [
                         current_data['webSocketDebuggerUrl']
                         for current_data in data
                         if current_data['url'] == 'chrome://newtab/'
                     ][0]
+                    logger.info(
+                        'Page WebSocket address fetched successfully.'
+                    )
+                    return ws_address
+        
         except aiohttp.ClientError as e:
+            logger.error(
+                'Failed to fetch page WebSocket address due to network error.'
+            )
             raise ValueError(f'Failed to get page ws address: {e}')
+        
         except (KeyError, IndexError) as e:
+            logger.error(
+                'Failed to get page WebSocket address due to missing data.'
+            )
             raise ValueError(f'Failed to get page ws address: {e}')
 
     @staticmethod
     async def _get_browser_ws_address() -> str:
-        """
-        Asynchronously retrieves the WebSocket address for the browser.
-
-        Returns:
-            str: The WebSocket address of the browser.
-
-        Raises:
-            ValueError: If unable to fetch the address due to network errors
-                         or missing data.
-        """
         try:
             async with aiohttp.ClientSession() as session:
+                
                 async with session.get(
                     ConnectionHandler.BROWSER_VERSION_URL
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
+                    logger.info(
+                        'Browser WebSocket address fetched successfully.'
+                    )
                     return data['webSocketDebuggerUrl']
+        
         except aiohttp.ClientError as e:
+            logger.error(
+                'Failed to fetch browser WebSocket address due to network error.'
+            )
             raise ValueError(f'Failed to get browser ws address: {e}')
+        
         except KeyError as e:
+            logger.error(
+                'Failed to get browser WebSocket address due to missing data.'
+            )
             raise ValueError(f'Failed to get browser ws address: {e}')
+
+    async def _monitor_connection(self):
+        attempts = 0
+        
+        while attempts < self._reconnect_max_attempts:
+            if self._connection is None or self._connection.closed:
+                try:
+                    logger.info('Attempting to reconnect to WebSocket...')
+                    self._connection = await self._connect_to_page()
+                    logger.info('Reconnected successfully.')
+                    await self._resend_pending_commands()
+                except Exception as e:
+                    logger.warning(
+                        f'Reconnection attempt {attempts + 1} failed: {e}'
+                    )
+                    await asyncio.sleep(self._reconnect_delay)
+                    attempts += 1
+            
+            await asyncio.sleep(1)
+
+        logger.error(
+            'Failed to reconnect to WebSocket after maximum attempts.'
+        )
+        raise Exception(
+            'Failed to reconnect to WebSocket after multiple attempts.'
+        )
+
+    async def _resend_pending_commands(self):
+        for command_id, future in self._pending_commands.items():
+            if not future.done():
+                try:
+                    command = {
+                        'id': command_id,
+                        **self._pending_commands[command_id],
+                    }
+                    command_str = json.dumps(command)
+                    await self._connection.send(command_str)
+                    logger.info(
+                        f'Resent pending command with ID {command_id}'
+                    )
+                except Exception as exc:
+                    logger.error(
+                        f'Failed to resend command {command_id}: {exc}'
+                    )
+                    raise exc
