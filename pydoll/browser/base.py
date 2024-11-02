@@ -7,6 +7,8 @@ from tempfile import TemporaryDirectory
 from datetime import datetime
 from random import randint
 
+import aiofiles
+
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
@@ -39,6 +41,15 @@ class Browser(ABC):
         self.process = None
         self.temp_dirs = []
 
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+        for temp_dir in self.temp_dirs:
+            temp_dir.cleanup()
+        self.connection_handler.close()
+
     async def start(self) -> None:
         """
         Starts the browser process with the specified options.
@@ -49,9 +60,8 @@ class Browser(ABC):
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
-        temp_dir_suffix = datetime.now().strftime('%Y%m%d%H%M%S')
-        temp_dir = TemporaryDirectory(temp_dir_suffix)
-        self.temp_dirs.append(temp_dir)
+
+        temp_dir = self._get_temp_dir()
         
         if '--user-data-dir' not in self.options.arguments:
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
@@ -110,8 +120,8 @@ class Browser(ABC):
         response = await self._execute_command(PageCommands.screenshot())
         image_b64 = response['result']['data'].encode('utf-8')
         image_bytes = decode_image_to_bytes(image_b64)
-        with open(path, 'wb') as file:
-            file.write(image_bytes)
+        async with aiofiles.open(path, 'wb') as file:
+            await file.write(image_bytes)
 
     async def go_to(self, url: str):
         """
@@ -186,8 +196,8 @@ class Browser(ABC):
         response = await self._execute_command(PageCommands.print_to_pdf())
         pdf_b64 = response['result']['data'].encode('utf-8')
         pdf_bytes = decode_image_to_bytes(pdf_b64)
-        with open(path, 'wb') as file:
-            file.write(pdf_bytes)
+        async with aiofiles.open(path, 'wb') as file:
+            await file.write(pdf_bytes)
 
     async def find_element(self, by: DomCommands.SelectorType, value: str):
         """
@@ -344,6 +354,17 @@ class Browser(ABC):
             raise ValueError('Invalid options')
         return options
 
+    def _get_temp_dir(self):
+        """
+        Retrieves a temporary directory for the browser instance.
+
+        Returns:
+            TemporaryDirectory: The temporary directory.
+        """
+        temp_dir = TemporaryDirectory()
+        self.temp_dirs.append(temp_dir)
+        return temp_dir
+    
     @abstractmethod
     def _get_default_binary_location(self) -> str:
         """
