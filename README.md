@@ -3,14 +3,14 @@
 </p>
 <br>
 
-PyDoll é uma biblioteca pensada em automatizar navegadores baseados no Chromium sem a necessidade de webdriver e com interações mais realísticas. Feita inspirada no Selenium e Puppeteer, tem suporte total a assincronidade do Python, o que permite um desempenho melhor, além de possibilidades como captura de eventos.
+PyDoll é uma biblioteca pensada em automatizar navegadores baseados no Chromium sem a necessidade de webdriver e com interações mais realísticas. Feita inspirada no Selenium e Puppeteer, tem suporte total a assincronidade do Python, o que permite um desempenho melhor, além de possibilidades como captura de eventos e webscrapping simultâneo.
 
 # TODO List
 
 - [x] Implementar sistema de portas randômicas, para possibilitar
 abertura de vários browsers.
 - [x] Criar exceptions personalizadas.
-- [] Adicionar sistema para verificar se o clique foi realizado 
+- [ ] Adicionar sistema para verificar se o clique foi realizado 
 com sucesso.
 - [x] Melhorar sistema de conexão com o protocolo, monitorando de forma
 mais ativa.
@@ -22,27 +22,7 @@ mais ativa.
 - [x] Adicionar funcionalidade de clique com offset.
 - [x] Implementar padrão Singleton para a classe `ConnectionHandler`.
 - [x] Fazer melhoria no sistema de atributos de `WebElement`:
-
-```python
-class WebElement:
-    def __init__(self, node: dict, connection_handler: ConnectionHandler):
-        self._node = node
-        self._connection_handler = connection_handler
-        self._attributes = {}
-
-    # cria properties para atributos mais comuns
-    @property
-    def class_name(self):
-        return self._attributes.get('class_name')
-
-    @property
-    def id(self):
-        return self._attributes.get('id')
-    
-    # método para obter atributos mais específicos
-    def get_attribute(self, key: str):
-        return self._attributes.get(key)
-```
-
+- [x] Criar uma classe chamada Page e separar da classe Browser. Assim, podemos lidar com múltiplas abas em simultâneo.
+- [ ] Criar classe Keyboard, para simular teclado.
 - [ ] Testes automatizados.
 - [ ] Integração contínua para verificar formatação do código.
