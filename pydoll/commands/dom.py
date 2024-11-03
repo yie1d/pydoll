@@ -6,6 +6,7 @@ from pydoll.constants import By
 class DomCommands:
     SelectorType = Literal[By.CSS, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME]
 
+    ENABLE = {'method': 'DOM.enable'}
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
     DESCRIBE_NODE_TEMPLATE = {'method': 'DOM.describeNode', 'params': {}}
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
@@ -51,6 +52,16 @@ class DomCommands:
         command = cls.BOX_MODEL_TEMPLATE.copy()
         command['params']['nodeId'] = node_id
         return command
+
+    @classmethod
+    def enable_dom_events(cls) -> dict:
+        """
+        Generates the command to enable the DOM domain.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        return cls.ENABLE
 
     @classmethod
     def find_element(cls, dom_id: int, by: SelectorType, value: str) -> dict:
