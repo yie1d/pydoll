@@ -143,8 +143,10 @@ class ConnectionHandler:
 
         try:
             response: str = await asyncio.wait_for(future, timeout)
+            logger.info(
+                f'Received response for command ID {command["id"]}: {response}'
+            )
             del self._pending_commands[command['id']]
-            logger.info(f'Received response for command ID {command["id"]}')
             return json.loads(response)
         except asyncio.TimeoutError:
             del self._pending_commands[command['id']]
@@ -241,7 +243,7 @@ class ConnectionHandler:
         event_name = event.get('method')
 
         if event_name:
-            logger.info(f"Handling event '{event_name}'")
+            logger.info(f'Handling event {event}')
         else:
             logger.warning('Event without a method received.')
 
