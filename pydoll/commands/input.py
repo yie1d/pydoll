@@ -10,6 +10,7 @@ class InputCommands:
         'params': {},
     }
     KEY_PRESS_TEMPLATE = {'method': 'Input.dispatchKeyEvent', 'params': {}}
+    INSERT_TEXT_TEMPLATE = {'method': 'Input.insertText', 'params': {}}
 
     @classmethod
     def mouse_press(cls, x: int, y: int) -> dict:
@@ -81,5 +82,24 @@ class InputCommands:
         command['params'] = {
             'type': 'char',
             'text': char,
+        }
+        return command
+    
+    @classmethod
+    def insert_text(cls, text: str) -> dict:
+        """
+        Generates the command to insert text into an input field.
+
+        Args:
+            text (str): The text to be inserted.
+
+        This command uses the CDP to simulate typing text into an input field.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = cls.INSERT_TEXT_TEMPLATE.copy()
+        command['params'] = {
+            'text': text,
         }
         return command
