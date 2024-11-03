@@ -1,0 +1,12 @@
+class DomEvents:
+    ATTRIBUTE_MODIFIED = 'DOM.attributeModified'
+    ATTRIBUTE_REMOVED = 'DOM.attributeRemoved'
+    CHARACTER_DATA_MODIFIED = 'DOM.characterDataModified'
+    CHILD_NODE_COUNT_UPDATED = 'DOM.childNodeCountUpdated'
+    CHILD_NODE_INSERTED = 'DOM.childNodeInserted'
+    CHILD_NODE_REMOVED = 'DOM.childNodeRemoved'
+    DOCUMENT_UPDATED = 'DOM.documentUpdated'
+    SCROLLABLE_FLAG_UPDATED = 'DOM.scrollableFlagUpdated'
+    SHADOW_ROOT_POPPED = 'DOM.shadowRootPopped'
+    SHADOW_ROOT_PUSHED = 'DOM.shadowRootPushed'
+    TOP_LAYER_ELEMENTS_UPDATED = 'DOM.topLayerElementsUpdated'

@@ -1,0 +1,20 @@
+class NetworkEvents:
+    DATA_RECEIVED = 'Network.dataReceived'
+    EVENT_SOURCE_MESSAGE_RECEIVED = 'Network.eventSourceMessageReceived'
+    LOADING_FAILED = 'Network.loadingFailed'
+    LOADING_FINISHED = 'Network.loadingFinished'
+    REQUEST_SERVED_FROM_CACHE = 'Network.requestServedFromCache'
+    REQUEST_WILL_BE_SENT = 'Network.requestWillBeSent'
+    RESPONSE_RECEIVED = 'Network.responseReceived'
+    WEB_SOCKET_CLOSED = 'Network.webSocketClosed'
+    WEB_SOCKET_CREATED = 'Network.webSocketCreated'
+    WEB_SOCKET_FRAME_ERROR = 'Network.webSocketFrameError'
+    WEB_SOCKET_FRAME_RECEIVED = 'Network.webSocketFrameReceived'
+    WEB_SOCKET_FRAME_SENT = 'Network.webSocketFrameSent'
+    WEB_TRANSPORT_CLOSED = 'Network.webTransportClosed'
+    WEB_TRANSPORT_CONNECTION_ESTABLISHED = (
+        'Network.webTransportConnectionEstablished'
+    )
+    WEB_TRANSPORT_CREATED = 'Network.webTransportCreated'
+    POLICY_UPDATED = 'Network.policyUpdated'
+    REQUEST_INTERCEPTED = 'Network.requestIntercepted'
