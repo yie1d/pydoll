@@ -5,22 +5,18 @@ from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
 from tempfile import TemporaryDirectory
-from typing import Callable
-
-import aiofiles
 
 from pydoll import exceptions
 from pydoll.browser.options import Options
+from pydoll.browser.page import Page
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
+from pydoll.commands.target import TargetCommands
 from pydoll.connection import ConnectionHandler
-from pydoll.element import WebElement
 from pydoll.events.fetch import FetchEvents
-from pydoll.events.page import PageEvents
-from pydoll.utils import decode_image_to_bytes
 
 
 class Browser(ABC):
@@ -48,6 +44,7 @@ class Browser(ABC):
         self.options = self._initialize_options(options)
         self.process = None
         self.temp_dirs = []
+        self._pages = []
 
     def __enter__(self):
         return self
@@ -60,33 +57,16 @@ class Browser(ABC):
 
     async def start(self) -> None:
         """
-        Starts the browser process with the specified options, including any proxy configurations.
+        Starts the browser process with the specified options, including proxy configurations.
 
         This method initializes and launches the browser, setting up the necessary command-line
-        arguments and options. It checks for a specified user data directory, creates a temporary
-        directory if none is provided, and configures the browser to run in a controlled environment.
-
-        If a private proxy is specified in the options, this method sets up the necessary
-        event listeners to handle network requests and authentication. The browser will pause
-        network requests that require authentication and will allow for continuing those requests
-        using the provided proxy credentials.
-
-        The proxy configuration process is as follows:
-        1. The `_configure_proxy()` method is called to check if any proxy server has been defined in the
-        command-line arguments. If a proxy is detected, it extracts the server address and, if necessary,
-        the authentication credentials (username and password).
-        2. When the browser is started, if the private proxy is enabled:
-        - The `enable_fetch_events` method is called with the argument `handle_auth_requests=True`.
-            This allows the browser to intercept network requests and pause them if authentication is needed.
-        - An event listener is set up for the `FetchEvents.REQUEST_PAUSED` event. This listener
-            calls the `_continue_request()` method, which is responsible for resuming requests that have been paused.
-        - Another event listener is set up for the `FetchEvents.AUTH_REQUIRED` event. This listener calls the
-            `_continue_request_auth_required()` method, passing the extracted proxy credentials to handle
-            authentication when required.
+        arguments. It checks for a specified user data directory, creating a temporary directory if none
+        is provided, and configures the browser to run in a controlled environment.
 
         Returns:
-            subprocess.Popen: The process object for the started browser.
+            Page: The Page instance for the browser.
         """
+
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
@@ -111,18 +91,13 @@ class Browser(ABC):
         if not await self._is_browser_running():
             raise exceptions.BrowserNotRunning('Failed to start browser')
 
-        await self.enable_page_events()
-
         if private_proxy:
-            await self.enable_fetch_events(
-                handle_auth_requests=True, resource_type='Document'
-            )
+            await self.enable_fetch_events(handle_auth_requests=True)
             await self.on(
                 FetchEvents.REQUEST_PAUSED,
                 self._continue_request,
                 temporary=True,
             )
-            # need to use partial to pass the proxy credentials to the callback as a coroutine argument
             await self.on(
                 FetchEvents.AUTH_REQUIRED,
                 partial(
@@ -133,21 +108,69 @@ class Browser(ABC):
                 temporary=True,
             )
 
-    async def execute_js_script(self, script: str):
+        pages = await self.get_pages()
+        page_id = pages[-1]['targetId']
+        self._pages.append(page_id)
+
+    async def get_page(self) -> Page:
         """
-        Executes a JavaScript script in the browser.
+        Retrieves a Page instance for an existing page in the browser.
+        If no pages are open, a new page will be created.
+        """
+        if not self._pages:
+            await self.new_page()
+        
+        page_id = self._pages.pop()
+        return Page(self._connection_port, page_id)
+    
+    async def on(
+        self, event_name: str, callback: callable, temporary: bool = False
+    ):
+        """
+        Registers an event callback for a specific event. This method has a global
+        scope and can be used to listen for events across all pages in the browser.
+        Each `Page` instance also has an `on` method that allows for listening to
+        events on a specific page.
 
         Args:
-            script (str): The JavaScript script to execute.
+            event_name (str): Name of the event to listen for.
+            callback (Callable): function to be called when the event occurs.
+        """
+
+        async def callback_wrapper(event):
+            asyncio.create_task(callback(event))
+
+        if asyncio.iscoroutinefunction(callback):
+            function_to_register = callback_wrapper
+        else:
+            function_to_register = callback
+
+        await self.connection_handler.register_callback(
+            event_name, function_to_register, temporary
+        )
+
+    async def new_page(self, url: str = ''):
+        """
+        Opens a new page in the browser.
 
         Returns:
-            The response from executing the script.
+            Page: The new page instance.
         """
-        command = {
-            'method': 'Runtime.evaluate',
-            'params': {'expression': script, 'returnByValue': True},
-        }
-        return await self._execute_command(command)
+        response = await self._execute_command(
+            TargetCommands.create_target(url)
+        )
+        page_id = response['result']['targetId']
+        self._pages.append(page_id)
+
+    async def get_pages(self):
+        """
+        Retrieves the list of open pages in the browser.
+
+        Returns:
+            list: The list of open pages in the browser.
+        """
+        response = await self._execute_command(TargetCommands.get_targets())
+        return response['result']['targetInfos']
 
     async def stop(self):
         """
@@ -161,43 +184,6 @@ class Browser(ABC):
             await self._execute_command(BrowserCommands.CLOSE)
         else:
             raise exceptions.BrowserNotRunning('Browser is not running')
-
-    async def get_screenshot(self, path: str):
-        """
-        Captures a screenshot of the current page and saves
-        it to the specified path.
-
-        Args:
-            path (str): The file path where the screenshot will be saved.
-        """
-        response = await self._execute_command(PageCommands.screenshot())
-        image_b64 = response['result']['data'].encode('utf-8')
-        image_bytes = decode_image_to_bytes(image_b64)
-        async with aiofiles.open(path, 'wb') as file:
-            await file.write(image_bytes)
-
-    async def go_to(self, url: str):
-        """
-        Navigates the browser to the specified URL.
-
-        Args:
-            url (str): The URL to navigate to.
-        """
-        await self._execute_command(PageCommands.go_to(url))
-        try:
-            await self._wait_page_loaded()
-        except asyncio.TimeoutError:
-            raise TimeoutError('Page load timed out')
-
-    async def refresh(self):
-        """
-        Refreshes the current page in the browser.
-        """
-        await self._execute_command(PageCommands.refresh())
-        try:
-            await self._wait_page_loaded()
-        except asyncio.TimeoutError:
-            raise TimeoutError('Page refresh timed out')
 
     async def get_window_id(self):
         """
@@ -239,63 +225,6 @@ class Browser(ABC):
             BrowserCommands.set_window_minimized(window_id)
         )
 
-    async def print_to_pdf(self, path: str):
-        """
-        Prints the current page to a PDF file and saves it to the specified path.
-
-        Args:
-            path (str): The file path where the PDF will be saved.
-        """
-        response = await self._execute_command(PageCommands.print_to_pdf())
-        pdf_b64 = response['result']['data'].encode('utf-8')
-        pdf_bytes = decode_image_to_bytes(pdf_b64)
-        async with aiofiles.open(path, 'wb') as file:
-            await file.write(pdf_bytes)
-
-    async def find_element(self, by: DomCommands.SelectorType, value: str):
-        """
-        Finds an element on the current page using the specified selector.
-
-        Args:
-            by (str): The type of selector to use (e.g., 'css', 'xpath').
-            value (str): The value of the selector to use.
-
-        Returns:
-            dict: The response from the browser.
-        """
-        root_node_id = await self._get_root_node_id()
-        response = await self._execute_command(
-            DomCommands.find_element(root_node_id, by, value)
-        )
-        target_node_id = response['result']['nodeId']
-        node_description = await self._describe_node(target_node_id)
-        return WebElement(node_description, self.connection_handler)
-
-    async def on(
-        self, event_name: str, callback: Callable, temporary: bool = False
-    ):
-        """
-        Registers an event callback for a specific event. If the callback is
-        a coroutine, it will be wrapped in a task to avoid blocking the event loop.
-        Otherwise, the callback will be used directly.
-
-        Args:
-            event_name (str): Name of the event to listen for.
-            callback (Callable): function to be called when the event occurs.
-        """
-
-        async def callback_wrapper(event):
-            asyncio.create_task(callback(event))
-
-        if asyncio.iscoroutinefunction(callback):
-            function_to_register = callback_wrapper
-        else:
-            function_to_register = callback
-
-        await self.connection_handler.register_callback(
-            event_name, function_to_register, temporary
-        )
-
     async def _is_browser_running(self):
         """
         Checks if the browser process is currently running.
@@ -318,7 +247,7 @@ class Browser(ABC):
             bool: True if the browser is running, False otherwise.
         """
         try:
-            await self.connection_handler.browser_ws_address
+            await self.connection_handler.connection
             return True
         except Exception as exc:
             print(f'Browser is not running: {exc}')
@@ -337,65 +266,6 @@ class Browser(ABC):
         return await self.connection_handler.execute_command(
             command, timeout=60
         )
-
-    async def _get_root_node_id(self):
-        """
-        Retrieves the root node ID of the current page's Document Object Model (DOM).
-        This ID serves as a fundamental reference point for various DOM operations,
-        such as locating specific elements or manipulating the document structure.
-
-        The root node is typically the <html> element in an HTML document, and its ID
-        is essential for subsequent DOM interactions.
-
-        Returns:
-            int: The unique ID of the root node in the current DOM.
-
-        Raises:
-            Exception: If the command to retrieve the DOM document fails or
-            does not return a valid root node ID.
-        """
-        response = await self._execute_command(DomCommands.dom_document())
-        return response['result']['root']['nodeId']
-
-    async def _describe_node(self, node_id: int):
-        """
-        Provides a detailed description of a specific node within the current page's DOM.
-        Each node represents an element in the document, and this method retrieves
-        comprehensive information about the node, including its ID, tag name, attributes,
-        and any child nodes that it may contain.
-
-        This method is useful for understanding the structure of the DOM and for
-        performing operations on specific elements based on their properties.
-
-        Args:
-            node_id (int): The unique ID of the node to describe.
-
-        Returns:
-            dict: A dictionary containing the detailed description of the node,
-            including its ID, tag name, attributes, and child nodes.
-
-        Raises:
-            ValueError: If the provided node ID is invalid or does not correspond
-            to a valid node in the DOM.
-        """
-        response = await self._execute_command(
-            DomCommands.describe_node(node_id)
-        )
-        return response['result']['node']
-
-    async def _wait_page_loaded(self):
-        """
-        Waits for the page to finish loading.
-
-        Raises:
-            asyncio.TimeoutError: If the page load times
-            out after 300 seconds.
-        """
-        page_loaded = asyncio.Event()
-        await self.on(
-            PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
-        )
-        await asyncio.wait_for(page_loaded.wait(), timeout=300)
 
     def _configure_proxy(self) -> tuple[bool, tuple[str, str]]:
         """
@@ -430,6 +300,119 @@ class Browser(ABC):
                 private_proxy = True
 
         return private_proxy, (proxy_username, proxy_password)
+
+    async def enable_page_events(self):
+        """
+        Enables listening for page-related events over the websocket connection.
+        Once this method is invoked, the connection will emit events pertaining
+        to page activities, such as loading, navigation, and DOM updates, to any
+        registered event callbacks. For a comprehensive list of available page
+        events and their purposes, refer to the PageEvents class documentation.
+        This functionality is crucial for monitoring and reacting to changes
+        in the page state in real-time.
+
+        This method has a global scope and can be used to listen for events across
+        all pages in the browser. Each Page instance also has an `enable_page_events`
+        method that allows for listening to events on a specific page.
+
+        Returns:
+            None
+        """
+        await self.connection_handler.execute_command(
+            PageCommands.enable_page()
+        )
+
+    async def enable_network_events(self):
+        """
+        Activates listening for network events through the websocket connection.
+        After calling this method, the connection will emit events related
+        to network activities, such as resource loading and response status,
+        to any registered event callbacks. This is essential for debugging
+        network interactions and analyzing resource requests. For details
+        on available network events, consult the NetworkEvents class documentation.
+
+        This method has a global scope and can be used to listen for events across
+        all pages in the browser. Each Page instance also has an `enable_network_events`
+        method that allows for listening to events on a specific page.
+
+        Returns:
+            None
+        """
+        await self.connection_handler.execute_command(
+            NetworkCommands.enable_network_events()
+        )
+
+    async def enable_fetch_events(
+        self, handle_auth_requests: bool = False, resource_type: str = ''
+    ):
+        """
+        Enables the Fetch domain for intercepting network requests before they
+        are sent. This method allows you to modify, pause, or continue requests
+        as needed. If handle_auth_requests is set to True, the connection will
+        emit an event when an authentication is required during a request.
+        The resource_type parameter specifies which type of requests to intercept;
+        if omitted, all requests will be intercepted. Use the _continue_request
+        method to resume any paused requests. This is especially useful for
+        monitoring and controlling network interactions.
+
+        This method has a global scope and can be used to intercept requests across
+        all pages in the browser. Each Page instance also has an `enable_fetch_events`
+        method that allows for intercepting requests on a specific page.
+
+        Args:
+            handle_auth_requests (bool): Whether to handle authentication
+            requests that require user credentials.
+            resource_type (str): The type of resource to intercept (e.g.,
+            'XHR', 'Script'). If not specified, all requests will be intercepted.
+
+        Returns:
+            None
+        """
+        await self.connection_handler.execute_command(
+            FetchCommands.enable_fetch_events(
+                handle_auth_requests, resource_type
+            )
+        )
+
+    async def enable_dom_events(self):
+        """
+        Enables DOM-related events for the websocket connection. When invoked,
+        this method allows the connection to listen for changes in the DOM,
+        including node additions, removals, and attribute changes. This feature
+        is vital for applications that need to react to dynamic changes in
+        the page structure. For a full list of available DOM events, refer to
+        the DomCommands class documentation.
+
+        This method has a global scope and can be used to listen for events across
+        all pages in the browser. Each Page instance also has an `enable_dom_events`
+        method that allows for listening to events on a specific page.
+
+        Returns:
+            None
+        """
+        await self.connection_handler.execute_command(
+            DomCommands.enable_dom_events()
+        )
+
+    async def disable_fetch_events(self):
+        """
+        Deactivates the Fetch domain, stopping the interception of network
+        requests for the websocket connection. Once this method is called,
+        the connection will no longer monitor or pause any network requests,
+        allowing normal network operations to resume. This can be useful when
+        you want to halt the monitoring of network activity.
+
+        This method has a global scope and can be used to disable fetch events
+        across all pages in the browser. Each Page instance also has a
+        `disable_fetch_events` method that allows for disabling fetch events
+        on a specific page.
+
+        Returns:
+            None
+        """
+        await self.connection_handler.execute_command(
+            FetchCommands.disable_fetch_events()
+        )
 
     async def _continue_request(self, event: dict):
         """
@@ -483,98 +466,6 @@ class Browser(ABC):
             )
         )
         await self.disable_fetch_events()
-
-    async def enable_page_events(self):
-        """
-        Enables listening for page-related events over the websocket connection.
-        Once this method is invoked, the connection will emit events pertaining
-        to page activities, such as loading, navigation, and DOM updates, to any
-        registered event callbacks. For a comprehensive list of available page
-        events and their purposes, refer to the PageEvents class documentation.
-        This functionality is crucial for monitoring and reacting to changes
-        in the page state in real-time.
-
-        Returns:
-            None
-        """
-        await self.connection_handler.execute_command(
-            PageCommands.enable_page()
-        )
-
-    async def enable_network_events(self):
-        """
-        Activates listening for network events through the websocket connection.
-        After calling this method, the connection will emit events related
-        to network activities, such as resource loading and response status,
-        to any registered event callbacks. This is essential for debugging
-        network interactions and analyzing resource requests. For details
-        on available network events, consult the NetworkEvents class documentation.
-
-        Returns:
-            None
-        """
-        await self.connection_handler.execute_command(
-            NetworkCommands.enable_network_events()
-        )
-
-    async def enable_fetch_events(
-        self, handle_auth_requests: bool = False, resource_type: str = ''
-    ):
-        """
-        Enables the Fetch domain for intercepting network requests before they
-        are sent. This method allows you to modify, pause, or continue requests
-        as needed. If handle_auth_requests is set to True, the connection will
-        emit an event when an authentication is required during a request.
-        The resource_type parameter specifies which type of requests to intercept;
-        if omitted, all requests will be intercepted. Use the _continue_request
-        method to resume any paused requests. This is especially useful for
-        monitoring and controlling network interactions.
-
-        Args:
-            handle_auth_requests (bool): Whether to handle authentication
-            requests that require user credentials.
-            resource_type (str): The type of resource to intercept (e.g.,
-            'XHR', 'Script'). If not specified, all requests will be intercepted.
-
-        Returns:
-            None
-        """
-        await self.connection_handler.execute_command(
-            FetchCommands.enable_fetch_events(
-                handle_auth_requests, resource_type
-            )
-        )
-
-    async def enable_dom_events(self):
-        """
-        Enables DOM-related events for the websocket connection. When invoked,
-        this method allows the connection to listen for changes in the DOM,
-        including node additions, removals, and attribute changes. This feature
-        is vital for applications that need to react to dynamic changes in
-        the page structure. For a full list of available DOM events, refer to
-        the DomCommands class documentation.
-
-        Returns:
-            None
-        """
-        await self.connection_handler.execute_command(
-            DomCommands.enable_dom_events()
-        )
-
-    async def disable_fetch_events(self):
-        """
-        Deactivates the Fetch domain, stopping the interception of network
-        requests for the websocket connection. Once this method is called,
-        the connection will no longer monitor or pause any network requests,
-        allowing normal network operations to resume. This can be useful when
-        you want to halt the monitoring of network activity.
-
-        Returns:
-            None
-        """
-        await self.connection_handler.execute_command(
-            FetchCommands.disable_fetch_events()
-        )
 
     @staticmethod
     def _validate_browser_path(path: str):
