@@ -119,11 +119,9 @@ class WebElement:
         Args:
             text (str): The text to send to the element.
         """
-        for char in text:
-            await self._connection_handler.execute_command(
-                InputCommands.key_press(char)
-            )
-            await asyncio.sleep(0.1)
+        await self._connection_handler.execute_command(
+            InputCommands.insert_text(text)
+        )
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:
