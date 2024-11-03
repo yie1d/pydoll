@@ -1,4 +1,21 @@
 class PageCommands:
+    """
+    PageCommands class provides a set of commands to interact with the Page domain
+    of the Chrome DevTools Protocol (CDP). These commands enable users to perform
+    operations related to web pages, such as capturing screenshots, navigating to
+    URLs, refreshing pages, printing to PDF, and enabling the Page domain.
+
+    The following operations can be performed:
+    - Capture a screenshot of the current page.
+    - Navigate to a specified URL.
+    - Refresh the current page, with an option to ignore the cache.
+    - Print the current page to a PDF document.
+    - Enable the Page domain for further interactions.
+
+    Each method generates a command that can be sent to the browser as part of
+    the DevTools Protocol communication.
+    """
+
     SCREENSHOT_TEMPLATE = {
         'method': 'Page.captureScreenshot',
         'params': {},
@@ -15,10 +32,15 @@ class PageCommands:
 
         Args:
             format (str): The format of the image to be captured.
-            quality (int): The quality of the image to be captured.
+                          Can be 'png' or 'jpeg'.
+            quality (int): The quality of the image to be captured,
+                           applicable only if the format is 'jpeg'.
+                           Value should be between 0 (lowest quality)
+                           and 100 (highest quality).
 
         Returns:
-            dict: The command to be sent to the browser.
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for the screenshot.
         """
         command = cls.SCREENSHOT_TEMPLATE.copy()
         command['params']['format'] = format
@@ -31,10 +53,11 @@ class PageCommands:
         Generates the command to navigate to a specific URL.
 
         Args:
-            url (str): The URL to navigate to.
+            url (str): The URL to navigate to. It should be a valid URL format.
 
         Returns:
-            dict: The command to be sent to the browser.
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for navigation.
         """
         command = cls.GO_TO_TEMPLATE.copy()
         command['params']['url'] = url
@@ -47,9 +70,11 @@ class PageCommands:
 
         Args:
             ignore_cache (bool): Whether to ignore the cache when refreshing.
+                                 If True, the cached resources will not be used.
 
         Returns:
-            dict: The command to be sent to the browser.
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for page refresh.
         """
         command = cls.REFRESH_TEMPLATE.copy()
         command['params']['ignoreCache'] = ignore_cache
@@ -63,12 +88,13 @@ class PageCommands:
         Generates the command to print the current page to a PDF.
 
         Args:
-            scale (int): The scale of the page to print.
-            paper_width (float): The width of the paper to print on.
-            paper_height (float): The height of the paper to print on.
+            scale (int): The scale of the page to print. Default is 1 (100%).
+            paper_width (float): The width of the paper to print on, in inches. Default is 8.5 inches.
+            paper_height (float): The height of the paper to print on, in inches. Default is 11 inches.
 
         Returns:
-            dict: The command to be sent to the browser.
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for printing to PDF.
         """
         command = cls.PRINT_TO_PDF_TEMPLATE.copy()
         command['params']['scale'] = scale
@@ -82,6 +108,7 @@ class PageCommands:
         Generates the command to enable the Page domain.
 
         Returns:
-            dict: The command to be sent to the browser.
+            dict: The command to be sent to the browser,
+                  containing the method to enable the Page domain.
         """
         return cls.ENABLE_PAGE

@@ -2,6 +2,7 @@ import asyncio
 import os
 import subprocess
 from abc import ABC, abstractmethod
+from functools import partial
 from random import randint
 from tempfile import TemporaryDirectory
 from typing import Callable
@@ -59,7 +60,29 @@ class Browser(ABC):
 
     async def start(self) -> None:
         """
-        Starts the browser process with the specified options.
+        Starts the browser process with the specified options, including any proxy configurations.
+
+        This method initializes and launches the browser, setting up the necessary command-line
+        arguments and options. It checks for a specified user data directory, creates a temporary
+        directory if none is provided, and configures the browser to run in a controlled environment.
+
+        If a private proxy is specified in the options, this method sets up the necessary
+        event listeners to handle network requests and authentication. The browser will pause
+        network requests that require authentication and will allow for continuing those requests
+        using the provided proxy credentials.
+
+        The proxy configuration process is as follows:
+        1. The `_configure_proxy()` method is called to check if any proxy server has been defined in the
+        command-line arguments. If a proxy is detected, it extracts the server address and, if necessary,
+        the authentication credentials (username and password).
+        2. When the browser is started, if the private proxy is enabled:
+        - The `enable_fetch_events` method is called with the argument `handle_auth_requests=True`.
+            This allows the browser to intercept network requests and pause them if authentication is needed.
+        - An event listener is set up for the `FetchEvents.REQUEST_PAUSED` event. This listener
+            calls the `_continue_request()` method, which is responsible for resuming requests that have been paused.
+        - Another event listener is set up for the `FetchEvents.AUTH_REQUIRED` event. This listener calls the
+            `_continue_request_auth_required()` method, passing the extracted proxy credentials to handle
+            authentication when required.
 
         Returns:
             subprocess.Popen: The process object for the started browser.
@@ -91,13 +114,23 @@ class Browser(ABC):
         await self.enable_page_events()
 
         if private_proxy:
-            await self.enable_fetch_events(handle_auth_requests=True)
-            await self.on(FetchEvents.REQUEST_PAUSED, self._continue_request)
+            await self.enable_fetch_events(
+                handle_auth_requests=True, resource_type='Document'
+            )
+            await self.on(
+                FetchEvents.REQUEST_PAUSED,
+                self._continue_request,
+                temporary=True,
+            )
+            # need to use partial to pass the proxy credentials to the callback as a coroutine argument
             await self.on(
                 FetchEvents.AUTH_REQUIRED,
-                lambda event: self._continue_request_auth_required(
-                    event, *proxy_credentials
+                partial(
+                    self._continue_request_auth_required,
+                    proxy_username=proxy_credentials[0],
+                    proxy_password=proxy_credentials[1],
                 ),
+                temporary=True,
             )
 
     async def execute_js_script(self, script: str):
@@ -242,7 +275,9 @@ class Browser(ABC):
         self, event_name: str, callback: Callable, temporary: bool = False
     ):
         """
-        Registers an event callback for a specific event.
+        Registers an event callback for a specific event. If the callback is
+        a coroutine, it will be wrapped in a task to avoid blocking the event loop.
+        Otherwise, the callback will be used directly.
 
         Args:
             event_name (str): Name of the event to listen for.
@@ -252,8 +287,13 @@ class Browser(ABC):
         async def callback_wrapper(event):
             asyncio.create_task(callback(event))
 
+        if asyncio.iscoroutinefunction(callback):
+            function_to_register = callback_wrapper
+        else:
+            function_to_register = callback
+
         await self.connection_handler.register_callback(
-            event_name, callback_wrapper, temporary
+            event_name, function_to_register, temporary
         )
 
     async def _is_browser_running(self):
@@ -300,23 +340,43 @@ class Browser(ABC):
 
     async def _get_root_node_id(self):
         """
-        Retrieves the root node ID of the current page.
+        Retrieves the root node ID of the current page's Document Object Model (DOM).
+        This ID serves as a fundamental reference point for various DOM operations,
+        such as locating specific elements or manipulating the document structure.
+
+        The root node is typically the <html> element in an HTML document, and its ID
+        is essential for subsequent DOM interactions.
 
         Returns:
-            int: The ID of the root node.
+            int: The unique ID of the root node in the current DOM.
+
+        Raises:
+            Exception: If the command to retrieve the DOM document fails or
+            does not return a valid root node ID.
         """
         response = await self._execute_command(DomCommands.dom_document())
         return response['result']['root']['nodeId']
 
     async def _describe_node(self, node_id: int):
         """
-        Describes a node on the current page.
+        Provides a detailed description of a specific node within the current page's DOM.
+        Each node represents an element in the document, and this method retrieves
+        comprehensive information about the node, including its ID, tag name, attributes,
+        and any child nodes that it may contain.
+
+        This method is useful for understanding the structure of the DOM and for
+        performing operations on specific elements based on their properties.
 
         Args:
-            node_id (int): The ID of the node to describe.
+            node_id (int): The unique ID of the node to describe.
 
         Returns:
-            dict: The description of the node.
+            dict: A dictionary containing the detailed description of the node,
+            including its ID, tag name, attributes, and child nodes.
+
+        Raises:
+            ValueError: If the provided node ID is invalid or does not correspond
+            to a valid node in the DOM.
         """
         response = await self._execute_command(
             DomCommands.describe_node(node_id)
@@ -339,7 +399,9 @@ class Browser(ABC):
 
     def _configure_proxy(self) -> tuple[bool, tuple[str, str]]:
         """
-        Configures the proxy settings for the browser.
+        Configures the proxy settings for the browser. If the proxy
+        is private, the credentials will be extracted from the proxy
+        string and returned.
 
         Returns:
             tuple[bool, tuple[str, str]]: A tuple containing a boolean
@@ -351,26 +413,69 @@ class Browser(ABC):
 
         if any('--proxy-server' in arg for arg in self.options.arguments):
             proxy_index = next(
-                index for index, arg in enumerate(self.options.arguments)
+                index
+                for index, arg in enumerate(self.options.arguments)
                 if '--proxy-server' in arg
             )
-            proxy = self.options.arguments[proxy_index].replace('--proxy-server=', '')
+            proxy = self.options.arguments[proxy_index].replace(
+                '--proxy-server=', ''
+            )
 
             if '@' in proxy:
                 credentials, proxy_server = proxy.split('@')
-                self.options.arguments[proxy_index] = f'--proxy-server={proxy_server}'
+                self.options.arguments[proxy_index] = (
+                    f'--proxy-server={proxy_server}'
+                )
                 proxy_username, proxy_password = credentials.split(':')
                 private_proxy = True
 
         return private_proxy, (proxy_username, proxy_password)
 
     async def _continue_request(self, event: dict):
+        """
+        Resumes a network request that was previously paused in the browser.
+        When the Fetch domain is active, certain requests can be paused based
+        on the specified resource type. This method takes the event data that
+        contains the request ID and uses it to continue the paused request,
+        allowing the browser to proceed with the network operation. This is
+        particularly useful for handling requests that require conditional logic
+        before they are sent to the server.
+
+        Args:
+            event (dict): A dictionary containing the event data, including
+            the request ID, which identifies the paused request to be resumed.
+
+        Returns:
+            None
+        """
         request_id = event['params']['requestId']
         await self._execute_command(FetchCommands.continue_request(request_id))
 
     async def _continue_request_auth_required(
         self, event: dict, proxy_username: str, proxy_password: str
     ):
+        """
+        Resumes a network request that was previously paused in the browser
+        and requires proxy authentication. This method is triggered when an
+        authentication challenge is encountered during the request handling.
+        It uses the provided proxy credentials to continue the request, enabling
+        successful communication through the proxy server. After handling the
+        request, it disables fetch event monitoring.
+
+        Args:
+            event (dict): A dictionary containing the event data, which includes
+            the request ID for the paused request that needs to be resumed.
+            proxy_username (str): The username for the proxy server
+            authentication.
+            proxy_password (str): The password for the proxy server
+            authentication.
+
+        Raises:
+            IndexError: If the event data does not contain a valid request ID.
+
+        Returns:
+            None
+        """
         request_id = event['params']['requestId']
         await self._execute_command(
             FetchCommands.continue_request_with_auth(
@@ -378,28 +483,95 @@ class Browser(ABC):
             )
         )
         await self.disable_fetch_events()
-        
+
     async def enable_page_events(self):
+        """
+        Enables listening for page-related events over the websocket connection.
+        Once this method is invoked, the connection will emit events pertaining
+        to page activities, such as loading, navigation, and DOM updates, to any
+        registered event callbacks. For a comprehensive list of available page
+        events and their purposes, refer to the PageEvents class documentation.
+        This functionality is crucial for monitoring and reacting to changes
+        in the page state in real-time.
+
+        Returns:
+            None
+        """
         await self.connection_handler.execute_command(
             PageCommands.enable_page()
         )
 
     async def enable_network_events(self):
+        """
+        Activates listening for network events through the websocket connection.
+        After calling this method, the connection will emit events related
+        to network activities, such as resource loading and response status,
+        to any registered event callbacks. This is essential for debugging
+        network interactions and analyzing resource requests. For details
+        on available network events, consult the NetworkEvents class documentation.
+
+        Returns:
+            None
+        """
         await self.connection_handler.execute_command(
             NetworkCommands.enable_network_events()
         )
 
-    async def enable_fetch_events(self, handle_auth_requests: bool = False):
+    async def enable_fetch_events(
+        self, handle_auth_requests: bool = False, resource_type: str = ''
+    ):
+        """
+        Enables the Fetch domain for intercepting network requests before they
+        are sent. This method allows you to modify, pause, or continue requests
+        as needed. If handle_auth_requests is set to True, the connection will
+        emit an event when an authentication is required during a request.
+        The resource_type parameter specifies which type of requests to intercept;
+        if omitted, all requests will be intercepted. Use the _continue_request
+        method to resume any paused requests. This is especially useful for
+        monitoring and controlling network interactions.
+
+        Args:
+            handle_auth_requests (bool): Whether to handle authentication
+            requests that require user credentials.
+            resource_type (str): The type of resource to intercept (e.g.,
+            'XHR', 'Script'). If not specified, all requests will be intercepted.
+
+        Returns:
+            None
+        """
         await self.connection_handler.execute_command(
-            FetchCommands.enable_fetch_events(handle_auth_requests)
+            FetchCommands.enable_fetch_events(
+                handle_auth_requests, resource_type
+            )
         )
 
     async def enable_dom_events(self):
+        """
+        Enables DOM-related events for the websocket connection. When invoked,
+        this method allows the connection to listen for changes in the DOM,
+        including node additions, removals, and attribute changes. This feature
+        is vital for applications that need to react to dynamic changes in
+        the page structure. For a full list of available DOM events, refer to
+        the DomCommands class documentation.
+
+        Returns:
+            None
+        """
         await self.connection_handler.execute_command(
             DomCommands.enable_dom_events()
         )
 
     async def disable_fetch_events(self):
+        """
+        Deactivates the Fetch domain, stopping the interception of network
+        requests for the websocket connection. Once this method is called,
+        the connection will no longer monitor or pause any network requests,
+        allowing normal network operations to resume. This can be useful when
+        you want to halt the monitoring of network activity.
+
+        Returns:
+            None
+        """
         await self.connection_handler.execute_command(
             FetchCommands.disable_fetch_events()
         )

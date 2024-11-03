@@ -253,6 +253,7 @@ class ConnectionHandler:
                 callback_func = callback_data['callback']
 
                 if asyncio.iscoroutinefunction(callback_func):
+                    print('is coroutine callback: ', callback_func)
                     await callback_func(event)
                 else:
                     callback_func(event)

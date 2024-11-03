@@ -1,7 +1,18 @@
 class BrowserCommands:
     """
-    A class to define the available commands to use in the
-    Browser main class.
+    BrowserCommands class provides a set of commands to interact with the
+    browser's main functionality based on CDP. These commands allow for managing browser
+    windows, such as closing windows, retrieving window IDs, and adjusting
+    window bounds (size and state).
+
+    The following operations can be performed:
+    - Close the browser.
+    - Get the ID of the current window.
+    - Set the size and position of a specific window.
+    - Maximize or minimize a specific window.
+
+    Each method generates a command that can be sent to the browser
+    as part of the communication with the browser's underlying API.
     """
 
     CLOSE = {'method': 'Browser.close'}
@@ -38,7 +49,9 @@ class BrowserCommands:
 
         Args:
             window_id (int): The ID of the window to set the bounds for.
-            bounds (dict): The bounds to set for the window.
+            bounds (dict): The bounds to set for the window,
+                           which should include width, height,
+                           and optionally x and y coordinates.
 
         Returns:
             dict: The command to be sent to the browser.
