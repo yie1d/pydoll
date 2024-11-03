@@ -12,9 +12,12 @@ from pydoll import exceptions
 from pydoll.browser.options import Options
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
+from pydoll.commands.fetch import FetchCommands
+from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
+from pydoll.events.fetch import FetchEvents
 from pydoll.events.page import PageEvents
 from pydoll.utils import decode_image_to_bytes
 
@@ -72,6 +75,8 @@ class Browser(ABC):
             self.options.arguments.append('--no-first-run')
             self.options.arguments.append('--no-default-browser-check')
 
+        private_proxy, proxy_credentials = self._configure_proxy()
+
         self.process = subprocess.Popen(
             [
                 binary_location,
@@ -82,7 +87,18 @@ class Browser(ABC):
         )
         if not await self._is_browser_running():
             raise exceptions.BrowserNotRunning('Failed to start browser')
-        await self._enable_page_events()
+
+        await self.enable_page_events()
+
+        if private_proxy:
+            await self.enable_fetch_events(handle_auth_requests=True)
+            await self.on(FetchEvents.REQUEST_PAUSED, self._continue_request)
+            await self.on(
+                FetchEvents.AUTH_REQUIRED,
+                lambda event: self._continue_request_auth_required(
+                    event, *proxy_credentials
+                ),
+            )
 
     async def execute_js_script(self, script: str):
         """
@@ -232,8 +248,12 @@ class Browser(ABC):
             event_name (str): Name of the event to listen for.
             callback (Callable): function to be called when the event occurs.
         """
+
+        async def callback_wrapper(event):
+            asyncio.create_task(callback(event))
+
         await self.connection_handler.register_callback(
-            event_name, callback, temporary
+            event_name, callback_wrapper, temporary
         )
 
     async def _is_browser_running(self):
@@ -274,7 +294,9 @@ class Browser(ABC):
         Returns:
             The response from executing the command.
         """
-        return await self.connection_handler.execute_command(command)
+        return await self.connection_handler.execute_command(
+            command, timeout=60
+        )
 
     async def _get_root_node_id(self):
         """
@@ -315,9 +337,71 @@ class Browser(ABC):
         )
         await asyncio.wait_for(page_loaded.wait(), timeout=300)
 
-    async def _enable_page_events(self):
+    def _configure_proxy(self) -> tuple[bool, tuple[str, str]]:
+        """
+        Configures the proxy settings for the browser.
+
+        Returns:
+            tuple[bool, tuple[str, str]]: A tuple containing a boolean
+            indicating if the proxy is private and a tuple with the proxy
+            username and password
+        """
+        private_proxy = False
+        proxy_username, proxy_password = None, None
+
+        if any('--proxy-server' in arg for arg in self.options.arguments):
+            proxy_index = next(
+                index for index, arg in enumerate(self.options.arguments)
+                if '--proxy-server' in arg
+            )
+            proxy = self.options.arguments[proxy_index].replace('--proxy-server=', '')
+
+            if '@' in proxy:
+                credentials, proxy_server = proxy.split('@')
+                self.options.arguments[proxy_index] = f'--proxy-server={proxy_server}'
+                proxy_username, proxy_password = credentials.split(':')
+                private_proxy = True
+
+        return private_proxy, (proxy_username, proxy_password)
+
+    async def _continue_request(self, event: dict):
+        request_id = event['params']['requestId']
+        await self._execute_command(FetchCommands.continue_request(request_id))
+
+    async def _continue_request_auth_required(
+        self, event: dict, proxy_username: str, proxy_password: str
+    ):
+        request_id = event['params']['requestId']
+        await self._execute_command(
+            FetchCommands.continue_request_with_auth(
+                request_id, proxy_username, proxy_password
+            )
+        )
+        await self.disable_fetch_events()
+        
+    async def enable_page_events(self):
         await self.connection_handler.execute_command(
             PageCommands.enable_page()
+        )
+
+    async def enable_network_events(self):
+        await self.connection_handler.execute_command(
+            NetworkCommands.enable_network_events()
+        )
+
+    async def enable_fetch_events(self, handle_auth_requests: bool = False):
+        await self.connection_handler.execute_command(
+            FetchCommands.enable_fetch_events(handle_auth_requests)
+        )
+
+    async def enable_dom_events(self):
+        await self.connection_handler.execute_command(
+            DomCommands.enable_dom_events()
+        )
+
+    async def disable_fetch_events(self):
+        await self.connection_handler.execute_command(
+            FetchCommands.disable_fetch_events()
         )
 
     @staticmethod
