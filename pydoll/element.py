@@ -30,7 +30,7 @@ class WebElement:
             key = key if key != 'class' else 'class_name'
             value = attr[i + 1]
             self._attributes[key] = value
-            
+
     @property
     def class_name(self) -> str:
         """
@@ -43,7 +43,7 @@ class WebElement:
 
         """
         return self._attributes.get('class')
-    
+
     @property
     def id(self) -> str:
         """
@@ -86,7 +86,7 @@ class WebElement:
             DomCommands.box_model(self._node['nodeId'])
         )
         return response['result']['model']['content']
-    
+
     def get_attribute(self, name: str) -> str:
         """
         Retrieves the attribute value of the element.
