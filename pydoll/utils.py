@@ -1,4 +1,11 @@
 import base64
+import logging
+
+import aiohttp
+
+from pydoll import exceptions
+
+logger = logging.getLogger(__name__)
 
 
 def decode_image_to_bytes(image: str) -> bytes:
@@ -12,3 +19,38 @@ def decode_image_to_bytes(image: str) -> bytes:
         bytes: The decoded image as bytes.
     """
     return base64.b64decode(image)
+
+
+async def get_browser_ws_address(port: int) -> str:
+    """
+    Fetches the WebSocket address for the browser instance.
+
+    Returns:
+        str: The WebSocket address for the browser.
+
+    Raises:
+        ValueError: If the address cannot be fetched due to network errors or missing data.
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f'http://localhost:{port}/json/version'
+            ) as response:
+                response.raise_for_status()
+                data = await response.json()
+                logger.info('Browser WebSocket address fetched successfully.')
+                return data['webSocketDebuggerUrl']
+
+    except aiohttp.ClientError as e:
+        logger.error(
+            'Failed to fetch browser WebSocket address due to network error.'
+        )
+        raise exceptions.NetworkError(f'Failed to get browser ws address: {e}')
+
+    except KeyError as e:
+        logger.error(
+            'Failed to get browser WebSocket address due to missing data.'
+        )
+        raise exceptions.InvalidResponse(
+            f'Failed to get browser ws address: {e}'
+        )
