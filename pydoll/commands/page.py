@@ -24,6 +24,7 @@ class PageCommands:
     REFRESH_TEMPLATE = {'method': 'Page.reload', 'params': {}}
     PRINT_TO_PDF_TEMPLATE = {'method': 'Page.printToPDF', 'params': {}}
     ENABLE_PAGE = {'method': 'Page.enable'}
+    DISABLE_PAGE = {'method': 'Page.disable'}
 
     @classmethod
     def screenshot(cls, format: str = 'png', quality: int = 100) -> dict:
@@ -112,3 +113,14 @@ class PageCommands:
                   containing the method to enable the Page domain.
         """
         return cls.ENABLE_PAGE
+
+    @classmethod
+    def disable_page(cls) -> dict:
+        """
+        Generates the command to disable the Page domain.
+
+        Returns:
+            dict: The command to be sent to the browser,
+                  containing the method to disable the Page domain.
+        """
+        return cls.DISABLE_PAGE
