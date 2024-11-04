@@ -4,9 +4,16 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import By
+from pydoll.mixins.find_elements import FindElementsMixin
 
-class WebElement:
-    def __init__(self, node: dict, connection_handler: ConnectionHandler, method: str = None):
+
+class WebElement(FindElementsMixin):
+    def __init__(
+        self,
+        node: dict,
+        connection_handler: ConnectionHandler,
+        method: str = None,
+    ):
         """
         Initializes the WebElement instance.
 
@@ -22,7 +29,7 @@ class WebElement:
 
     def __repr__(self):
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
-        return f'{self.__class__.__name__}({attrs})'
+        return f'{self.__class__.__name__}({attrs})(node_id={self._node["nodeId"]}, object_id={self._node["objectId"]})'
 
     def _def_attributes(self):
         attr = self._node['attributes']
@@ -41,7 +48,7 @@ class WebElement:
             str: The value of the element.
         """
         return self._attributes.get('value')
-    
+
     @property
     def class_name(self) -> str:
         """
@@ -94,13 +101,11 @@ class WebElement:
             dict: The bounding box of the element.
         """
         if self._search_method == By.XPATH:
-            response = await self._connection_handler.execute_command(
-                DomCommands.box_model_by_object_id(self._node['objectId'])
-            )
+            command = DomCommands.box_model(object_id=self._node['objectId'])
         else:
-            response = await self._connection_handler.execute_command(
-                DomCommands.box_model(self._node['nodeId'])
-            )
+            command = DomCommands.box_model(node_id=self._node['nodeId'])
+
+        response = await self._execute_command(command)
         return response['result']['model']['content']
 
     def get_attribute(self, name: str) -> str:
@@ -116,10 +121,9 @@ class WebElement:
         return self._attributes.get(name)
 
     async def click(self, x_offset: int = 0, y_offset: int = 0):
-        
         if self._node['nodeName'].lower() == 'option':
             return await self.click_option_tag()
-            
+
         element_bounds = await self.bounds
         position_to_click = self._calculate_center(element_bounds)
         position_to_click = (
@@ -140,9 +144,7 @@ class WebElement:
         var event = new Event('change', {{ bubbles: true }})
         select.dispatchEvent(event)
         '''
-        await self._connection_handler.execute_command(
-            DomCommands.evaluate_js(script)
-        )
+        await self._execute_command(DomCommands.evaluate_js(script))
 
     async def send_keys(self, text: str):
         """
@@ -151,9 +153,7 @@ class WebElement:
         Args:
             text (str): The text to send to the element.
         """
-        await self._connection_handler.execute_command(
-            InputCommands.insert_text(text)
-        )
+        await self._execute_command(InputCommands.insert_text(text))
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:
