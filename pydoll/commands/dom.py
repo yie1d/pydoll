@@ -1,7 +1,7 @@
 from typing import Literal
 
 from pydoll.constants import By
-
+import json
 
 class DomCommands:
     """
@@ -113,9 +113,10 @@ class DomCommands:
                         return result.singleNodeValue;
                     }})()
                 """
+                xpath_script = json.dumps(xpath_script)
                 command['params'] = {
                     'expression': xpath_script,
-                    'returnByValue': False,
+                    'returnByValue': True,
                 }
             case By.CLASS_NAME:
                 command = cls.FIND_ELEMENT_TEMPLATE.copy()

@@ -27,7 +27,6 @@ class Page:
         self._network_events_enabled = False
         self._fetch_events_enabled = False
         self._dom_events_enabled = False
-        # TODO: add class Keyboard inside page, to handle keyboard events
 
     @property
     def page_events_enabled(self) -> bool:

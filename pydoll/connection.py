@@ -69,7 +69,7 @@ class ConnectionHandler:
             dict: The response from the browser.
 
         Raises:
-            ValueError: If the command is not a dictionary.
+            InvalidCommand: If the command is not a dictionary.
             TimeoutError: If the command execution exceeds the timeout.
         """
         if not isinstance(command, dict):
@@ -134,7 +134,7 @@ class ConnectionHandler:
             temporary (bool, optional): If True, the callback will be removed after one use. Defaults to False.
 
         Raises:
-            ValueError: If the callback is not callable.
+            InvalidCallback: If the callback is not callable.
         """
         if not callable(callback):
             logger.error('Callback must be a callable function.')

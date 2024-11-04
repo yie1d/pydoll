@@ -98,6 +98,8 @@ class Browser(ABC):
                 self._continue_request,
                 temporary=True,
             )
+            # partial is used to send extra arguments to the callback
+            # and keep the callback as a coroutine function
             await self.on(
                 FetchEvents.AUTH_REQUIRED,
                 partial(
