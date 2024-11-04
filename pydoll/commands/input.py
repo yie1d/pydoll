@@ -84,7 +84,7 @@ class InputCommands:
             'text': char,
         }
         return command
-    
+
     @classmethod
     def insert_text(cls, text: str) -> dict:
         """
