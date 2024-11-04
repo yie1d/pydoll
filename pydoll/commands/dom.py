@@ -20,7 +20,7 @@ class DomCommands:
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
     DESCRIBE_NODE_TEMPLATE = {'method': 'DOM.describeNode', 'params': {}}
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
-    FIND_ELEMENT_XPATH_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
+    EVALUATE_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     BOX_MODEL_TEMPLATE = {'method': 'DOM.getBoxModel', 'params': {}}
     RESOLVE_NODE_TEMPLATE = {'method': 'DOM.resolveNode', 'params': {}}
 
@@ -143,7 +143,7 @@ class DomCommands:
                 command['params'] = {'selector': value}
                 command['params']['nodeId'] = dom_id
             case By.XPATH:
-                command = copy.deepcopy(cls.FIND_ELEMENT_XPATH_TEMPLATE)
+                command = copy.deepcopy(cls.EVALUATE_TEMPLATE)
                 escaped_value = value.replace('"', '\\"')
                 xpath_script = f'''
                 var element = document.evaluate("{escaped_value}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -187,4 +187,24 @@ class DomCommands:
         """
         command = copy.deepcopy(cls.RESOLVE_NODE_TEMPLATE)
         command['params']['nodeId'] = node_id
+        return command
+    
+    @classmethod
+    def evaluate_js(cls, expression: str) -> dict:
+        """
+        Generates the command to evaluate JavaScript code.
+
+        Args:
+            expression (str): The JavaScript expression to evaluate.
+
+        This command leverages the CDP to evaluate JavaScript code.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = copy.deepcopy(cls.EVALUATE_TEMPLATE)
+        command['params'] = {
+            'expression': expression,
+            'returnByValue': False,
+        }
         return command
