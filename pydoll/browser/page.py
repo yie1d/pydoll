@@ -5,18 +5,15 @@ import aiofiles
 
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.input import InputCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.connection import ConnectionHandler
-from pydoll.element import WebElement
 from pydoll.events.page import PageEvents
+from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
-from pydoll.constants import By
-from pydoll import exceptions
 
 
-class Page:
+class Page(FindElementsMixin):
     def __init__(self, connection_port: int, page_id: str):
         """
         Initializes the Page instance.
@@ -107,7 +104,7 @@ class Page:
         screenshot_bytes = decode_image_to_bytes(screenshot_b64)
         async with aiofiles.open(path, 'wb') as file:
             await file.write(screenshot_bytes)
-    
+
     async def print_to_pdf(self, path: str):
         """
         Prints the page to a PDF file.
@@ -140,12 +137,12 @@ class Page:
                 if match in log['params']['request']['url']:
                     logs_matched.append(log)
                     break
-        
+
         if not logs_matched:
             raise LookupError('No network logs matched the specified pattern')
-        
+
         return logs_matched
-    
+
     async def get_network_response_bodies(self, matches: list[str] = []):
         """
         Retrieves the response bodies of network requests that match the specified pattern.
@@ -159,10 +156,12 @@ class Page:
         logs_matched = await self.get_network_logs(matches)
         responses = []
         for log in logs_matched:
-            response = await self.get_network_response_body(log['params']['requestId'])
+            response = await self.get_network_response_body(
+                log['params']['requestId']
+            )
             responses.append(json.loads(response))
         return responses
-    
+
     async def get_network_response_body(self, request_id: str):
         """
         Retrieves the response body of a network request.
@@ -177,80 +176,7 @@ class Page:
             NetworkCommands.get_response_body(request_id)
         )
         return response['result']['body']
-    
-    async def wait_element(self, by: DomCommands.SelectorType, value: str, timeout: int = 30):
-        """
-        Waits for an element to appear on the page.
 
-        Args:
-            by (str): The type of selector to use (e.g., 'css', 'xpath').
-            value (str): The value of the selector to use.
-        """
-        start_time = asyncio.get_event_loop().time()
-        while True:
-            node_description = await self._get_node_description(by, value)
-            if node_description:
-                break
-
-            if asyncio.get_event_loop().time() - start_time > timeout:
-                raise TimeoutError('Element not found')
-            await asyncio.sleep(0.5)
-        
-        return WebElement(node_description, self._connection_handler, by)
-
-    async def find_element(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
-        """
-        Finds an element on the current page using the specified selector.
-
-        Args:
-            by (str): The type of selector to use (e.g., 'css', 'xpath').
-            value (str): The value of the selector to use.
-
-        Returns:
-            dict: The response from the browser.
-        """
-        node_description = await self._get_node_description(by, value)
-        
-        if not node_description:
-            if raise_exc:
-                raise exceptions.ElementNotFound('Element not found')
-            return None
-        
-        return WebElement(node_description, self._connection_handler, by)
-
-    async def _get_node_description(self, by: str, value: str):
-        """
-        Executes a command to find an element on the page.
-
-        Args:
-            by (str): The type of selector to use.
-            value (str): The value of the selector to use.
-
-        Returns:
-            dict: The response from the browser.
-        """
-        root_node_id = await self._get_root_node_id()
-        response = await self._execute_command(
-            DomCommands.find_element(root_node_id, by, value)
-        )
-        if not response.get('result', {}):
-            return None
-        
-        if by == By.XPATH:
-            
-            if not response.get('result', {}).get('result', {}).get('objectId'):
-                return None
-            
-            target_node_id = response['result']['result']['objectId']
-        else:
-            target_node_id = response['result']['nodeId']
-            if target_node_id == 0:
-                return None
-        
-        node_description = await self._describe_node(target_node_id)
-        node_description['objectId'] = target_node_id
-        return node_description
-    
     async def enable_page_events(self):
         """
         Enables page events for the page.
@@ -337,26 +263,12 @@ class Page:
         }
         return await self._execute_command(command)
 
-    async def _execute_command(self, command: dict) -> dict:
-        """
-        Executes a command on the page.
-
-        Args:
-            command (dict): The command to execute.
-
-        Returns:
-            dict: The result of the command execution.
-        """
-        return await self._connection_handler.execute_command(
-            command, timeout=60
-        )
-
     async def _wait_page_load(self):
         """
         Waits for the page to finish loading.
         """
         page_events_auto_enabled = False
-        
+
         if not self._page_events_enabled:
             page_events_auto_enabled = True
             await self.enable_page_events()
@@ -366,57 +278,6 @@ class Page:
             PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
         )
         await asyncio.wait_for(page_loaded.wait(), timeout=300)
-        
+
         if page_events_auto_enabled:
             await self.disable_page_events()
-
-    async def _get_root_node_id(self):
-        """
-        Retrieves the root node ID of the current page's Document Object Model (DOM).
-        This ID serves as a fundamental reference point for various DOM operations,
-        such as locating specific elements or manipulating the document structure.
-
-        The root node is typically the <html> element in an HTML document, and its ID
-        is essential for subsequent DOM interactions.
-
-        Returns:
-            int: The unique ID of the root node in the current DOM.
-
-        Raises:
-            Exception: If the command to retrieve the DOM document fails or
-            does not return a valid root node ID.
-        """
-        response = await self._execute_command(DomCommands.dom_document())
-        return response['result']['root']['nodeId']
-
-    async def _describe_node(self, id: int | str) -> dict:
-        """
-        Provides a detailed description of a specific node within the current page's DOM.
-        Each node represents an element in the document, and this method retrieves
-        comprehensive information about the node, including its ID, tag name, attributes,
-        and any child nodes that it may contain.
-
-        This method is useful for understanding the structure of the DOM and for
-        performing operations on specific elements based on their properties.
-
-        Args:
-            node_id (int): The unique ID of the node to describe.
-
-        Returns:
-            dict: A dictionary containing the detailed description of the node,
-            including its ID, tag name, attributes, and child nodes.
-
-        Raises:
-            ValueError: If the provided node ID is invalid or does not correspond
-            to a valid node in the DOM.
-        """
-        if isinstance(id, str):
-            response = await self._execute_command(
-                DomCommands.describe_node_by_object_id(id)
-            )
-            return response['result']['node']
-        
-        response = await self._execute_command(
-            DomCommands.describe_node(id)
-        )
-        return response['result']['node']
