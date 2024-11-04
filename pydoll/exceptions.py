@@ -28,3 +28,7 @@ class ResendCommandFailed(Exception):
 
 class BrowserNotRunning(Exception):
     pass
+
+
+class ElementNotFound(Exception):
+    pass
