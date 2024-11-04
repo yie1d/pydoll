@@ -3,10 +3,10 @@ import asyncio
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
 from pydoll.connection import ConnectionHandler
-
+from pydoll.constants import By
 
 class WebElement:
-    def __init__(self, node: dict, connection_handler: ConnectionHandler):
+    def __init__(self, node: dict, connection_handler: ConnectionHandler, method: str = None):
         """
         Initializes the WebElement instance.
 
@@ -15,6 +15,7 @@ class WebElement:
             connection_handler (ConnectionHandler): The connection handler instance.
         """
         self._node = node
+        self._search_method = method
         self._connection_handler = connection_handler
         self._attributes = {}
         self._def_attributes()
@@ -82,9 +83,14 @@ class WebElement:
         Returns:
             dict: The bounding box of the element.
         """
-        response = await self._connection_handler.execute_command(
-            DomCommands.box_model(self._node['nodeId'])
-        )
+        if self._search_method == By.XPATH:
+            response = await self._connection_handler.execute_command(
+                DomCommands.box_model_by_object_id(self._node['objectId'])
+            )
+        else:
+            response = await self._connection_handler.execute_command(
+                DomCommands.box_model(self._node['nodeId'])
+            )
         return response['result']['model']['content']
 
     def get_attribute(self, name: str) -> str:

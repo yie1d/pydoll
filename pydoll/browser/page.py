@@ -11,6 +11,7 @@ from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
 from pydoll.events.page import PageEvents
 from pydoll.utils import decode_image_to_bytes
+from pydoll.constants import By
 
 
 class Page:
@@ -118,6 +119,26 @@ class Page:
         async with aiofiles.open(path, 'wb') as file:
             await file.write(pdf_bytes)
 
+    async def wait_element(self, by: DomCommands.SelectorType, value: str, timeout: int = 30):
+        """
+        Waits for an element to appear on the page.
+
+        Args:
+            by (str): The type of selector to use (e.g., 'css', 'xpath').
+            value (str): The value of the selector to use.
+        """
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            node_description = await self._get_node_description(by, value)
+            if node_description:
+                break
+
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                raise TimeoutError('Element not found')
+            await asyncio.sleep(0.5)
+        
+        return WebElement(node_description, self._connection_handler, by)
+
     async def find_element(self, by: DomCommands.SelectorType, value: str):
         """
         Finds an element on the current page using the specified selector.
@@ -129,14 +150,44 @@ class Page:
         Returns:
             dict: The response from the browser.
         """
+        node_description = await self._get_node_description(by, value)
+        
+        if not node_description:
+            raise ValueError('Element not found')
+        
+        return WebElement(node_description, self._connection_handler, by)
+
+    async def _get_node_description(self, by: str, value: str):
+        """
+        Executes a command to find an element on the page.
+
+        Args:
+            by (str): The type of selector to use.
+            value (str): The value of the selector to use.
+
+        Returns:
+            dict: The response from the browser.
+        """
         root_node_id = await self._get_root_node_id()
         response = await self._execute_command(
             DomCommands.find_element(root_node_id, by, value)
         )
-        target_node_id = response['result']['nodeId']
+        if not response.get('result'):
+            return None
+        
+        if by == By.XPATH:
+            
+            if not response.get('result', {}).get('result', {}).get('objectId'):
+                return None
+            
+            target_node_id = response['result']['result']['objectId']
+        else:
+            target_node_id = response['result']['nodeId']
+        
         node_description = await self._describe_node(target_node_id)
-        return WebElement(node_description, self._connection_handler)
-
+        node_description['objectId'] = target_node_id
+        return node_description
+    
     async def enable_page_events(self):
         """
         Enables page events for the page.
@@ -275,7 +326,7 @@ class Page:
         response = await self._execute_command(DomCommands.dom_document())
         return response['result']['root']['nodeId']
 
-    async def _describe_node(self, node_id: int):
+    async def _describe_node(self, id: int | str) -> dict:
         """
         Provides a detailed description of a specific node within the current page's DOM.
         Each node represents an element in the document, and this method retrieves
@@ -296,7 +347,13 @@ class Page:
             ValueError: If the provided node ID is invalid or does not correspond
             to a valid node in the DOM.
         """
+        if isinstance(id, str):
+            response = await self._execute_command(
+                DomCommands.describe_node_by_object_id(id)
+            )
+            return response['result']['node']
+        
         response = await self._execute_command(
-            DomCommands.describe_node(node_id)
+            DomCommands.describe_node(id)
         )
         return response['result']['node']

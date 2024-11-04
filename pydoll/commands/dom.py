@@ -1,7 +1,7 @@
 from typing import Literal
 
 from pydoll.constants import By
-import json
+import copy
 
 class DomCommands:
     """
@@ -22,6 +22,7 @@ class DomCommands:
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
     FIND_ELEMENT_XPATH_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     BOX_MODEL_TEMPLATE = {'method': 'DOM.getBoxModel', 'params': {}}
+    RESOLVE_NODE_TEMPLATE = {'method': 'DOM.resolveNode', 'params': {}}
 
     @classmethod
     def dom_document(cls) -> dict:
@@ -50,10 +51,28 @@ class DomCommands:
         Returns:
             dict: The command to be sent to the browser.
         """
-        command = cls.DESCRIBE_NODE_TEMPLATE.copy()
+        command = copy.deepcopy(cls.DESCRIBE_NODE_TEMPLATE)
         command['params']['nodeId'] = node_id
         return command
 
+    @classmethod
+    def describe_node_by_object_id(cls, object_id: str) -> dict:
+        """
+        Generates the command to describe a specific DOM node by its object ID.
+
+        Args:
+            object_id (str): The object ID of the node to describe.
+
+        This command uses the CDP to provide details about the
+        specified DOM node using its object ID.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = copy.deepcopy(cls.DESCRIBE_NODE_TEMPLATE)
+        command['params']['objectId'] = object_id
+        return command
+    
     @classmethod
     def box_model(cls, node_id: int) -> dict:
         """
@@ -67,10 +86,28 @@ class DomCommands:
         Returns:
             dict: The command to be sent to the browser.
         """
-        command = cls.BOX_MODEL_TEMPLATE.copy()
+        command = copy.deepcopy(cls.BOX_MODEL_TEMPLATE)
         command['params']['nodeId'] = node_id
         return command
 
+    @classmethod
+    def box_model_by_object_id(cls, object_id: str) -> dict:
+        """
+        Generates the command to get the box model of a specific DOM node by its object ID.
+
+        Args:
+            object_id (str): The object ID of the node to get the box model for.
+
+        This command retrieves box model information using the CDP
+        based on the object ID of the node.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = copy.deepcopy(cls.BOX_MODEL_TEMPLATE)
+        command['params']['objectId'] = object_id
+        return command
+    
     @classmethod
     def enable_dom_events(cls) -> dict:
         """
@@ -102,32 +139,30 @@ class DomCommands:
         """
         match by:
             case By.CSS:
-                command = cls.FIND_ELEMENT_TEMPLATE.copy()
+                command = copy.deepcopy(cls.FIND_ELEMENT_TEMPLATE)
                 command['params'] = {'selector': value}
                 command['params']['nodeId'] = dom_id
             case By.XPATH:
-                command = cls.FIND_ELEMENT_XPATH_TEMPLATE.copy()
-                xpath_script = f"""
-                    (function() {{
-                        const result = document.evaluate("{value}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                        return result.singleNodeValue;
-                    }})()
-                """
-                xpath_script = json.dumps(xpath_script)
+                command = copy.deepcopy(cls.FIND_ELEMENT_XPATH_TEMPLATE)
+                escaped_value = value.replace('"', '\\"')
+                xpath_script = f'''
+                var element = document.evaluate("{escaped_value}", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                element;
+                '''
                 command['params'] = {
                     'expression': xpath_script,
-                    'returnByValue': True,
+                    'returnByValue': False,
                 }
             case By.CLASS_NAME:
-                command = cls.FIND_ELEMENT_TEMPLATE.copy()
+                command = copy.deepcopy(cls.FIND_ELEMENT_TEMPLATE)
                 command['params'] = {'selector': f'.{value}'}
                 command['params']['nodeId'] = dom_id
             case By.ID:
-                command = cls.FIND_ELEMENT_TEMPLATE.copy()
+                command = copy.deepcopy(cls.FIND_ELEMENT_TEMPLATE)
                 command['params'] = {'selector': f'#{value}'}
                 command['params']['nodeId'] = dom_id
             case By.TAG_NAME:
-                command = cls.FIND_ELEMENT_TEMPLATE.copy()
+                command = copy.deepcopy(cls.FIND_ELEMENT_TEMPLATE)
                 command['params'] = {'selector': value}
                 command['params']['nodeId'] = dom_id
             case _:
@@ -135,4 +170,21 @@ class DomCommands:
                     "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
                 )
 
+        return command
+
+    @classmethod
+    def resolve_node(cls, node_id: int) -> dict:
+        """
+        Generates the command to resolve a specific DOM node.
+
+        Args:
+            node_id (int): The ID of the node to resolve.
+
+        This command uses the CDP to resolve a DOM node by its ID.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = copy.deepcopy(cls.RESOLVE_NODE_TEMPLATE)
+        command['params']['nodeId'] = node_id
         return command
