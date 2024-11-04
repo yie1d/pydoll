@@ -33,6 +33,16 @@ class WebElement:
             self._attributes[key] = value
 
     @property
+    def value(self) -> str:
+        """
+        Retrieves the value of the element.
+
+        Returns:
+            str: The value of the element.
+        """
+        return self._attributes.get('value')
+    
+    @property
     def class_name(self) -> str:
         """
         Retrieves the class name of the
@@ -106,6 +116,10 @@ class WebElement:
         return self._attributes.get(name)
 
     async def click(self, x_offset: int = 0, y_offset: int = 0):
+        
+        if self._node['nodeName'].lower() == 'option':
+            return await self.click_option_tag()
+            
         element_bounds = await self.bounds
         position_to_click = self._calculate_center(element_bounds)
         position_to_click = (
@@ -117,6 +131,18 @@ class WebElement:
         await self._connection_handler.execute_command(press_command)
         await asyncio.sleep(0.1)
         await self._connection_handler.execute_command(release_command)
+
+    async def click_option_tag(self):
+        script = f'''
+        document.querySelector('option[value="{self.value}"]').selected = true
+        var selectParentXpath = '//option[@value="{self.value}"]//ancestor::select'
+        var select = document.evaluate(selectParentXpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
+        var event = new Event('change', {{ bubbles: true }})
+        select.dispatchEvent(event)
+        '''
+        await self._connection_handler.execute_command(
+            DomCommands.evaluate_js(script)
+        )
 
     async def send_keys(self, text: str):
         """
