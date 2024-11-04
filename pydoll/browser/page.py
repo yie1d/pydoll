@@ -120,6 +120,31 @@ class Page:
         async with aiofiles.open(path, 'wb') as file:
             await file.write(pdf_bytes)
 
+    async def get_network_logs(self, matches: list[str] = []):
+        """
+        Retrieves network logs from the page.
+
+        Args:
+            matches (str): The URL pattern to match network logs against.
+
+        Returns:
+            list: A list of network logs that match the specified pattern.
+        """
+        network_logs = self._connection_handler.network_logs
+        logs_matched = []
+        for log in network_logs:
+            if not log.get('params', {}).get('request', {}).get('url'):
+                continue
+            for match in matches:
+                if match in log['params']['request']['url']:
+                    logs_matched.append(log)
+                    break
+        
+        if not logs_matched:
+            raise LookupError('No network logs matched the specified pattern')
+        
+        return logs_matched
+    
     async def wait_element(self, by: DomCommands.SelectorType, value: str, timeout: int = 30):
         """
         Waits for an element to appear on the page.

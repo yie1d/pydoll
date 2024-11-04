@@ -38,6 +38,7 @@ class ConnectionHandler:
         self._id = 1
         self._callback_id = 1
         self._pending_commands: dict[int, asyncio.Future] = {}
+        self.network_logs = []
         logger.info('ConnectionHandler initialized.')
 
     @property
@@ -199,6 +200,10 @@ class ConnectionHandler:
         else:
             logger.warning('Event without a method received.')
 
+        if 'Network.requestWillBeSent' in event_name:
+            self.network_logs.append(event)
+            self.network_logs = self.network_logs[-10000:]
+            
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
             if callback_data['event'] == event_name:
