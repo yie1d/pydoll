@@ -3,7 +3,6 @@ import json
 import logging
 from typing import Callable
 
-import aiohttp
 import websockets
 
 from pydoll import exceptions
@@ -203,7 +202,7 @@ class ConnectionHandler:
         if 'Network.requestWillBeSent' in event_name:
             self.network_logs.append(event)
             self.network_logs = self.network_logs[-10000:]
-            
+
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
             if callback_data['event'] == event_name:
