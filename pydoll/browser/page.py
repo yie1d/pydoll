@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import aiofiles
 
@@ -144,6 +145,38 @@ class Page:
             raise LookupError('No network logs matched the specified pattern')
         
         return logs_matched
+    
+    async def get_network_response_bodies(self, matches: list[str] = []):
+        """
+        Retrieves the response bodies of network requests that match the specified pattern.
+
+        Args:
+            matches (list): The URL patterns to match network requests against.
+
+        Returns:
+            list: A list of response bodies from network requests that match the specified patterns.
+        """
+        logs_matched = await self.get_network_logs(matches)
+        responses = []
+        for log in logs_matched:
+            response = await self.get_network_response_body(log['params']['requestId'])
+            responses.append(json.loads(response))
+        return responses
+    
+    async def get_network_response_body(self, request_id: str):
+        """
+        Retrieves the response body of a network request.
+
+        Args:
+            request_id (str): The ID of the network request.
+
+        Returns:
+            str: The response body of the network request.
+        """
+        response = await self._execute_command(
+            NetworkCommands.get_response_body(request_id)
+        )
+        return response['result']['body']
     
     async def wait_element(self, by: DomCommands.SelectorType, value: str, timeout: int = 30):
         """
