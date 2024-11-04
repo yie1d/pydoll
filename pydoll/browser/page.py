@@ -12,6 +12,7 @@ from pydoll.element import WebElement
 from pydoll.events.page import PageEvents
 from pydoll.utils import decode_image_to_bytes
 from pydoll.constants import By
+from pydoll import exceptions
 
 
 class Page:
@@ -139,7 +140,7 @@ class Page:
         
         return WebElement(node_description, self._connection_handler, by)
 
-    async def find_element(self, by: DomCommands.SelectorType, value: str):
+    async def find_element(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
         """
         Finds an element on the current page using the specified selector.
 
@@ -153,7 +154,9 @@ class Page:
         node_description = await self._get_node_description(by, value)
         
         if not node_description:
-            raise ValueError('Element not found')
+            if raise_exc:
+                raise exceptions.ElementNotFound('Element not found')
+            return None
         
         return WebElement(node_description, self._connection_handler, by)
 
@@ -172,7 +175,7 @@ class Page:
         response = await self._execute_command(
             DomCommands.find_element(root_node_id, by, value)
         )
-        if not response.get('result'):
+        if not response.get('result', {}):
             return None
         
         if by == By.XPATH:
@@ -183,6 +186,8 @@ class Page:
             target_node_id = response['result']['result']['objectId']
         else:
             target_node_id = response['result']['nodeId']
+            if target_node_id == 0:
+                return None
         
         node_description = await self._describe_node(target_node_id)
         node_description['objectId'] = target_node_id
