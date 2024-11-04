@@ -14,10 +14,10 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
+from pydoll.commands.storage import StorageCommands
 from pydoll.commands.target import TargetCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.events.fetch import FetchEvents
-from pydoll.commands.storage import StorageCommands
 
 
 class Browser(ABC):
@@ -122,10 +122,10 @@ class Browser(ABC):
         """
         if not self._pages:
             await self.new_page()
-        
+
         page_id = self._pages.pop()
         return Page(self._connection_port, page_id)
-    
+
     async def delete_all_cookies(self):
         """
         Deletes all cookies from the browser.
@@ -150,7 +150,7 @@ class Browser(ABC):
         """
         response = await self._execute_command(StorageCommands.get_cookies())
         return response['result']['cookies']
-    
+
     async def on(
         self, event_name: str, callback: callable, temporary: bool = False
     ):
