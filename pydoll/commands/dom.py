@@ -21,6 +21,7 @@ class DomCommands:
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
     DESCRIBE_NODE_TEMPLATE = {'method': 'DOM.describeNode', 'params': {}}
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
+    FIND_ALL_ELEMENTS_TEMPLATE = {'method': 'DOM.querySelectorAll', 'params': {}}
     EVALUATE_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     BOX_MODEL_TEMPLATE = {'method': 'DOM.getBoxModel', 'params': {}}
     RESOLVE_NODE_TEMPLATE = {'method': 'DOM.resolveNode', 'params': {}}
@@ -86,6 +87,31 @@ class DomCommands:
                     "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
                 )
 
+    @classmethod
+    def find_elements(
+        cls,
+        by: SelectorType,
+        value: str,
+        node_id: int = None,
+        object_id: str = '',
+    ) -> dict:
+        """Generates a command to find multiple DOM elements based on the specified criteria."""
+        match by:
+            case By.CSS:
+                return cls._find_elements_by_selector(value, node_id)
+            case By.XPATH:
+                return cls._find_elements_by_xpath(value, object_id)
+            case By.CLASS_NAME:
+                return cls._find_elements_by_selector(f'.{value}', node_id)
+            case By.ID:
+                return cls._find_elements_by_selector(f'#{value}', node_id)
+            case By.TAG_NAME:
+                return cls._find_elements_by_selector(value, node_id)
+            case _:
+                raise ValueError(
+                    "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
+                )
+            
     @classmethod
     def resolve_node(cls, node_id: int) -> dict:
         """Generates the command to resolve a specific DOM node."""
@@ -157,3 +183,19 @@ class DomCommands:
             element;
             '''
         return command
+
+    @classmethod
+    def _find_elements_by_selector(
+        cls, selector: str, node_id: int = None
+    ) -> dict:
+        """Creates a command to find multiple DOM elements by CSS selector."""
+        command = cls._create_command(
+            cls.FIND_ALL_ELEMENTS_TEMPLATE, node_id=node_id
+        )
+        command['params']['selector'] = selector
+        return command
+
+    @classmethod
+    def _find_elements_by_xpath(cls, xpath: str, object_id: str) -> dict:
+        """Creates a command to find multiple DOM elements by XPath."""
+        return cls._find_element_by_xpath(xpath, object_id)
