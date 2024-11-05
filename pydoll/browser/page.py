@@ -130,6 +130,16 @@ class Page(FindElementsMixin):
         async with aiofiles.open(path, 'wb') as file:
             await file.write(screenshot_bytes)
 
+    async def get_pdf_base64(self):
+        """
+        Retrieves the PDF data of the page.
+
+        Returns:
+            str: The PDF data of the page.
+        """
+        response = await self._execute_command(PageCommands.print_to_pdf())
+        return response['result']['data'].encode('utf-8')
+    
     async def print_to_pdf(self, path: str):
         """
         Prints the page to a PDF file.
