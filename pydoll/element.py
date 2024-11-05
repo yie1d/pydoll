@@ -29,7 +29,8 @@ class WebElement(FindElementsMixin):
 
     def __repr__(self):
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
-        return f'{self.__class__.__name__}({attrs})(node_id={self._node["nodeId"]}, object_id={self._node["objectId"]})'
+        node_attrs = ', '.join(f'{k}={v!r}' for k, v in self._node.items())
+        return f'{self.__class__.__name__}({attrs})(node={node_attrs}, object_id={self._node["objectId"]})'
 
     def _def_attributes(self):
         attr = self._node['attributes']
@@ -90,7 +91,7 @@ class WebElement(FindElementsMixin):
         Returns:
             str: The text of the element.
         """
-        return self._node.get('nodeValue')
+        return self._node.get('nodeValue', None)
 
     @property
     async def bounds(self) -> list:
@@ -145,7 +146,7 @@ class WebElement(FindElementsMixin):
                 node_id=self._node['nodeId'],
             )
         await self._execute_command(command)
-        
+
     async def click(self, x_offset: int = 0, y_offset: int = 0):
         if self._node['nodeName'].lower() == 'option':
             return await self.click_option_tag()
