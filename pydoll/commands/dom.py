@@ -41,7 +41,17 @@ class DomCommands:
         'method': 'DOM.scrollIntoViewIfNeeded',
         'params': {},
     }
+    GET_PROPERTIES = {
+        'method': 'Runtime.getProperties',
+        'params': {},
+    }
 
+
+    @classmethod
+    def get_properties(cls, object_id: str) -> dict:
+        """Generates the command to get the properties of a specific object."""
+        return cls._create_command(cls.GET_PROPERTIES, object_id=object_id)
+    
     @classmethod
     def scroll_into_view(
         cls, node_id: int = None, object_id: str = ''
@@ -230,4 +240,40 @@ class DomCommands:
     @classmethod
     def _find_elements_by_xpath(cls, xpath: str, object_id: str) -> dict:
         """Creates a command to find multiple DOM elements by XPath."""
-        return cls._find_element_by_xpath(xpath, object_id)
+        escaped_value = xpath.replace('"', '\\"')
+        if object_id:
+            command = cls._create_command(
+                cls.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
+            )
+            command['params']['functionDeclaration'] = f'''
+            function() {{
+                var elements = document.evaluate(
+                    "{escaped_value}", document, null,
+                    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+                );
+
+                var results = [];
+
+                for (var i = 0; i < elements.snapshotLength; i++) {{
+                    results.push(elements.snapshotItem(i));
+                }}
+
+                return results;
+            }}
+            '''
+        else:
+            command = cls._create_command(cls.EVALUATE_TEMPLATE)
+            command['params']['expression'] = f'''
+            var elements = document.evaluate(
+                "{escaped_value}", document, null,
+                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+            );
+            var results = [];
+
+            for (var i = 0; i < elements.snapshotLength; i++) {{
+                results.push(elements.snapshotItem(i));
+            }}
+
+            results;
+            '''
+        return command

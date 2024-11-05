@@ -137,6 +137,16 @@ class FindElementsMixin:
                 .get('objectId')
             ):
                 return []
+            
+            object_id = response['result']['result']['objectId']
+            query_response = await self._execute_command(
+                    DomCommands.get_properties(object_id=object_id)
+            )
+            response = []
+            for query in query_response['result']['result']:
+                query_value = query.get('value', {})
+                if query_value and query_value['type'] == 'object':
+                    response.append(query_value['objectId'])
 
         nodes_description = await self._describe_nodes_based_on_response(
             response, by
@@ -206,16 +216,16 @@ class FindElementsMixin:
         """
         nodes_description = []
         if by == By.XPATH:
-            # If the response is for an XPath query, only one node is returned.
-            object_id = response['result']['result']['objectId']
-            nodes_description = [
-                await self._describe_node(object_id=object_id)
-            ]
-            node_id = await self._get_node_id_by_object_id(object_id)
-            nodes_description[0].update({
-                'nodeId': node_id,
-                'objectId': object_id,
-            })
+            for object_id in response:
+                
+                try:
+                    node_description = await self._describe_node(object_id=object_id)
+                except KeyError:
+                    continue
+
+                node_id = await self._get_node_id_by_object_id(object_id)
+                node_description.update({'nodeId': node_id, 'objectId': object_id})
+                nodes_description.append(node_description)
         else:
             for node_id in response['result']['nodeIds']:
                 node_description = await self._describe_node(node_id=node_id)

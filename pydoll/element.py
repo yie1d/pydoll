@@ -32,7 +32,7 @@ class WebElement(FindElementsMixin):
     def __repr__(self):
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
         node_attrs = ', '.join(f'{k}={v!r}' for k, v in self._node.items())
-        return f'{self.__class__.__name__}({attrs})(node={node_attrs}, object_id={self._node["objectId"]})'
+        return f'{self.__class__.__name__}({attrs})(node={node_attrs})'
 
     def _def_attributes(self):
         attr = self._node['attributes']
