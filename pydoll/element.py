@@ -64,7 +64,7 @@ class WebElement(FindElementsMixin):
             element.
 
         """
-        return self._attributes.get('class')
+        return self._attributes.get('class_name')
 
     @property
     def id(self) -> str:
