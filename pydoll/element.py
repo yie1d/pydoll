@@ -132,6 +132,20 @@ class WebElement(FindElementsMixin):
         """
         return self._attributes.get(name)
 
+    async def scroll_into_view(self):
+        """
+        Scrolls the element into view.
+        """
+        if self._search_method == By.XPATH:
+            command = DomCommands.scroll_into_view(
+                object_id=self._node['objectId']
+            )
+        else:
+            command = DomCommands.scroll_into_view(
+                node_id=self._node['nodeId'],
+            )
+        await self._execute_command(command)
+        
     async def click(self, x_offset: int = 0, y_offset: int = 0):
         if self._node['nodeName'].lower() == 'option':
             return await self.click_option_tag()

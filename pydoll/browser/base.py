@@ -135,6 +135,7 @@ class Browser(ABC):
         Deletes all cookies from the browser.
         """
         await self._execute_command(StorageCommands.clear_cookies())
+        await self._execute_command(NetworkCommands.delete_cookies())
 
     async def set_cookies(self, cookies: list[dict]):
         """
@@ -144,6 +145,7 @@ class Browser(ABC):
             cookies (list[dict]): A list of dictionaries containing the cookie data.
         """
         await self._execute_command(StorageCommands.set_cookies(cookies))
+        await self._execute_command(NetworkCommands.set_cookies(cookies))
 
     async def get_cookies(self):
         """

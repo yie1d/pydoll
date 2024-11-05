@@ -37,7 +37,14 @@ class DomCommands:
         'method': 'DOM.getOuterHTML',
         'params': {},
     }
+    SCROLL_INTO_VIEW_IF_NEEDED = {'method': 'DOM.scrollIntoViewIfNeeded', 'params': {}}
 
+
+    @classmethod
+    def scroll_into_view(cls, node_id: int = None, object_id: str = "") -> dict:
+        """Generates the command to scroll a specific DOM node into view."""
+        return cls._create_command(cls.SCROLL_INTO_VIEW_IF_NEEDED, node_id=node_id, object_id=object_id)
+    
     @classmethod
     def get_outer_html(cls, node_id: int) -> dict:
         """Generates the command to get the outer HTML"""
