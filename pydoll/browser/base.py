@@ -115,7 +115,7 @@ class Browser(ABC):
         valid_page = [
             page
             for page in pages
-            if page['type'] == 'page' and 'chrome' not in page['url']
+            if page['type'] == 'page' and 'chrome' not in page['title']
         ][0]['targetId']
         self._pages.append(valid_page)
 
