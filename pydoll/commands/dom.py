@@ -50,7 +50,9 @@ class DomCommands:
     @classmethod
     def get_properties(cls, object_id: str) -> dict:
         """Generates the command to get the properties of a specific object."""
-        return cls._create_command(cls.GET_PROPERTIES, object_id=object_id)
+        command = cls._create_command(cls.GET_PROPERTIES, object_id=object_id)
+        command['params']['ownProperties'] = True
+        return command
     
     @classmethod
     def scroll_into_view(
