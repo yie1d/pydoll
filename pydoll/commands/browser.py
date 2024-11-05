@@ -21,6 +21,26 @@ class BrowserCommands:
         'method': 'Browser.setWindowBounds',
         'params': {},
     }
+    SET_DOWNLOAD_BEHAVIOR = {
+        'method': 'Browser.setDownloadBehavior',
+        'params': {},
+    }
+
+    @classmethod
+    def set_download_path(cls, path: str) -> dict:
+        """
+        Generates the command to set the download path for the browser.
+
+        Args:
+            path (str): The path to set for downloads.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = cls.SET_DOWNLOAD_BEHAVIOR.copy()
+        command['params']['behavior'] = 'allow'
+        command['params']['downloadPath'] = path
+        return command
 
     @classmethod
     def close(cls) -> dict:
