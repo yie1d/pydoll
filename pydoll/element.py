@@ -86,40 +86,14 @@ class WebElement(FindElementsMixin):
         return self._node.get('nodeName')
 
     @property
-    async def text(self) -> str:
+    def text(self) -> str:
         """
         Retrieves the text of the element.
 
         Returns:
             str: The text of the element.
         """
-        text = self._node.get('nodeValue', None)
-
-        if not text:
-            if self._search_method == By.XPATH:
-                script = f'''
-                var element = document.evaluate('{self._selector}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                element ? element.innerText : '';
-                '''
-            else:
-                # Define o seletor para os métodos que não usam XPath
-                prefix = {
-                    By.CLASS_NAME: '.',
-                    By.ID: '#',
-                    By.TAG_NAME: '',
-                    By.CSS: ''
-                }.get(self._search_method, '')
-                
-                argument = f'{prefix}{self._selector}'
-                script = f'''
-                var element = document.querySelector('{argument}');
-                element ? element.innerText : '';
-                '''
-            result = await self._execute_command(DomCommands.evaluate_js(script))
-            text = result['result']['value']
-
-        return text
-
+        return self._node.get('nodeValue', '')
 
     @property
     async def bounds(self) -> list:
@@ -148,6 +122,36 @@ class WebElement(FindElementsMixin):
         command = DomCommands.get_outer_html(self._node['nodeId'])
         response = await self._execute_command(command)
         return response['result']['outerHTML']
+
+    async def get_text_by_js(self) -> str:
+        """
+        Retrieves the text of the element using JavaScript.
+
+        Returns:
+            str: The text of the element.
+        """
+        if self._search_method == By.XPATH:
+            script = f"""
+            var element = document.evaluate('{self._selector}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            element ? element.innerText : '';
+            """
+        else:
+            # Define o seletor para os métodos que não usam XPath
+            prefix = {
+                By.CLASS_NAME: '.',
+                By.ID: '#',
+                By.TAG_NAME: '',
+                By.CSS: '',
+            }.get(self._search_method, '')
+
+            argument = f'{prefix}{self._selector}'
+            script = f"""
+            var element = document.querySelector('{argument}');
+            element ? element.innerText : '';
+            """
+        result = await self._execute_command(DomCommands.evaluate_js(script))
+        text = result['result']['value']
+        return text
 
     def get_attribute(self, name: str) -> str:
         """

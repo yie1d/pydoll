@@ -139,7 +139,7 @@ class Page(FindElementsMixin):
         """
         response = await self._execute_command(PageCommands.print_to_pdf())
         return response['result']['data'].encode('utf-8')
-    
+
     async def print_to_pdf(self, path: str):
         """
         Prints the page to a PDF file.
@@ -311,11 +311,11 @@ class Page(FindElementsMixin):
         page_loaded = asyncio.Event()
         await self.on(
             PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
-        )  
+        )
         try:
             await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             print('TimeoutError')
-        
+
         if page_events_auto_enabled:
             await self.disable_page_events()
