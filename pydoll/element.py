@@ -150,7 +150,7 @@ class WebElement(FindElementsMixin):
             element ? element.innerText : '';
             """
         result = await self._execute_command(DomCommands.evaluate_js(script))
-        text = result['result']['value']
+        text = result['result']['result']['value']
         return text
 
     def get_attribute(self, name: str) -> str:
