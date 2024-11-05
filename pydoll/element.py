@@ -13,6 +13,7 @@ class WebElement(FindElementsMixin):
         node: dict,
         connection_handler: ConnectionHandler,
         method: str = None,
+        selector: str = None,
     ):
         """
         Initializes the WebElement instance.
@@ -23,6 +24,7 @@ class WebElement(FindElementsMixin):
         """
         self._node = node
         self._search_method = method
+        self._selector = selector
         self._connection_handler = connection_handler
         self._attributes = {}
         self._def_attributes()
@@ -84,14 +86,40 @@ class WebElement(FindElementsMixin):
         return self._node.get('nodeName')
 
     @property
-    def text(self) -> str:
+    async def text(self) -> str:
         """
         Retrieves the text of the element.
 
         Returns:
             str: The text of the element.
         """
-        return self._node.get('nodeValue', None)
+        text = self._node.get('nodeValue', None)
+
+        if not text:
+            if self._search_method == By.XPATH:
+                script = f'''
+                var element = document.evaluate('{self._selector}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                element ? element.innerText : '';
+                '''
+            else:
+                # Define o seletor para os métodos que não usam XPath
+                prefix = {
+                    By.CLASS_NAME: '.',
+                    By.ID: '#',
+                    By.TAG_NAME: '',
+                    By.CSS: ''
+                }.get(self._search_method, '')
+                
+                argument = f'{prefix}{self._selector}'
+                script = f'''
+                var element = document.querySelector('{argument}');
+                element ? element.innerText : '';
+                '''
+            result = await self._execute_command(DomCommands.evaluate_js(script))
+            text = result['result']['value']
+
+        return text
+
 
     @property
     async def bounds(self) -> list:

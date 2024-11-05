@@ -93,7 +93,7 @@ class Page(FindElementsMixin):
         )
         return response['result']['outerHTML']
 
-    async def go_to(self, url: str):
+    async def go_to(self, url: str, timeout=300):
         """
         Navigates to a URL in the page.
 
@@ -103,7 +103,7 @@ class Page(FindElementsMixin):
         await self._execute_command(PageCommands.go_to(url))
 
         try:
-            await self._wait_page_load()
+            await self._wait_page_load(timeout=timeout)
         except asyncio.TimeoutError:
             raise TimeoutError('Page load timed out')
 
@@ -298,7 +298,7 @@ class Page(FindElementsMixin):
         }
         return await self._execute_command(command)
 
-    async def _wait_page_load(self):
+    async def _wait_page_load(self, timeout: int = 300):
         """
         Waits for the page to finish loading.
         """
@@ -311,8 +311,11 @@ class Page(FindElementsMixin):
         page_loaded = asyncio.Event()
         await self.on(
             PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
-        )
-        await asyncio.wait_for(page_loaded.wait(), timeout=300)
-
+        )  
+        try:
+            await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
+        except asyncio.TimeoutError:
+            print('TimeoutError')
+        
         if page_events_auto_enabled:
             await self.disable_page_events()

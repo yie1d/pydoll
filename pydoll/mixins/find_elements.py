@@ -45,7 +45,7 @@ class FindElementsMixin:
             raise TimeoutError('Element not found')
 
         return create_web_element(
-            node_description, self._connection_handler, by
+            node_description, self._connection_handler, by, value
         )
 
     async def find_element(
@@ -72,7 +72,7 @@ class FindElementsMixin:
             return None
 
         return create_web_element(
-            node_description, self._connection_handler, by
+            node_description, self._connection_handler, by, value
         )
 
     async def find_elements(
