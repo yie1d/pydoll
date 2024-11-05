@@ -21,7 +21,10 @@ class DomCommands:
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
     DESCRIBE_NODE_TEMPLATE = {'method': 'DOM.describeNode', 'params': {}}
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
-    FIND_ALL_ELEMENTS_TEMPLATE = {'method': 'DOM.querySelectorAll', 'params': {}}
+    FIND_ALL_ELEMENTS_TEMPLATE = {
+        'method': 'DOM.querySelectorAll',
+        'params': {},
+    }
     EVALUATE_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     BOX_MODEL_TEMPLATE = {'method': 'DOM.getBoxModel', 'params': {}}
     RESOLVE_NODE_TEMPLATE = {'method': 'DOM.resolveNode', 'params': {}}
@@ -75,7 +78,7 @@ class DomCommands:
     def get_current_url(cls) -> dict:
         """Generates the command to get the current URL of the page."""
         return cls.evaluate_js('window.location.href')
-    
+
     @classmethod
     def find_element(
         cls,
@@ -125,7 +128,7 @@ class DomCommands:
                 raise ValueError(
                     "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
                 )
-            
+
     @classmethod
     def resolve_node(cls, node_id: int) -> dict:
         """Generates the command to resolve a specific DOM node."""

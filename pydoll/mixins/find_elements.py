@@ -74,7 +74,7 @@ class FindElementsMixin:
         return create_web_element(
             node_description, self._connection_handler, by
         )
-    
+
     async def find_elements(
         self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True
     ):
@@ -102,7 +102,7 @@ class FindElementsMixin:
             create_web_element(node, self._connection_handler, by)
             for node in nodes_description
         ]
-    
+
     async def _get_nodes_description(self, by: str, value: str):
         """
         Executes a command to find elements on the page and returns their descriptions.
@@ -122,7 +122,9 @@ class FindElementsMixin:
             object_id = ''
 
         response = await self._execute_command(
-            DomCommands.find_elements(by, value, node_id=root_node_id, object_id=object_id)
+            DomCommands.find_elements(
+                by, value, node_id=root_node_id, object_id=object_id
+            )
         )
 
         if not response.get('result', {}):
@@ -135,12 +137,11 @@ class FindElementsMixin:
                 .get('objectId')
             ):
                 return []
-            
+
         nodes_description = await self._describe_nodes_based_on_response(
             response, by
         )
         return nodes_description
-    
 
     async def _get_node_description(self, by: str, value: str):
         """
@@ -161,7 +162,9 @@ class FindElementsMixin:
             object_id = ''
 
         response = await self._execute_command(
-            DomCommands.find_element(by, value, node_id=root_node_id, object_id=object_id)
+            DomCommands.find_element(
+                by, value, node_id=root_node_id, object_id=object_id
+            )
         )
 
         if not response.get('result', {}):
@@ -205,17 +208,25 @@ class FindElementsMixin:
         if by == By.XPATH:
             # If the response is for an XPath query, only one node is returned.
             object_id = response['result']['result']['objectId']
-            nodes_description = [await self._describe_node(object_id=object_id)]
+            nodes_description = [
+                await self._describe_node(object_id=object_id)
+            ]
             node_id = await self._get_node_id_by_object_id(object_id)
-            nodes_description[0].update({'nodeId': node_id, 'objectId': object_id})
+            nodes_description[0].update({
+                'nodeId': node_id,
+                'objectId': object_id,
+            })
         else:
             for node_id in response['result']['nodeIds']:
                 node_description = await self._describe_node(node_id=node_id)
                 object_id = await self._get_object_id_by_node_id(node_id)
-                node_description.update({'nodeId': node_id, 'objectId': object_id})
+                node_description.update({
+                    'nodeId': node_id,
+                    'objectId': object_id,
+                })
                 nodes_description.append(node_description)
         return nodes_description
-    
+
     async def _describe_node_based_on_response(self, response: dict, by: str):
         """
         Describes a node based on the response from finding the element.

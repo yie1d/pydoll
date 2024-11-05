@@ -112,8 +112,12 @@ class Browser(ABC):
             )
 
         pages = await self.get_pages()
-        page_id = pages[-1]['targetId']
-        self._pages.append(page_id)
+        valid_page = [
+            page
+            for page in pages
+            if page['type'] == 'page' and 'chrome' not in page['url']
+        ][0]['targetId']
+        self._pages.append(valid_page)
 
     async def get_page(self) -> Page:
         """

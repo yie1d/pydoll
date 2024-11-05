@@ -119,7 +119,7 @@ class WebElement(FindElementsMixin):
         command = DomCommands.get_outer_html(self._node['nodeId'])
         response = await self._execute_command(command)
         return response['result']['outerHTML']
-    
+
     def get_attribute(self, name: str) -> str:
         """
         Retrieves the attribute value of the element.
