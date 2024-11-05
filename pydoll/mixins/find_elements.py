@@ -99,7 +99,7 @@ class FindElementsMixin:
             return []
 
         return [
-            create_web_element(node, self._connection_handler, by)
+            create_web_element(node, self._connection_handler, by, value)
             for node in nodes_description
         ]
 
