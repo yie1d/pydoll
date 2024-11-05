@@ -36,7 +36,7 @@ class WebElement(FindElementsMixin):
         return f'{self.__class__.__name__}({attrs})(node={node_attrs})'
 
     def _def_attributes(self):
-        attr = self._node['attributes']
+        attr = self._node.get('attributes', [])
         for i in range(0, len(attr), 2):
             key = attr[i]
             key = key if key != 'class' else 'class_name'
