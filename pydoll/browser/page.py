@@ -68,6 +68,17 @@ class Page(FindElementsMixin):
         """
         return self._dom_events_enabled
 
+    @property
+    async def current_url(self) -> str:
+        """
+        Retrieves the current URL of the page.
+
+        Returns:
+            str: The current URL of the page.
+        """
+        response = await self._execute_command(DomCommands.get_current_url())
+        return response['result']['result']['value']
+    
     async def go_to(self, url: str):
         """
         Navigates to a URL in the page.

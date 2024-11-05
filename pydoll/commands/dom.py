@@ -63,6 +63,11 @@ class DomCommands:
         return cls.ENABLE
 
     @classmethod
+    def get_current_url(cls) -> dict:
+        """Generates the command to get the current URL of the page."""
+        return cls.evaluate_js('window.location.href')
+    
+    @classmethod
     def find_element(
         cls,
         by: SelectorType,
