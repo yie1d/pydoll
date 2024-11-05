@@ -30,6 +30,15 @@ class DomCommands:
         'method': 'Runtime.callFunctionOn',
         'params': {},
     }
+    GET_OUTER_HTML = {
+        'method': 'DOM.getOuterHTML',
+        'params': {},
+    }
+
+    @classmethod
+    def get_outer_html(cls, node_id: int) -> dict:
+        """Generates the command to get the outer HTML"""
+        return cls._create_command(cls.GET_OUTER_HTML, node_id=node_id)
 
     @classmethod
     def dom_document(cls) -> dict:
@@ -40,7 +49,7 @@ class DomCommands:
     def request_node(cls, object_id: str) -> dict:
         """Generates the command to request a specific DOM node by its object ID."""
         return cls._create_command(
-            cls.REQUEST_NODE_TEMPLATE, objectId=object_id
+            cls.REQUEST_NODE_TEMPLATE, object_id=object_id
         )
 
     @classmethod

@@ -79,6 +79,18 @@ class Page(FindElementsMixin):
         response = await self._execute_command(DomCommands.get_current_url())
         return response['result']['result']['value']
     
+    @property
+    async def page_source(self) -> str:
+        """
+        Retrieves the source code of the page.
+
+        Returns:
+            str: The source code of the page.
+        """
+        root_node_id = await self._get_root_node_id()
+        response = await self._execute_command(DomCommands.get_outer_html(root_node_id))
+        return response['result']['outerHTML']
+    
     async def go_to(self, url: str):
         """
         Navigates to a URL in the page.
