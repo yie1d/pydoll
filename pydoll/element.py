@@ -1,4 +1,5 @@
 import asyncio
+from bs4 import BeautifulSoup
 
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
@@ -133,7 +134,8 @@ class WebElement(FindElementsMixin):
         command = DomCommands.get_outer_html(self._node['nodeId'])
         response = await self._execute_command(command)
         outer_html = response['result']['outerHTML']
-        text_inside = outer_html.split('>')[1].split('<')[0]
+        soup = BeautifulSoup(outer_html, 'html.parser')
+        text_inside = soup.get_text(strip=True)
         return text_inside
 
     def get_attribute(self, name: str) -> str:
