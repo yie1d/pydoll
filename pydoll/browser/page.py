@@ -191,9 +191,12 @@ class Page(FindElementsMixin):
         logs_matched = await self.get_network_logs(matches)
         responses = []
         for log in logs_matched:
-            response = await self.get_network_response_body(
-                log['params']['requestId']
-            )
+            try:
+                response = await self.get_network_response_body(
+                    log['params']['requestId']
+                )
+            except KeyError:
+                continue
             responses.append(json.loads(response))
         return responses
 
