@@ -130,6 +130,15 @@ class Page(FindElementsMixin):
         async with aiofiles.open(path, 'wb') as file:
             await file.write(screenshot_bytes)
 
+    async def set_download_path(self, path: str):
+        """
+        Sets the download path for the page.
+
+        Args:
+            path (str): The path where the downloaded files should be saved.
+        """
+        await self._execute_command(PageCommands.set_download_path(path))
+        
     async def get_pdf_base64(self):
         """
         Retrieves the PDF data of the page.

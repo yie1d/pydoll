@@ -25,7 +25,28 @@ class PageCommands:
     PRINT_TO_PDF_TEMPLATE = {'method': 'Page.printToPDF', 'params': {}}
     ENABLE_PAGE = {'method': 'Page.enable'}
     DISABLE_PAGE = {'method': 'Page.disable'}
+    SET_DOWNLOAD_BEHAVIOR = {
+        'method': 'Page.setDownloadBehavior',
+        'params': {},
+    }
 
+    @classmethod
+    def set_download_path(cls, path: str) -> dict:
+        """
+        Generates the command to set the download path for the browser.
+
+        Args:
+            path (str): The path where the downloaded files should be saved.
+
+        Returns:
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for setting the download path.
+        """
+        command = cls.SET_DOWNLOAD_BEHAVIOR.copy()
+        command['params']['behavior'] = 'allow'
+        command['params']['downloadPath'] = path
+        return command
+    
     @classmethod
     def screenshot(cls, format: str = 'png', quality: int = 100) -> dict:
         """
