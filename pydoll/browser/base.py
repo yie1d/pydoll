@@ -72,13 +72,14 @@ class Browser(ABC):
             self.options.binary_location or self._get_default_binary_location()
         )
 
+        self.options.arguments.append('--no-first-run')
+        self.options.arguments.append('--no-default-browser-check')
+        
         temp_dir = self._get_temp_dir()
 
-        if '--user-data-dir' not in self.options.arguments:
+        if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
-            self.options.arguments.append('--no-first-run')
-            self.options.arguments.append('--no-default-browser-check')
-
+        
         private_proxy, proxy_credentials = self._configure_proxy()
 
         self.process = subprocess.Popen(
