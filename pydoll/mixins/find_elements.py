@@ -16,7 +16,7 @@ def create_web_element(*args, **kwargs):
 
 class FindElementsMixin:
     async def wait_element(
-        self, by: DomCommands.SelectorType, value: str, timeout: int = 10
+        self, by: DomCommands.SelectorType, value: str, timeout: int = 10, raise_exc: bool = True
     ):
         """
         Waits for an element to be present in the DOM.
@@ -42,7 +42,9 @@ class FindElementsMixin:
             await asyncio.sleep(0.5)
 
         if not node_description:
-            raise TimeoutError('Element not found')
+            if raise_exc:
+                raise TimeoutError('Element not found')
+            return None
 
         return create_web_element(
             node_description, self._connection_handler, by, value
