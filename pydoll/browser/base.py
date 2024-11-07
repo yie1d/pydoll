@@ -155,7 +155,7 @@ class Browser(ABC):
         Returns:
             list[dict]: A list of dictionaries containing the cookie data.
         """
-        response = await self._execute_command(StorageCommands.get_cookies())
+        response = await self._execute_command(NetworkCommands.get_all_cookies())
         return response['result']['cookies']
 
     async def on(
