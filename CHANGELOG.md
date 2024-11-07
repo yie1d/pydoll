@@ -1,3 +1,9 @@
+## 0.1.1 (2024-11-07)
+
+### Fix
+
+- ensure browser process terminates after executing close command
+
 ## 0.1.0 (2024-11-07)
 
 ### Feat
