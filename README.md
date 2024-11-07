@@ -4,13 +4,3 @@
 <br>
 
 PyDoll é uma biblioteca pensada em automatizar navegadores baseados no Chromium sem a necessidade de webdriver e com interações mais realísticas. Feita inspirada no Selenium e Puppeteer, tem suporte total a assincronidade do Python, o que permite um desempenho melhor, além de possibilidades como captura de eventos e webscrapping simultâneo.
-
-# TODO List
-- [ ] Criar issues para todo list
-- [ ] Adicionar sistema para verificar se o clique foi realizado 
-com sucesso.
-- [ ] Criar gerador de fingerprint
-- [ ] Criar classe Keyboard, para simular teclado.
-- [ ] Melhorar documentação.
-- [ ] Testes automatizados.
-- [ ] Integração contínua para verificar formatação do código.
