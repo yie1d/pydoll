@@ -97,6 +97,16 @@ class WebElement(FindElementsMixin):
         return self._node.get('nodeValue', '')
 
     @property
+    def is_enabled(self) -> bool:
+        """
+        Retrieves the enabled status of the element.
+
+        Returns:
+            bool: The enabled status of the element.
+        """
+        return bool('disabled' not in self._attributes.keys())
+    
+    @property
     async def bounds(self) -> list:
         """
         Asynchronously retrieves the bounding box of the element.
