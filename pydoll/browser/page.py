@@ -112,7 +112,13 @@ class Page(FindElementsMixin):
             cookies (list): A list of cookies to set.
         """
         await self._execute_command(NetworkCommands.set_cookies(cookies))
-        await self._execute_command(StorageCommands.set_cookies(cookies))
+
+    async def delete_all_cookies(self):
+        """
+        Deletes all cookies from the browser.
+        """
+        await self._execute_command(StorageCommands.clear_cookies())
+        await self._execute_command(NetworkCommands.clear_browser_cookies())
     
     async def go_to(self, url: str, timeout=300):
         """
