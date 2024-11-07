@@ -6,6 +6,7 @@ import aiofiles
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
+from pydoll.commands.storage import StorageCommands
 from pydoll.commands.page import PageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.events.page import PageEvents
@@ -93,6 +94,26 @@ class Page(FindElementsMixin):
         )
         return response['result']['outerHTML']
 
+    async def get_cookies(self) -> list[dict]:
+        """
+        Retrieves the cookies of the page.
+
+        Returns:
+            list: A list of cookies.
+        """
+        response = await self._execute_command(NetworkCommands.get_all_cookies())
+        return response['result']['cookies']
+
+    async def set_cookies(self, cookies: list[dict]):
+        """
+        Sets cookies for the page.
+
+        Args:
+            cookies (list): A list of cookies to set.
+        """
+        await self._execute_command(NetworkCommands.set_cookies(cookies))
+        await self._execute_command(StorageCommands.set_cookies(cookies))
+    
     async def go_to(self, url: str, timeout=300):
         """
         Navigates to a URL in the page.
