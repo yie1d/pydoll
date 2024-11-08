@@ -218,7 +218,7 @@ class WebElement(FindElementsMixin):
         """
         for char in text:
             await self._execute_command(InputCommands.key_press(char))
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.1)
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:
