@@ -174,7 +174,7 @@ class Page(FindElementsMixin):
             str: The PDF data of the page.
         """
         response = await self._execute_command(PageCommands.print_to_pdf())
-        return response['result']['data'].encode('utf-8')
+        return response['result']['data']
 
     async def print_to_pdf(self, path: str):
         """
