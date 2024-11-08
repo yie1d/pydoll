@@ -208,6 +208,17 @@ class WebElement(FindElementsMixin):
             text (str): The text to send to the element.
         """
         await self._execute_command(InputCommands.insert_text(text))
+    
+    async def type_keys(self, text: str):
+        """
+        Types in a realistic manner by sending keys one by one.
+
+        Args:
+            text (str): The text to send to the element.
+        """
+        for char in text:
+            await self._execute_command(InputCommands.key_press(char))
+            await asyncio.sleep(0.2)
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:
