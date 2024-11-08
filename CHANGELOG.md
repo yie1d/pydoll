@@ -1,3 +1,9 @@
+## 0.2.0 (2024-11-08)
+
+### Feat
+
+- dynamic lib version using pyproject
+
 ## 0.1.1 (2024-11-07)
 
 ### Fix
