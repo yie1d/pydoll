@@ -55,12 +55,13 @@ jobs:
           git push
 
       - name: Update poetry.lock
+      - continue-on-error: true
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           poetry lock
           git add poetry.lock
-          git commit -m "Update poetry.lock for version ${{ needs.version-cz.outputs.version }}"
+          git commit -m "Update poetry.lock"
           git pull --rebase
           git push
 
