@@ -1,3 +1,10 @@
+## 0.4.1 (2024-11-08)
+
+### Fix
+
+- fixes workflow removing unnecessary hifen
+- reduce sleep duration in key press handling for improved speed
+
 ## 0.4.0 (2024-11-08)
 
 ### Feat
