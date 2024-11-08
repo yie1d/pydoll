@@ -1,3 +1,9 @@
+## 0.3.0 (2024-11-08)
+
+### Feat
+
+- set_download_path added in browser class methods
+
 ## 0.2.0 (2024-11-08)
 
 ### Feat
