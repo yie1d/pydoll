@@ -120,6 +120,16 @@ class Browser(ABC):
         ][0]['targetId']
         self._pages.append(valid_page)
 
+    async def set_download_path(self, path: str):
+        """
+        Sets the download path for the browser.
+        Args:
+            path (str): The path to the download directory.
+        """
+        await self._execute_command(
+            BrowserCommands.set_download_path(path)
+        )
+
     async def get_page(self) -> Page:
         """
         Retrieves a Page instance for an existing page in the browser.
