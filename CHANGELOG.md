@@ -1,3 +1,9 @@
+## 0.4.0 (2024-11-08)
+
+### Feat
+
+- add type_keys method for realistic key input simulation
+
 ## 0.3.1 (2024-11-08)
 
 ### Fix
