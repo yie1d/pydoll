@@ -25,6 +25,30 @@ jobs:
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
 
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="$HOME/.local/bin:$PATH"
+
+      - name: Update Poetry version in pyproject.toml
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          poetry version "${{ steps.cz.outputs.version }}"
+          git add pyproject.toml
+          git commit -m "Update pyproject.toml to version ${{ steps.cz.outputs.version }}"
+          git push
+
+      - name: Update poetry.lock
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          poetry lock
+          git add poetry.lock
+          git commit -m "Update poetry.lock for version ${{ steps.cz.outputs.version }}" 
+          git push
+
+
   release:
     name: Release
     needs: version
