@@ -1,3 +1,10 @@
+## 0.3.1 (2024-11-08)
+
+### Fix
+
+- addning new package version
+- removing encode utf8 in get_pdf_base64
+
 ## 0.3.0 (2024-11-08)
 
 ### Feat
