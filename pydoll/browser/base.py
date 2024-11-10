@@ -47,14 +47,14 @@ class Browser(ABC):  # noqa: PLR0904
         self.temp_dirs = []
         self._pages = []
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.stop()
         for temp_dir in self.temp_dirs:
             temp_dir.cleanup()
-        self.connection_handler.close()
+        await self.connection_handler.close()
 
     async def start(self) -> None:
         """
