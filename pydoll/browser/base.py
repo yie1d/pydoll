@@ -20,7 +20,7 @@ from pydoll.connection import ConnectionHandler
 from pydoll.events.fetch import FetchEvents
 
 
-class Browser(ABC):
+class Browser(ABC):  # noqa: PLR0904
     """
     A class to manage a browser instance for automated interactions.
 
@@ -58,11 +58,13 @@ class Browser(ABC):
 
     async def start(self) -> None:
         """
-        Starts the browser process with the specified options, including proxy configurations.
+        Starts the browser process with the specified options,
+        including proxy configurations.
 
-        This method initializes and launches the browser, setting up the necessary command-line
-        arguments. It checks for a specified user data directory, creating a temporary directory if none
-        is provided, and configures the browser to run in a controlled environment.
+        This method initializes and launches the browser, setting up the
+        necessary command-line arguments. It checks for a specified user data
+        directory, creating a temporary directory if none is provided,
+        and configures the browser to run in a controlled environment.
 
         Returns:
             Page: The Page instance for the browser.
@@ -74,12 +76,14 @@ class Browser(ABC):
 
         self.options.arguments.append('--no-first-run')
         self.options.arguments.append('--no-default-browser-check')
-        
+
         temp_dir = self._get_temp_dir()
 
-        if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
+        if '--user-data-dir' not in [
+            arg.split('=')[0] for arg in self.options.arguments
+        ]:
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
-        
+
         private_proxy, proxy_credentials = self._configure_proxy()
 
         self.process = subprocess.Popen(
@@ -126,9 +130,7 @@ class Browser(ABC):
         Args:
             path (str): The path to the download directory.
         """
-        await self._execute_command(
-            BrowserCommands.set_download_path(path)
-        )
+        await self._execute_command(BrowserCommands.set_download_path(path))
 
     async def get_page(self) -> Page:
         """
@@ -153,7 +155,8 @@ class Browser(ABC):
         Sets cookies in the browser.
 
         Args:
-            cookies (list[dict]): A list of dictionaries containing the cookie data.
+            cookies (list[dict]): A list of dictionaries containing
+               the cookie data.
         """
         await self._execute_command(StorageCommands.set_cookies(cookies))
         await self._execute_command(NetworkCommands.set_cookies(cookies))
@@ -172,10 +175,10 @@ class Browser(ABC):
         self, event_name: str, callback: callable, temporary: bool = False
     ):
         """
-        Registers an event callback for a specific event. This method has a global
-        scope and can be used to listen for events across all pages in the browser.
-        Each `Page` instance also has an `on` method that allows for listening to
-        events on a specific page.
+        Registers an event callback for a specific event. This method has
+        a global scope and can be used to listen for events across all pages
+        in the browser. Each `Page` instance also has an `on` method that
+        allows for listening to events on a specific page.
 
         Args:
             event_name (str): Name of the event to listen for.
@@ -348,17 +351,19 @@ class Browser(ABC):
 
     async def enable_page_events(self):
         """
-        Enables listening for page-related events over the websocket connection.
-        Once this method is invoked, the connection will emit events pertaining
-        to page activities, such as loading, navigation, and DOM updates, to any
-        registered event callbacks. For a comprehensive list of available page
-        events and their purposes, refer to the PageEvents class documentation.
+        Enables listening for page-related events over the websocket
+        connection. Once this method is invoked, the connection will emit
+        events pertaining to page activities, such as loading, navigation,
+        and DOM updates, to any registered event callbacks. For a comprehensive
+        list of available page events and their purposes, refer to the
+        PageEvents class documentation.
         This functionality is crucial for monitoring and reacting to changes
         in the page state in real-time.
 
-        This method has a global scope and can be used to listen for events across
-        all pages in the browser. Each Page instance also has an `enable_page_events`
-        method that allows for listening to events on a specific page.
+        This method has a global scope and can be used to listen
+        for events across all pages in the browser. Each Page instance also
+        has an `enable_page_events` method that allows for listening to events
+        on a specific page.
 
         Returns:
             None
@@ -369,16 +374,18 @@ class Browser(ABC):
 
     async def enable_network_events(self):
         """
-        Activates listening for network events through the websocket connection.
-        After calling this method, the connection will emit events related
-        to network activities, such as resource loading and response status,
-        to any registered event callbacks. This is essential for debugging
-        network interactions and analyzing resource requests. For details
-        on available network events, consult the NetworkEvents class documentation.
+        Activates listening for network events through the websocket
+        connection. After calling this method, the connection will emit
+        events related to network activities, such as resource loading and
+        response status, to any registered event callbacks. This is essential
+        for debugging network interactions and analyzing resource requests.
+        For details on available network events, consult the NetworkEvents
+        class documentation.
 
-        This method has a global scope and can be used to listen for events across
-        all pages in the browser. Each Page instance also has an `enable_network_events`
-        method that allows for listening to events on a specific page.
+        This method has a global scope and can be used to listen
+        for events across all pages in the browser. Each Page instance also
+        has an `enable_network_events` method that allows for listening to
+        events on a specific page.
 
         Returns:
             None
@@ -395,20 +402,22 @@ class Browser(ABC):
         are sent. This method allows you to modify, pause, or continue requests
         as needed. If handle_auth_requests is set to True, the connection will
         emit an event when an authentication is required during a request.
-        The resource_type parameter specifies which type of requests to intercept;
-        if omitted, all requests will be intercepted. Use the _continue_request
-        method to resume any paused requests. This is especially useful for
-        monitoring and controlling network interactions.
+        The resource_type parameter specifies which type of requests to
+        intercept; if omitted, all requests will be intercepted. Use the
+        _continue_request method to resume any paused requests. This is
+        especially useful for monitoring and controlling network interactions.
 
-        This method has a global scope and can be used to intercept requests across
-        all pages in the browser. Each Page instance also has an `enable_fetch_events`
-        method that allows for intercepting requests on a specific page.
+        This method has a global scope and can be used to intercept request
+        across all pages in the browser. Each Page instance also has an
+        `enable_fetch_events` method that allows for intercepting requests
+        on a specific page.
 
         Args:
             handle_auth_requests (bool): Whether to handle authentication
             requests that require user credentials.
             resource_type (str): The type of resource to intercept (e.g.,
-            'XHR', 'Script'). If not specified, all requests will be intercepted.
+            'XHR', 'Script'). If not specified, all requests will
+            be intercepted.
 
         Returns:
             None
@@ -428,9 +437,10 @@ class Browser(ABC):
         the page structure. For a full list of available DOM events, refer to
         the DomCommands class documentation.
 
-        This method has a global scope and can be used to listen for events across
-        all pages in the browser. Each Page instance also has an `enable_dom_events`
-        method that allows for listening to events on a specific page.
+        This method has a global scope and can be used to listen
+        for events across all pages in the browser. Each Page instance also has
+        an `enable_dom_events` method that allows for listening to events on
+        a specific page.
 
         Returns:
             None
@@ -466,8 +476,8 @@ class Browser(ABC):
         on the specified resource type. This method takes the event data that
         contains the request ID and uses it to continue the paused request,
         allowing the browser to proceed with the network operation. This is
-        particularly useful for handling requests that require conditional logic
-        before they are sent to the server.
+        particularly useful for handling requests that require conditional
+        logic before they are sent to the server.
 
         Args:
             event (dict): A dictionary containing the event data, including
@@ -486,13 +496,14 @@ class Browser(ABC):
         Resumes a network request that was previously paused in the browser
         and requires proxy authentication. This method is triggered when an
         authentication challenge is encountered during the request handling.
-        It uses the provided proxy credentials to continue the request, enabling
-        successful communication through the proxy server. After handling the
-        request, it disables fetch event monitoring.
+        It uses the provided proxy credentials to continue the request,
+        enabling successful communication through the proxy server. After
+        handling the request, it disables fetch event monitoring.
 
         Args:
-            event (dict): A dictionary containing the event data, which includes
-            the request ID for the paused request that needs to be resumed.
+            event (dict): A dictionary containing the event data, which
+            includes the request ID for the paused request that needs
+            to be resumed.
             proxy_username (str): The username for the proxy server
             authentication.
             proxy_password (str): The password for the proxy server

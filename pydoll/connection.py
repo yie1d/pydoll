@@ -63,7 +63,8 @@ class ConnectionHandler:
 
         Args:
             command (dict): The command to send, structured as a dictionary.
-            timeout (int, optional): Time in seconds to wait for a response. Defaults to 10.
+            timeout (int, optional): Time in seconds to wait for a response.
+                Defaults to 10.
 
         Returns:
             dict: The response from the browser.
@@ -130,8 +131,10 @@ class ConnectionHandler:
 
         Args:
             event_name (str): The name of the event to register.
-            callback (Callable): The function to call when the event is received.
-            temporary (bool, optional): If True, the callback will be removed after one use. Defaults to False.
+            callback (Callable): The function to call when the event
+                is received.
+            temporary (bool, optional): If True, the callback will be
+                removed after one use. Defaults to False.
 
         Raises:
             InvalidCallback: If the callback is not callable.
@@ -148,20 +151,24 @@ class ConnectionHandler:
             'temporary': temporary,
         }
         logger.info(
-            f"Registered callback for event '{event_name}' with ID {self._callback_id}"
+            "Registered callback for event '{event_name}'"
+            f"with ID {self._callback_id}"
         )
         self._callback_id += 1
 
     async def _receive_events(self):
         """
-        Listens for incoming events from the WebSocket connection and processes them.
+        Listens for incoming events from the WebSocket connection
+        and processes them.
 
-        Matches responses to pending commands and handles events based on registered callbacks.
+        Matches responses to pending commands and handles
+        events based on registered callbacks.
         """
         try:
             while True:
                 connection = await self.connection
                 event = await connection.recv()
+                print(event)
                 try:
                     event_json = json.loads(event)
                 except json.JSONDecodeError:
@@ -173,7 +180,8 @@ class ConnectionHandler:
                     and event_json['id'] in self._pending_commands
                 ):
                     logger.info(
-                        f'Received response for pending command ID {event_json["id"]}'
+                        'Received response for pending '
+                        f'command ID {event_json["id"]}'
                     )
                     self._pending_commands[event_json['id']].set_result(event)
                     continue

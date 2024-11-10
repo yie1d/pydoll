@@ -4,19 +4,25 @@ class FetchCommands:
 
     This class provides a structured way to create and manage commands related
     to fetch operations intercepted by the Fetch API. Each command corresponds
-    to specific actions that can be performed on fetch requests, such as continuing
-    a fetch request, fulfilling a fetch response, or handling authentication challenges.
+    to specific actions that can be performed on fetch requests, such as
+    continuing a fetch request, fulfilling a fetch response, or handling
+    authentication challenges.
 
     Attributes:
-        CONTINUE_REQUEST (dict): Template for continuing an intercepted fetch request.
-        CONTINUE_REQUEST_WITH_AUTH (dict): Template for continuing a fetch request
-            that requires authentication.
+        CONTINUE_REQUEST (dict): Template for continuing an intercepted fetch
+            request.
+        CONTINUE_REQUEST_WITH_AUTH (dict): Template for continuing a fetch
+            request that requires authentication.
         DISABLE (dict): Template for disabling fetch interception.
         ENABLE (dict): Template for enabling fetch interception.
-        FAIL_REQUEST (dict): Template for simulating a failure in a fetch request.
-        FULFILL_REQUEST (dict): Template for fulfilling a fetch request with custom responses.
-        GET_RESPONSE_BODY (dict): Template for retrieving the response body of a fetch request.
-        CONTINUE_RESPONSE (dict): Template for continuing a fetch response for an intercepted request.
+        FAIL_REQUEST (dict): Template for simulating a failure in a fetch
+            request.
+        FULFILL_REQUEST (dict): Template for fulfilling a fetch request with
+            custom responses.
+        GET_RESPONSE_BODY (dict): Template for retrieving the response body of
+            a fetch request.
+        CONTINUE_RESPONSE (dict): Template for continuing a fetch response for
+            an intercepted request.
     """
 
     CONTINUE_REQUEST = {'method': 'Fetch.continueRequest', 'params': {}}
@@ -32,7 +38,7 @@ class FetchCommands:
     CONTINUE_RESPONSE = {'method': 'Fetch.continueResponse', 'params': {}}
 
     @classmethod
-    def continue_request(
+    def continue_request(  # noqa: PLR0913, PLR0917
         cls,
         request_id: str,
         url: str = '',
@@ -44,17 +50,22 @@ class FetchCommands:
         """
         Creates a command to continue a paused fetch request.
 
-        This command allows the browser to resume a fetch operation that has been
-        intercepted. You can modify the fetch request URL, method, headers, and
-        body before continuing.
+        This command allows the browser to resume a fetch operation that has
+        been intercepted. You can modify the fetch request URL, method,
+        headers, and body before continuing.
 
         Args:
             request_id (str): The ID of the fetch request to continue.
-            url (str, optional): The new URL for the fetch request. Defaults to ''.
-            method (str, optional): The HTTP method to use (e.g., 'GET', 'POST'). Defaults to ''.
-            postData (str, optional): The body data to send with the fetch request. Defaults to ''.
-            headers (dict, optional): A dictionary of HTTP headers to include in the fetch request. Defaults to {}.
-            interceptResponse (bool, optional): Indicates if the response should be intercepted. Defaults to False.
+            url (str, optional): The new URL for the fetch request. Defaults to
+                ''.
+            method (str, optional): The HTTP method to use (e.g., 'GET',
+                'POST'). Defaults to ''.
+            postData (str, optional): The body data to send with the fetch
+                request. Defaults to ''.
+            headers (dict, optional): A dictionary of HTTP headers to include
+              in the fetch request. Defaults to {}.
+            interceptResponse (bool, optional): Indicates if the response
+              should be intercepted. Defaults to False.
 
         Returns:
             dict: A command template for continuing the fetch request.
@@ -80,7 +91,8 @@ class FetchCommands:
         cls, request_id: str, proxy_username: str, proxy_password: str
     ):
         """
-        Creates a command to continue a paused fetch request with authentication.
+        Creates a command to continue a paused fetch request with
+        authentication.
 
         This command is used when the fetch operation requires authentication.
         It provides the necessary credentials to continue the request.
@@ -91,7 +103,8 @@ class FetchCommands:
             proxy_password (str): The password for proxy authentication.
 
         Returns:
-            dict: A command template for continuing the fetch request with authentication.
+            dict: A command template for continuing the fetch request with
+                authentication.
         """
         continue_request_with_auth_template = (
             cls.CONTINUE_REQUEST_WITH_AUTH.copy()
@@ -126,12 +139,14 @@ class FetchCommands:
         Creates a command to enable fetch interception.
 
         This command allows the browser to start intercepting fetch requests.
-        You can specify whether to handle authentication challenges and the types
-        of resources to intercept.
+        You can specify whether to handle authentication challenges and the
+        types of resources to intercept.
 
         Args:
-            handle_auth_requests (bool): Indicates if authentication requests should be handled.
-            resource_type (str): The type of resource to intercept (e.g., 'Document', 'Image').
+            handle_auth_requests (bool): Indicates if authentication requests
+                should be handled.
+            resource_type (str): The type of resource to intercept (e.g.,
+                'Document', 'Image').
 
         Returns:
             dict: A command template for enabling fetch interception.
@@ -155,8 +170,8 @@ class FetchCommands:
         """
         Creates a command to simulate a failure in a fetch request.
 
-        This command allows you to simulate a failure for a specific fetch operation,
-        providing a reason for the failure.
+        This command allows you to simulate a failure for a specific fetch
+        operation, providing a reason for the failure.
 
         Args:
             request_id (str): The ID of the fetch request to fail.
@@ -171,7 +186,7 @@ class FetchCommands:
         return fail_request_template
 
     @classmethod
-    def fulfill_request(
+    def fulfill_request(  # noqa: PLR0913, PLR0917
         cls,
         request_id: str,
         responseCode: int,
@@ -183,16 +198,20 @@ class FetchCommands:
         """
         Creates a command to fulfill a fetch request with a custom response.
 
-        This command allows you to provide a custom response for a fetch operation,
-        including the HTTP status code, headers, and body content.
+        This command allows you to provide a custom response for a fetch
+        operation, including the HTTP status code, headers, and body content.
 
         Args:
             request_id (str): The ID of the fetch request to fulfill.
             responseCode (int): The HTTP status code to return.
-            responseHeaders (dict, optional): A dictionary of response headers. Defaults to {}.
-            binaryResponseHeaders (str, optional): Binary response headers. Defaults to ''.
-            body (str, optional): The body content of the response. Defaults to ''.
-            responsePhrase (str, optional): The response phrase (e.g., 'OK', 'Not Found'). Defaults to ''.
+            responseHeaders (dict, optional): A dictionary of response headers.
+                Defaults to {}.
+            binaryResponseHeaders (str, optional): Binary response headers.
+                Defaults to ''.
+            body (str, optional): The body content of the response. Defaults to
+                ''.
+            responsePhrase (str, optional): The response phrase (e.g., 'OK',
+                'Not Found'). Defaults to ''.
 
         Returns:
             dict: A command template for fulfilling the fetch request.
@@ -222,11 +241,12 @@ class FetchCommands:
         """
         Creates a command to retrieve the response body of a fetch request.
 
-        This command allows you to access the body of a completed fetch operation,
-        which can be useful for analyzing the response data.
+        This command allows you to access the body of a completed fetch
+        operation, which can be useful for analyzing the response data.
 
         Args:
-            request_id (str): The ID of the fetch request to retrieve the body from.
+            request_id (str): The ID of the fetch request to retrieve the body
+                from.
 
         Returns:
             dict: A command template for getting the response body.
@@ -245,17 +265,24 @@ class FetchCommands:
         responsePhrase: str = '',
     ):
         """
-        Creates a command to continue a fetch response for an intercepted request.
+        Creates a command to continue a fetch response for an intercepted
+        request.
 
-        This command allows the browser to continue the response flow for a specific fetch request,
-        including customizing the HTTP status code, headers, and response phrase.
+        This command allows the browser to continue the response flow for a
+        specific fetch request, including customizing the HTTP status code,
+        headers, and response phrase.
 
         Args:
-            requestId (str): The ID of the fetch request to continue the response for.
-            responseCode (int, optional): The HTTP status code to send. Defaults to ''.
-            responseHeaders (dict, optional): A dictionary of response headers. Defaults to {}.
-            binaryResponseHeaders (str, optional): Binary response headers. Defaults to ''.
-            responsePhrase (str, optional): The response phrase (e.g., 'OK'). Defaults to ''.
+            requestId (str): The ID of the fetch request to continue the
+                response for.
+            responseCode (int, optional): The HTTP status code to send.
+                Defaults to ''.
+            responseHeaders (dict, optional): A dictionary of response headers.
+                Defaults to {}.
+            binaryResponseHeaders (str, optional): Binary response headers.
+                Defaults to ''.
+            responsePhrase (str, optional): The response phrase (e.g., 'OK').
+                Defaults to ''.
 
         Returns:
             dict: A command template for continuing the fetch response.

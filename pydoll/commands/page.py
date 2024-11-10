@@ -1,9 +1,10 @@
 class PageCommands:
     """
-    PageCommands class provides a set of commands to interact with the Page domain
-    of the Chrome DevTools Protocol (CDP). These commands enable users to perform
-    operations related to web pages, such as capturing screenshots, navigating to
-    URLs, refreshing pages, printing to PDF, and enabling the Page domain.
+    PageCommands class provides a set of commands to interact with the
+    Page domain of the Chrome DevTools Protocol (CDP). These commands enable
+    users to perform operations related to web pages, such as capturing
+    screenshots, navigating to URLs, refreshing pages, printing to PDF,
+    and enabling the Page domain.
 
     The following operations can be performed:
     - Capture a screenshot of the current page.
@@ -40,13 +41,14 @@ class PageCommands:
 
         Returns:
             dict: The command to be sent to the browser,
-                  containing the method and parameters for setting the download path.
+                  containing the method and parameters for setting
+                  the download path.
         """
         command = cls.SET_DOWNLOAD_BEHAVIOR.copy()
         command['params']['behavior'] = 'allow'
         command['params']['downloadPath'] = path
         return command
-    
+
     @classmethod
     def screenshot(cls, format: str = 'png', quality: int = 100) -> dict:
         """
@@ -92,7 +94,8 @@ class PageCommands:
 
         Args:
             ignore_cache (bool): Whether to ignore the cache when refreshing.
-                                 If True, the cached resources will not be used.
+                                 If True, the cached resources will not be
+                                 used.
 
         Returns:
             dict: The command to be sent to the browser,
@@ -111,8 +114,10 @@ class PageCommands:
 
         Args:
             scale (int): The scale of the page to print. Default is 1 (100%).
-            paper_width (float): The width of the paper to print on, in inches. Default is 8.5 inches.
-            paper_height (float): The height of the paper to print on, in inches. Default is 11 inches.
+            paper_width (float): The width of the paper to print on, in inches.
+                Default is 8.5 inches.
+            paper_height (float): The height of the paper to print on,
+                in inches. Default is 11 inches.
 
         Returns:
             dict: The command to be sent to the browser,

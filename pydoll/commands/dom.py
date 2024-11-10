@@ -6,9 +6,10 @@ from pydoll.constants import By
 
 class DomCommands:
     """
-    A class to define commands for interacting with the Document Object Model (DOM)
-    using the Chrome DevTools Protocol (CDP). The commands allow for various
-    operations on DOM nodes, such as enabling the DOM domain, retrieving the
+    A class to define commands for interacting with the Document
+    Object Model (DOM) using the Chrome DevTools Protocol (CDP).
+    The commands allow for various operations on DOM nodes,
+    such as enabling the DOM domain, retrieving the
     DOM document, describing nodes, and querying elements.
 
     Attributes:
@@ -46,14 +47,13 @@ class DomCommands:
         'params': {},
     }
 
-
     @classmethod
     def get_properties(cls, object_id: str) -> dict:
         """Generates the command to get the properties of a specific object."""
         command = cls._create_command(cls.GET_PROPERTIES, object_id=object_id)
         command['params']['ownProperties'] = True
         return command
-    
+
     @classmethod
     def scroll_into_view(
         cls, node_id: int = None, object_id: str = ''
@@ -72,12 +72,15 @@ class DomCommands:
 
     @classmethod
     def dom_document(cls) -> dict:
-        """Generates the command to get the root DOM node of the current page."""
+        """
+        Generates the command to get the root DOM node of the current page.
+        """
         return cls.DOM_DOCUMENT
 
     @classmethod
     def request_node(cls, object_id: str) -> dict:
-        """Generates the command to request a specific DOM node by its object ID."""
+        """Generates the command to request a specific DOM node by its object
+        ID."""
         return cls._create_command(
             cls.REQUEST_NODE_TEMPLATE, object_id=object_id
         )
@@ -91,7 +94,9 @@ class DomCommands:
 
     @classmethod
     def box_model(cls, node_id: int = None, object_id: str = '') -> dict:
-        """Generates the command to get the box model of a specific DOM node."""
+        """
+        Generates the command to get the box model of a specific DOM node.
+        """
         return cls._create_command(
             cls.BOX_MODEL_TEMPLATE, node_id=node_id, object_id=object_id
         )
@@ -114,7 +119,8 @@ class DomCommands:
         node_id: int = None,
         object_id: str = '',
     ) -> dict:
-        """Generates a command to find a DOM element based on the specified criteria."""
+        """Generates a command to find a DOM element based on the specified
+        criteria."""
         match by:
             case By.CSS:
                 return cls._find_element_by_selector(value, node_id)
@@ -128,7 +134,8 @@ class DomCommands:
                 return cls._find_element_by_selector(value, node_id)
             case _:
                 raise ValueError(
-                    "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
+                    "Unsupported selector type. Use 'css', 'xpath', "
+                    "'class_name', or 'id'."
                 )
 
     @classmethod
@@ -139,7 +146,8 @@ class DomCommands:
         node_id: int = None,
         object_id: str = '',
     ) -> dict:
-        """Generates a command to find multiple DOM elements based on the specified criteria."""
+        """Generates a command to find multiple DOM elements based on the
+        specified criteria."""
         match by:
             case By.CSS:
                 return cls._find_elements_by_selector(value, node_id)
@@ -153,7 +161,8 @@ class DomCommands:
                 return cls._find_elements_by_selector(value, node_id)
             case _:
                 raise ValueError(
-                    "Unsupported selector type. Use 'css', 'xpath', 'class_name', or 'id'."
+                    "Unsupported selector type. Use 'css', 'xpath', "
+                    "'class_name', or 'id'."
                 )
 
     @classmethod
@@ -209,23 +218,23 @@ class DomCommands:
             command = cls._create_command(
                 cls.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
             )
-            command['params']['functionDeclaration'] = f'''
-            function() {{
-                return document.evaluate(
-                    "{escaped_value}", document, null,
-                    XPathResult.FIRST_ORDERED_NODE_TYPE, null
-                ).singleNodeValue;
-            }}
-            '''
+            command['params']['functionDeclaration'] = (
+                'function() {'
+                'return document.evaluate('
+                f'"{escaped_value}", document, null, '
+                'XPathResult.FIRST_ORDERED_NODE_TYPE, null'
+                ').singleNodeValue;'
+                '}'
+            )
         else:
             command = cls._create_command(cls.EVALUATE_TEMPLATE)
-            command['params']['expression'] = f'''
-            var element = document.evaluate(
-                "{escaped_value}", document, null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE, null
-            ).singleNodeValue;
-            element;
-            '''
+            command['params']['expression'] = (
+                'var element = document.evaluate('
+                f'"{escaped_value}", document, null, '
+                'XPathResult.FIRST_ORDERED_NODE_TYPE, null'
+                ').singleNodeValue;'
+                'element;'
+            )
         return command
 
     @classmethod
@@ -247,35 +256,30 @@ class DomCommands:
             command = cls._create_command(
                 cls.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
             )
-            command['params']['functionDeclaration'] = f'''
-            function() {{
-                var elements = document.evaluate(
-                    "{escaped_value}", document, null,
-                    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
-                );
-
-                var results = [];
-
-                for (var i = 0; i < elements.snapshotLength; i++) {{
-                    results.push(elements.snapshotItem(i));
-                }}
-
-                return results;
-            }}
-            '''
+            command['params']['functionDeclaration'] = (
+                'function() {'
+                'var elements = document.evaluate('
+                f'"{escaped_value}", document, null, '
+                'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null'
+                ');'
+                'var results = [];'
+                'for (var i = 0; i < elements.snapshotLength; i++) {'
+                'results.push(elements.snapshotItem(i));'
+                '}'
+                'return results;'
+                '}'
+            )
         else:
             command = cls._create_command(cls.EVALUATE_TEMPLATE)
-            command['params']['expression'] = f'''
-            var elements = document.evaluate(
-                "{escaped_value}", document, null,
-                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
-            );
-            var results = [];
-
-            for (var i = 0; i < elements.snapshotLength; i++) {{
-                results.push(elements.snapshotItem(i));
-            }}
-
-            results;
-            '''
+            command['params']['expression'] = (
+                'var elements = document.evaluate('
+                f'"{escaped_value}", document, null, '
+                'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null'
+                ');'
+                'var results = [];'
+                'for (var i = 0; i < elements.snapshotLength; i++) {'
+                'results.push(elements.snapshotItem(i));'
+                '}'
+                'results;'
+            )
         return command

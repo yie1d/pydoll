@@ -6,22 +6,24 @@ import aiofiles
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
-from pydoll.commands.storage import StorageCommands
 from pydoll.commands.page import PageCommands
+from pydoll.commands.storage import StorageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.events.page import PageEvents
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
 
-class Page(FindElementsMixin):
+class Page(FindElementsMixin):  # noqa: PLR0904
     def __init__(self, connection_port: int, page_id: str):
         """
         Initializes the Page instance.
 
         Args:
-            connection_handler (ConnectionHandler): The connection handler instance.
-            page_id (str): The ID of the page, obtained via the DevTools Protocol.
+            connection_handler (ConnectionHandler): The connection handler
+                instance.
+            page_id (str): The ID of the page, obtained via the DevTools
+                Protocol.
         """
         self._connection_handler = ConnectionHandler(connection_port, page_id)
         self._page_events_enabled = False
@@ -101,7 +103,9 @@ class Page(FindElementsMixin):
         Returns:
             list: A list of cookies.
         """
-        response = await self._execute_command(NetworkCommands.get_all_cookies())
+        response = await self._execute_command(
+            NetworkCommands.get_all_cookies()
+        )
         return response['result']['cookies']
 
     async def set_cookies(self, cookies: list[dict]):
@@ -119,7 +123,7 @@ class Page(FindElementsMixin):
         """
         await self._execute_command(StorageCommands.clear_cookies())
         await self._execute_command(NetworkCommands.clear_browser_cookies())
-    
+
     async def go_to(self, url: str, timeout=300):
         """
         Navigates to a URL in the page.
@@ -165,7 +169,7 @@ class Page(FindElementsMixin):
             path (str): The path where the downloaded files should be saved.
         """
         await self._execute_command(PageCommands.set_download_path(path))
-        
+
     async def get_pdf_base64(self):
         """
         Retrieves the PDF data of the page.
@@ -216,13 +220,15 @@ class Page(FindElementsMixin):
 
     async def get_network_response_bodies(self, matches: list[str] = []):
         """
-        Retrieves the response bodies of network requests that match the specified pattern.
+        Retrieves the response bodies of network requests that match the
+        specified pattern.
 
         Args:
             matches (list): The URL patterns to match network requests against.
 
         Returns:
-            list: A list of response bodies from network requests that match the specified patterns.
+            list: A list of response bodies from network requests that match
+                the specified patterns.
         """
         logs_matched = await self.get_network_logs(matches)
         responses = []
@@ -305,7 +311,8 @@ class Page(FindElementsMixin):
 
         Args:
             event (str): The event to listen for.
-            callback (callable): The callback function to execute when the event is triggered.
+            callback (callable): The callback function to execute when the
+                event is triggered.
             temporary (bool): Whether the event listener is temporary or not.
         """
 

@@ -1,4 +1,5 @@
 import asyncio
+
 from bs4 import BeautifulSoup
 
 from pydoll.commands.dom import DomCommands
@@ -21,7 +22,7 @@ class WebElement(FindElementsMixin):
 
         Args:
             node (dict): The node description from the browser.
-            connection_handler (ConnectionHandler): The connection handler instance.
+            connection_handler (ConnectionHandler): The connection instance.
         """
         self._node = node
         self._search_method = method
@@ -105,7 +106,7 @@ class WebElement(FindElementsMixin):
             bool: The enabled status of the element.
         """
         return bool('disabled' not in self._attributes.keys())
-    
+
     @property
     async def bounds(self) -> list:
         """
@@ -192,12 +193,21 @@ class WebElement(FindElementsMixin):
 
     async def click_option_tag(self):
         script = f'''
-        document.querySelector('option[value="{self.value}"]').selected = true
-        var selectParentXpath = '//option[@value="{self.value}"]//ancestor::select'
-        var select = document.evaluate(selectParentXpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; 
-        var event = new Event('change', {{ bubbles: true }})
-        select.dispatchEvent(event)
+        document.querySelector('option[value="{self.value}"]').selected = true;
+        var selectParentXpath = (
+            '//option[@value="{self.value}"]//ancestor::select'
+        );
+        var select = document.evaluate(
+            selectParentXpath,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+        ).singleNodeValue;
+        var event = new Event('change', {{ bubbles: true }});
+        select.dispatchEvent(event);
         '''
+
         await self._execute_command(DomCommands.evaluate_js(script))
 
     async def send_keys(self, text: str):
@@ -208,7 +218,7 @@ class WebElement(FindElementsMixin):
             text (str): The text to send to the element.
         """
         await self._execute_command(InputCommands.insert_text(text))
-    
+
     async def type_keys(self, text: str):
         """
         Types in a realistic manner by sending keys one by one.

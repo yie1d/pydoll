@@ -9,14 +9,18 @@ def create_web_element(*args, **kwargs):
     """
     Creates a WebElement instance to avoid circular imports.
     """
-    from pydoll.element import WebElement
+    from pydoll.element import WebElement  # noqa: PLC0415
 
     return WebElement(*args, **kwargs)
 
 
 class FindElementsMixin:
     async def wait_element(
-        self, by: DomCommands.SelectorType, value: str, timeout: int = 10, raise_exc: bool = True
+        self,
+        by: DomCommands.SelectorType,
+        value: str,
+        timeout: int = 10,
+        raise_exc: bool = True,
     ):
         """
         Waits for an element to be present in the DOM.
@@ -24,7 +28,8 @@ class FindElementsMixin:
         Args:
             by (SelectorType): The type of selector to use.
             value (str): The value of the selector.
-            timeout (int, optional): Time in seconds to wait for the element. Defaults to 10.
+            timeout (int, optional): Time in seconds to wait for the element.
+            Defaults to 10.
 
         Returns:
             Element: The element found in the DOM.
@@ -107,14 +112,16 @@ class FindElementsMixin:
 
     async def _get_nodes_description(self, by: str, value: str):
         """
-        Executes a command to find elements on the page and returns their descriptions.
+        Executes a command to find elements on the page and returns their
+        descriptions.
 
         Args:
             by (str): The type of selector to use.
             value (str): The value of the selector to use.
 
         Returns:
-            list: The descriptions of the found nodes or an empty list if not found.
+            list: The descriptions of the found nodes or an empty list if
+            not found.
         """
         if hasattr(self, '_node'):
             root_node_id = self._node['nodeId']
@@ -139,10 +146,10 @@ class FindElementsMixin:
                 .get('objectId')
             ):
                 return []
-            
+
             object_id = response['result']['result']['objectId']
             query_response = await self._execute_command(
-                    DomCommands.get_properties(object_id=object_id)
+                DomCommands.get_properties(object_id=object_id)
             )
             response = []
             for query in query_response['result']['result']:
@@ -157,7 +164,8 @@ class FindElementsMixin:
 
     async def _get_node_description(self, by: str, value: str):
         """
-        Executes a command to find an element on the page and returns its description.
+        Executes a command to find an element on the page and returns its
+        description.
 
         Args:
             by (str): The type of selector to use.
@@ -210,7 +218,8 @@ class FindElementsMixin:
         Describes nodes based on the response from finding the elements.
 
         Args:
-            response (dict): The response containing the result of finding the nodes.
+            response (dict): The response containing the result of finding
+            the nodes.
             by (str): The selector type used to find the nodes.
 
         Returns:
@@ -219,14 +228,18 @@ class FindElementsMixin:
         nodes_description = []
         if by == By.XPATH:
             for object_id in response:
-                
                 try:
-                    node_description = await self._describe_node(object_id=object_id)
+                    node_description = await self._describe_node(
+                        object_id=object_id
+                    )
                 except KeyError:
                     continue
 
                 node_id = await self._get_node_id_by_object_id(object_id)
-                node_description.update({'nodeId': node_id, 'objectId': object_id})
+                node_description.update({
+                    'nodeId': node_id,
+                    'objectId': object_id,
+                })
                 nodes_description.append(node_description)
         else:
             for node_id in response['result']['nodeIds']:
@@ -244,7 +257,8 @@ class FindElementsMixin:
         Describes a node based on the response from finding the element.
 
         Args:
-            response (dict): The response containing the result of finding the node.
+            response (dict): The response containing the result of finding
+            the node.
             by (str): The selector type used to find the node.
 
         Returns:

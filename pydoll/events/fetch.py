@@ -9,12 +9,12 @@ class FetchEvents:
 
     AUTH_REQUIRED = 'Fetch.authRequired'
     """
-    Event triggered when authentication is required for a network 
+    Event triggered when authentication is required for a network
     request.
 
-    This event allows developers to respond to authentication 
-    challenges, enabling them to provide credentials or take 
-    appropriate actions when the requested resource requires 
+    This event allows developers to respond to authentication
+    challenges, enabling them to provide credentials or take
+    appropriate actions when the requested resource requires
     authentication.
     """
 
@@ -22,8 +22,8 @@ class FetchEvents:
     """
     Event triggered when a network request is paused.
 
-    This event is particularly useful for developers who want to 
-    analyze or modify requests before they are sent. When a request 
-    is paused, it gives the opportunity to inspect the request data 
+    This event is particularly useful for developers who want to
+    analyze or modify requests before they are sent. When a request
+    is paused, it gives the opportunity to inspect the request data
     or alter headers before resuming it.
     """

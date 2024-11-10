@@ -1,9 +1,9 @@
 class BrowserCommands:
     """
     BrowserCommands class provides a set of commands to interact with the
-    browser's main functionality based on CDP. These commands allow for managing browser
-    windows, such as closing windows, retrieving window IDs, and adjusting
-    window bounds (size and state).
+    browser's main functionality based on CDP. These commands allow for
+    managing browser windows, such as closing windows, retrieving window IDs,
+    and adjusting window bounds (size and state).
 
     The following operations can be performed:
     - Close the browser.

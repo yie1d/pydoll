@@ -15,7 +15,8 @@ class InputCommands:
     @classmethod
     def mouse_press(cls, x: int, y: int) -> dict:
         """
-        Generates the command to simulate pressing the mouse button on a specific location.
+        Generates the command to simulate pressing the mouse button on a
+        specific location.
 
         Args:
             x (int): The x-coordinate of the mouse press.
