@@ -152,7 +152,7 @@ class ConnectionHandler:
         }
         logger.info(
             "Registered callback for event '{event_name}'"
-            f"with ID {self._callback_id}"
+            f'with ID {self._callback_id}'
         )
         self._callback_id += 1
 
