@@ -371,7 +371,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             lambda _: page_loaded.set(),
             temporary=True,
         )
-        
+
         try:
             await asyncio.wait_for(page_loaded.wait(), timeout=5)
         except asyncio.TimeoutError:
