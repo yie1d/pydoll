@@ -2,10 +2,11 @@ import asyncio
 
 from bs4 import BeautifulSoup
 
+from pydoll import exceptions
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
 from pydoll.connection import ConnectionHandler
-from pydoll.constants import By
+from pydoll.constants import By, Scripts
 from pydoll.mixins.find_elements import FindElementsMixin
 
 
@@ -135,6 +136,33 @@ class WebElement(FindElementsMixin):
         response = await self._execute_command(command)
         return response['result']['outerHTML']
 
+    async def _execute_script(
+        self, script: str, return_by_value: bool = False
+    ):
+        """
+        Executes a JavaScript script on the element.
+
+        Args:
+            script (str): The JavaScript script to execute.
+        """
+        return await self._execute_command(
+            DomCommands.call_function_on(
+                self._node['objectId'], script, return_by_value
+            )
+        )
+
+    async def _is_element_visible(self):
+        result = await self._execute_script(
+            Scripts.ELEMENT_VISIBLE, return_by_value=True
+        )
+        return result['result']['result']['value']
+
+    async def _is_element_on_top(self):
+        result = await self._execute_script(
+            Scripts.ELEMENT_ON_TOP, return_by_value=True
+        )
+        return result['result']['result']['value']
+
     async def get_element_text(self) -> str:
         """
         Retrieves the text of the element.
@@ -175,9 +203,47 @@ class WebElement(FindElementsMixin):
             )
         await self._execute_command(command)
 
-    async def click(self, x_offset: int = 0, y_offset: int = 0):
-        if self._node['nodeName'].lower() == 'option':
+    async def click(self):
+
+        if self._is_option_tag():
             return await self.click_option_tag()
+
+        await self.scroll_into_view()
+
+        if not await self._is_element_visible():
+            raise exceptions.ElementNotVisible(
+                'Element is not visible on the page.'
+            )
+
+        if not await self._is_element_on_top():
+            raise exceptions.ClickIntercepted(
+                'Element is not on top of the page.'
+            )
+
+        result = await self._execute_script(
+            Scripts.CLICK, return_by_value=True
+        )
+        clicked = result['result']['result']['value']
+        if not clicked:
+            raise exceptions.ElementNotInteractable(
+                'Element is not interactable.'
+            )
+
+    async def realistic_click(self, x_offset: int = 0, y_offset: int = 0):
+        if not await self._is_element_visible():
+            raise exceptions.ElementNotVisible(
+                'Element is not visible on the page.'
+            )
+
+        if not await self._is_element_on_top():
+            raise exceptions.ClickIntercepted(
+                'Element is not on top of the page.'
+            )
+
+        if self._is_option_tag():
+            return await self.click_option_tag()
+
+        await self.scroll_into_view()
 
         element_bounds = await self.bounds
         position_to_click = self._calculate_center(element_bounds)
@@ -192,22 +258,7 @@ class WebElement(FindElementsMixin):
         await self._connection_handler.execute_command(release_command)
 
     async def click_option_tag(self):
-        script = f'''
-        document.querySelector('option[value="{self.value}"]').selected = true;
-        var selectParentXpath = (
-            '//option[@value="{self.value}"]//ancestor::select'
-        );
-        var select = document.evaluate(
-            selectParentXpath,
-            document,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null
-        ).singleNodeValue;
-        var event = new Event('change', {{ bubbles: true }});
-        select.dispatchEvent(event);
-        '''
-
+        script = Scripts.CLICK_OPTION_TAG.replace('{self.value}', self.value)
         await self._execute_command(DomCommands.evaluate_js(script))
 
     async def send_keys(self, text: str):
@@ -229,6 +280,9 @@ class WebElement(FindElementsMixin):
         for char in text:
             await self._execute_command(InputCommands.key_press(char))
             await asyncio.sleep(0.1)
+
+    def _is_option_tag(self):
+        return self._node['nodeName'].lower() == 'option'
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:
