@@ -32,3 +32,15 @@ class BrowserNotRunning(Exception):
 
 class ElementNotFound(Exception):
     pass
+
+
+class ClickIntercepted(Exception):
+    pass
+
+
+class ElementNotVisible(Exception):
+    pass
+
+
+class ElementNotInteractable(Exception):
+    pass

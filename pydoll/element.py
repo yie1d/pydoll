@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from pydoll import exceptions
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
+from pydoll.commands.runtime import RuntimeCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import By, Scripts
 from pydoll.mixins.find_elements import FindElementsMixin
@@ -146,7 +147,7 @@ class WebElement(FindElementsMixin):
             script (str): The JavaScript script to execute.
         """
         return await self._execute_command(
-            DomCommands.call_function_on(
+            RuntimeCommands.call_function_on(
                 self._node['objectId'], script, return_by_value
             )
         )
@@ -204,7 +205,6 @@ class WebElement(FindElementsMixin):
         await self._execute_command(command)
 
     async def click(self):
-
         if self._is_option_tag():
             return await self.click_option_tag()
 
@@ -259,7 +259,7 @@ class WebElement(FindElementsMixin):
 
     async def click_option_tag(self):
         script = Scripts.CLICK_OPTION_TAG.replace('{self.value}', self.value)
-        await self._execute_command(DomCommands.evaluate_js(script))
+        await self._execute_command(RuntimeCommands.evaluate_script(script))
 
     async def send_keys(self, text: str):
         """
