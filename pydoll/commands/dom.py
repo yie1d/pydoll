@@ -66,6 +66,20 @@ class DomCommands:
         )
 
     @classmethod
+    def call_function_on(
+        cls,
+        object_id: str,
+        function_declaration: str,
+        return_by_value: bool = False,
+    ) -> dict:
+        """Generates the command to call a function on a specific object."""
+        command = cls._create_command(cls.CALL_FUNCTION_ON_TEMPLATE)
+        command['params']['objectId'] = object_id
+        command['params']['functionDeclaration'] = function_declaration
+        command['params']['returnByValue'] = return_by_value
+        return command
+
+    @classmethod
     def get_outer_html(cls, node_id: int) -> dict:
         """Generates the command to get the outer HTML"""
         return cls._create_command(cls.GET_OUTER_HTML, node_id=node_id)
