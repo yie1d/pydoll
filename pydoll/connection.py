@@ -168,7 +168,6 @@ class ConnectionHandler:
             while True:
                 connection = await self.connection
                 event = await connection.recv()
-                print(event)
                 try:
                     event_json = json.loads(event)
                 except json.JSONDecodeError:
