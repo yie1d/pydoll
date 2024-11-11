@@ -345,10 +345,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
                 object_id, script, return_by_value=True
             )
         else:
-            command = {
-                'method': 'Runtime.evaluate',
-                'params': {'expression': script, 'returnByValue': True},
-            }
+            command = RuntimeCommands.evaluate_script(script)
         return await self._execute_command(command)
 
     async def _wait_page_load(self, timeout: int = 300):
