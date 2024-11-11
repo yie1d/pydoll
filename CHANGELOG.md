@@ -1,3 +1,13 @@
+## 0.4.3 (2024-11-11)
+
+### Fix
+
+- rename event variables for clarity and improve timeout handling
+
+### Refactor
+
+- remove debug print statement from connection event handling
+
 ## 0.4.2 (2024-11-11)
 
 ### Fix
