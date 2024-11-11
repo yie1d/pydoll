@@ -337,6 +337,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         of that element. To provide the element context, use the 'argument'
         keyword in the script.
 
+        Examples:
+        ```python
+        await page.execute_script('argument.click()', element)
+        await page.execute_script('argument.value = "Hello, World!"', element)
+        ```
+
         Args:
             script (str): The JavaScript script to execute.
         """
