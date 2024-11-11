@@ -354,18 +354,28 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             page_events_auto_enabled = True
             await self.enable_page_events()
 
-        page_loaded = asyncio.Event()
+        dom_loaded = asyncio.Event()
         await self.on(
             PageEvents.DOM_CONTENT_LOADED,
-            lambda _: page_loaded.set(),
+            lambda _: dom_loaded.set(),
             temporary=True,
         )
         try:
-            await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
+            await asyncio.wait_for(dom_loaded.wait(), timeout=timeout)
         except asyncio.TimeoutError:
-            print('TimeoutError')
+            pass
 
-        await asyncio.sleep(1.5)
+        page_loaded = asyncio.Event()
+        await self.on(
+            PageEvents.PAGE_LOADED,
+            lambda _: page_loaded.set(),
+            temporary=True,
+        )
+        
+        try:
+            await asyncio.wait_for(page_loaded.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            pass
 
         if page_events_auto_enabled:
             await self.disable_page_events()
