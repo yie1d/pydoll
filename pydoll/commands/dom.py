@@ -1,6 +1,7 @@
 import copy
 from typing import Literal
 
+from pydoll.commands.runtime import RuntimeCommands
 from pydoll.constants import By
 
 
@@ -26,14 +27,9 @@ class DomCommands:
         'method': 'DOM.querySelectorAll',
         'params': {},
     }
-    EVALUATE_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     BOX_MODEL_TEMPLATE = {'method': 'DOM.getBoxModel', 'params': {}}
     RESOLVE_NODE_TEMPLATE = {'method': 'DOM.resolveNode', 'params': {}}
     REQUEST_NODE_TEMPLATE = {'method': 'DOM.requestNode', 'params': {}}
-    CALL_FUNCTION_ON_TEMPLATE = {
-        'method': 'Runtime.callFunctionOn',
-        'params': {},
-    }
     GET_OUTER_HTML = {
         'method': 'DOM.getOuterHTML',
         'params': {},
@@ -42,17 +38,6 @@ class DomCommands:
         'method': 'DOM.scrollIntoViewIfNeeded',
         'params': {},
     }
-    GET_PROPERTIES = {
-        'method': 'Runtime.getProperties',
-        'params': {},
-    }
-
-    @classmethod
-    def get_properties(cls, object_id: str) -> dict:
-        """Generates the command to get the properties of a specific object."""
-        command = cls._create_command(cls.GET_PROPERTIES, object_id=object_id)
-        command['params']['ownProperties'] = True
-        return command
 
     @classmethod
     def scroll_into_view(
@@ -109,7 +94,7 @@ class DomCommands:
     @classmethod
     def get_current_url(cls) -> dict:
         """Generates the command to get the current URL of the page."""
-        return cls.evaluate_js('window.location.href')
+        return RuntimeCommands.evaluate_script('window.location.href')
 
     @classmethod
     def find_element(
@@ -171,16 +156,6 @@ class DomCommands:
         return cls._create_command(cls.RESOLVE_NODE_TEMPLATE, node_id=node_id)
 
     @classmethod
-    def evaluate_js(cls, expression: str) -> dict:
-        """Generates the command to evaluate JavaScript code."""
-        command = copy.deepcopy(cls.EVALUATE_TEMPLATE)
-        command['params'] = {
-            'expression': expression,
-            'returnByValue': False,
-        }
-        return command
-
-    @classmethod
     def _create_command(
         cls,
         template: dict,
@@ -216,7 +191,7 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             command = cls._create_command(
-                cls.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
+                RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
             )
             command['params']['functionDeclaration'] = (
                 'function() {'
@@ -227,7 +202,7 @@ class DomCommands:
                 '}'
             )
         else:
-            command = cls._create_command(cls.EVALUATE_TEMPLATE)
+            command = cls._create_command(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
                 'var element = document.evaluate('
                 f'"{escaped_value}", document, null, '
@@ -254,7 +229,7 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             command = cls._create_command(
-                cls.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
+                RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
             )
             command['params']['functionDeclaration'] = (
                 'function() {'
@@ -270,7 +245,7 @@ class DomCommands:
                 '}'
             )
         else:
-            command = cls._create_command(cls.EVALUATE_TEMPLATE)
+            command = cls._create_command(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
                 'var elements = document.evaluate('
                 f'"{escaped_value}", document, null, '

@@ -7,8 +7,10 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
+from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.connection import ConnectionHandler
+from pydoll.element import WebElement
 from pydoll.events.page import PageEvents
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
@@ -328,20 +330,31 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             event_name, function_to_register, temporary
         )
 
-    async def execute_js_script(self, script: str) -> dict:
+    async def execute_script(self, script: str, element: WebElement = None):
         """
         Executes a JavaScript script in the page.
+        If an element is provided, the script will be executed in the context
+        of that element. To provide the element context, use the 'argument'
+        keyword in the script.
+
+        Examples:
+        ```python
+        await page.execute_script('argument.click()', element)
+        await page.execute_script('argument.value = "Hello, World!"', element)
+        ```
 
         Args:
             script (str): The JavaScript script to execute.
-
-        Returns:
-            dict: The result of the JavaScript script execution.
         """
-        command = {
-            'method': 'Runtime.evaluate',
-            'params': {'expression': script, 'returnByValue': True},
-        }
+        if element:
+            script = script.replace('argument', 'this')
+            script = f'function(){{ {script} }}'
+            object_id = element._node['objectId']
+            command = RuntimeCommands.call_function_on(
+                object_id, script, return_by_value=True
+            )
+        else:
+            command = RuntimeCommands.evaluate_script(script)
         return await self._execute_command(command)
 
     async def _wait_page_load(self, timeout: int = 300):
