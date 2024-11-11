@@ -231,11 +231,6 @@ class WebElement(FindElementsMixin):
                 'Element is not visible on the page.'
             )
 
-        if not await self._is_element_on_top():
-            raise exceptions.ClickIntercepted(
-                'Element is not on top of the page.'
-            )
-
         result = await self._execute_script(
             Scripts.CLICK, return_by_value=True
         )
@@ -249,11 +244,6 @@ class WebElement(FindElementsMixin):
         if not await self._is_element_visible():
             raise exceptions.ElementNotVisible(
                 'Element is not visible on the page.'
-            )
-
-        if not await self._is_element_on_top():
-            raise exceptions.ClickIntercepted(
-                'Element is not on top of the page.'
             )
 
         if self._is_option_tag():
