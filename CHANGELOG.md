@@ -1,3 +1,14 @@
+## 0.4.2 (2024-11-11)
+
+### Fix
+
+- update event handling to use DOM_CONTENT_LOADED for page load
+- convert Browser context management to async methods
+
+### Refactor
+
+- fix string formatting in logger info message for clarity
+
 ## 0.4.1 (2024-11-08)
 
 ### Fix
