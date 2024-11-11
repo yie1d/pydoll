@@ -1,3 +1,17 @@
+## 0.5.0 (2024-11-11)
+
+### Feat
+
+- add method to generate command for calling a function on an object
+- implement script execution and visibility checks in click method
+- add JavaScript functions for element visibility and interaction
+
+### Refactor
+
+- enhance exception classes with descriptive error messages
+- simplify command creation by using RuntimeCommands.evaluate_script
+- refactor JavaScript execution and introduce runtime commands
+
 ## 0.4.4 (2024-11-11)
 
 ### Fix
