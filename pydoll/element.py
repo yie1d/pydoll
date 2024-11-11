@@ -153,12 +153,28 @@ class WebElement(FindElementsMixin):
         )
 
     async def _is_element_visible(self):
+        """
+        Verifies if the element is visible using JavaScript.
+        It uses the getBoundingClientRect method to check if the element is
+        within the viewport and the width and height are greater than 0.
+
+        Returns:
+            bool: True if the element is visible, False otherwise.
+        """
         result = await self._execute_script(
             Scripts.ELEMENT_VISIBLE, return_by_value=True
         )
         return result['result']['result']['value']
 
     async def _is_element_on_top(self):
+        """
+        Verifies if the element is on top of the page using JavaScript.
+        It uses the elementFromPoint method to check if the element is the
+        topmost element at the center of its bounding box.
+
+        Returns:
+            bool: True if the element is on top of the page, False otherwise.
+        """
         result = await self._execute_script(
             Scripts.ELEMENT_ON_TOP, return_by_value=True
         )

@@ -333,6 +333,9 @@ class Page(FindElementsMixin):  # noqa: PLR0904
     async def execute_script(self, script: str, element: WebElement = None):
         """
         Executes a JavaScript script in the page.
+        If an element is provided, the script will be executed in the context
+        of that element. To provide the element context, use the 'argument'
+        keyword in the script.
 
         Args:
             script (str): The JavaScript script to execute.
