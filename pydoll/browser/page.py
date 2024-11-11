@@ -356,12 +356,16 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         page_loaded = asyncio.Event()
         await self.on(
-            PageEvents.PAGE_LOADED, lambda _: page_loaded.set(), temporary=True
+            PageEvents.DOM_CONTENT_LOADED,
+            lambda _: page_loaded.set(),
+            temporary=True,
         )
         try:
             await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             print('TimeoutError')
+
+        await asyncio.sleep(1.5)
 
         if page_events_auto_enabled:
             await self.disable_page_events()
