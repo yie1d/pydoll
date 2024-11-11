@@ -1,3 +1,9 @@
+## 0.4.4 (2024-11-11)
+
+### Fix
+
+- remove redundant DOM content loaded event handling logic
+
 ## 0.4.3 (2024-11-11)
 
 ### Fix
