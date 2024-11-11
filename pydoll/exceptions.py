@@ -1,82 +1,82 @@
 class ConnectionFailed(Exception):
-    message = "Failed to connect to the browser"
+    message = 'Failed to connect to the browser'
 
     def __str__(self):
         return self.message
 
 
 class InvalidCommand(Exception):
-    message = "The command provided is invalid"
+    message = 'The command provided is invalid'
 
     def __str__(self):
         return self.message
 
 
 class InvalidCallback(Exception):
-    message = "The callback provided is invalid"
+    message = 'The callback provided is invalid'
 
     def __str__(self):
         return self.message
 
 
 class NetworkError(Exception):
-    message = "A network error occurred"
+    message = 'A network error occurred'
 
     def __str__(self):
         return self.message
 
 
 class InvalidResponse(Exception):
-    message = "The response received is invalid"
+    message = 'The response received is invalid'
 
     def __str__(self):
         return self.message
 
 
 class ReconnectionFailed(Exception):
-    message = "Failed to reconnect to the browser"
+    message = 'Failed to reconnect to the browser'
 
     def __str__(self):
         return self.message
 
 
 class ResendCommandFailed(Exception):
-    message = "Failed to resend the command"
+    message = 'Failed to resend the command'
 
     def __str__(self):
         return self.message
 
 
 class BrowserNotRunning(Exception):
-    message = "The browser is not running"
+    message = 'The browser is not running'
 
     def __str__(self):
         return self.message
 
 
 class ElementNotFound(Exception):
-    message = "The specified element was not found"
+    message = 'The specified element was not found'
 
     def __str__(self):
         return self.message
 
 
 class ClickIntercepted(Exception):
-    message = "The click was intercepted"
+    message = 'The click was intercepted'
 
     def __str__(self):
         return self.message
 
 
 class ElementNotVisible(Exception):
-    message = "The element is not visible"
+    message = 'The element is not visible'
 
     def __str__(self):
         return self.message
 
 
 class ElementNotInteractable(Exception):
-    message = "The element is not interactable"
+    message = 'The element is not interactable'
 
     def __str__(self):
         return self.message

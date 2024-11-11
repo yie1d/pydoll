@@ -58,3 +58,9 @@ class Scripts:
     var event = new Event('change', { bubbles: true });
     select.dispatchEvent(event);
     """
+
+    BOUNDS = """
+    function() {
+        return JSON.stringify(this.getBoundingClientRect());
+    }
+    """

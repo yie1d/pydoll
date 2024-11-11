@@ -2,6 +2,7 @@ import asyncio
 
 from pydoll import exceptions
 from pydoll.commands.dom import DomCommands
+from pydoll.commands.runtime import RuntimeCommands
 from pydoll.constants import By
 
 
@@ -149,7 +150,7 @@ class FindElementsMixin:
 
             object_id = response['result']['result']['objectId']
             query_response = await self._execute_command(
-                DomCommands.get_properties(object_id=object_id)
+                RuntimeCommands.get_properties(object_id=object_id)
             )
             response = []
             for query in query_response['result']['result']:

@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from bs4 import BeautifulSoup
 
@@ -137,6 +138,15 @@ class WebElement(FindElementsMixin):
         response = await self._execute_command(command)
         return response['result']['outerHTML']
 
+    async def get_bounds_by_js(self) -> list:
+        """
+        Retrieves the bounding box of the element using JavaScript.
+
+        Returns:
+            list: The bounding box of the element.
+        """
+        return await self._execute_script(Scripts.BOUNDS, return_by_value=True)
+
     async def _execute_script(
         self, script: str, return_by_value: bool = False
     ):
@@ -251,12 +261,21 @@ class WebElement(FindElementsMixin):
 
         await self.scroll_into_view()
 
-        element_bounds = await self.bounds
-        position_to_click = self._calculate_center(element_bounds)
-        position_to_click = (
-            position_to_click[0] + x_offset,
-            position_to_click[1] + y_offset,
-        )
+        try:
+            element_bounds = await self.bounds
+            position_to_click = self._calculate_center(element_bounds)
+            position_to_click = (
+                position_to_click[0] + x_offset,
+                position_to_click[1] + y_offset,
+            )
+        except IndexError:
+            element_bounds = await self.get_bounds_by_js()
+            element_bounds = json.loads(element_bounds)
+            position_to_click = (
+                element_bounds['x'] + element_bounds['width'] / 2,
+                element_bounds['y'] + element_bounds['height'] / 2,
+            )
+
         press_command = InputCommands.mouse_press(*position_to_click)
         release_command = InputCommands.mouse_release(*position_to_click)
         await self._connection_handler.execute_command(press_command)
