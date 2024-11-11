@@ -1,46 +1,82 @@
 class ConnectionFailed(Exception):
-    pass
+    message = "Failed to connect to the browser"
+
+    def __str__(self):
+        return self.message
 
 
 class InvalidCommand(Exception):
-    pass
+    message = "The command provided is invalid"
+
+    def __str__(self):
+        return self.message
 
 
 class InvalidCallback(Exception):
-    pass
+    message = "The callback provided is invalid"
+
+    def __str__(self):
+        return self.message
 
 
 class NetworkError(Exception):
-    pass
+    message = "A network error occurred"
+
+    def __str__(self):
+        return self.message
 
 
 class InvalidResponse(Exception):
-    pass
+    message = "The response received is invalid"
+
+    def __str__(self):
+        return self.message
 
 
 class ReconnectionFailed(Exception):
-    pass
+    message = "Failed to reconnect to the browser"
+
+    def __str__(self):
+        return self.message
 
 
 class ResendCommandFailed(Exception):
-    pass
+    message = "Failed to resend the command"
+
+    def __str__(self):
+        return self.message
 
 
 class BrowserNotRunning(Exception):
-    pass
+    message = "The browser is not running"
+
+    def __str__(self):
+        return self.message
 
 
 class ElementNotFound(Exception):
-    pass
+    message = "The specified element was not found"
+
+    def __str__(self):
+        return self.message
 
 
 class ClickIntercepted(Exception):
-    pass
+    message = "The click was intercepted"
+
+    def __str__(self):
+        return self.message
 
 
 class ElementNotVisible(Exception):
-    pass
+    message = "The element is not visible"
+
+    def __str__(self):
+        return self.message
 
 
 class ElementNotInteractable(Exception):
-    pass
+    message = "The element is not interactable"
+
+    def __str__(self):
+        return self.message
