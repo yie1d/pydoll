@@ -72,15 +72,27 @@ class FindElementsMixin:
         Raises:
             ElementNotFound: If the element is not found and raise_exc is True.
         """
-        node_description = await self._get_node_description(by, value)
+        if hasattr(self, '_object_id'):
+            command = DomCommands.find_element(by, value, self._object_id)
+        else:
+            command = DomCommands.find_element(by, value)
 
-        if not node_description:
+        response = await self._execute_command(command)
+
+        if not response.get('result', {}).get('result', {}).get('objectId'):
             if raise_exc:
                 raise exceptions.ElementNotFound('Element not found')
             return None
 
+        object_id = response['result']['result']['objectId']
+        node_description = await self._describe_node(object_id=object_id)
+        attributes = node_description.get('attributes', [])
+
+        tag_name = node_description.get('nodeName', '').lower()
+        attributes.extend(['tag_name', tag_name])
+
         return create_web_element(
-            node_description, self._connection_handler, by, value
+            object_id, self._connection_handler, by, value, attributes
         )
 
     async def find_elements(
@@ -99,17 +111,45 @@ class FindElementsMixin:
         Raises:
             ElementNotFound: If no elements are found and raise_exc is True.
         """
-        nodes_description = await self._get_nodes_description(by, value)
-
-        if not nodes_description:
+        if hasattr(self, '_object_id'):
+            command = DomCommands.find_elements(by, value, self._object_id)
+        else:
+            command = DomCommands.find_elements(by, value)
+        response = await self._execute_command(command)
+        if not response.get('result', {}).get('result', {}).get('objectId'):
             if raise_exc:
                 raise exceptions.ElementNotFound('Element not found')
             return []
 
-        return [
-            create_web_element(node, self._connection_handler, by, value)
-            for node in nodes_description
-        ]
+        object_id = response['result']['result']['objectId']
+        query_response = await self._execute_command(
+            RuntimeCommands.get_properties(object_id=object_id)
+        )
+        response = []
+        for query in query_response['result']['result']:
+            query_value = query.get('value', {})
+            if query_value and query_value['type'] == 'object':
+                response.append(query_value['objectId'])
+
+        elements = []
+        for object_id in response:
+            try:
+                node_description = await self._describe_node(
+                    object_id=object_id
+                )
+            except KeyError:
+                continue
+
+            attributes = node_description.get('attributes', [])
+            tag_name = node_description.get('nodeName', '').lower()
+            attributes.extend(['tag_name', tag_name])
+
+            elements.append(
+                create_web_element(
+                    object_id, self._connection_handler, by, value, attributes
+                )
+            )
+        return elements
 
     async def _get_nodes_description(self, by: str, value: str):
         """
@@ -163,47 +203,6 @@ class FindElementsMixin:
         )
         return nodes_description
 
-    async def _get_node_description(self, by: str, value: str):
-        """
-        Executes a command to find an element on the page and returns its
-        description.
-
-        Args:
-            by (str): The type of selector to use.
-            value (str): The value of the selector to use.
-
-        Returns:
-            dict: The description of the found node or None if not found.
-        """
-        if hasattr(self, '_node'):
-            root_node_id = self._node['nodeId']
-            object_id = self._node['objectId']
-        else:
-            root_node_id = await self._get_root_node_id()
-            object_id = ''
-
-        response = await self._execute_command(
-            DomCommands.find_element(
-                by, value, node_id=root_node_id, object_id=object_id
-            )
-        )
-
-        if not response.get('result', {}):
-            return None
-
-        if by == By.XPATH:
-            if (
-                not response.get('result', {})
-                .get('result', {})
-                .get('objectId')
-            ):
-                return None
-
-        node_description = await self._describe_node_based_on_response(
-            response, by
-        )
-        return node_description
-
     async def _get_root_node_id(self):
         """
         Retrieves the root node ID of the current page's DOM.
@@ -253,38 +252,7 @@ class FindElementsMixin:
                 nodes_description.append(node_description)
         return nodes_description
 
-    async def _describe_node_based_on_response(self, response: dict, by: str):
-        """
-        Describes a node based on the response from finding the element.
-
-        Args:
-            response (dict): The response containing the result of finding
-            the node.
-            by (str): The selector type used to find the node.
-
-        Returns:
-            dict: A detailed description of the node.
-        """
-        if by == By.XPATH:
-            object_id = response['result']['result']['objectId']
-            node_description = await self._describe_node(object_id=object_id)
-            node_id = await self._get_node_id_by_object_id(object_id)
-            node_description.update({'nodeId': node_id, 'objectId': object_id})
-        else:
-            target_node_id = response['result']['nodeId']
-            if target_node_id == 0:
-                return None
-            node_description = await self._describe_node(
-                node_id=target_node_id
-            )
-            object_id = await self._get_object_id_by_node_id(target_node_id)
-            node_description['objectId'] = object_id
-
-        return node_description
-
-    async def _describe_node(
-        self, node_id: int = None, object_id: str = ''
-    ) -> dict:
+    async def _describe_node(self, object_id: str = '') -> dict:
         """
         Provides a detailed description of a specific node within the DOM.
 
@@ -295,7 +263,7 @@ class FindElementsMixin:
             dict: A dictionary containing the detailed description of the node.
         """
         response = await self._execute_command(
-            DomCommands.describe_node(node_id=node_id, object_id=object_id)
+            DomCommands.describe_node(object_id=object_id)
         )
         return response['result']['node']
 

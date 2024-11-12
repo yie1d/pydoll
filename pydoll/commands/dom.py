@@ -40,20 +40,18 @@ class DomCommands:
     }
 
     @classmethod
-    def scroll_into_view(
-        cls, node_id: int = None, object_id: str = ''
-    ) -> dict:
+    def scroll_into_view(cls, object_id: str) -> dict:
         """Generates the command to scroll a specific DOM node into view."""
-        return cls._create_command(
-            cls.SCROLL_INTO_VIEW_IF_NEEDED,
-            node_id=node_id,
-            object_id=object_id,
-        )
+        command = copy.deepcopy(cls.SCROLL_INTO_VIEW_IF_NEEDED)
+        command['params']['objectId'] = object_id
+        return command
 
     @classmethod
-    def get_outer_html(cls, node_id: int) -> dict:
+    def get_outer_html(cls, object_id: int) -> dict:
         """Generates the command to get the outer HTML"""
-        return cls._create_command(cls.GET_OUTER_HTML, node_id=node_id)
+        command = copy.deepcopy(cls.GET_OUTER_HTML)
+        command['params']['objectId'] = object_id
+        return command
 
     @classmethod
     def dom_document(cls) -> dict:
@@ -66,25 +64,25 @@ class DomCommands:
     def request_node(cls, object_id: str) -> dict:
         """Generates the command to request a specific DOM node by its object
         ID."""
-        return cls._create_command(
-            cls.REQUEST_NODE_TEMPLATE, object_id=object_id
-        )
+        command = copy.deepcopy(cls.REQUEST_NODE_TEMPLATE)
+        command['params']['objectId'] = object_id
+        return command
 
     @classmethod
-    def describe_node(cls, node_id: int = None, object_id: str = '') -> dict:
+    def describe_node(cls, object_id: str) -> dict:
         """Generates the command to describe a specific DOM node."""
-        return cls._create_command(
-            cls.DESCRIBE_NODE_TEMPLATE, node_id=node_id, object_id=object_id
-        )
+        command = copy.deepcopy(cls.DESCRIBE_NODE_TEMPLATE)
+        command['params']['objectId'] = object_id
+        return command
 
     @classmethod
-    def box_model(cls, node_id: int = None, object_id: str = '') -> dict:
+    def box_model(cls, object_id: str) -> dict:
         """
         Generates the command to get the box model of a specific DOM node.
         """
-        return cls._create_command(
-            cls.BOX_MODEL_TEMPLATE, node_id=node_id, object_id=object_id
-        )
+        command = copy.deepcopy(cls.BOX_MODEL_TEMPLATE)
+        command['params']['objectId'] = object_id
+        return command
 
     @classmethod
     def enable_dom_events(cls) -> dict:
@@ -101,88 +99,69 @@ class DomCommands:
         cls,
         by: SelectorType,
         value: str,
-        node_id: int = None,
         object_id: str = '',
     ) -> dict:
         """Generates a command to find a DOM element based on the specified
         criteria."""
         match by:
-            case By.CSS:
-                return cls._find_element_by_selector(value, node_id)
-            case By.XPATH:
-                return cls._find_element_by_xpath(value, object_id)
             case By.CLASS_NAME:
-                return cls._find_element_by_selector(f'.{value}', node_id)
+                selector = f'.{value}'
             case By.ID:
-                return cls._find_element_by_selector(f'#{value}', node_id)
-            case By.TAG_NAME:
-                return cls._find_element_by_selector(value, node_id)
+                selector = f'#{value}'
             case _:
-                raise ValueError(
-                    "Unsupported selector type. Use 'css', 'xpath', "
-                    "'class_name', or 'id'."
-                )
+                selector = value
+        if object_id and not by == By.XPATH:
+            script = f'''
+            function() {{
+                return this.querySelector("{selector}");
+            }}
+            '''
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        elif by == By.XPATH:
+            command = cls._find_element_by_xpath(value, object_id)
+        else:
+            command = RuntimeCommands.evaluate_script(
+                f'document.querySelector("{selector}");'
+            )
+        return command
 
     @classmethod
     def find_elements(
         cls,
         by: SelectorType,
         value: str,
-        node_id: int = None,
         object_id: str = '',
     ) -> dict:
         """Generates a command to find multiple DOM elements based on the
         specified criteria."""
         match by:
-            case By.CSS:
-                return cls._find_elements_by_selector(value, node_id)
-            case By.XPATH:
-                return cls._find_elements_by_xpath(value, object_id)
             case By.CLASS_NAME:
-                return cls._find_elements_by_selector(f'.{value}', node_id)
+                selector = f'.{value}'
             case By.ID:
-                return cls._find_elements_by_selector(f'#{value}', node_id)
-            case By.TAG_NAME:
-                return cls._find_elements_by_selector(value, node_id)
+                selector = f'#{value}'
             case _:
-                raise ValueError(
-                    "Unsupported selector type. Use 'css', 'xpath', "
-                    "'class_name', or 'id'."
-                )
-
-    @classmethod
-    def resolve_node(cls, node_id: int) -> dict:
-        """Generates the command to resolve a specific DOM node."""
-        return cls._create_command(cls.RESOLVE_NODE_TEMPLATE, node_id=node_id)
-
-    @classmethod
-    def _create_command(
-        cls,
-        template: dict,
-        node_id: int = None,
-        object_id: str = None,
-        **params,
-    ) -> dict:
-        """Creates a command from a template with optional parameters."""
-        command = copy.deepcopy(template)
-        command['params'].update({
-            k: v for k, v in params.items() if v is not None
-        })
-        if node_id is not None:
-            command['params']['nodeId'] = node_id
-        if object_id:
-            command['params']['objectId'] = object_id
-        return command
-
-    @classmethod
-    def _find_element_by_selector(
-        cls, selector: str, node_id: int = None
-    ) -> dict:
-        """Creates a command to find a DOM element by CSS selector."""
-        command = cls._create_command(
-            cls.FIND_ELEMENT_TEMPLATE, node_id=node_id
-        )
-        command['params']['selector'] = selector
+                selector = value
+        if object_id and not by == By.XPATH:
+            script = f'''
+            function() {{
+                return this.querySelectorAll("{selector}");
+            }}
+            '''
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        elif by == By.XPATH:
+            command = cls._find_elements_by_xpath(value, object_id)
+        else:
+            command = RuntimeCommands.evaluate_script(
+                f'document.querySelectorAll("{selector}");'
+            )
         return command
 
     @classmethod
@@ -190,19 +169,19 @@ class DomCommands:
         """Creates a command to find a DOM element by XPath."""
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
-            command = cls._create_command(
-                RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
-            )
+            command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
+            command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
                 'function() {'
                 'return document.evaluate('
-                f'"{escaped_value}", document, null, '
+                f'"{escaped_value}", this, null, '
                 'XPathResult.FIRST_ORDERED_NODE_TYPE, null'
                 ').singleNodeValue;'
                 '}'
             )
+            command['params']['returnByValue'] = False
         else:
-            command = cls._create_command(RuntimeCommands.EVALUATE_TEMPLATE)
+            command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
                 'var element = document.evaluate('
                 f'"{escaped_value}", document, null, '
@@ -213,28 +192,16 @@ class DomCommands:
         return command
 
     @classmethod
-    def _find_elements_by_selector(
-        cls, selector: str, node_id: int = None
-    ) -> dict:
-        """Creates a command to find multiple DOM elements by CSS selector."""
-        command = cls._create_command(
-            cls.FIND_ALL_ELEMENTS_TEMPLATE, node_id=node_id
-        )
-        command['params']['selector'] = selector
-        return command
-
-    @classmethod
     def _find_elements_by_xpath(cls, xpath: str, object_id: str) -> dict:
         """Creates a command to find multiple DOM elements by XPath."""
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
-            command = cls._create_command(
-                RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE, object_id=object_id
-            )
+            command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
+            command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
                 'function() {'
                 'var elements = document.evaluate('
-                f'"{escaped_value}", document, null, '
+                f'"{escaped_value}", this, null, '
                 'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null'
                 ');'
                 'var results = [];'
@@ -245,7 +212,7 @@ class DomCommands:
                 '}'
             )
         else:
-            command = cls._create_command(RuntimeCommands.EVALUATE_TEMPLATE)
+            command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
                 'var elements = document.evaluate('
                 f'"{escaped_value}", document, null, '
