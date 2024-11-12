@@ -257,13 +257,13 @@ class WebElement(FindElementsMixin):
             )
 
     async def click(self, x_offset: int = 0, y_offset: int = 0):
+        if self._is_option_tag():
+            return await self.click_option_tag()
+
         if not await self._is_element_visible():
             raise exceptions.ElementNotVisible(
                 'Element is not visible on the page.'
             )
-
-        if self._is_option_tag():
-            return await self.click_option_tag()
 
         await self.scroll_into_view()
 
