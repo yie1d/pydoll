@@ -134,12 +134,9 @@ class WebElement(FindElementsMixin):
         Returns:
             str: The inner HTML of the element.
         """
-        if self._search_method == By.XPATH:
-            command = DomCommands.get_outer_html(
-                object_id=self._node['objectId']
-            )
-        else:
-            command = DomCommands.get_outer_html(self._node['nodeId'])
+        command = DomCommands.get_outer_html(
+            object_id=self._node['objectId']
+        )
         response = await self._execute_command(command)
         return response['result']['outerHTML']
 
