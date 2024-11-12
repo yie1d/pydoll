@@ -51,9 +51,11 @@ class DomCommands:
         )
 
     @classmethod
-    def get_outer_html(cls, node_id: int) -> dict:
+    def get_outer_html(cls, node_id: int = None, object_id: str = '') -> dict:
         """Generates the command to get the outer HTML"""
-        return cls._create_command(cls.GET_OUTER_HTML, node_id=node_id)
+        return cls._create_command(
+            cls.GET_OUTER_HTML, node_id=node_id, object_id=object_id
+        )
 
     @classmethod
     def dom_document(cls) -> dict:

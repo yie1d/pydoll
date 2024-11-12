@@ -134,11 +134,16 @@ class WebElement(FindElementsMixin):
         Returns:
             str: The inner HTML of the element.
         """
-        command = DomCommands.get_outer_html(self._node['nodeId'])
+        if self._search_method == By.XPATH:
+            command = DomCommands.get_outer_html(
+                object_id=self._node['objectId']
+            )
+        else:
+            command = DomCommands.get_outer_html(self._node['nodeId'])
         response = await self._execute_command(command)
         return response['result']['outerHTML']
 
-    async def get_bounds_by_js(self) -> list:
+    async def get_bounds_using_js(self) -> list:
         """
         Retrieves the bounding box of the element using JavaScript.
 
@@ -197,9 +202,7 @@ class WebElement(FindElementsMixin):
         Returns:
             str: The text of the element.
         """
-        command = DomCommands.get_outer_html(self._node['nodeId'])
-        response = await self._execute_command(command)
-        outer_html = response['result']['outerHTML']
+        outer_html = await self.inner_html
         soup = BeautifulSoup(outer_html, 'html.parser')
         text_inside = soup.get_text(strip=True)
         return text_inside
@@ -230,7 +233,7 @@ class WebElement(FindElementsMixin):
             )
         await self._execute_command(command)
 
-    async def click(self):
+    async def click_using_js(self):
         if self._is_option_tag():
             return await self.click_option_tag()
 
@@ -250,7 +253,7 @@ class WebElement(FindElementsMixin):
                 'Element is not interactable.'
             )
 
-    async def realistic_click(self, x_offset: int = 0, y_offset: int = 0):
+    async def click(self, x_offset: int = 0, y_offset: int = 0):
         if not await self._is_element_visible():
             raise exceptions.ElementNotVisible(
                 'Element is not visible on the page.'
@@ -269,7 +272,7 @@ class WebElement(FindElementsMixin):
                 position_to_click[1] + y_offset,
             )
         except IndexError:
-            element_bounds = await self.get_bounds_by_js()
+            element_bounds = await self.get_bounds_using_js()
             element_bounds = json.loads(element_bounds)
             position_to_click = (
                 element_bounds['x'] + element_bounds['width'] / 2,
