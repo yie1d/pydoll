@@ -150,7 +150,10 @@ class WebElement(FindElementsMixin):
         Returns:
             list: The bounding box of the element.
         """
-        return await self._execute_script(Scripts.BOUNDS, return_by_value=True)
+        response = await self._execute_script(
+            Scripts.BOUNDS, return_by_value=True
+        )
+        return response['result']['result']['value']
 
     async def _execute_script(
         self, script: str, return_by_value: bool = False
