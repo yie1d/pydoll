@@ -1,3 +1,15 @@
+## 0.5.1 (2024-11-12)
+
+### Fix
+
+- simplify outer HTML retrieval for consistent object handling
+- refactor click method to check option tag earlier in flow
+- refactor bounding box retrieval to access nested response value
+- handle KeyError instead of IndexError for element bounds retrieval
+- enhance DOM command methods and rename for clarity and consistency
+- add JavaScript bounding box retrieval for web elements
+- remove redundant top-checks for element clicks in WebElement
+
 ## 0.5.0 (2024-11-11)
 
 ### Feat
