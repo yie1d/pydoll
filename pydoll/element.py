@@ -271,7 +271,7 @@ class WebElement(FindElementsMixin):
                 position_to_click[0] + x_offset,
                 position_to_click[1] + y_offset,
             )
-        except IndexError:
+        except KeyError:
             element_bounds = await self.get_bounds_using_js()
             element_bounds = json.loads(element_bounds)
             position_to_click = (
