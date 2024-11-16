@@ -8,17 +8,18 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
 from pydoll.commands.runtime import RuntimeCommands
 from pydoll.connection import ConnectionHandler
-from pydoll.constants import By, Scripts
+from pydoll.constants import Scripts
 from pydoll.mixins.find_elements import FindElementsMixin
 
 
 class WebElement(FindElementsMixin):
     def __init__(
         self,
-        node: dict,
+        object_id: str,
         connection_handler: ConnectionHandler,
         method: str = None,
         selector: str = None,
+        attributes_list: list = [],
     ):
         """
         Initializes the WebElement instance.
@@ -27,24 +28,24 @@ class WebElement(FindElementsMixin):
             node (dict): The node description from the browser.
             connection_handler (ConnectionHandler): The connection instance.
         """
-        self._node = node
+        self._object_id = object_id
         self._search_method = method
         self._selector = selector
         self._connection_handler = connection_handler
         self._attributes = {}
-        self._def_attributes()
+        self._def_attributes(attributes_list)
 
     def __repr__(self):
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
-        node_attrs = ', '.join(f'{k}={v!r}' for k, v in self._node.items())
-        return f'{self.__class__.__name__}({attrs})(node={node_attrs})'
+        return (
+            f'{self.__class__.__name__}({attrs})(object_id={self._object_id})'
+        )
 
-    def _def_attributes(self):
-        attr = self._node.get('attributes', [])
-        for i in range(0, len(attr), 2):
-            key = attr[i]
+    def _def_attributes(self, attributes_list: list):
+        for i in range(0, len(attributes_list), 2):
+            key = attributes_list[i]
             key = key if key != 'class' else 'class_name'
-            value = attr[i + 1]
+            value = attributes_list[i + 1]
             self._attributes[key] = value
 
     @property
@@ -81,26 +82,6 @@ class WebElement(FindElementsMixin):
         return self._attributes.get('id')
 
     @property
-    def tag_name(self) -> str:
-        """
-        Retrieves the tag name of the element.
-
-        Returns:
-            str: The tag name of the element.
-        """
-        return self._node.get('nodeName')
-
-    @property
-    def text(self) -> str:
-        """
-        Retrieves the text of the element.
-
-        Returns:
-            str: The text of the element.
-        """
-        return self._node.get('nodeValue', '')
-
-    @property
     def is_enabled(self) -> bool:
         """
         Retrieves the enabled status of the element.
@@ -118,11 +99,7 @@ class WebElement(FindElementsMixin):
         Returns:
             dict: The bounding box of the element.
         """
-        if self._search_method == By.XPATH:
-            command = DomCommands.box_model(object_id=self._node['objectId'])
-        else:
-            command = DomCommands.box_model(node_id=self._node['nodeId'])
-
+        command = DomCommands.box_model(object_id=self._object_id)
         response = await self._execute_command(command)
         return response['result']['model']['content']
 
@@ -134,9 +111,7 @@ class WebElement(FindElementsMixin):
         Returns:
             str: The inner HTML of the element.
         """
-        command = DomCommands.get_outer_html(
-            object_id=self._node['objectId']
-        )
+        command = DomCommands.get_outer_html(self._object_id)
         response = await self._execute_command(command)
         return response['result']['outerHTML']
 
@@ -163,7 +138,7 @@ class WebElement(FindElementsMixin):
         """
         return await self._execute_command(
             RuntimeCommands.call_function_on(
-                self._node['objectId'], script, return_by_value
+                self._object_id, script, return_by_value
             )
         )
 
@@ -223,14 +198,7 @@ class WebElement(FindElementsMixin):
         """
         Scrolls the element into view.
         """
-        if self._search_method == By.XPATH:
-            command = DomCommands.scroll_into_view(
-                object_id=self._node['objectId']
-            )
-        else:
-            command = DomCommands.scroll_into_view(
-                node_id=self._node['nodeId'],
-            )
+        command = DomCommands.scroll_into_view(object_id=self._object_id)
         await self._execute_command(command)
 
     async def click_using_js(self):
@@ -310,7 +278,7 @@ class WebElement(FindElementsMixin):
             await asyncio.sleep(0.1)
 
     def _is_option_tag(self):
-        return self._node['nodeName'].lower() == 'option'
+        return self._attributes['tag_name'].lower() == 'option'
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:

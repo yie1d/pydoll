@@ -40,6 +40,6 @@ class RuntimeCommands:
         command = copy.deepcopy(cls.EVALUATE_TEMPLATE)
         command['params'] = {
             'expression': expression,
-            'returnByValue': True,
+            'returnByValue': False,
         }
         return command

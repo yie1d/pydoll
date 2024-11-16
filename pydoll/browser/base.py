@@ -1,7 +1,9 @@
 import asyncio
 import os
+import shutil
 import subprocess
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from functools import partial
 from random import randint
 from tempfile import TemporaryDirectory
@@ -53,7 +55,8 @@ class Browser(ABC):  # noqa: PLR0904
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.stop()
         for temp_dir in self.temp_dirs:
-            temp_dir.cleanup()
+            with suppress(OSError):
+                shutil.rmtree(temp_dir.name)
         await self.connection_handler.close()
 
     async def start(self) -> None:

@@ -349,7 +349,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if element:
             script = script.replace('argument', 'this')
             script = f'function(){{ {script} }}'
-            object_id = element._node['objectId']
+            object_id = element._object_id
             command = RuntimeCommands.call_function_on(
                 object_id, script, return_by_value=True
             )

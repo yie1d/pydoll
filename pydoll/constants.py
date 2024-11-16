@@ -64,3 +64,62 @@ class Scripts:
         return JSON.stringify(this.getBoundingClientRect());
     }
     """
+
+    FIND_RELATIVE_XPATH_ELEMENT = """
+        function() {
+            return document.evaluate(
+                "{escaped_value}", this, null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE, null
+            ).singleNodeValue;
+        }
+    """
+
+    FIND_XPATH_ELEMENT = """
+        var element = document.evaluate(
+            "{escaped_value}", document, null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE, null
+        ).singleNodeValue;
+        element;
+    """
+
+    FIND_RELATIVE_XPATH_ELEMENTS = """
+        function() {
+            var elements = document.evaluate(
+                "{escaped_value}", this, null,
+                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+            );
+            var results = [];
+            for (var i = 0; i < elements.snapshotLength; i++) {
+                results.push(elements.snapshotItem(i));
+            }
+            return results;
+        }
+    """
+
+    FIND_XPATH_ELEMENTS = """
+        var elements = document.evaluate(
+            "{escaped_value}", document, null,
+            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null
+        );
+        var results = [];
+        for (var i = 0; i < elements.snapshotLength; i++) {
+            results.push(elements.snapshotItem(i));
+        }
+        results;
+    """
+
+    QUERY_SELECTOR = 'document.querySelector("{selector}");'
+
+    RELATIVE_QUERY_SELECTOR = """
+        function() {
+            return this.querySelector("{selector}");
+        }
+    """
+
+    QUERY_SELECTOR_ALL = 'document.querySelectorAll("{selector}");'
+
+    RELATIVE_QUERY_SELECTOR_ALL = """
+        function() {
+            return this.querySelectorAll("{selector}");
+        }
+    """
