@@ -43,9 +43,9 @@ class FetchCommands:
         request_id: str,
         url: str = '',
         method: str = '',
-        postData: str = '',
+        post_data: str = '',
         headers: dict = {},
-        interceptResponse: bool = False,
+        intercept_response: bool = False,
     ):
         """
         Creates a command to continue a paused fetch request.
@@ -76,13 +76,13 @@ class FetchCommands:
             continue_request_template['params']['url'] = url
         if method:
             continue_request_template['params']['method'] = method
-        if postData:
-            continue_request_template['params']['postData'] = postData
+        if post_data:
+            continue_request_template['params']['postData'] = post_data
         if headers:
             continue_request_template['params']['headers'] = headers
-        if interceptResponse:
+        if intercept_response:
             continue_request_template['params']['interceptResponse'] = (
-                interceptResponse
+                intercept_response
             )
         return continue_request_template
 
@@ -166,7 +166,7 @@ class FetchCommands:
         return enable_fetch_events_template
 
     @classmethod
-    def fail_request(cls, request_id: str, errorReason: str):
+    def fail_request(cls, request_id: str, error_reason: str):
         """
         Creates a command to simulate a failure in a fetch request.
 
@@ -182,18 +182,18 @@ class FetchCommands:
         """
         fail_request_template = cls.FAIL_REQUEST.copy()
         fail_request_template['params']['requestId'] = request_id
-        fail_request_template['params']['errorReason'] = errorReason
+        fail_request_template['params']['errorReason'] = error_reason
         return fail_request_template
 
     @classmethod
     def fulfill_request(  # noqa: PLR0913, PLR0917
         cls,
         request_id: str,
-        responseCode: int,
-        responseHeaders: dict = {},
-        binaryResponseHeaders: str = '',
+        response_code: int,
+        response_headers: dict = {},
+        binary_response_headers: str = '',
         body: str = '',
-        responsePhrase: str = '',
+        response_phrase: str = '',
     ):
         """
         Creates a command to fulfill a fetch request with a custom response.
@@ -218,21 +218,21 @@ class FetchCommands:
         """
         fulfill_request_template = cls.FULFILL_REQUEST.copy()
         fulfill_request_template['params']['requestId'] = request_id
-        if responseCode:
-            fulfill_request_template['params']['responseCode'] = responseCode
-        if responseHeaders:
+        if response_code:
+            fulfill_request_template['params']['responseCode'] = response_code
+        if response_headers:
             fulfill_request_template['params']['responseHeaders'] = (
-                responseHeaders
+                response_headers
             )
-        if binaryResponseHeaders:
+        if binary_response_headers:
             fulfill_request_template['params']['binaryResponseHeaders'] = (
-                binaryResponseHeaders
+                binary_response_headers
             )
         if body:
             fulfill_request_template['params']['body'] = body
-        if responsePhrase:
+        if response_phrase:
             fulfill_request_template['params']['responsePhrase'] = (
-                responsePhrase
+                response_phrase
             )
         return fulfill_request_template
 
@@ -258,11 +258,11 @@ class FetchCommands:
     @classmethod
     def continue_response(
         cls,
-        requestId: str,
-        responseCode: int = '',
-        responseHeaders: dict = {},
-        binaryResponseHeaders: str = '',
-        responsePhrase: str = '',
+        request_id: str,
+        response_code: int = '',
+        response_headers: dict = {},
+        binary_response_headers: str = '',
+        response_phrase: str = '',
     ):
         """
         Creates a command to continue a fetch response for an intercepted
@@ -288,19 +288,21 @@ class FetchCommands:
             dict: A command template for continuing the fetch response.
         """
         continue_response_template = cls.CONTINUE_RESPONSE.copy()
-        continue_response_template['params']['requestId'] = requestId
-        if responseCode:
-            continue_response_template['params']['responseCode'] = responseCode
-        if responseHeaders:
+        continue_response_template['params']['requestId'] = request_id
+        if response_code:
+            continue_response_template['params']['responseCode'] = (
+                response_code
+            )
+        if response_headers:
             continue_response_template['params']['responseHeaders'] = (
-                responseHeaders
+                response_headers
             )
-        if binaryResponseHeaders:
+        if binary_response_headers:
             continue_response_template['params']['binaryResponseHeaders'] = (
-                binaryResponseHeaders
+                binary_response_headers
             )
-        if responsePhrase:
+        if response_phrase:
             continue_response_template['params']['responsePhrase'] = (
-                responsePhrase
+                response_phrase
             )
         return continue_response_template
