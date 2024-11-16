@@ -7,21 +7,21 @@ class TargetCommands:
     GET_TARGET_INFO = {'method': 'Target.getTargetInfo', 'params': {}}
 
     @classmethod
-    def activate_target(cls, targetId: str) -> dict:
+    def activate_target(cls, target_id: str) -> dict:
         activate_target = cls.ATTACH_TO_TARGET.copy()
-        activate_target['params']['targetId'] = targetId
+        activate_target['params']['targetId'] = target_id
         return activate_target
 
     @classmethod
-    def attach_to_target(cls, targetId: str) -> dict:
+    def attach_to_target(cls, target_id: str) -> dict:
         attach_to_target = cls.ATTACH_TO_TARGET.copy()
-        attach_to_target['params']['targetId'] = targetId
+        attach_to_target['params']['targetId'] = target_id
         return attach_to_target
 
     @classmethod
-    def close_target(cls, targetId: str) -> dict:
+    def close_target(cls, target_id: str) -> dict:
         close_target = cls.CLOSE_TARGET.copy()
-        close_target['params']['targetId'] = targetId
+        close_target['params']['targetId'] = target_id
         return close_target
 
     @classmethod
