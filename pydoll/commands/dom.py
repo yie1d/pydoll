@@ -52,7 +52,7 @@ class DomCommands:
         command = copy.deepcopy(cls.GET_OUTER_HTML)
         command['params']['objectId'] = object_id
         return command
-
+    
     @classmethod
     def dom_document(cls) -> dict:
         """

@@ -122,7 +122,10 @@ class WebElement(FindElementsMixin):
         Returns:
             list: The bounding box of the element.
         """
-        return await self._execute_script(Scripts.BOUNDS, return_by_value=True)
+        response = await self._execute_script(
+            Scripts.BOUNDS, return_by_value=True
+        )
+        return response['result']['result']['value']
 
     async def _execute_script(
         self, script: str, return_by_value: bool = False
@@ -219,13 +222,13 @@ class WebElement(FindElementsMixin):
             )
 
     async def click(self, x_offset: int = 0, y_offset: int = 0):
+        if self._is_option_tag():
+            return await self.click_option_tag()
+
         if not await self._is_element_visible():
             raise exceptions.ElementNotVisible(
                 'Element is not visible on the page.'
             )
-
-        if self._is_option_tag():
-            return await self.click_option_tag()
 
         await self.scroll_into_view()
 
@@ -236,7 +239,7 @@ class WebElement(FindElementsMixin):
                 position_to_click[0] + x_offset,
                 position_to_click[1] + y_offset,
             )
-        except IndexError:
+        except KeyError:
             element_bounds = await self.get_bounds_using_js()
             element_bounds = json.loads(element_bounds)
             position_to_click = (
