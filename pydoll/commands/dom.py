@@ -103,13 +103,14 @@ class DomCommands:
     ) -> dict:
         """Generates a command to find a DOM element based on the specified
         criteria."""
+        escaped_value = value.replace('"', '\\"')
         match by:
             case By.CLASS_NAME:
-                selector = f'.{value}'
+                selector = f'.{escaped_value}'
             case By.ID:
-                selector = f'#{value}'
+                selector = f'#{escaped_value}'
             case _:
-                selector = value
+                selector = escaped_value
         if object_id and not by == By.XPATH:
             script = f'''
             function() {{
@@ -138,13 +139,14 @@ class DomCommands:
     ) -> dict:
         """Generates a command to find multiple DOM elements based on the
         specified criteria."""
+        escaped_value = value.replace('"', '\\"')
         match by:
             case By.CLASS_NAME:
-                selector = f'.{value}'
+                selector = f'.{escaped_value}'
             case By.ID:
-                selector = f'#{value}'
+                selector = f'#{escaped_value}'
             case _:
-                selector = value
+                selector = escaped_value
         if object_id and not by == By.XPATH:
             script = f'''
             function() {{
@@ -169,6 +171,7 @@ class DomCommands:
         """Creates a command to find a DOM element by XPath."""
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
+            escaped_value = cls._ensure_relative_xpath(escaped_value)
             command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
             command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
@@ -196,6 +199,7 @@ class DomCommands:
         """Creates a command to find multiple DOM elements by XPath."""
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
+            escaped_value = cls._ensure_relative_xpath(escaped_value)
             command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
             command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
@@ -225,3 +229,8 @@ class DomCommands:
                 'results;'
             )
         return command
+
+    @staticmethod
+    def _ensure_relative_xpath(xpath: str) -> str:
+        """Ensures that the XPath expression is relative."""
+        return f'.{xpath}' if not xpath.startswith('.') else xpath
