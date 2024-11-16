@@ -2,7 +2,7 @@ import copy
 from typing import Literal
 
 from pydoll.commands.runtime import RuntimeCommands
-from pydoll.constants import By
+from pydoll.constants import By, Scripts
 
 
 class DomCommands:
@@ -112,11 +112,9 @@ class DomCommands:
             case _:
                 selector = escaped_value
         if object_id and not by == By.XPATH:
-            script = f'''
-            function() {{
-                return this.querySelector("{selector}");
-            }}
-            '''
+            script = Scripts.RELATIVE_QUERY_SELECTOR.replace(
+                '{selector}', escaped_value
+            )
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
@@ -126,7 +124,7 @@ class DomCommands:
             command = cls._find_element_by_xpath(value, object_id)
         else:
             command = RuntimeCommands.evaluate_script(
-                f'document.querySelector("{selector}");'
+                Scripts.QUERY_SELECTOR.replace('{selector}', selector)
             )
         return command
 
@@ -148,11 +146,9 @@ class DomCommands:
             case _:
                 selector = escaped_value
         if object_id and not by == By.XPATH:
-            script = f'''
-            function() {{
-                return this.querySelectorAll("{selector}");
-            }}
-            '''
+            script = Scripts.RELATIVE_QUERY_SELECTOR_ALL.replace(
+                '{selector}', escaped_value
+            )
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
@@ -162,7 +158,7 @@ class DomCommands:
             command = cls._find_elements_by_xpath(value, object_id)
         else:
             command = RuntimeCommands.evaluate_script(
-                f'document.querySelectorAll("{selector}");'
+                Scripts.QUERY_SELECTOR_ALL.replace('{selector}', selector)
             )
         return command
 
@@ -175,22 +171,17 @@ class DomCommands:
             command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
             command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
-                'function() {'
-                'return document.evaluate('
-                f'"{escaped_value}", this, null, '
-                'XPathResult.FIRST_ORDERED_NODE_TYPE, null'
-                ').singleNodeValue;'
-                '}'
+                Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace(
+                    '{escaped_value}', escaped_value
+                )
             )
             command['params']['returnByValue'] = False
         else:
             command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
-                'var element = document.evaluate('
-                f'"{escaped_value}", document, null, '
-                'XPathResult.FIRST_ORDERED_NODE_TYPE, null'
-                ').singleNodeValue;'
-                'element;'
+                Scripts.FIND_XPATH_ELEMENT.replace(
+                    '{escaped_value}', escaped_value
+                )
             )
         return command
 
@@ -203,30 +194,16 @@ class DomCommands:
             command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
             command['params']['objectId'] = object_id
             command['params']['functionDeclaration'] = (
-                'function() {'
-                'var elements = document.evaluate('
-                f'"{escaped_value}", this, null, '
-                'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null'
-                ');'
-                'var results = [];'
-                'for (var i = 0; i < elements.snapshotLength; i++) {'
-                'results.push(elements.snapshotItem(i));'
-                '}'
-                'return results;'
-                '}'
+                Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace(
+                    '{escaped_value}', escaped_value
+                )
             )
         else:
             command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
             command['params']['expression'] = (
-                'var elements = document.evaluate('
-                f'"{escaped_value}", document, null, '
-                'XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null'
-                ');'
-                'var results = [];'
-                'for (var i = 0; i < elements.snapshotLength; i++) {'
-                'results.push(elements.snapshotItem(i));'
-                '}'
-                'results;'
+                Scripts.FIND_XPATH_ELEMENTS.replace(
+                    '{escaped_value}', escaped_value
+                )
             )
         return command
 
