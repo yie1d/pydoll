@@ -1,3 +1,6 @@
+import copy
+
+
 class NetworkCommands:
     """
     This class encapsulates the network commands of the
@@ -88,7 +91,7 @@ class NetworkCommands:
         Returns:
             dict: A command to delete the specified cookie.
         """
-        delete_cookies_template = cls.DELETE_COOKIES_TEMPLATE.copy()
+        delete_cookies_template = copy.deepcopy(cls.DELETE_COOKIES_TEMPLATE)
         delete_cookies_template['params']['name'] = name
         if url:
             delete_cookies_template['params']['url'] = url
@@ -130,7 +133,7 @@ class NetworkCommands:
         Returns:
             dict: A command to get cookies associated with the specified URLs.
         """
-        get_cookies_template = cls.GET_COOKIES_TEMPLATE.copy()
+        get_cookies_template = copy.deepcopy(cls.GET_COOKIES_TEMPLATE)
         if urls:
             get_cookies_template['params']['urls'] = urls
         return get_cookies_template
@@ -148,8 +151,8 @@ class NetworkCommands:
         Returns:
             dict: A command to get the POST data for the specified request.
         """
-        get_request_post_data_template = (
-            cls.GET_REQUEST_POST_DATA_TEMPLATE.copy()
+        get_request_post_data_template = copy.deepcopy(
+            cls.GET_REQUEST_POST_DATA_TEMPLATE
         )
         get_request_post_data_template['params']['requestId'] = request_id
         return get_request_post_data_template
@@ -168,7 +171,9 @@ class NetworkCommands:
             dict: A command to get the response body associated with the
                 specified request.
         """
-        get_response_body_template = cls.GET_RESPONSE_BODY_TEMPLATE.copy()
+        get_response_body_template = copy.deepcopy(
+            cls.GET_RESPONSE_BODY_TEMPLATE
+        )
         get_response_body_template['params']['requestId'] = request_id
         return get_response_body_template
 
@@ -184,7 +189,9 @@ class NetworkCommands:
         Returns:
             dict: A command to set the cache state in the browser.
         """
-        set_cache_disabled_template = cls.SET_CACHE_DISABLED_TEMPLATE.copy()
+        set_cache_disabled_template = copy.deepcopy(
+            cls.SET_CACHE_DISABLED_TEMPLATE
+        )
         set_cache_disabled_template['params']['cacheDisabled'] = cache_disabled
         return set_cache_disabled_template
 
@@ -202,7 +209,7 @@ class NetworkCommands:
         Returns:
             dict: A command to set the specified cookie in the browser.
         """
-        set_cookie_template = cls.SET_COOKIE_TEMPLATE.copy()
+        set_cookie_template = copy.deepcopy(cls.SET_COOKIE_TEMPLATE)
         set_cookie_template['params']['name'] = name
         set_cookie_template['params']['value'] = value
         if url:
@@ -221,7 +228,7 @@ class NetworkCommands:
         Returns:
             dict: A command to set the specified cookies in the browser.
         """
-        set_cookies_template = cls.SET_COOKIES_TEMPLATE.copy()
+        set_cookies_template = copy.deepcopy(cls.SET_COOKIES_TEMPLATE)
         set_cookies_template['params']['cookies'] = cookies
         return set_cookies_template
 
@@ -239,8 +246,8 @@ class NetworkCommands:
             dict: A command to set extra HTTP headers for the browser's network
                 requests.
         """
-        set_extra_http_headers_template = (
-            cls.SET_EXTRA_HTTP_HEADERS_TEMPLATE.copy()
+        set_extra_http_headers_template = copy.deepcopy(
+            cls.SET_EXTRA_HTTP_HEADERS_TEMPLATE
         )
         set_extra_http_headers_template['params']['headers'] = headers
         return set_extra_http_headers_template
@@ -259,8 +266,8 @@ class NetworkCommands:
             dict: A command to override the browser's user agent for network
                 requests.
         """
-        set_useragent_override_template = (
-            cls.SET_USERAGENT_OVERRIDE_TEMPLATE.copy()
+        set_useragent_override_template = copy.deepcopy(
+            cls.SET_USERAGENT_OVERRIDE_TEMPLATE
         )
         set_useragent_override_template['params']['userAgent'] = user_agent
         return set_useragent_override_template
@@ -300,7 +307,9 @@ class NetworkCommands:
             dict: A command to search the specified query within the response
                 body of the given request.
         """
-        search_in_response_template = cls.SEARCH_IN_RESPONSE_TEMPLATE.copy()
+        search_in_response_template = copy.deepcopy(
+            cls.SEARCH_IN_RESPONSE_TEMPLATE
+        )
         search_in_response_template['params']['requestId'] = request_id
         search_in_response_template['params']['query'] = query
         search_in_response_template['params']['caseSensitive'] = case_sensitive
@@ -320,6 +329,6 @@ class NetworkCommands:
         Returns:
             dict: A command to set the specified URLs as blocked.
         """
-        set_blocked_urls_template = cls.SET_BLOCKED_URLS.copy()
+        set_blocked_urls_template = copy.deepcopy(cls.SET_BLOCKED_URLS)
         set_blocked_urls_template['params']['urls'] = urls
         return set_blocked_urls_template

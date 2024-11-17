@@ -251,9 +251,8 @@ class ConnectionHandler:
     def __str__(self):
         return f'ConnectionHandler(port={self._connection_port})'
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-        return False
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
