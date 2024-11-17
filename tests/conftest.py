@@ -1,6 +1,8 @@
 import asyncio
 import json
+from unittest.mock import patch
 
+import pytest
 import pytest_asyncio
 import websockets
 
@@ -48,3 +50,9 @@ async def ws_server():
 @pytest_asyncio.fixture(scope='function')
 async def handler(ws_server):
     return ConnectionHandler(connection_port=9222)
+
+
+@pytest.fixture
+def mock_runtime_commands():
+    with patch('pydoll.commands.dom.RuntimeCommands') as mock:
+        yield mock
