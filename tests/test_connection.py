@@ -2,6 +2,9 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import websockets
+
+from pydoll import exceptions
 
 
 @pytest.mark.asyncio
@@ -151,3 +154,98 @@ async def test_network_events_are_being_saved(handler):
         assert handler.network_logs == [
             {'method': 'Network.requestWillBeSent', 'params': {}}
         ]
+
+
+@pytest.mark.asyncio
+async def test_execute_invalid_command(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        with pytest.raises(exceptions.InvalidCommand):
+            await handler.execute_command('Invalid command')
+
+
+@pytest.mark.asyncio
+async def test_register_invalid_callback(handler):
+    with pytest.raises(exceptions.InvalidCallback):
+        await handler.register_callback('test', 'Invalid callback')
+
+
+@pytest.mark.asyncio
+async def test_async_callback_execution(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        callback = AsyncMock()
+        await handler.register_callback('Network.requestWillBeSent', callback)
+        await handler.connect_to_page()
+        await asyncio.sleep(0.2)
+        callback.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_clear_callbacks(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        callback = MagicMock()
+        await handler.register_callback('Network.requestWillBeSent', callback)
+        handler.clear_callbacks()
+        assert handler._event_callbacks == {}
+
+
+@pytest.mark.asyncio
+async def test_close(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        await handler.connect_to_page()
+        callback = MagicMock()
+        await handler.register_callback('Network.requestWillBeSent', callback)
+        await handler.close()
+        handler._connection.closed is True
+
+
+def test_repr(handler):
+    assert repr(handler) == 'ConnectionHandler(port=9222)'
+
+
+def test_str(handler):
+    assert str(handler) == 'ConnectionHandler(port=9222)'
+
+
+@pytest.mark.asyncio
+async def test_aenter(handler):
+    async with handler as h:
+        h._connection = AsyncMock()
+        assert h is handler
+
+
+@pytest.mark.asyncio
+async def test_aexit(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        async with handler as h:
+            await h.connect_to_page()
+
+    assert h._connection.closed is True
+    assert h._event_callbacks == {}
+
+
+@pytest.mark.asyncio
+async def test_connection_property(handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        connection = await handler.connection
+        assert connection is handler._connection
+        assert (
+            isinstance(connection, websockets.WebSocketClientProtocol) is True
+        )
