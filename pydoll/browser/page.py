@@ -134,11 +134,11 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Args:
             url (str): The URL to navigate to.
         """
-        if await self._refresh_if_url_not_changed(url):
-            return
-
-        await self._execute_command(PageCommands.go_to(url))
-
+        await self._execute_command(
+            RuntimeCommands.evaluate_script(
+                f'window.location.assign("{url}");'
+            )
+        )
         try:
             await self._wait_page_load(timeout=timeout)
         except asyncio.TimeoutError:
