@@ -137,6 +137,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         await self._execute_command(
             RuntimeCommands.evaluate_script(
                 f'window.location.assign("{url}");'
+                'window.location.reload(true);'
             )
         )
         try:
