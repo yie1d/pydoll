@@ -330,7 +330,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         else:
             function_to_register = callback
 
-        await self._connection_handler.register_callback(
+        return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
 

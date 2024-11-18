@@ -35,7 +35,7 @@ class ConnectionHandler:
         self._connection = None
         self._event_callbacks = {}
         self._id = 1
-        self._callback_id = 1
+        self._callback_id = 0
         self._pending_commands: dict[int, asyncio.Future] = {}
         self.network_logs = []
         logger.info('ConnectionHandler initialized.')
@@ -144,17 +144,36 @@ class ConnectionHandler:
             raise exceptions.InvalidCallback(
                 'Callback must be a callable function'
             )
-
+        self._callback_id += 1
         self._event_callbacks[self._callback_id] = {
             'event': event_name,
             'callback': callback,
             'temporary': temporary,
         }
         logger.info(
-            "Registered callback for event '{event_name}'"
+            f"Registered callback for event '{event_name}'"
             f'with ID {self._callback_id}'
         )
-        self._callback_id += 1
+        return self._callback_id
+
+    async def remove_callback(self, callback_id: int) -> None:
+        """
+        Removes a registered event callback by its ID.
+
+        Args:
+            callback_id (int): The ID of the callback to remove.
+
+        Raises:
+            InvalidCallback: If the callback ID is not found.
+        """
+        if callback_id not in self._event_callbacks:
+            logger.error(f'Callback with ID {callback_id} not found.')
+            raise exceptions.InvalidCallback(
+                f'Callback with ID {callback_id} not found'
+            )
+
+        del self._event_callbacks[callback_id]
+        logger.info(f'Removed callback with ID {callback_id}')
 
     async def _receive_events(self):
         """
