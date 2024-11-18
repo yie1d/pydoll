@@ -5,8 +5,10 @@ from pydoll.browser.options import Options
 
 
 class Chrome(Browser):
-    def __init__(self, options: Options | None = None):
-        super().__init__(options)
+    def __init__(
+        self, options: Options | None = None, connection_port: int = 9222
+    ):
+        super().__init__(options, connection_port)
 
     def _get_default_binary_location(self):
         os_name = os.name
