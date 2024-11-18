@@ -1,3 +1,30 @@
+## 0.6.0 (2024-11-18)
+
+### Feat
+
+- add callback ID handling for page load events in Page class
+- update event registration to return callback IDs and add removal
+- refactor DOM commands to use object_id instead of node_id
+
+### Fix
+
+- refactor page navigation and loading logic for efficiency
+- add page reload after navigating to a new URL in Page class
+- refactor URL navigation to use evaluate_script for efficiency
+- implement page refresh on URL unchanged and add navigation event
+- update object ID reference in Page class for clarity
+- refactor element search logic to simplify error handling
+- DomCommands using `object_id` instead of `node_id` to prevent bugs
+- handle OSError when cleaning up temporary directories in Browser
+
+### Refactor
+
+- change error log to warning for missing callback ID
+- refactor DOM command scripts for improved readability and reuse
+- rename methods for clarity and consistency in WebElement class
+- refactor parameter names for consistency in target methods
+- normalize variable naming for consistency in fetch commands
+
 ## 0.5.1 (2024-11-12)
 
 ### Fix

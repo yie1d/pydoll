@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pydoll"
-version = "0.5.1"
+version = "0.6.0"
 description = ""
 authors = ["Thalison Fernandes <thalissfernandes99@gmail.com>"]
 readme = "README.md"
