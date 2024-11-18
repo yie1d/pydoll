@@ -167,7 +167,7 @@ class ConnectionHandler:
             InvalidCallback: If the callback ID is not found.
         """
         if callback_id not in self._event_callbacks:
-            logger.error(f'Callback with ID {callback_id} not found.')
+            logger.warning(f'Callback with ID {callback_id} not found.')
             return False
 
         del self._event_callbacks[callback_id]
