@@ -386,13 +386,13 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         page_loaded = asyncio.Event()
 
-        await self.on(
+        page_loaded_callback_id = await self.on(
             PageEvents.PAGE_LOADED,
             lambda _: page_loaded.set(),
             temporary=True,
         )
 
-        await self.on(
+        navigated_within_document_callback_id = await self.on(
             PageEvents.NAVIGATED_WITHIN_DOCUMENT,
             lambda _: page_loaded.set(),
             temporary=True,
@@ -402,6 +402,11 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             pass
+
+        await self._connection_handler.remove_callback(page_loaded_callback_id)
+        await self._connection_handler.remove_callback(
+            navigated_within_document_callback_id
+        )
 
         if page_events_auto_enabled:
             await self.disable_page_events()

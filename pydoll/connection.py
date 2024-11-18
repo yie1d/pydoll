@@ -156,7 +156,7 @@ class ConnectionHandler:
         )
         return self._callback_id
 
-    async def remove_callback(self, callback_id: int) -> None:
+    async def remove_callback(self, callback_id: int) -> bool:
         """
         Removes a registered event callback by its ID.
 
@@ -168,12 +168,11 @@ class ConnectionHandler:
         """
         if callback_id not in self._event_callbacks:
             logger.error(f'Callback with ID {callback_id} not found.')
-            raise exceptions.InvalidCallback(
-                f'Callback with ID {callback_id} not found'
-            )
+            return False
 
         del self._event_callbacks[callback_id]
         logger.info(f'Removed callback with ID {callback_id}')
+        return True
 
     async def _receive_events(self):
         """
