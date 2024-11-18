@@ -120,12 +120,15 @@ class Browser(ABC):  # noqa: PLR0904
             )
 
         pages = await self.get_pages()
-        valid_page = [
-            page
-            for page in pages
-            if page['type'] == 'page' and 'chrome://newtab/' in page['url']
-        ][0]['targetId']
-        self._pages.append(valid_page)
+        try:
+            valid_page = [
+                page
+                for page in pages
+                if page['type'] == 'page' and 'chrome://newtab/' in page['url']
+            ][0]['targetId']
+            self._pages.append(valid_page)
+        except IndexError:
+            await self.new_page()
 
     async def set_download_path(self, path: str):
         """
