@@ -123,7 +123,7 @@ class Browser(ABC):  # noqa: PLR0904
         valid_page = [
             page
             for page in pages
-            if page['type'] == 'page' and 'chrome' not in page['title']
+            if page['type'] == 'page' and 'chrome://newtab/' in page['url']
         ][0]['targetId']
         self._pages.append(valid_page)
 
