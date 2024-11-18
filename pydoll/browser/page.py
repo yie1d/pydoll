@@ -11,7 +11,6 @@ from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
-from pydoll.events.page import PageEvents
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
@@ -134,12 +133,11 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Args:
             url (str): The URL to navigate to.
         """
-        await self._execute_command(
-            RuntimeCommands.evaluate_script(
-                f'window.location.assign("{url}");'
-                'window.location.reload(true);'
-            )
-        )
+        if await self._refresh_if_url_not_changed(url):
+            return
+
+        await self._execute_command(PageCommands.go_to(url))
+
         try:
             await self._wait_page_load(timeout=timeout)
         except asyncio.TimeoutError:
@@ -379,35 +377,13 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         Waits for the page to finish loading.
         """
-        page_events_auto_enabled = False
-
-        if not self._page_events_enabled:
-            page_events_auto_enabled = True
-            await self.enable_page_events()
-
-        page_loaded = asyncio.Event()
-
-        page_loaded_callback_id = await self.on(
-            PageEvents.PAGE_LOADED,
-            lambda _: page_loaded.set(),
-            temporary=True,
-        )
-
-        navigated_within_document_callback_id = await self.on(
-            PageEvents.NAVIGATED_WITHIN_DOCUMENT,
-            lambda _: page_loaded.set(),
-            temporary=True,
-        )
-
-        try:
-            await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
-            pass
-
-        await self._connection_handler.remove_callback(page_loaded_callback_id)
-        await self._connection_handler.remove_callback(
-            navigated_within_document_callback_id
-        )
-
-        if page_events_auto_enabled:
-            await self.disable_page_events()
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            response = await self._execute_command(
+                RuntimeCommands.evaluate_script('document.readyState')
+            )
+            if response['result']['result']['value'] == 'complete':
+                break
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                raise asyncio.TimeoutError('Page load timed out')
+            await asyncio.sleep(0.5)
