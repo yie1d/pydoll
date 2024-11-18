@@ -135,3 +135,10 @@ class PageEvents:
     This event is significant for tracking the initiation of downloads,
     allowing for pre-download actions such as logging or user notifications.
     """
+    NAVIGATED_WITHIN_DOCUMENT = 'Page.navigatedWithinDocument'
+    """
+    Event that indicates navigation within the same document.
+
+    This event is useful for tracking changes in the document state, such as
+    anchor links or in-page navigation, without requiring a full page reload.
+    """

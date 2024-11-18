@@ -92,11 +92,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             str: The source code of the page.
         """
-        root_node_id = await self._get_root_node_id()
         response = await self._execute_command(
-            DomCommands.get_outer_html(root_node_id)
+            RuntimeCommands.evaluate_script(
+                'document.documentElement.outerHTML'
+            )
         )
-        return response['result']['outerHTML']
+        return response['result']['result']['value']
 
     async def get_cookies(self) -> list[dict]:
         """
@@ -133,6 +134,9 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Args:
             url (str): The URL to navigate to.
         """
+        if await self._refresh_if_url_not_changed(url):
+            return
+
         await self._execute_command(PageCommands.go_to(url))
 
         try:
@@ -357,6 +361,19 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             command = RuntimeCommands.evaluate_script(script)
         return await self._execute_command(command)
 
+    async def _refresh_if_url_not_changed(self, url: str):
+        """
+        Refreshes the page if the URL has not changed.
+
+        Args:
+            url (str): The URL to compare against.
+        """
+        current_url = await self.current_url
+        if current_url == url:
+            await self.refresh()
+            return True
+        return False
+
     async def _wait_page_load(self, timeout: int = 300):
         """
         Waits for the page to finish loading.
@@ -368,8 +385,15 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             await self.enable_page_events()
 
         page_loaded = asyncio.Event()
+
         await self.on(
             PageEvents.PAGE_LOADED,
+            lambda _: page_loaded.set(),
+            temporary=True,
+        )
+
+        await self.on(
+            PageEvents.NAVIGATED_WITHIN_DOCUMENT,
             lambda _: page_loaded.set(),
             temporary=True,
         )
