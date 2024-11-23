@@ -1,15 +1,18 @@
 import asyncio
 import json
 
+import aiofiles
 from bs4 import BeautifulSoup
 
 from pydoll import exceptions
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
+from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import Scripts
 from pydoll.mixins.find_elements import FindElementsMixin
+from pydoll.utils import decode_image_to_bytes
 
 
 class WebElement(FindElementsMixin):
@@ -125,7 +128,7 @@ class WebElement(FindElementsMixin):
         response = await self._execute_script(
             Scripts.BOUNDS, return_by_value=True
         )
-        return response['result']['result']['value']
+        return json.loads(response['result']['result']['value'])
 
     async def _execute_script(
         self, script: str, return_by_value: bool = False
@@ -169,6 +172,30 @@ class WebElement(FindElementsMixin):
             Scripts.ELEMENT_ON_TOP, return_by_value=True
         )
         return result['result']['result']['value']
+
+    async def get_screenshot(self, path: str):
+        """
+        Takes a screenshot of the element.
+
+        Args:
+            path (str): The path where the screenshot will be saved.
+        """
+        bounds = await self.get_bounds_using_js()
+        clip = {
+            'x': bounds['x'],
+            'y': bounds['y'],
+            'width': bounds['width'],
+            'height': bounds['height'],
+            'scale': 1,
+        }
+        screenshot = await self._connection_handler.execute_command(
+            PageCommands.screenshot(
+                format='png', clip=clip
+            )
+        )
+        async with aiofiles.open(path, 'wb') as file:
+            image_bytes = decode_image_to_bytes(screenshot['result']['data'])
+            await file.write(image_bytes)
 
     async def get_element_text(self) -> str:
         """
@@ -241,7 +268,6 @@ class WebElement(FindElementsMixin):
             )
         except KeyError:
             element_bounds = await self.get_bounds_using_js()
-            element_bounds = json.loads(element_bounds)
             position_to_click = (
                 element_bounds['x'] + element_bounds['width'] / 2,
                 element_bounds['y'] + element_bounds['height'] / 2,
