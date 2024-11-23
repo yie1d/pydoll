@@ -11,7 +11,6 @@ from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.connection import ConnectionHandler
 from pydoll.element import WebElement
-from pydoll.events.page import PageEvents
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
@@ -94,11 +93,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         TODO: tix this
         """
-        root_node_id = await self._get_root_node_id()
         response = await self._execute_command(
-            DomCommands.get_outer_html(root_node_id)
+            RuntimeCommands.evaluate_script(
+                'document.documentElement.outerHTML'
+            )
         )
-        return response['result']['outerHTML']
+        return response['result']['result']['value']
 
     async def get_cookies(self) -> list[dict]:
         """
@@ -135,6 +135,9 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Args:
             url (str): The URL to navigate to.
         """
+        if await self._refresh_if_url_not_changed(url):
+            return
+
         await self._execute_command(PageCommands.go_to(url))
 
         try:
@@ -238,12 +241,13 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         responses = []
         for log in logs_matched:
             try:
-                response = await self.get_network_response_body(
+                body, base64encoded = await self.get_network_response_body(
                     log['params']['requestId']
                 )
             except KeyError:
                 continue
-            responses.append(json.loads(response))
+            response = json.loads(body) if not base64encoded else body
+            responses.append(response)
         return responses
 
     async def get_network_response_body(self, request_id: str):
@@ -259,7 +263,10 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         response = await self._execute_command(
             NetworkCommands.get_response_body(request_id)
         )
-        return response['result']['body']
+        return (
+            response['result']['body'],
+            response['result']['base64Encoded'],
+        )
 
     async def enable_page_events(self):
         """
@@ -328,7 +335,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         else:
             function_to_register = callback
 
-        await self._connection_handler.register_callback(
+        return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
 
@@ -359,27 +366,30 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             command = RuntimeCommands.evaluate_script(script)
         return await self._execute_command(command)
 
+    async def _refresh_if_url_not_changed(self, url: str):
+        """
+        Refreshes the page if the URL has not changed.
+
+        Args:
+            url (str): The URL to compare against.
+        """
+        current_url = await self.current_url
+        if current_url == url:
+            await self.refresh()
+            return True
+        return False
+
     async def _wait_page_load(self, timeout: int = 300):
         """
         Waits for the page to finish loading.
         """
-        page_events_auto_enabled = False
-
-        if not self._page_events_enabled:
-            page_events_auto_enabled = True
-            await self.enable_page_events()
-
-        page_loaded = asyncio.Event()
-        await self.on(
-            PageEvents.PAGE_LOADED,
-            lambda _: page_loaded.set(),
-            temporary=True,
-        )
-
-        try:
-            await asyncio.wait_for(page_loaded.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
-            pass
-
-        if page_events_auto_enabled:
-            await self.disable_page_events()
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            response = await self._execute_command(
+                RuntimeCommands.evaluate_script('document.readyState')
+            )
+            if response['result']['result']['value'] == 'complete':
+                break
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                raise asyncio.TimeoutError('Page load timed out')
+            await asyncio.sleep(0.5)

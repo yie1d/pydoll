@@ -120,12 +120,15 @@ class Browser(ABC):  # noqa: PLR0904
             )
 
         pages = await self.get_pages()
-        valid_page = [
-            page
-            for page in pages
-            if page['type'] == 'page' and 'chrome' not in page['title']
-        ][0]['targetId']
-        self._pages.append(valid_page)
+        try:
+            valid_page = [
+                page
+                for page in pages
+                if page['type'] == 'page' and 'chrome://newtab/' in page['url']
+            ][0]['targetId']
+            self._pages.append(valid_page)
+        except IndexError:
+            await self.new_page()
 
     async def set_download_path(self, path: str):
         """
@@ -176,7 +179,7 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def on(
         self, event_name: str, callback: callable, temporary: bool = False
-    ):
+    ) -> int:
         """
         Registers an event callback for a specific event. This method has
         a global scope and can be used to listen for events across all pages
@@ -186,6 +189,9 @@ class Browser(ABC):  # noqa: PLR0904
         Args:
             event_name (str): Name of the event to listen for.
             callback (Callable): function to be called when the event occurs.
+
+        Returns:
+            int: The ID of the registered callback.
         """
 
         async def callback_wrapper(event):
@@ -196,7 +202,7 @@ class Browser(ABC):  # noqa: PLR0904
         else:
             function_to_register = callback
 
-        await self.connection_handler.register_callback(
+        return await self.connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
 
