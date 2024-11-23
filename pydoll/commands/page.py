@@ -51,7 +51,7 @@ class PageCommands:
 
     @classmethod
     def screenshot(
-        cls, format: str = 'png', quality: int = 100, clip: dict = None
+        cls, format: str = 'jpg', quality: int = 100, clip: dict = None
     ) -> dict:
         """
         Generates the command to capture a screenshot of the current page.
