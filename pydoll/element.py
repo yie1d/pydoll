@@ -190,7 +190,7 @@ class WebElement(FindElementsMixin):
         }
         screenshot = await self._connection_handler.execute_command(
             PageCommands.screenshot(
-                format='jpg', clip=clip
+                format='jpeg', clip=clip
             )
         )
         async with aiofiles.open(path, 'wb') as file:
