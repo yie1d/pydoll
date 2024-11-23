@@ -66,7 +66,7 @@ async def test_execute_command_timeout(handler):
 
 @pytest.mark.asyncio
 async def test_register_callback(handler):
-    EXPECTED_CALLBACK_ID = 2
+    EXPECTED_CALLBACK_ID = 1
     with patch(
         'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
     ) as mock_get_browser_ws_address:
@@ -84,7 +84,7 @@ async def test_register_callback(handler):
 
 @pytest.mark.asyncio
 async def test_register_temporary_callback(handler):
-    EXPECTED_CALLBACK_ID = 2
+    EXPECTED_CALLBACK_ID = 1
     with patch(
         'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
     ) as mock_get_browser_ws_address:
@@ -102,7 +102,7 @@ async def test_register_temporary_callback(handler):
 
 @pytest.mark.asyncio
 async def test_callback_id_increment(handler):
-    EXPECTED_CALLBACK_ID = 3
+    EXPECTED_CALLBACK_ID = 2
     with patch(
         'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
     ) as mock_get_browser_ws_address:

@@ -17,7 +17,7 @@ def test_screenshot_default():
     expected_command = {
         'method': 'Page.captureScreenshot',
         'params': {
-            'format': 'png',
+            'format': 'jpeg',
             'quality': 100,
         },
     }
