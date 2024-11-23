@@ -239,12 +239,13 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         responses = []
         for log in logs_matched:
             try:
-                response = await self.get_network_response_body(
+                body, base64encoded = await self.get_network_response_body(
                     log['params']['requestId']
                 )
             except KeyError:
                 continue
-            responses.append(json.loads(response))
+            response = json.loads(body) if not base64encoded else body
+            responses.append(response)
         return responses
 
     async def get_network_response_body(self, request_id: str):
@@ -260,7 +261,10 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         response = await self._execute_command(
             NetworkCommands.get_response_body(request_id)
         )
-        return response['result']['body']
+        return (
+            response['result']['body'],
+            response['result']['base64Encoded'],
+        )
 
     async def enable_page_events(self):
         """
