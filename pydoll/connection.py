@@ -218,11 +218,7 @@ class ConnectionHandler:
             event (dict): The event data in dictionary form.
         """
         event_name = event.get('method')
-
-        if event_name:
-            logger.info(f'Handling event {event}')
-        else:
-            logger.warning('Event without a method received.')
+        logger.info(f'Handling event {event}')
 
         if 'Network.requestWillBeSent' in event_name:
             self.network_logs.append(event)
