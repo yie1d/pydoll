@@ -37,6 +37,36 @@ def test_screenshot_jpeg():
     )
 
 
+def test_screenshot_png():
+    expected_command = {
+        'method': 'Page.captureScreenshot',
+        'params': {
+            'format': 'png',
+            'quality': 100,
+        },
+    }
+    assert PageCommands.screenshot(format='png') == expected_command
+
+
+def test_screenshot_with_clip():
+    clip = {
+        'x': 10,
+        'y': 20,
+        'width': 30,
+        'height': 40,
+        'scale': 1,
+    }
+    expected_command = {
+        'method': 'Page.captureScreenshot',
+        'params': {
+            'format': 'jpeg',
+            'quality': 100,
+            'clip': clip,
+        },
+    }
+    assert PageCommands.screenshot(clip=clip) == expected_command
+
+
 def test_go_to():
     url = 'https://example.com'
     expected_command = {

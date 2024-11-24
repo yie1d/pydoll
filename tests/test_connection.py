@@ -26,6 +26,16 @@ async def test_connect_to_page(handler):
 
 
 @pytest.mark.asyncio
+async def test_connect_to_page_with_page_id(page_handler):
+    with patch(
+        'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
+    ) as mock_get_browser_ws_address:
+        mock_get_browser_ws_address.return_value = 'ws://localhost:9222'
+        await page_handler.connect_to_page()
+        assert page_handler._connection is not None
+
+
+@pytest.mark.asyncio
 async def test_execute_command(handler):
     with patch(
         'pydoll.connection.get_browser_ws_address', new_callable=AsyncMock
@@ -141,6 +151,23 @@ async def test_callback_removal(handler):
         await asyncio.sleep(0.2)
         callback.assert_called_once()
         assert handler._event_callbacks == {}
+
+
+@pytest.mark.asyncio
+async def test_remove_callback(handler):
+    callback = MagicMock()
+    callback_id = await handler.register_callback(
+        'Network.requestWillBeSent', callback
+    )
+    await handler.remove_callback(callback_id)
+    assert callback_id not in handler._event_callbacks
+
+
+@pytest.mark.asyncio
+async def test_remove_invalid_callback(handler):
+    callback_id = '1234'
+    response = await handler.remove_callback(callback_id)
+    assert response is False
 
 
 @pytest.mark.asyncio

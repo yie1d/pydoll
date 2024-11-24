@@ -25,8 +25,16 @@ async def ws_server():
                     })
                 )
 
+            # Função para enviar um evento não json
+            async def send_event_non_json():
+                await asyncio.sleep(0.1)
+                await websocket.send('Non JSON event')
+
             # Envio de evento em paralelo com a recepção de mensagens
             send_event_task = asyncio.create_task(send_event())
+            send_event_non_json_task = asyncio.create_task(
+                send_event_non_json()
+            )
 
             async for message in websocket:
                 data = json.loads(message)
@@ -39,6 +47,7 @@ async def ws_server():
 
             # Espera a tarefa do evento ser concluída antes de fechar a conexão
             await send_event_task
+            await send_event_non_json_task
         except websockets.ConnectionClosed:
             pass
 
@@ -52,6 +61,11 @@ async def ws_server():
 @pytest_asyncio.fixture(scope='function')
 async def handler(ws_server):
     return ConnectionHandler(connection_port=9222)
+
+
+@pytest_asyncio.fixture(scope='function')
+async def page_handler(ws_server):
+    return ConnectionHandler(connection_port=9222, page_id='page_id')
 
 
 @pytest.fixture
