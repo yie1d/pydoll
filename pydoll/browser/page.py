@@ -146,7 +146,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         if not await self.has_dialog():
             raise LookupError('No dialog present on the page')
-        return self._connection_handler.dialog['message']
+        return self._connection_handler.dialog['params']['message']
 
     async def accept_dialog(self):
         """
