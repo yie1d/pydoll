@@ -231,7 +231,7 @@ class ConnectionHandler:
 
         if 'Page.javascriptDialogOpening' in event_name:
             self.dialog = event
-        
+
         if 'Page.javascriptDialogClosed' in event_name:
             self.dialog = {}
 
