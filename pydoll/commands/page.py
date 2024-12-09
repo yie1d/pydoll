@@ -30,6 +30,25 @@ class PageCommands:
         'method': 'Page.setDownloadBehavior',
         'params': {},
     }
+    HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
+
+    @classmethod
+    def handle_dialog(cls, accept: bool = True) -> dict:
+        """
+        Generates the command to handle a JavaScript dialog.
+
+        Args:
+            accept (bool): Whether to accept the dialog.
+                           If True, the dialog will be accepted.
+                           If False, the dialog will be dismissed.
+
+        Returns:
+            dict: The command to be sent to the browser,
+                  containing the method and parameters for handling the dialog.
+        """
+        command = cls.HANDLE_DIALOG.copy()
+        command['params']['accept'] = accept
+        return command
 
     @classmethod
     def set_download_path(cls, path: str) -> dict:

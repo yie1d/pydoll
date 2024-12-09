@@ -126,6 +126,39 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         await self._execute_command(StorageCommands.clear_cookies())
         await self._execute_command(NetworkCommands.clear_browser_cookies())
 
+    async def has_dialog(self) -> bool:
+        """
+        Checks if a dialog is present on the page.
+
+        Returns:
+            bool: True if a dialog is present, False otherwise.
+        """
+        if self._connection_handler.dialog:
+            return True
+        return False
+
+    async def get_dialog_message(self) -> str:
+        """
+        Retrieves the message of the dialog on the page.
+
+        Returns:
+            str: The message of the dialog.
+        """
+        if not await self.has_dialog():
+            raise LookupError('No dialog present on the page')
+        return self._connection_handler.dialog['params']['message']
+
+    async def accept_dialog(self):
+        """
+        Accepts the dialog on the page.
+
+        Raises:
+            LookupError: If no dialog is present on the page.
+        """
+        if not await self.has_dialog():
+            raise LookupError('No dialog present on the page')
+        await self._execute_command(PageCommands.handle_dialog(True))
+
     async def go_to(self, url: str, timeout=300):
         """
         Navigates to a URL in the page.
