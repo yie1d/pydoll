@@ -158,7 +158,6 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if not await self.has_dialog():
             raise LookupError('No dialog present on the page')
         await self._execute_command(PageCommands.handle_dialog(True))
-        self._connection_handler.dialog = {}
 
     async def go_to(self, url: str, timeout=300):
         """
