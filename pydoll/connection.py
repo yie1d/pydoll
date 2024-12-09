@@ -38,6 +38,7 @@ class ConnectionHandler:
         self._callback_id = 0
         self._pending_commands: dict[int, asyncio.Future] = {}
         self.network_logs = []
+        self.dialog = {}
         logger.info('ConnectionHandler initialized.')
 
     @property
@@ -228,6 +229,9 @@ class ConnectionHandler:
             self.network_logs.append(event)
             self.network_logs = self.network_logs[-10000:]
 
+        if 'Page.javascriptDialogOpening' in event_name:
+            self.dialog = event
+        
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
             if callback_data['event'] == event_name:
