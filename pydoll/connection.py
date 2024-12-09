@@ -231,7 +231,7 @@ class ConnectionHandler:
 
         if 'Page.javascriptDialogOpening' in event_name:
             self.dialog = event
-        
+
         event_callbacks = self._event_callbacks.copy()
         for callback_id, callback_data in event_callbacks.items():
             if callback_data['event'] == event_name:

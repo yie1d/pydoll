@@ -32,7 +32,6 @@ class PageCommands:
     }
     HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
 
-
     @classmethod
     def handle_dialog(cls, accept: bool = True) -> dict:
         """
@@ -50,7 +49,7 @@ class PageCommands:
         command = cls.HANDLE_DIALOG.copy()
         command['params']['accept'] = accept
         return command
-    
+
     @classmethod
     def set_download_path(cls, path: str) -> dict:
         """

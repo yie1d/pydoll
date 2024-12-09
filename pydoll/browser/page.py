@@ -136,7 +136,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if self._connection_handler.dialog:
             return True
         return False
-    
+
     async def get_dialog_message(self) -> str:
         """
         Retrieves the message of the dialog on the page.
@@ -147,7 +147,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if not await self.has_dialog():
             raise LookupError('No dialog present on the page')
         return self._connection_handler.dialog['message']
-        
+
     async def accept_dialog(self):
         """
         Accepts the dialog on the page.
@@ -159,7 +159,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             raise LookupError('No dialog present on the page')
         await self._execute_command(PageCommands.handle_dialog(True))
         self._connection_handler.dialog = {}
-    
+
     async def go_to(self, url: str, timeout=300):
         """
         Navigates to a URL in the page.
