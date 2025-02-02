@@ -7,6 +7,11 @@ from pydoll.utils import decode_image_to_bytes, get_browser_ws_address
 
 
 def test_decode_image_to_bytes():
+    """
+    Tests the decode_image_to_bytes function.
+
+    The function should return the original image given a base64 encoded string
+    """
     base64code = 'aGVsbG8gd29ybGQ='
     assert decode_image_to_bytes(base64code) == b'hello world'
 
