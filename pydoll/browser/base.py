@@ -19,7 +19,7 @@ from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.commands.target import TargetCommands
-from pydoll.connection import ConnectionHandler
+from pydoll.connection.connection import ConnectionHandler
 from pydoll.events.fetch import FetchEvents
 
 
