@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
+from typing import Callable
 
 from pydoll import exceptions
 from pydoll.browser.managers import (
@@ -35,6 +36,11 @@ class Browser(ABC):  # noqa: PLR0904
         self,
         options: Options | None = None,
         connection_port: int = None,
+        process_manager: BrowserProcessManager | None = None,
+        options_manager: BrowserOptionsManager | None = None,
+        proxy_manager_factory: Callable[[Options], ProxyManager] | None = None,
+        temp_directory_manager: TempDirectoryManager | None = None,
+        connection_handler: ConnectionHandler | None = None,
     ):
         """
         Initializes the Browser instance.
@@ -47,15 +53,23 @@ class Browser(ABC):  # noqa: PLR0904
         Raises:
             TypeError: If any of the arguments are not callable.
         """
-        self.options = BrowserOptionsManager.initialize_options(options)
-        self._proxy_manager = ProxyManager(self.options)
+        options_manager = options_manager or BrowserOptionsManager()
+        self.options = options_manager.initialize_options(options)
+        proxy_manager_factory = proxy_manager_factory or ProxyManager
+        self._proxy_manager = proxy_manager_factory(self.options)
         self._connection_port = (
             connection_port if connection_port else randint(9223, 9322)
         )
-        self._browser_process_manager = BrowserProcessManager()
-        self._temp_directory_manager = TempDirectoryManager()
-        self._connection_handler = ConnectionHandler(self._connection_port)
-        BrowserOptionsManager.add_default_arguments(self.options)
+        self._browser_process_manager = (
+            process_manager or BrowserProcessManager()
+        )
+        self._temp_directory_manager = (
+            temp_directory_manager or TempDirectoryManager()
+        )
+        self._connection_handler = (
+            connection_handler or ConnectionHandler(self._connection_port)
+        )
+        options_manager.add_default_arguments(self.options)
 
         self._pages = []
 
