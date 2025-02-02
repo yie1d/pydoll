@@ -39,19 +39,12 @@ async def get_browser_ws_address(port: int) -> str:
             ) as response:
                 response.raise_for_status()
                 data = await response.json()
-                logger.info('Browser WebSocket address fetched successfully.')
                 return data['webSocketDebuggerUrl']
 
     except aiohttp.ClientError as e:
-        logger.error(
-            'Failed to fetch browser WebSocket address due to network error.'
-        )
         raise exceptions.NetworkError(f'Failed to get browser ws address: {e}')
 
     except KeyError as e:
-        logger.error(
-            'Failed to get browser WebSocket address due to missing data.'
-        )
         raise exceptions.InvalidResponse(
             f'Failed to get browser ws address: {e}'
         )
