@@ -57,6 +57,19 @@ class ConnectionHandler:
             await self.connect_to_page()
         return self._connection
 
+    async def ping(self) -> bool:
+        """
+        Sends a ping message to the browser.
+
+        Returns:
+            bool: True if the ping was successful, False otherwise.
+        """
+        try:
+            await (await self.connection).ping()
+            return True
+        except Exception:
+            return False
+
     async def execute_command(self, command: dict, timeout: int = 10) -> dict:
         """
         Sends a command to the browser and awaits its response.
