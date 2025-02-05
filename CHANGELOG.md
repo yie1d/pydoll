@@ -1,3 +1,27 @@
+## 0.7.0 (2024-12-09)
+
+### Feat
+
+- autoremove dialog from connection_handler when closed
+- add handle_dialog method to PageCommands class
+- add dialog handling methods to Page class
+- add support for handling JavaScript dialog opening events
+- refactor network response handling for base64 encoding support
+- add clipping option for screenshots and implement element capture
+
+### Fix
+
+- index error on method get_dialog_message
+- update screenshot format from 'jpg' to 'jpeg' for consistency
+- handle potential IndexError when retrieving valid page targetId
+- filter valid pages using URL condition instead of title check
+
+### Refactor
+
+- run ruff formatter to ensure code consistency
+- run ruff formatter to ensure code consistency
+- change screenshot format from PNG to JPG in commands and element
+
 ## 0.6.0 (2024-11-18)
 
 ### Feat
