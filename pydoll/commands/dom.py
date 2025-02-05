@@ -17,7 +17,7 @@ class DomCommands:
         SelectorType (Literal): A type definition for supported selector types.
     """
 
-    SelectorType = Literal[By.CSS, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME]
+    SelectorType = Literal[By.CSS_SELECTOR, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME]
 
     ENABLE = {'method': 'DOM.enable'}
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
