@@ -1,6 +1,6 @@
 
 <p align="center">
-    <h1>🚀 Pydoll: Revolutionizing Web Automation in Python!</h1>
+    <h1>🚀 Pydoll: Async Web Automation in Python!</h1>
 </p>
 <br>
 <p align="center">
@@ -28,8 +28,8 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
 
 - **Zero Webdrivers!** Say goodbye to webdriver compatibility and configuration headaches
 - **Native Captcha Bypass!** Naturally passes through Cloudflare Turnstile and reCAPTCHA v3
-- **Exceptional Performance** thanks to native asynchronous programming
-- **Ultra-Realistic Interactions** that perfectly simulate human behavior
+- **Performance** thanks to native asynchronous programming
+- **Realistic Interactions** that simulate human behavior
 - **Advanced Event System** for complex and reactive automations
 
 ## Table of Contents
@@ -169,12 +169,6 @@ async def proxy_example():
         await browser.start()
 ```
 
-## 🌟 Why is Pydoll Revolutionary?
-
-1. **Captcha Bypass**: Naturally passes through modern protection systems due to realistic interactions
-2. **Zero Configuration**: Forget webdrivers and complex dependencies
-3. **Superior Performance**: Harness the power of Python's native async/await
-4. **Incredible Scalability**: From simple scripts to complex scraping systems
 
 For exploring all available methods and additional features, check out:
 - Browser interface: [pydoll/browser/base.py](./pydoll/browser/base.py)
@@ -184,4 +178,4 @@ For exploring all available methods and additional features, check out:
 
 ## 🎉 Start Now!
 
-Join the web automation revolution with Pydoll - where complexity becomes simplicity and limitations become possibilities!
+Feel free to use, open issues and contributing!
