@@ -17,4 +17,4 @@ jobs:
           poetry install
       - name: Run tests
         run: |
-          task test
+          poetry run task test
