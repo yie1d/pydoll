@@ -16,6 +16,7 @@ from pydoll.commands.fetch import FetchCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.storage import StorageCommands
+from pydoll.commands.target import TargetCommands
 from pydoll.events.fetch import FetchEvents
 
 
@@ -263,4 +264,96 @@ async def test_enable_events(mock_browser):
     )
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.enable_fetch_events(True, 'XHR')
+    )
+
+
+@pytest.mark.asyncio
+async def test_disable_events(mock_browser):
+    await mock_browser.disable_fetch_events()
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        FetchCommands.disable_fetch_events()
+    )
+
+
+@pytest.mark.asyncio
+async def test__continue_request(mock_browser):
+    await mock_browser._continue_request({'params': {'requestId': 'request1'}})
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        FetchCommands.continue_request('request1'), timeout=60
+    )
+
+
+@pytest.mark.asyncio
+async def test__continue_request_auth_required(mock_browser):
+    await mock_browser._continue_request_auth_required(
+        event={'params': {'requestId': 'request1'}},
+        proxy_username='user',
+        proxy_password='pass',
+    )
+
+    mock_browser._connection_handler.execute_command.assert_any_call(
+        FetchCommands.continue_request_with_auth('request1', 'user', 'pass'),
+        timeout=60,
+    )
+
+    mock_browser._connection_handler.execute_command.assert_any_call(
+        FetchCommands.disable_fetch_events()
+    )
+
+
+def test__is_valid_page(mock_browser):
+    result = mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'chrome://newtab/',
+    })
+    assert result is True
+
+
+def test__is_valid_page_not_a_page(mock_browser):
+    result = mock_browser._is_valid_page({
+        'type': 'tab',
+        'url': 'chrome://newtab/',
+    })
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test__get_valid_page(mock_browser):
+    pages = [
+        {
+            'type': 'page',
+            'url': 'chrome://newtab/',
+            'targetId': 'valid_page_id',
+        },
+        {
+            'type': 'page',
+            'url': 'https://example.com/',
+            'targetId': 'invalid_page_id',
+        },
+        {
+            'type': 'tab',
+            'url': 'chrome://newtab/',
+            'targetId': 'invalid_page_id',
+        },
+    ]
+
+    result = await mock_browser._get_valid_page(pages)
+    assert result == 'valid_page_id'
+
+
+@pytest.mark.asyncio
+async def test__get_valid_page_key_error(mock_browser):
+    pages = [
+        {'type': 'page', 'url': 'chrome://newtab/'},
+        {'type': 'page', 'url': 'https://example.com/'},
+        {'type': 'tab', 'url': 'chrome://newtab/'},
+    ]
+
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'targetId': 'new_page'}
+    }
+    result = await mock_browser._get_valid_page(pages)
+    assert result == 'new_page'
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        TargetCommands.create_target(''), timeout=60
     )
