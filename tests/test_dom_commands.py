@@ -90,7 +90,7 @@ def test_get_current_url(mock_runtime_commands):
 
 
 def test_find_element_css(mock_runtime_commands):
-    by = By.CSS
+    by = By.CSS_SELECTOR
     value = 'test-class'
     expected_selector = 'test-class'
     expected_expression = f'document.querySelector("{expected_selector}");'
@@ -181,7 +181,7 @@ def test_find_element_class_name(mock_runtime_commands):
 
 
 def test_find_element_relative_css(mock_runtime_commands):
-    by = By.CSS
+    by = By.CSS_SELECTOR
     value = 'div[id="test"]'
     object_id = '12345'
     expected_expression = (
@@ -380,7 +380,7 @@ def test_find_elements_id(mock_runtime_commands):
 
 
 def test_find_elements_css(mock_runtime_commands):
-    by = By.CSS
+    by = By.CSS_SELECTOR
     value = 'test-class'
     expected_selector = 'test-class'
     expected_expression = f'document.querySelectorAll("{expected_selector}");'
@@ -436,7 +436,7 @@ def test_find_elements_relative_xpath(mock_runtime_commands):
 
 
 def test_find_elements_relative_css(mock_runtime_commands):
-    by = By.CSS
+    by = By.CSS_SELECTOR
     value = 'div[id="test"]'
     object_id = '12345'
     expected_expression = (
