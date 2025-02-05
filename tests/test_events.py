@@ -1,5 +1,9 @@
 from pydoll.events import (
-    BrowserEvents, DomEvents, FetchEvents, NetworkEvents, PageEvents
+    BrowserEvents,
+    DomEvents,
+    FetchEvents,
+    NetworkEvents,
+    PageEvents,
 )
 
 
@@ -19,7 +23,9 @@ def test_dom_events():
     assert DomEvents.SCROLLABLE_FLAG_UPDATED == 'DOM.scrollableFlagUpdated'
     assert DomEvents.SHADOW_ROOT_POPPED == 'DOM.shadowRootPopped'
     assert DomEvents.SHADOW_ROOT_PUSHED == 'DOM.shadowRootPushed'
-    assert DomEvents.TOP_LAYER_ELEMENTS_UPDATED == 'DOM.topLayerElementsUpdated'
+    assert (
+        DomEvents.TOP_LAYER_ELEMENTS_UPDATED == 'DOM.topLayerElementsUpdated'
+    )
 
 
 def test_fetch_events():
@@ -33,8 +39,13 @@ def test_network_events():
     assert NetworkEvents.RESPONSE_RECEIVED == 'Network.responseReceived'
     assert NetworkEvents.WEB_SOCKET_CLOSED == 'Network.webSocketClosed'
     assert NetworkEvents.WEB_SOCKET_CREATED == 'Network.webSocketCreated'
-    assert NetworkEvents.WEB_SOCKET_FRAME_ERROR == 'Network.webSocketFrameError'
-    assert NetworkEvents.WEB_SOCKET_FRAME_RECEIVED == 'Network.webSocketFrameReceived'
+    assert (
+        NetworkEvents.WEB_SOCKET_FRAME_ERROR == 'Network.webSocketFrameError'
+    )
+    assert (
+        NetworkEvents.WEB_SOCKET_FRAME_RECEIVED
+        == 'Network.webSocketFrameReceived'
+    )
     assert NetworkEvents.WEB_SOCKET_FRAME_SENT == 'Network.webSocketFrameSent'
     assert NetworkEvents.WEB_TRANSPORT_CLOSED == 'Network.webTransportClosed'
     assert NetworkEvents.WEB_TRANSPORT_CONNECTION_ESTABLISHED == (
@@ -43,10 +54,16 @@ def test_network_events():
     assert NetworkEvents.WEB_TRANSPORT_CREATED == 'Network.webTransportCreated'
     assert NetworkEvents.POLICY_UPDATED == 'Network.policyUpdated'
     assert NetworkEvents.REQUEST_INTERCEPTED == 'Network.requestIntercepted'
-    assert NetworkEvents.REQUEST_SERVED_FROM_CACHE == 'Network.requestServedFromCache'
+    assert (
+        NetworkEvents.REQUEST_SERVED_FROM_CACHE
+        == 'Network.requestServedFromCache'
+    )
     assert NetworkEvents.LOADING_FAILED == 'Network.loadingFailed'
     assert NetworkEvents.LOADING_FINISHED == 'Network.loadingFinished'
-    assert NetworkEvents.EVENT_SOURCE_MESSAGE_RECEIVED == 'Network.eventSourceMessageReceived'
+    assert (
+        NetworkEvents.EVENT_SOURCE_MESSAGE_RECEIVED
+        == 'Network.eventSourceMessageReceived'
+    )
 
 
 def test_page_events():
@@ -59,7 +76,9 @@ def test_page_events():
     assert PageEvents.FRAME_STOPPED_LOADING == 'Page.frameStoppedLoading'
     assert PageEvents.JS_DIALOG_CLOSED == 'Page.javascriptDialogClosed'
     assert PageEvents.JS_DIALOG_OPENING == 'Page.javascriptDialogOpening'
-    assert PageEvents.NAVIGATED_WITHIN_DOCUMENT == 'Page.navigatedWithinDocument'
+    assert (
+        PageEvents.NAVIGATED_WITHIN_DOCUMENT == 'Page.navigatedWithinDocument'
+    )
     assert PageEvents.DOWNLOAD_PROGRESS == 'Page.downloadProgress'
     assert PageEvents.DOWNLOAD_WILL_BEGIN == 'Page.downloadWillBegin'
     assert PageEvents.LIFECYCLE_EVENT == 'Page.lifecycleEvent'
