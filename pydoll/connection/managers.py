@@ -1,12 +1,11 @@
-import json
 import asyncio
-from typing import Callable, Dict
 import logging
+from typing import Callable, Dict
 
 from pydoll import exceptions
 
-
 logger = logging.getLogger(__name__)
+
 
 class CommandManager:
     def __init__(self):
@@ -24,11 +23,11 @@ class CommandManager:
         if response_id in self._pending_commands:
             self._pending_commands[response_id].set_result(result)
             del self._pending_commands[response_id]
-    
+
     def remove_pending_command(self, command_id: int):
         """
         Remove um comando pendente sem resolvê-lo (útil para timeouts).
-        
+
         Args:
             command_id: ID do comando a ser removido
         """
@@ -40,7 +39,7 @@ class EventsHandler:
     """
     Gerencia registro de callbacks, processamento de eventos e logs de rede.
     """
-    
+
     def __init__(self):
         self._event_callbacks: Dict[int, dict] = {}
         self._callback_id = 0
@@ -48,14 +47,11 @@ class EventsHandler:
         logger.info('EventsHandler initialized')
 
     def register_callback(
-        self, 
-        event_name: str, 
-        callback: Callable, 
-        temporary: bool = False
+        self, event_name: str, callback: Callable, temporary: bool = False
     ) -> int:
         """
         Registra um callback para um tipo específico de evento.
-        
+
         Retorna:
             int: ID do callback registrado
         """
@@ -67,9 +63,11 @@ class EventsHandler:
         self._event_callbacks[self._callback_id] = {
             'event': event_name,
             'callback': callback,
-            'temporary': temporary
+            'temporary': temporary,
         }
-        logger.info(f"Registered callback for '{event_name}' with ID {self._callback_id}")
+        logger.info(
+            f"Registered callback for '{event_name}' with ID {self._callback_id}"
+        )
         return self._callback_id
 
     def remove_callback(self, callback_id: int) -> bool:
@@ -90,7 +88,7 @@ class EventsHandler:
     async def process_event(self, event_data: dict):
         """
         Processa um evento recebido e dispara os callbacks correspondentes.
-        
+
         Args:
             event_data: Dados do evento no formato dicionário
         """

@@ -6,8 +6,8 @@ from typing import Callable
 import websockets
 
 from pydoll import exceptions
-from pydoll.utils import get_browser_ws_address
 from pydoll.connection.managers import CommandManager, EventsHandler
+from pydoll.utils import get_browser_ws_address
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -22,11 +22,12 @@ class ConnectionHandler:
     """
 
     def __init__(
-            self,
-            connection_port: int,
-            page_id: str = 'browser',
-            ws_address_resolver: Callable[[int], str] = get_browser_ws_address,
-        ):
+        self,
+        connection_port: int,
+        page_id: str = 'browser',
+        ws_address_resolver: Callable[[int], str] = get_browser_ws_address,
+        ws_connector: Callable = websockets.connect,
+    ):
         """
         Initializes the ConnectionHandler instance.
 
@@ -39,9 +40,8 @@ class ConnectionHandler:
         self._connection_port = connection_port
         self._page_id = page_id
         self._ws_address_resolver = ws_address_resolver
-        self._connection = None
-        self._event_callbacks = {}
-        self._callback_id = 0
+        self._ws_connector = ws_connector
+        self._ws_connection = None
         self._command_manager = CommandManager()
         self._events_handler = EventsHandler()
         logger.info('ConnectionHandler initialized.')
@@ -49,23 +49,6 @@ class ConnectionHandler:
     @property
     def network_logs(self):
         return self._events_handler.network_logs
-    
-    @property
-    async def connection(self) -> websockets.WebSocketClientProtocol:
-        """
-        Returns the WebSocket connection to the browser.
-
-        If the connection is not established, it is created first.
-
-        Returns:
-            websockets.WebSocketClientProtocol: The WebSocket connection.
-
-        Raises:
-            ValueError: If the connection cannot be established.
-        """
-        if self._connection is None or self._connection.closed:
-            await self.connect_to_page()
-        return self._connection
 
     async def ping(self) -> bool:
         """
@@ -75,7 +58,8 @@ class ConnectionHandler:
             bool: True if the ping was successful, False otherwise.
         """
         try:
-            await (await self.connection).ping()
+            await self._ensure_active_connection()
+            await self._ws_connection.ping()
             return True
         except Exception:
             return False
@@ -100,47 +84,76 @@ class ConnectionHandler:
             logger.error('Command must be a dictionary.')
             raise exceptions.InvalidCommand('Command must be a dictionary')
 
+        await self._ensure_active_connection()
         future = self._command_manager.create_command_future(command)
         command_str = json.dumps(command)
 
-        connection = await self.connection
-        await connection.send(command_str)
-        logger.info(f'Sent command with ID {command["id"]}: {command}')
-
         try:
+            await self._ws_connection.send(command_str)
             response: str = await asyncio.wait_for(future, timeout)
-            logger.info(
-                f'Received response for command ID {command["id"]}: {response}'
-            )
             return json.loads(response)
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             self._command_manager.remove_pending_command(command['id'])
-            logger.warning(
-                f'Command execution timed out for ID {command["id"]}'
-            )
-            raise TimeoutError('Command execution timed out')
+            raise exc
+        except websockets.ConnectionClosed as exc:
+            await self._handle_connection_loss()
+            raise exc
 
-    async def connect_to_page(self) -> websockets.WebSocketClientProtocol:
+    async def register_callback(
+        self, event_name: str, callback: Callable, temporary: bool = False
+    ):
+        return self._events_handler.register_callback(
+            event_name, callback, temporary
+        )
+
+    async def remove_callback(self, callback_id: int):
+        return self._events_handler.remove_callback(callback_id)
+
+    async def clear_callbacks(self):
+        return self._events_handler.clear_callbacks()
+
+    async def close(self):
         """
-        Establishes a WebSocket connection to the browser page.
+        Closes the WebSocket connection.
 
-        Returns:
-            websockets.WebSocketClientProtocol: The WebSocket connection.
-
-        Initiates a task to listen for events from the page WebSocket.
+        Closes the WebSocket connection and clears all event callbacks.
         """
+        await self.clear_callbacks()
+        await self._ws_connection.close()
+        logger.info('WebSocket connection closed.')
+
+    async def _ensure_active_connection(self):
+        """Guarantee an active connection exists."""
+        if self._ws_connection is None or self._ws_connection.closed:
+            await self._establish_new_connection()
+
+    async def _establish_new_connection(self):
+        """Create fresh connection and start listening."""
+        ws_address = await self._resolve_ws_address()
+        logger.info(f'Connecting to {ws_address}')
+        self._ws_connection = await self._ws_connector(ws_address)
+        self._receive_task = asyncio.create_task(self._receive_events())
+        logger.debug('WebSocket connection established')
+
+    async def _resolve_ws_address(self):
+        """Determine correct WebSocket address."""
         if 'browser' in self._page_id:
-            ws_address = await self._ws_address_resolver(self._connection_port)
-        else:
-            ws_address = (
-                f'ws://localhost:{self._connection_port}/devtools/page/'
-                + self._page_id
-            )
+            return await self._ws_address_resolver(self._connection_port)
+        return (
+            f'ws://localhost:{self._connection_port}/devtools/page/'
+            f'{self._page_id}'
+        )
 
-        connection = await websockets.connect(ws_address)
-        logger.info(f'Connected to page WebSocket at {ws_address}')
-        asyncio.create_task(self._receive_events())
-        self._connection = connection
+    async def _handle_connection_loss(self):
+        """Clean up after connection loss."""
+        if self._ws_connection and not self._ws_connection.closed:
+            await self._ws_connection.close()
+        self._ws_connection = None
+
+        if self._receive_task and not self._receive_task.done():
+            self._receive_task.cancel()
+
+        logger.info('Connection resources cleaned up')
 
     async def _receive_events(self):
         """
@@ -151,16 +164,16 @@ class ConnectionHandler:
             async for raw_message in self._incoming_messages():
                 await self._process_single_message(raw_message)
         except websockets.ConnectionClosed as e:
-            logger.warning(f"Connection closed gracefully: {e}")
+            logger.info(f'Connection closed gracefully: {e}')
         except Exception as e:
-            logger.error(f"Unexpected error in event loop: {e}")
+            logger.error(f'Unexpected error in event loop: {e}')
             raise
-    
+
     async def _incoming_messages(self):
         """Generator that yields raw messages while connection is open"""
-        while not self._connection.closed:
-            yield await self._connection.recv()
-    
+        while not self._ws_connection.closed:
+            yield await self._ws_connection.recv()
+
     async def _process_single_message(self, raw_message: str):
         """Orchestrates processing of a single raw WebSocket message"""
         message = self._parse_message(raw_message)
@@ -180,42 +193,25 @@ class ConnectionHandler:
         try:
             return json.loads(raw_message)
         except json.JSONDecodeError:
-            logger.warning(f"Failed to parse message: {raw_message[:200]}...")
+            logger.warning(f'Failed to parse message: {raw_message[:200]}...')
             return None
 
     def _is_command_response(self, message: dict) -> bool:
         """Determines if message is a response to a command"""
-        return "id" in message and isinstance(message["id"], int)
+        return 'id' in message and isinstance(message['id'], int)
 
     async def _handle_command_message(self, message: dict):
         """Processes messages that are command responses"""
-        logger.debug(f"Processing command response: {message.get('id')}")
-        self._command_manager.resolve_command(message["id"], json.dumps(message))
+        logger.debug(f'Processing command response: {message.get("id")}')
+        self._command_manager.resolve_command(
+            message['id'], json.dumps(message)
+        )
 
     async def _handle_event_message(self, message: dict):
         """Processes messages that are spontaneous events"""
-        event_type = message.get("method", "unknown-event")
-        logger.debug(f"Processing {event_type} event")
+        event_type = message.get('method', 'unknown-event')
+        logger.debug(f'Processing {event_type} event')
         await self._events_handler.process_event(message)
-
-    async def register_callback(self, event_name: str, callback: Callable, temporary: bool = False):
-        return await self._events_handler.register_callback(event_name, callback, temporary)
-    
-    async def remove_callback(self, callback_id: int):
-        return await self._events_handler.remove_callback(callback_id)
-    
-    async def clear_callbacks(self):
-        return self._events_handler.clear_callbacks()
-    
-    async def close(self):
-        """
-        Closes the WebSocket connection.
-
-        Closes the WebSocket connection and clears all event callbacks.
-        """
-        await self.clear_callbacks()
-        await self._connection.close()
-        logger.info('WebSocket connection closed.')
 
     def __repr__(self):
         return f'ConnectionHandler(port={self._connection_port})'
