@@ -185,7 +185,8 @@ class ConnectionHandler:
         else:
             await self._handle_event_message(message)
 
-    def _parse_message(self, raw_message: str) -> dict | None:
+    @staticmethod
+    def _parse_message(raw_message: str) -> dict | None:
         """
         Attempts to parse raw message string into JSON.
         Returns parsed dict or None if parsing fails.
@@ -196,7 +197,8 @@ class ConnectionHandler:
             logger.warning(f'Failed to parse message: {raw_message[:200]}...')
             return None
 
-    def _is_command_response(self, message: dict) -> bool:
+    @staticmethod
+    def _is_command_response(message: dict) -> bool:
         """Determines if message is a response to a command"""
         return 'id' in message and isinstance(message['id'], int)
 

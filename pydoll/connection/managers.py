@@ -66,7 +66,7 @@ class EventsHandler:
             'temporary': temporary,
         }
         logger.info(
-            f"Registered callback for '{event_name}' with ID {self._callback_id}"
+            f"Registered callback '{event_name}' with ID {self._callback_id}"
         )
         return self._callback_id
 
