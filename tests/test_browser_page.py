@@ -7,9 +7,14 @@ from pydoll.browser.page import Page
 from pydoll.element import WebElement
 
 from pydoll.commands import (
-    DomCommands, RuntimeCommands, NetworkCommands, 
-    StorageCommands, PageCommands, FetchCommands
+    DomCommands,
+    RuntimeCommands,
+    NetworkCommands,
+    StorageCommands,
+    PageCommands,
+    FetchCommands,
 )
+
 
 @pytest_asyncio.fixture
 async def mock_connection_handler():
@@ -20,11 +25,13 @@ async def mock_connection_handler():
         handler.network_logs = []
         yield handler
 
+
 @pytest_asyncio.fixture
 async def page(mock_connection_handler):
     page = Page(connection_port=9223, page_id='test_page')
     page._connection_handler = mock_connection_handler
     return page
+
 
 @pytest.mark.asyncio
 async def test_page_initialization(page):
@@ -34,27 +41,30 @@ async def test_page_initialization(page):
     assert not page.fetch_events_enabled
     assert not page.dom_events_enabled
 
+
 @pytest.mark.asyncio
 async def test_current_url(page):
     page._connection_handler.execute_command.return_value = {
         'result': {'result': {'value': 'https://example.com'}}
     }
-    
+
     url = await page.current_url
     assert url == 'https://example.com'
     page._connection_handler.execute_command.assert_called_once_with(
         DomCommands.get_current_url(), timeout=60
     )
 
+
 @pytest.mark.asyncio
 async def test_page_source(page):
     page._connection_handler.execute_command.return_value = {
         'result': {'result': {'value': '<html><body>Test</body></html>'}}
     }
-    
+
     source = await page.page_source
     assert source == '<html><body>Test</body></html>'
     page._connection_handler.execute_command.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_get_cookies(page):
@@ -62,12 +72,13 @@ async def test_get_cookies(page):
     page._connection_handler.execute_command.return_value = {
         'result': {'cookies': test_cookies}
     }
-    
+
     cookies = await page.get_cookies()
     assert cookies == test_cookies
     page._connection_handler.execute_command.assert_called_once_with(
         NetworkCommands.get_all_cookies(), timeout=60
     )
+
 
 @pytest.mark.asyncio
 async def test_set_cookies(page):
@@ -76,6 +87,7 @@ async def test_set_cookies(page):
     page._connection_handler.execute_command.assert_called_once_with(
         NetworkCommands.set_cookies(test_cookies), timeout=60
     )
+
 
 @pytest.mark.asyncio
 async def test_delete_all_cookies(page):
@@ -88,6 +100,7 @@ async def test_delete_all_cookies(page):
         NetworkCommands.clear_browser_cookies(), timeout=60
     )
 
+
 @pytest.mark.asyncio
 async def test_go_to_success(page):
     page._wait_page_load = AsyncMock(return_value=None)
@@ -99,14 +112,18 @@ async def test_go_to_success(page):
         PageCommands.go_to('https://example.com'), timeout=60
     )
 
+
 @pytest.mark.asyncio
 async def test_go_to_timeout(page):
     page._connection_handler.execute_command.return_value = {
         'result': {'result': {'value': 'loading'}}
     }
-    page._wait_page_load = AsyncMock(side_effect=asyncio.TimeoutError('Timeout'))
+    page._wait_page_load = AsyncMock(
+        side_effect=asyncio.TimeoutError('Timeout')
+    )
     with pytest.raises(TimeoutError):
         await page.go_to('https://example.com', timeout=0)
+
 
 @pytest.mark.asyncio
 async def test_refresh(page):
@@ -119,21 +136,23 @@ async def test_refresh(page):
         PageCommands.refresh(), timeout=60
     )
 
+
 @pytest.mark.asyncio
 async def test_get_screenshot(page, tmp_path):
     test_image = b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
     page._connection_handler.execute_command.return_value = {
         'result': {'data': test_image.decode()}
     }
-    
+
     screenshot_path = tmp_path / 'screenshot.png'
     with patch('aiofiles.open') as mock_open:
         mock_open.return_value.__aenter__.return_value.write = AsyncMock()
         await page.get_screenshot(str(screenshot_path))
-    
+
     page._connection_handler.execute_command.assert_called_once_with(
         PageCommands.screenshot(), timeout=60
     )
+
 
 @pytest.mark.asyncio
 async def test_enable_events(page):
@@ -142,24 +161,25 @@ async def test_enable_events(page):
     page._connection_handler.execute_command.assert_called_once_with(
         PageCommands.enable_page(), timeout=60
     )
-    
+
     await page.enable_network_events()
     assert page.network_events_enabled
     page._connection_handler.execute_command.assert_any_call(
         NetworkCommands.enable_network_events(), timeout=60
     )
-    
+
     await page.enable_fetch_events()
     assert page.fetch_events_enabled
     page._connection_handler.execute_command.assert_any_call(
         FetchCommands.enable_fetch_events(False, 'Document'), timeout=60
     )
-    
+
     await page.enable_dom_events()
     assert page.dom_events_enabled
     page._connection_handler.execute_command.assert_any_call(
         DomCommands.enable_dom_events(), timeout=60
     )
+
 
 @pytest.mark.asyncio
 async def test_disable_events(page):
@@ -168,12 +188,13 @@ async def test_disable_events(page):
     page._connection_handler.execute_command.assert_called_once_with(
         FetchCommands.disable_fetch_events(), timeout=60
     )
-    
+
     await page.disable_page_events()
     assert not page.page_events_enabled
     page._connection_handler.execute_command.assert_any_call(
         PageCommands.disable_page(), timeout=60
     )
+
 
 @pytest.mark.asyncio
 async def test_execute_script(page):
@@ -181,46 +202,46 @@ async def test_execute_script(page):
     page._connection_handler.execute_command.return_value = {
         'result': {'result': {'value': 'Test Page'}}
     }
-    
+
     result = await page.execute_script(test_script)
     page._connection_handler.execute_command.assert_called_once_with(
         RuntimeCommands.evaluate_script(test_script), timeout=60
     )
-    
+
     # Test with element context
-    element = WebElement(object_id='test_id', connection_handler=page._connection_handler)
+    element = WebElement(
+        object_id='test_id', connection_handler=page._connection_handler
+    )
     await page.execute_script('argument.click()', element)
     page._connection_handler.execute_command.assert_called_with(
         RuntimeCommands.call_function_on(
-            'test_id',
-            'function(){ this.click() }',
-            return_by_value=True
-        ), timeout=60
+            'test_id', 'function(){ this.click() }', return_by_value=True
+        ),
+        timeout=60,
     )
+
 
 @pytest.mark.asyncio
 async def test_get_network_logs(page):
     page._connection_handler.network_logs = [
         {'params': {'request': {'url': 'https://example.com/api'}}},
-        {'params': {'request': {'url': 'https://example.com/other'}}}
+        {'params': {'request': {'url': 'https://example.com/other'}}},
     ]
-    
+
     logs = await page.get_network_logs(['api'])
     assert len(logs) == 1
     assert logs[0]['params']['request']['url'] == 'https://example.com/api'
-    
+
     with pytest.raises(LookupError):
         await page.get_network_logs(['nonexistent'])
+
 
 @pytest.mark.asyncio
 async def test_get_network_response_body(page):
     page._connection_handler.execute_command.return_value = {
-        'result': {
-            'body': '{"key": "value"}',
-            'base64Encoded': False
-        }
+        'result': {'body': '{"key": "value"}', 'base64Encoded': False}
     }
-    
+
     body, encoded = await page.get_network_response_body('request_id')
     assert body == '{"key": "value"}'
     assert not encoded
@@ -232,7 +253,7 @@ async def test_get_network_response_body(page):
 @pytest.mark.asyncio
 async def test_has_dialog(page):
     page._connection_handler.dialog = {'params': {'type': 'alert'}}
-    
+
     result = await page.has_dialog()
     assert result is True
 
@@ -244,10 +265,9 @@ async def test_has_dialog(page):
 @pytest.mark.asyncio
 async def test_get_dialog_message(page):
     page._connection_handler.dialog = {'params': {'message': 'Test message'}}
-    
+
     message = await page.get_dialog_message()
     assert message == 'Test message'
-
 
     page._connection_handler.dialog = None
     with pytest.raises(LookupError):
@@ -284,7 +304,9 @@ async def test_go_to_same_url(page):
 
 @pytest.mark.asyncio
 async def test_refresh_timeout(page):
-    page._wait_page_load = AsyncMock(side_effect=asyncio.TimeoutError('Timeout'))
+    page._wait_page_load = AsyncMock(
+        side_effect=asyncio.TimeoutError('Timeout')
+    )
     with pytest.raises(TimeoutError):
         await page.refresh()
 
@@ -310,7 +332,11 @@ async def test_get_pdf_base64(page):
 
 @pytest.mark.asyncio
 async def test_print_to_pdf(page):
-    response = {'result': {'data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='}}
+    response = {
+        'result': {
+            'data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
+        }
+    }
     page._connection_handler.execute_command.return_value = response
     with patch('aiofiles.open') as mock_open:
         mock_open.return_value.__aenter__.return_value.write = AsyncMock()
@@ -324,12 +350,12 @@ async def test_print_to_pdf(page):
 async def test_get_network_logs(page):
     page._connection_handler.network_logs = [
         {'params': {'request': {'url': 'https://example.com/request'}}},
-        {'params': {'otherkey': {}}}
+        {'params': {'otherkey': {}}},
     ]
 
     logs = await page.get_network_logs(['request'])
     assert logs[0]['params']['request']['url'] == 'https://example.com/request'
-    
+
     with pytest.raises(LookupError):
         await page.get_network_logs(['nonexistent'])
 
@@ -337,17 +363,27 @@ async def test_get_network_logs(page):
 @pytest.mark.asyncio
 async def test_get_network_response_bodies(page):
     page._connection_handler.network_logs = [
-        {'params': {'request': {'url': 'https://example.com/api'}, 'requestId': 'request_id'}},
-        {'params': {'request': {'url': 'https://example.com/other'}, 'requestId': 'other_id'}}
+        {
+            'params': {
+                'request': {'url': 'https://example.com/api'},
+                'requestId': 'request_id',
+            }
+        },
+        {
+            'params': {
+                'request': {'url': 'https://example.com/other'},
+                'requestId': 'other_id',
+            }
+        },
     ]
     page.get_network_response_body = AsyncMock(
         return_value=('{"key": "value"}', False)
     )
     matches = ['api']
-    
+
     responses = await page.get_network_response_bodies(matches)
-    assert responses[0] == {"key": "value"}
-    
+    assert responses[0] == {'key': 'value'}
+
     with pytest.raises(LookupError):
         await page.get_network_response_bodies(['nonexistent'])
 
@@ -356,7 +392,7 @@ async def test_get_network_response_bodies(page):
 async def test_get_network_response_bodies_keyerror(page):
     page._connection_handler.network_logs = [
         {'params': {'request': {'url': 'https://example.com/api'}}},
-        {'params': {'request': {'url': 'https://example.com/other'}}}
+        {'params': {'request': {'url': 'https://example.com/other'}}},
     ]
 
     matches = ['api']
