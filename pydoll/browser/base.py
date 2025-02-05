@@ -64,7 +64,6 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.stop()
-        self._temp_directory_manager.cleanup()
         await self._connection_handler.close()
 
     async def start(self) -> None:
@@ -82,8 +81,8 @@ class Browser(ABC):  # noqa: PLR0904
         )
         await self._verify_browser_running()
 
-        if proxy_config := self._proxy_manager.get_proxy_credentials():
-            await self._configure_proxy(*proxy_config)
+        proxy_config = self._proxy_manager.get_proxy_credentials()
+        await self._configure_proxy(proxy_config[0], proxy_config[1])
 
         await self._init_first_page()
 
@@ -157,7 +156,6 @@ class Browser(ABC):  # noqa: PLR0904
             function_to_register = callback_wrapper
         else:
             function_to_register = callback
-
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
@@ -195,6 +193,7 @@ class Browser(ABC):  # noqa: PLR0904
         if await self._is_browser_running():
             await self._execute_command(BrowserCommands.CLOSE)
             self._browser_process_manager.stop_process()
+            self._temp_directory_manager.cleanup()
         else:
             raise exceptions.BrowserNotRunning('Browser is not running')
 
@@ -467,7 +466,7 @@ class Browser(ABC):  # noqa: PLR0904
 
         return await self.new_page()
 
-    async def _is_browser_running(self):
+    async def _is_browser_running(self, timeout: int = 10) -> bool:
         """
         Checks if the browser process is currently running.
         Attempts to connect to the browser to verify its status.
@@ -475,8 +474,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             bool: True if the browser is running, False otherwise.
         """
-        MAX_TRIES = 10
-        for _ in range(MAX_TRIES):
+        for _ in range(timeout):
             if await self._connection_handler.ping():
                 return True
             await asyncio.sleep(1)
