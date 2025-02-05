@@ -1,3 +1,41 @@
+## 1.0.0 (2025-02-05)
+
+### BREAKING CHANGE
+
+- now you'll have to use By.CSS_SELECTOR instead of By.CSS
+
+### Feat
+
+- refactor import and export statements for better readability
+- update changelog for version 0.7.0 and fix dependency versions
+- add ping method to ConnectionHandler for browser connectivity check
+- add tests for BrowserCommands in test_browser_commands.py
+
+### Fix
+
+- add initial module files for commands, connection, events, and mixins
+- add connection port parameter to Chrome browser initialization
+- use deepcopy for templates to prevent mutation issues
+
+### Refactor
+
+- rename constant CSS to CSS_SELECTOR
+- add command imports and remove obsolete connection handler code
+- refactor methods to be static in ConnectionHandler class
+- refactor proxy configuration and cleanup logic in Browser class
+- refactor ConnectionHandler to improve WebSocket management logic
+- refactor Browser class initialization for better clarity and structure
+- refactor Browser initialization to enhance flexibility and defaults
+- refactor import statement for ConnectionHandler module
+- refactor import paths for ConnectionHandler in browser modules
+- implement ConnectionHandler for WebSocket browser automation
+- implement command and event management for asynchronous processing
+- remove unnecessary logging for WebSocket address fetching
+- refactor Chrome class to use BrowserOptionsManager for path validation
+- implement proxy and browser management in the new managers module
+- refactor Browser class to use manager classes for better structure
+- refactor DOM command scripts for clarity and efficiency
+
 ## 0.7.0 (2024-12-09)
 
 ### Feat
