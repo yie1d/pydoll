@@ -32,6 +32,7 @@ line-length = 79
 [tool.ruff.lint]
 preview = true
 select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+exclude = ['tests', 'tests/*']
 
 [tool.ruff.format]
 preview = true
