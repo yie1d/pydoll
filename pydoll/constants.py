@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class By(str, Enum):
-    CSS = 'css'
+    CSS_SELECTOR = 'css'
     XPATH = 'xpath'
     CLASS_NAME = 'class_name'
     ID = 'id'

@@ -17,7 +17,9 @@ class DomCommands:
         SelectorType (Literal): A type definition for supported selector types.
     """
 
-    SelectorType = Literal[By.CSS, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME]
+    SelectorType = Literal[
+        By.CSS_SELECTOR, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME
+    ]
 
     ENABLE = {'method': 'DOM.enable'}
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
@@ -113,7 +115,7 @@ class DomCommands:
                 selector = escaped_value
         if object_id and not by == By.XPATH:
             script = Scripts.RELATIVE_QUERY_SELECTOR.replace(
-                '{selector}', escaped_value
+                '{selector}', selector
             )
             command = RuntimeCommands.call_function_on(
                 object_id,
@@ -168,21 +170,19 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
-            command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
-            command['params']['objectId'] = object_id
-            command['params']['functionDeclaration'] = (
-                Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace(
-                    '{escaped_value}', escaped_value
-                )
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace(
+                '{escaped_value}', escaped_value
             )
-            command['params']['returnByValue'] = False
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
         else:
-            command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
-            command['params']['expression'] = (
-                Scripts.FIND_XPATH_ELEMENT.replace(
-                    '{escaped_value}', escaped_value
-                )
+            script = Scripts.FIND_XPATH_ELEMENT.replace(
+                '{escaped_value}', escaped_value
             )
+            command = RuntimeCommands.evaluate_script(script)
         return command
 
     @classmethod
@@ -191,20 +191,19 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
-            command = copy.deepcopy(RuntimeCommands.CALL_FUNCTION_ON_TEMPLATE)
-            command['params']['objectId'] = object_id
-            command['params']['functionDeclaration'] = (
-                Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace(
-                    '{escaped_value}', escaped_value
-                )
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace(
+                '{escaped_value}', escaped_value
+            )
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
             )
         else:
-            command = copy.deepcopy(RuntimeCommands.EVALUATE_TEMPLATE)
-            command['params']['expression'] = (
-                Scripts.FIND_XPATH_ELEMENTS.replace(
-                    '{escaped_value}', escaped_value
-                )
+            script = Scripts.FIND_XPATH_ELEMENTS.replace(
+                '{escaped_value}', escaped_value
             )
+            command = RuntimeCommands.evaluate_script(script)
         return command
 
     @staticmethod

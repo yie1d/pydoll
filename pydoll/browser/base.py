@@ -1,14 +1,15 @@
 import asyncio
-import os
-import shutil
-import subprocess
 from abc import ABC, abstractmethod
-from contextlib import suppress
 from functools import partial
 from random import randint
-from tempfile import TemporaryDirectory
 
 from pydoll import exceptions
+from pydoll.browser.managers import (
+    BrowserOptionsManager,
+    BrowserProcessManager,
+    ProxyManager,
+    TempDirectoryManager,
+)
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
 from pydoll.commands.browser import BrowserCommands
@@ -18,7 +19,7 @@ from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.commands.target import TargetCommands
-from pydoll.connection import ConnectionHandler
+from pydoll.connection.connection import ConnectionHandler
 from pydoll.events.fetch import FetchEvents
 
 
@@ -31,7 +32,9 @@ class Browser(ABC):  # noqa: PLR0904
     """
 
     def __init__(
-        self, options: Options | None = None, connection_port: int = None
+        self,
+        options: Options | None = None,
+        connection_port: int = None,
     ):
         """
         Initializes the Browser instance.
@@ -39,14 +42,21 @@ class Browser(ABC):  # noqa: PLR0904
         Args:
             options (Options | None): An instance of the Options class to
             configure the browser. If None, default options will be used.
+            connection_port (int): The port to connect to the browser.
+
+        Raises:
+            TypeError: If any of the arguments are not callable.
         """
+        self.options = BrowserOptionsManager.initialize_options(options)
+        self._proxy_manager = ProxyManager(self.options)
         self._connection_port = (
             connection_port if connection_port else randint(9223, 9322)
         )
-        self.connection_handler = ConnectionHandler(self._connection_port)
-        self.options = self._initialize_options(options)
-        self.process = None
-        self.temp_dirs = []
+        self._browser_process_manager = BrowserProcessManager()
+        self._temp_directory_manager = TempDirectoryManager()
+        self._connection_handler = ConnectionHandler(self._connection_port)
+        BrowserOptionsManager.add_default_arguments(self.options)
+
         self._pages = []
 
     async def __aenter__(self):
@@ -54,81 +64,27 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.stop()
-        for temp_dir in self.temp_dirs:
-            with suppress(OSError):
-                shutil.rmtree(temp_dir.name)
-        await self.connection_handler.close()
+        await self._connection_handler.close()
 
     async def start(self) -> None:
-        """
-        Starts the browser process with the specified options,
-        including proxy configurations.
-
-        This method initializes and launches the browser, setting up the
-        necessary command-line arguments. It checks for a specified user data
-        directory, creating a temporary directory if none is provided,
-        and configures the browser to run in a controlled environment.
-
-        Returns:
-            Page: The Page instance for the browser.
-        """
-
+        """Método principal para iniciar o navegador."""
         binary_location = (
             self.options.binary_location or self._get_default_binary_location()
         )
 
-        self.options.arguments.append('--no-first-run')
-        self.options.arguments.append('--no-default-browser-check')
+        self._setup_user_dir()
 
-        temp_dir = self._get_temp_dir()
-
-        if '--user-data-dir' not in [
-            arg.split('=')[0] for arg in self.options.arguments
-        ]:
-            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
-
-        private_proxy, proxy_credentials = self._configure_proxy()
-
-        self.process = subprocess.Popen(
-            [
-                binary_location,
-                f'--remote-debugging-port={self._connection_port}',
-                *self.options.arguments,
-            ],
-            stdout=subprocess.PIPE,
+        self._browser_process_manager.start_browser_process(
+            binary_location,
+            self._connection_port,
+            self.options.arguments,
         )
-        if not await self._is_browser_running():
-            raise exceptions.BrowserNotRunning('Failed to start browser')
+        await self._verify_browser_running()
 
-        if private_proxy:
-            await self.enable_fetch_events(handle_auth_requests=True)
-            await self.on(
-                FetchEvents.REQUEST_PAUSED,
-                self._continue_request,
-                temporary=True,
-            )
-            # partial is used to send extra arguments to the callback
-            # and keep the callback as a coroutine function
-            await self.on(
-                FetchEvents.AUTH_REQUIRED,
-                partial(
-                    self._continue_request_auth_required,
-                    proxy_username=proxy_credentials[0],
-                    proxy_password=proxy_credentials[1],
-                ),
-                temporary=True,
-            )
+        proxy_config = self._proxy_manager.get_proxy_credentials()
+        await self._configure_proxy(proxy_config[0], proxy_config[1])
 
-        pages = await self.get_pages()
-        try:
-            valid_page = [
-                page
-                for page in pages
-                if page['type'] == 'page' and 'chrome://newtab/' in page['url']
-            ][0]['targetId']
-            self._pages.append(valid_page)
-        except IndexError:
-            await self.new_page()
+        await self._init_first_page()
 
     async def set_download_path(self, path: str):
         """
@@ -143,10 +99,9 @@ class Browser(ABC):  # noqa: PLR0904
         Retrieves a Page instance for an existing page in the browser.
         If no pages are open, a new page will be created.
         """
-        if not self._pages:
-            await self.new_page()
-
-        page_id = self._pages.pop()
+        page_id = (
+            await self.new_page() if not self._pages else self._pages.pop()
+        )
         return Page(self._connection_port, page_id)
 
     async def delete_all_cookies(self):
@@ -201,8 +156,7 @@ class Browser(ABC):  # noqa: PLR0904
             function_to_register = callback_wrapper
         else:
             function_to_register = callback
-
-        return await self.connection_handler.register_callback(
+        return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
 
@@ -217,9 +171,9 @@ class Browser(ABC):  # noqa: PLR0904
             TargetCommands.create_target(url)
         )
         page_id = response['result']['targetId']
-        self._pages.append(page_id)
+        return page_id
 
-    async def get_pages(self):
+    async def _get_targets(self):
         """
         Retrieves the list of open pages in the browser.
 
@@ -238,7 +192,8 @@ class Browser(ABC):  # noqa: PLR0904
         """
         if await self._is_browser_running():
             await self._execute_command(BrowserCommands.CLOSE)
-            self.process.terminate()
+            self._browser_process_manager.stop_process()
+            self._temp_directory_manager.cleanup()
         else:
             raise exceptions.BrowserNotRunning('Browser is not running')
 
@@ -282,82 +237,6 @@ class Browser(ABC):  # noqa: PLR0904
             BrowserCommands.set_window_minimized(window_id)
         )
 
-    async def _is_browser_running(self):
-        """
-        Checks if the browser process is currently running.
-        Attempts to connect to the browser to verify its status.
-
-        Returns:
-            bool: True if the browser is running, False otherwise.
-        """
-        for _ in range(10):
-            if await self._check_browser_connection():
-                return True
-            await asyncio.sleep(1)
-        return False
-
-    async def _check_browser_connection(self):
-        """
-        Checks if the browser process is currently running.
-
-        Returns:
-            bool: True if the browser is running, False otherwise.
-        """
-        try:
-            await self.connection_handler.connection
-            return True
-        except Exception as exc:
-            print(f'Browser is not running: {exc}')
-            return False
-
-    async def _execute_command(self, command: str):
-        """
-        Executes a command through the connection handler.
-
-        Args:
-            command (str): The command to be executed.
-
-        Returns:
-            The response from executing the command.
-        """
-        return await self.connection_handler.execute_command(
-            command, timeout=60
-        )
-
-    def _configure_proxy(self) -> tuple[bool, tuple[str, str]]:
-        """
-        Configures the proxy settings for the browser. If the proxy
-        is private, the credentials will be extracted from the proxy
-        string and returned.
-
-        Returns:
-            tuple[bool, tuple[str, str]]: A tuple containing a boolean
-            indicating if the proxy is private and a tuple with the proxy
-            username and password
-        """
-        private_proxy = False
-        proxy_username, proxy_password = None, None
-
-        if any('--proxy-server' in arg for arg in self.options.arguments):
-            proxy_index = next(
-                index
-                for index, arg in enumerate(self.options.arguments)
-                if '--proxy-server' in arg
-            )
-            proxy = self.options.arguments[proxy_index].replace(
-                '--proxy-server=', ''
-            )
-
-            if '@' in proxy:
-                credentials, proxy_server = proxy.split('@')
-                self.options.arguments[proxy_index] = (
-                    f'--proxy-server={proxy_server}'
-                )
-                proxy_username, proxy_password = credentials.split(':')
-                private_proxy = True
-
-        return private_proxy, (proxy_username, proxy_password)
-
     async def enable_page_events(self):
         """
         Enables listening for page-related events over the websocket
@@ -377,7 +256,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self.connection_handler.execute_command(
+        await self._connection_handler.execute_command(
             PageCommands.enable_page()
         )
 
@@ -399,7 +278,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self.connection_handler.execute_command(
+        await self._connection_handler.execute_command(
             NetworkCommands.enable_network_events()
         )
 
@@ -431,7 +310,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self.connection_handler.execute_command(
+        await self._connection_handler.execute_command(
             FetchCommands.enable_fetch_events(
                 handle_auth_requests, resource_type
             )
@@ -454,7 +333,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self.connection_handler.execute_command(
+        await self._connection_handler.execute_command(
             DomCommands.enable_dom_events()
         )
 
@@ -474,7 +353,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self.connection_handler.execute_command(
+        await self._connection_handler.execute_command(
             FetchCommands.disable_fetch_events()
         )
 
@@ -532,54 +411,96 @@ class Browser(ABC):  # noqa: PLR0904
         )
         await self.disable_fetch_events()
 
+    async def _init_first_page(self):
+        pages = await self._get_targets()
+        valid_page = await self._get_valid_page(pages)
+        self._pages.append(valid_page)
+
+    async def _verify_browser_running(self):
+        """Verifica se o navegador está rodando."""
+        if not await self._is_browser_running():
+            raise exceptions.BrowserNotRunning('Failed to start browser')
+
+    async def _configure_proxy(self, private_proxy, proxy_credentials):
+        """Configura o proxy, se necessário."""
+        if private_proxy:
+            await self.enable_fetch_events(handle_auth_requests=True)
+            await self.on(
+                FetchEvents.REQUEST_PAUSED,
+                self._continue_request,
+                temporary=True,
+            )
+            await self.on(
+                FetchEvents.AUTH_REQUIRED,
+                partial(
+                    self._continue_request_auth_required,
+                    proxy_username=proxy_credentials[0],
+                    proxy_password=proxy_credentials[1],
+                ),
+                temporary=True,
+            )
+
     @staticmethod
-    def _validate_browser_path(path: str):
+    def _is_valid_page(page: dict) -> bool:
+        """Verifica se uma página é uma nova aba válida."""
+        return page.get('type') == 'page' and 'chrome://newtab/' in page.get(
+            'url', ''
+        )
+
+    async def _get_valid_page(self, pages) -> str:
         """
-        Validates the provided browser path.
+        Obtém o ID de uma página válida ou cria uma nova.
+
+        Returns:
+            str: targetId da página existente ou nova
+        """
+        valid_page = next(
+            (page for page in pages if self._is_valid_page(page)), None
+        )
+
+        if valid_page:
+            try:
+                return valid_page['targetId']
+            except KeyError:
+                pass
+
+        return await self.new_page()
+
+    async def _is_browser_running(self, timeout: int = 10) -> bool:
+        """
+        Checks if the browser process is currently running.
+        Attempts to connect to the browser to verify its status.
+
+        Returns:
+            bool: True if the browser is running, False otherwise.
+        """
+        for _ in range(timeout):
+            if await self._connection_handler.ping():
+                return True
+            await asyncio.sleep(1)
+        return False
+
+    async def _execute_command(self, command: str):
+        """
+        Executes a command through the connection handler.
 
         Args:
-            path (str): The file path to the browser executable.
-
-        Raises:
-            ValueError: If the browser path does not exist.
+            command (str): The command to be executed.
 
         Returns:
-            str: The validated browser path.
+            The response from executing the command.
         """
-        if not os.path.exists(path):
-            raise ValueError(f'Browser not found: {path}')
-        return path
+        return await self._connection_handler.execute_command(
+            command, timeout=60
+        )
 
-    @staticmethod
-    def _initialize_options(options: Options | None) -> Options:
-        """
-        Initializes the options for the browser.
-
-        Args:
-            options (Options | None): An instance of the Options class or None.
-
-        Raises:
-            ValueError: If the provided options are invalid.
-
-        Returns:
-            Options: The initialized options instance.
-        """
-        if options is None:
-            return Options()
-        if not isinstance(options, Options):
-            raise ValueError('Invalid options')
-        return options
-
-    def _get_temp_dir(self):
-        """
-        Retrieves a temporary directory for the browser instance.
-
-        Returns:
-            TemporaryDirectory: The temporary directory.
-        """
-        temp_dir = TemporaryDirectory()
-        self.temp_dirs.append(temp_dir)
-        return temp_dir
+    def _setup_user_dir(self):
+        """Prepara o diretório de dados do usuário, se necessário."""
+        temp_dir = self._temp_directory_manager.create_temp_dir()
+        if '--user-data-dir' not in [
+            arg.split('=')[0] for arg in self.options.arguments
+        ]:
+            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:

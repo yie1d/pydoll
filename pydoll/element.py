@@ -9,7 +9,7 @@ from pydoll.commands.dom import DomCommands
 from pydoll.commands.input import InputCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
-from pydoll.connection import ConnectionHandler
+from pydoll.connection.connection import ConnectionHandler
 from pydoll.constants import Scripts
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes

@@ -9,7 +9,7 @@ from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
-from pydoll.connection import ConnectionHandler
+from pydoll.connection.connection import ConnectionHandler
 from pydoll.element import WebElement
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
@@ -90,6 +90,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         Returns:
             str: The source code of the page.
+
+        TODO: tix this
         """
         response = await self._execute_command(
             RuntimeCommands.evaluate_script(
