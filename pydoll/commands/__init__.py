@@ -7,7 +7,6 @@ from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 
-
 __all__ = [
     'DomCommands',
     'FetchCommands',

@@ -4,4 +4,10 @@ from pydoll.events.fetch import FetchEvents
 from pydoll.events.network import NetworkEvents
 from pydoll.events.page import PageEvents
 
-__all__ = ['BrowserEvents', 'DomEvents', 'FetchEvents', 'NetworkEvents', 'PageEvents']
+__all__ = [
+    'BrowserEvents',
+    'DomEvents',
+    'FetchEvents',
+    'NetworkEvents',
+    'PageEvents',
+]
