@@ -1,6 +1,6 @@
 import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 import pytest_asyncio
@@ -8,7 +8,7 @@ import websockets
 
 from pydoll.browser.chrome import Chrome
 from pydoll.browser.options import Options
-from pydoll.connection import ConnectionHandler
+from pydoll.connection.connection import ConnectionHandler
 
 
 @pytest_asyncio.fixture
@@ -59,11 +59,6 @@ async def ws_server():
 
 
 @pytest_asyncio.fixture(scope='function')
-async def handler(ws_server):
-    return ConnectionHandler(connection_port=9222)
-
-
-@pytest_asyncio.fixture(scope='function')
 async def page_handler(ws_server):
     return ConnectionHandler(connection_port=9222, page_id='page_id')
 
@@ -75,22 +70,52 @@ def mock_runtime_commands():
 
 
 @pytest.fixture
+def mock_connection_handler():
+    with patch('pydoll.browser.base.ConnectionHandler') as MockHandler:
+        yield MockHandler
+
+
+@pytest_asyncio.fixture
+async def mock_browser_instance(mock_connection_handler):
+    options = MagicMock(spec=Options)
+    return Chrome(options=options, connection_port=9222)
+
+
+@pytest_asyncio.fixture
+async def mock_browser_class(mock_connection_handler):
+    return Chrome
+
+
+@pytest.fixture
+def mock_shutil():
+    with patch('pydoll.browser.base.shutil') as mock_shutil:
+        yield mock_shutil
+
+
+@pytest.fixture
+def mock_temp_dir():
+    with patch('pydoll.browser.base.TemporaryDirectory') as mock_temp_dir:
+        mock_temp_dir.return_value = MagicMock()
+        mock_temp_dir.return_value.name = 'temp_dir'
+        yield mock_temp_dir
+
+
+@pytest.fixture
+def mock_os_name():
+    with patch('pydoll.browser.chrome.os') as mock_os:
+        type(mock_os).name = PropertyMock(return_value='posix')
+        yield mock_os
+
+
+@pytest.fixture
+def mock_options():
+    mock = MagicMock()
+    mock.binary_location = None
+    mock.arguments = []
+    return mock
+
+
+@pytest.fixture
 def mock_subprocess_popen():
     with patch('pydoll.browser.base.subprocess.Popen') as mock_popen:
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-        yield mock_popen, mock_process
-
-
-@pytest.fixture
-def mock_connection_handler():
-    with patch('pydoll.browser.base.ConnectionHandler') as mock_handler_cls:
-        mock_handler = AsyncMock(spec=ConnectionHandler)
-        mock_handler_cls.return_value = mock_handler
-        yield mock_handler_cls, mock_handler
-
-
-@pytest.fixture
-def browser_instance(mock_connection_handler):
-    options = Options()
-    return Chrome(options=options, connection_port=9222)
+        yield mock_popen
