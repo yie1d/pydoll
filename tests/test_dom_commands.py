@@ -1,5 +1,6 @@
 # tests/test_dom_commands.py
-
+import pytest
+from unittest.mock import patch
 from pydoll.commands.dom import (
     DomCommands,
 )
@@ -7,11 +8,17 @@ from pydoll.commands.runtime import RuntimeCommands
 from pydoll.constants import By
 
 
+@pytest.fixture
+def mock_runtime_commands():
+    with patch('pydoll.commands.dom.RuntimeCommands') as mock:
+        yield mock
+
+
 def test_enable_dom_events():
     expected = {'method': 'DOM.enable'}
     result = DomCommands.enable_dom_events()
     assert result == expected, (
-        'O método enable_dom_events não retornou o dicionário esperado.'
+        'The enable_dom_events method did not return the expected dictionary.'
     )
 
 
@@ -19,7 +26,7 @@ def test_dom_document():
     expected = {'method': 'DOM.getDocument'}
     result = DomCommands.dom_document()
     assert result == expected, (
-        'O método dom_document não retornou o dicionário esperado.'
+        'The dom_document method did not return the expected dictionary.'
     )
 
 
@@ -31,7 +38,7 @@ def test_scroll_into_view():
     }
     result = DomCommands.scroll_into_view(object_id)
     assert result == expected, (
-        'O método scroll_into_view não retornou o dicionário esperado.'
+        'The scroll_into_view method did not return the expected dictionary.'
     )
 
 
@@ -43,7 +50,7 @@ def test_get_outer_html():
     }
     result = DomCommands.get_outer_html(object_id)
     assert result == expected, (
-        'O método get_outer_html não retornou o dicionário esperado.'
+        'The get_outer_html method did not return the expected dictionary.'
     )
 
 
@@ -52,7 +59,7 @@ def test_request_node():
     expected = {'method': 'DOM.requestNode', 'params': {'objectId': object_id}}
     result = DomCommands.request_node(object_id)
     assert result == expected, (
-        'O método request_node não retornou o dicionário esperado.'
+        'The request_node method did not return the expected dictionary.'
     )
 
 
@@ -64,7 +71,7 @@ def test_describe_node():
     }
     result = DomCommands.describe_node(object_id)
     assert result == expected, (
-        'O método describe_node não retornou o dicionário esperado.'
+        'The describe_node method did not return the expected dictionary.'
     )
 
 
@@ -73,7 +80,7 @@ def test_box_model():
     expected = {'method': 'DOM.getBoxModel', 'params': {'objectId': object_id}}
     result = DomCommands.box_model(object_id)
     assert result == expected, (
-        'O método box_model não retornou o dicionário esperado.'
+        'The box_model method did not return the expected dictionary.'
     )
 
 
@@ -85,7 +92,7 @@ def test_get_current_url(mock_runtime_commands):
         'window.location.href'
     )
     assert result == expected_command, (
-        'O método get_current_url não retornou o comando esperado.'
+        'The get_current_url method did not return the expected command.'
     )
 
 
@@ -106,7 +113,7 @@ def test_find_element_css(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_element com CSS não retornou o comando esperado.'
+        'The find_element method with CSS did not return the expected command.'
     )
 
 
@@ -132,7 +139,7 @@ def test_find_element_xpath(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_element com XPATH não retornou o comando esperado.'
+        'The find_element method with XPATH did not return the expected command.'
     )
 
 
@@ -154,7 +161,7 @@ def test_find_element_id(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_element com ID não retornou o comando esperado.'
+        'The find_element method with ID did not return the expected command.'
     )
 
 
@@ -176,7 +183,7 @@ def test_find_element_class_name(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_element com CLASS_NAME não retornou o comando esperado.'
+        'The find_element method with CLASS_NAME did not return the expected command.'
     )
 
 
@@ -204,7 +211,7 @@ def test_find_element_relative_css(mock_runtime_commands):
     )
 
     assert result == expected_command, (
-        'O método find_element relativo não retornou o comando esperado.'
+        'The find_element relative method did not return the expected command.'
     )
 
 
@@ -233,7 +240,7 @@ def test_find_element_relative_class_name(mock_runtime_commands):
         object_id, expected_expression, return_by_value=False
     )
     assert result == expected_command, (
-        'O método find_element relativo não retornou o comando esperado.'
+        'The find_element relative method did not return the expected command.'
     )
 
 
@@ -266,7 +273,7 @@ def test_find_element_relative_id(mock_runtime_commands):
         return_by_value=False,
     )
     assert result == expected_command, (
-        'O método find_element relativo não retornou o comando esperado.'
+        'The find_element relative method did not return the expected command.'
     )
 
 
@@ -304,7 +311,7 @@ def test_find_element_relative_xpath(mock_runtime_commands):
         return_by_value=False,
     )
     assert result == expected_command, (
-        'O método find_elements relativo não retornou o comando esperado.'
+        'The find_elements relative method did not return the expected command.'
     )
 
 
@@ -326,8 +333,7 @@ def test_find_elements_class_name(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_elements com CLASS_NAME não '
-        'retornou o comando esperado.'
+        'The find_elements method with CLASS_NAME did not return the expected command.'
     )
 
 
@@ -355,7 +361,7 @@ def test_find_elements_xpath(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_elements com XPATH não retornou o comando esperado.'
+        'The find_elements method with XPATH did not return the expected command.'
     )
 
 
@@ -375,7 +381,7 @@ def test_find_elements_id(mock_runtime_commands):
         'document.querySelectorAll("#test-id");'
     )
     assert result == expected_command, (
-        'O método find_elements com ID não retornou o comando esperado.'
+        'The find_elements method with ID did not return the expected command.'
     )
 
 
@@ -396,7 +402,7 @@ def test_find_elements_css(mock_runtime_commands):
         expected_expression
     )
     assert result == expected_command, (
-        'O método find_elements com CSS não retornou o comando esperado.'
+        'The find_elements method with CSS did not return the expected command.'
     )
 
 
@@ -431,7 +437,7 @@ def test_find_elements_relative_xpath(mock_runtime_commands):
         object_id, expected_expression, return_by_value=False
     )
     assert result == expected_command, (
-        'O método find_elements relativo não retornou o comando esperado.'
+        'The find_elements relative method did not return the expected command.'
     )
 
 
@@ -458,5 +464,5 @@ def test_find_elements_relative_css(mock_runtime_commands):
         object_id, expected_expression, return_by_value=False
     )
     assert result == expected_command, (
-        'O método find_elements relativo não retornou o comando esperado.'
+        'The find_elements relative method did not return the expected command.'
     )
