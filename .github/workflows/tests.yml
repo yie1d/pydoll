@@ -20,9 +20,10 @@ jobs:
           poetry run pytest -s -x --cov=pydoll -vv --cov-report=xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
           flags: tests
           name: PyDoll Tests
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
