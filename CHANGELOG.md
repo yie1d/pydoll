@@ -1,3 +1,9 @@
+## 1.0.1 (2025-02-10)
+
+### Fix
+
+- add dialog property to ConnectionHandler and manage dialog state
+
 ## 1.0.0 (2025-02-05)
 
 ### BREAKING CHANGE
