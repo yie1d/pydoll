@@ -50,6 +50,10 @@ class ConnectionHandler:
     def network_logs(self):
         return self._events_handler.network_logs
 
+    @property
+    def dialog(self):
+        return self._events_handler.dialog
+
     async def ping(self) -> bool:
         """
         Sends a ping message to the browser.

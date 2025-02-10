@@ -44,6 +44,7 @@ class EventsHandler:
         self._event_callbacks: Dict[int, dict] = {}
         self._callback_id = 0
         self.network_logs = []
+        self.dialog = {}
         logger.info('EventsHandler initialized')
 
     def register_callback(
@@ -98,6 +99,12 @@ class EventsHandler:
         # Atualiza logs de rede se necessário
         if 'Network.requestWillBeSent' in event_name:
             self._update_network_logs(event_data)
+
+        if 'Page.javascriptDialogOpening' in event_name:
+            self.dialog = event_data
+
+        if 'Page.javascriptDialogClosed' in event_name:
+            self.dialog = {}
 
         # Processa callbacks
         await self._trigger_callbacks(event_name, event_data)
