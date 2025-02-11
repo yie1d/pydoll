@@ -1,3 +1,9 @@
+## 1.1.0 (2025-02-11)
+
+### Feat
+
+- add method to retrieve Page instance by its ID in Browser class
+
 ## 1.0.1 (2025-02-10)
 
 ### Fix
