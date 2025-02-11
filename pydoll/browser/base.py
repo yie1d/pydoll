@@ -94,6 +94,18 @@ class Browser(ABC):  # noqa: PLR0904
         """
         await self._execute_command(BrowserCommands.set_download_path(path))
 
+    async def get_page_by_id(self, page_id: str) -> Page:
+        """
+        Retrieves a Page instance by its ID.
+
+        Args:
+            page_id (str): The ID of the page to retrieve.
+
+        Returns:
+            Page: The Page instance corresponding to the specified ID.
+        """
+        return Page(self._connection_port, page_id)
+
     async def get_page(self) -> Page:
         """
         Retrieves a Page instance for an existing page in the browser.
@@ -173,7 +185,7 @@ class Browser(ABC):  # noqa: PLR0904
         page_id = response['result']['targetId']
         return page_id
 
-    async def _get_targets(self):
+    async def get_targets(self):
         """
         Retrieves the list of open pages in the browser.
 
@@ -412,7 +424,7 @@ class Browser(ABC):  # noqa: PLR0904
         await self.disable_fetch_events()
 
     async def _init_first_page(self):
-        pages = await self._get_targets()
+        pages = await self.get_targets()
         valid_page = await self._get_valid_page(pages)
         self._pages.append(valid_page)
 
