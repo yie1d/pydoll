@@ -31,6 +31,7 @@ class PageCommands:
         'params': {},
     }
     HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
+    CLOSE = {'method': 'Page.close'}
 
     @classmethod
     def handle_dialog(cls, accept: bool = True) -> dict:
@@ -173,3 +174,14 @@ class PageCommands:
                   containing the method to disable the Page domain.
         """
         return cls.DISABLE_PAGE
+
+    @classmethod
+    def close(cls) -> dict:
+        """
+        Generates the command to close the current page.
+
+        Returns:
+            dict: The command to be sent to the browser,
+                  containing the method to close the current page.
+        """
+        return cls.CLOSE

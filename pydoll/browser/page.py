@@ -91,7 +91,6 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             str: The source code of the page.
 
-        TODO: tix this
         """
         response = await self._execute_command(
             RuntimeCommands.evaluate_script(
@@ -99,6 +98,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             )
         )
         return response['result']['result']['value']
+
+    async def close(self):
+        """
+        Closes the page.
+        """
+        await self._execute_command(PageCommands.close())
 
     async def get_cookies(self) -> list[dict]:
         """
