@@ -104,7 +104,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Closes the page.
         """
         await self._execute_command(PageCommands.close())
-        
+
     async def get_cookies(self) -> list[dict]:
         """
         Retrieves the cookies of the page.
