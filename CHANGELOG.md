@@ -1,3 +1,9 @@
+## 1.2.0 (2025-02-11)
+
+### Feat
+
+- add close method and command to Page class functionality
+
 ## 1.1.0 (2025-02-11)
 
 ### Feat
