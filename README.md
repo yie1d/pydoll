@@ -48,7 +48,7 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
 ## 🔥 Installation
 
 ```bash
-pip install git+https://github.com/thalissonvs/pydoll.git
+pip install pydoll-python
 ```
 
 ## ⚡ Quick Start
