@@ -1,9 +1,12 @@
 [tool.poetry]
-name = "pydoll"
+name = "pydoll-python"
 version = "1.2.0"
 description = ""
 authors = ["Thalison Fernandes <thalissfernandes99@gmail.com>"]
 readme = "README.md"
+packages = [
+    {include = "pydoll"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
