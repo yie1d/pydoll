@@ -68,7 +68,7 @@ async def main():
         
         # Navigate through captcha-protected sites without worry
         await page.go_to('https://example-with-cloudflare.com')
-        button = await page.find_element(By.CSS, 'button')
+        button = await page.find_element(By.CSS_SELECTOR, 'button')
         await button.click()
 
 asyncio.run(main())
