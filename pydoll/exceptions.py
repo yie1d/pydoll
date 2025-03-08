@@ -80,3 +80,9 @@ class ElementNotInteractable(Exception):
 
     def __str__(self):
         return self.message
+
+class InvalidExtension(Exception):
+    message = 'The extension is not supported'
+
+    def __str__(self):
+        return self.message
