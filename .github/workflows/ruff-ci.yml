@@ -32,4 +32,4 @@ jobs:
           pip install ruff
 
       - name: ruff
-        run: ruff check .
+        run: python -m ruff check .
