@@ -31,4 +31,3 @@ class Chrome(Browser):
         return BrowserOptionsManager.validate_browser_path(
             browser_path
         )
-
