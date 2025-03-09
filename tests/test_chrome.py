@@ -4,9 +4,11 @@ import pytest
 import pytest_asyncio
 
 from pydoll import exceptions
+from pydoll.browser.chrome import Chrome
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import (
     ProxyManager,
+    BrowserOptionsManager
 )
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
@@ -357,3 +359,26 @@ async def test__get_valid_page_key_error(mock_browser):
     mock_browser._connection_handler.execute_command.assert_called_with(
         TargetCommands.create_target(''), timeout=60
     )
+
+@pytest.mark.parametrize('os_name, expected_browser_path', [
+    ('Windows', r'C:\Program Files\Google\Chrome\Application\chrome.exe'),
+    ('Linux', '/usr/bin/google-chrome'),
+    ('Darwin', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+])
+@patch('platform.system')
+@patch.object(BrowserOptionsManager, 'validate_browser_path')
+def test__get_default_binary_location(mock_validate_browser_path, mock_platform_system, os_name, expected_browser_path):
+    mock_platform_system.return_value = os_name
+    mock_validate_browser_path.return_value = expected_browser_path
+
+    path = Chrome._get_default_binary_location()
+    mock_validate_browser_path.assert_called_once_with(expected_browser_path)
+
+    assert path == expected_browser_path
+
+@patch('platform.system')
+def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_platform_system):
+    mock_platform_system.return_value = 'FreeBSD'
+
+    with pytest.raises(ValueError, match="Unsupported OS"):
+        Chrome._get_default_binary_location()
