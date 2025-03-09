@@ -1,3 +1,10 @@
+## 1.2.1 (2025-03-09)
+
+### Fix
+
+- resolve issue #29 where browser path was not found on macOS
+- Quickstart code given in README is wrong
+
 ## 1.2.0 (2025-02-11)
 
 ### Feat
