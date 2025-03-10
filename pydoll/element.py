@@ -18,7 +18,7 @@ from pydoll.utils import decode_image_to_bytes
 class WebElement(FindElementsMixin):
     """
     Represents a DOM element in the browser.
-    
+
     This class provides methods to interact with and retrieve information about
     DOM elements. It allows operations such as clicking, sending keys, getting
     attributes, and other common web element interactions. It inherits element
@@ -39,12 +39,12 @@ class WebElement(FindElementsMixin):
             object_id (str): The unique object ID for this DOM element.
             connection_handler (ConnectionHandler): The connection instance to
                 communicate with the browser.
-            method (str, optional): The search method used to find this element.
-                Defaults to None.
-            selector (str, optional): The selector string used to find this element.
-                Defaults to None.
-            attributes_list (list, optional): List of attribute name-value pairs.
-                Defaults to an empty list.
+            method (str, optional): The search method used to find this
+                element. Defaults to None.
+            selector (str, optional): The selector string used to find this
+            element. Defaults to None.
+            attributes_list (list, optional): List of attribute name-value
+                pairs. Defaults to an empty list.
         """
         self._object_id = object_id
         self._search_method = method
@@ -56,10 +56,10 @@ class WebElement(FindElementsMixin):
     def __repr__(self):
         """
         Returns a string representation of the WebElement.
-        
+
         The representation includes all attributes and the object ID,
         making it useful for debugging and logging.
-        
+
         Returns:
             str: String representation of the WebElement.
         """
@@ -71,16 +71,16 @@ class WebElement(FindElementsMixin):
     def _def_attributes(self, attributes_list: list):
         """
         Defines element attributes from a flat list of key-value pairs.
-        
+
         This method processes an attribute list from the browser and
-        populates the element's attributes dictionary. It handles the 
+        populates the element's attributes dictionary. It handles the
         special case of renaming 'class' to 'class_name' to avoid conflicts
         with Python's reserved keywords.
-        
+
         Args:
             attributes_list (list): A flat list of alternating attribute names
                 and values.
-                
+
         Returns:
             None
         """
@@ -134,7 +134,7 @@ class WebElement(FindElementsMixin):
     async def bounds(self) -> list:
         """
         Asynchronously retrieves the bounding box coordinates of the element.
-        
+
         This property uses the DevTools Protocol to get detailed positioning
         information of the element.
 
@@ -174,7 +174,7 @@ class WebElement(FindElementsMixin):
     ):
         """
         Executes a JavaScript script in the context of this element.
-        
+
         This method allows executing JavaScript with the element as 'this',
         enabling direct manipulation of the element using JavaScript.
 
@@ -182,7 +182,7 @@ class WebElement(FindElementsMixin):
             script (str): The JavaScript script to execute.
             return_by_value (bool): Whether to return the result by value.
                 If False, returns a reference. Defaults to False.
-                
+
         Returns:
             dict: The response from the browser containing the script execution
                 results.
@@ -270,10 +270,10 @@ class WebElement(FindElementsMixin):
     async def scroll_into_view(self):
         """
         Scrolls the element into the visible area of the browser window.
-        
+
         This method ensures that the element is visible in the viewport
         before performing actions like clicking or getting screenshots.
-        
+
         Returns:
             None
         """
@@ -283,15 +283,15 @@ class WebElement(FindElementsMixin):
     async def click_using_js(self):
         """
         Clicks on the element using JavaScript.
-        
+
         This method uses JavaScript to trigger a click event on the element.
-        It's useful for elements that can't be clicked using normal mouse events,
-        or for elements that might be obscured.
-        
+        It's useful for elements that can't be clicked using normal mouse
+        events, or for elements that might be obscured.
+
         Raises:
             ElementNotVisible: If the element is not visible on the page.
             ElementNotInteractable: If the element could not be clicked.
-            
+
         Returns:
             None
         """
@@ -317,20 +317,20 @@ class WebElement(FindElementsMixin):
     async def click(self, x_offset: int = 0, y_offset: int = 0):
         """
         Clicks on the element using mouse events.
-        
+
         This method simulates a real mouse click by sending mouse press and
         release events at the center of the element. It can also click at
         an offset from the center if specified.
-        
+
         Args:
             x_offset (int): Horizontal offset from the center of the element.
                 Defaults to 0.
             y_offset (int): Vertical offset from the center of the element.
                 Defaults to 0.
-                
+
         Raises:
             ElementNotVisible: If the element is not visible on the page.
-            
+
         Returns:
             None
         """
@@ -367,11 +367,11 @@ class WebElement(FindElementsMixin):
     async def click_option_tag(self):
         """
         Clicks on an option element in a select dropdown.
-        
+
         This method uses a specialized JavaScript approach to select an option
         in a dropdown, as option elements require different handling than
         standard clickable elements.
-        
+
         Returns:
             None
         """
@@ -401,7 +401,7 @@ class WebElement(FindElementsMixin):
     def _is_option_tag(self):
         """
         Checks if the element is an option tag in a select dropdown.
-        
+
         Returns:
             bool: True if the element is an option tag, False otherwise.
         """
@@ -411,16 +411,18 @@ class WebElement(FindElementsMixin):
     def _calculate_center(bounds: list) -> tuple:
         """
         Calculates the center point of an element from its bounding box.
-        
+
         This method processes the coordinates from a bounding box list and
         computes the center point, which is useful for clicking operations.
-        
+
         Args:
-            bounds (list): A list of coordinates defining the element's bounding box.
-                Expected format is a flat list of [x1, y1, x2, y2, ..., xn, yn].
-                
+            bounds (list): A list of coordinates defining the element's
+                bounding box. Expected format is
+                a flat list of [x1, y1, ..., xn, yn].
+
         Returns:
-            tuple: A tuple containing the (x, y) coordinates of the center point.
+            tuple: A tuple containing the (x, y) coordinates of
+                the center point.
         """
         x_values = [bounds[i] for i in range(0, len(bounds), 2)]
         y_values = [bounds[i] for i in range(1, len(bounds), 2)]

@@ -204,7 +204,8 @@ class Browser(ABC):  # noqa: PLR0904
         Opens a new page in the browser.
 
         Args:
-            url (str): Optional initial URL to navigate to. Defaults to empty string.
+            url (str): Optional initial URL to navigate to.
+                Defaults to empty string.
 
         Returns:
             str: The ID of the new page.
@@ -456,10 +457,10 @@ class Browser(ABC):  # noqa: PLR0904
     async def _init_first_page(self):
         """
         Initializes the first page in the browser.
-        
+
         This method obtains the first valid page from available targets
         and stores its ID for later use.
-        
+
         Returns:
             None
         """
@@ -470,7 +471,7 @@ class Browser(ABC):  # noqa: PLR0904
     async def _verify_browser_running(self):
         """
         Verifies if the browser is running.
-        
+
         Raises:
             BrowserNotRunning: If the browser failed to start.
         """
@@ -480,11 +481,11 @@ class Browser(ABC):  # noqa: PLR0904
     async def _configure_proxy(self, private_proxy, proxy_credentials):
         """
         Configures proxy settings if needed.
-        
+
         Args:
             private_proxy: Boolean indicating if a private proxy is enabled.
             proxy_credentials: Tuple containing proxy username and password.
-            
+
         Returns:
             None
         """
@@ -509,10 +510,10 @@ class Browser(ABC):  # noqa: PLR0904
     def _is_valid_page(page: dict) -> bool:
         """
         Verifies if a page is a valid new tab.
-        
+
         Args:
             page (dict): Dictionary containing page information.
-            
+
         Returns:
             bool: True if the page is a valid new tab, False otherwise.
         """
@@ -523,10 +524,10 @@ class Browser(ABC):  # noqa: PLR0904
     async def _get_valid_page(self, pages) -> str:
         """
         Gets the ID of a valid page or creates a new one.
-        
+
         Args:
             pages (list): List of page dictionaries to check for validity.
-            
+
         Returns:
             str: The target ID of an existing or new page.
         """
@@ -573,10 +574,10 @@ class Browser(ABC):  # noqa: PLR0904
     def _setup_user_dir(self):
         """
         Prepares the user data directory if needed.
-        
+
         This method creates a temporary directory for browser data if
         no user directory is specified in the browser options.
-        
+
         Returns:
             None
         """

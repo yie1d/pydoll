@@ -35,11 +35,11 @@ class ConnectionHandler:
             connection_port (int): The port to connect to the browser.
             page_id (str): The ID of the page to connect to. Use 'browser'
                 for browser-level connections. Defaults to 'browser'.
-            ws_address_resolver (Callable): Function to resolve WebSocket address
-                from port. Defaults to get_browser_ws_address.
-            ws_connector (Callable): Function to establish WebSocket connections.
-                Defaults to websockets.connect.
-                
+            ws_address_resolver (Callable): Function to resolve WebSocket
+                address from port. Defaults to get_browser_ws_address.
+            ws_connector (Callable): Function to establish WebSocket
+                connections. Defaults to websockets.connect.
+
         Returns:
             None
         """
@@ -56,10 +56,10 @@ class ConnectionHandler:
     def network_logs(self):
         """
         Gets all network logs captured by the connection.
-        
+
         This property provides access to network request and response logs
         that have been captured during the browser session.
-        
+
         Returns:
             list: A list of network log entries.
         """
@@ -69,12 +69,13 @@ class ConnectionHandler:
     def dialog(self):
         """
         Gets information about the current dialog in the page, if any.
-        
+
         This property provides access to any active dialog (alert, confirm,
         prompt) that might be present in the page.
-        
+
         Returns:
-            dict or None: Dialog information if a dialog is present, None otherwise.
+            dict or None: Dialog information if a dialog is present,
+                None otherwise.
         """
         return self._events_handler.dialog
 
@@ -132,13 +133,13 @@ class ConnectionHandler:
     ):
         """
         Registers a callback function for a specific event.
-        
+
         Args:
             event_name (str): The name of the event to listen for.
             callback (Callable): The function to call when the event occurs.
             temporary (bool): If True, the callback will be removed after it's
                 triggered once. Defaults to False.
-                
+
         Returns:
             int: The ID of the registered callback, which can be used to
                 remove the listener later.
@@ -150,22 +151,23 @@ class ConnectionHandler:
     async def remove_callback(self, callback_id: int):
         """
         Removes a registered event callback by its ID.
-        
+
         Args:
             callback_id (int): The ID of the callback to remove.
-            
+
         Returns:
-            bool: True if the callback was successfully removed, False otherwise.
+            bool: True if the callback was successfully removed,
+                False otherwise.
         """
         return self._events_handler.remove_callback(callback_id)
 
     async def clear_callbacks(self):
         """
         Removes all registered event callbacks.
-        
+
         This method clears all event listeners that have been registered with
         the register_callback method.
-        
+
         Returns:
             None
         """
@@ -184,10 +186,10 @@ class ConnectionHandler:
     async def _ensure_active_connection(self):
         """
         Guarantees that an active connection exists before proceeding.
-        
-        This method checks if the WebSocket connection is established and active.
-        If not, it establishes a new connection.
-        
+
+        This method checks if the WebSocket connection is established
+        and active. If not, it establishes a new connection.
+
         Returns:
             None
         """
@@ -197,10 +199,10 @@ class ConnectionHandler:
     async def _establish_new_connection(self):
         """
         Creates a fresh WebSocket connection and starts listening for events.
-        
+
         This method resolves the appropriate WebSocket address, establishes
         a new connection, and initiates an asynchronous task to receive events.
-        
+
         Returns:
             None
         """
@@ -213,10 +215,10 @@ class ConnectionHandler:
     async def _resolve_ws_address(self):
         """
         Determines the correct WebSocket address based on the page ID.
-        
+
         This method resolves the WebSocket URL differently depending on whether
         the connection is to the browser itself or a specific page.
-        
+
         Returns:
             str: The WebSocket URL to connect to.
         """
@@ -230,10 +232,10 @@ class ConnectionHandler:
     async def _handle_connection_loss(self):
         """
         Cleans up resources after a WebSocket connection loss.
-        
+
         This method closes the connection if it's still open, nullifies the
         connection reference, and cancels any ongoing receive tasks.
-        
+
         Returns:
             None
         """
@@ -263,10 +265,10 @@ class ConnectionHandler:
     async def _incoming_messages(self):
         """
         Generator that yields raw messages from the WebSocket connection.
-        
+
         This asynchronous generator continuously receives messages from the
         WebSocket connection as long as it remains open.
-        
+
         Yields:
             str: The raw message string received from the WebSocket.
         """
@@ -276,14 +278,14 @@ class ConnectionHandler:
     async def _process_single_message(self, raw_message: str):
         """
         Orchestrates the processing of a single raw WebSocket message.
-        
+
         This method parses the raw message string into a JSON object and
         routes it to the appropriate handler based on whether it's a command
         response or an event notification.
-        
+
         Args:
             raw_message (str): The raw message string to process.
-            
+
         Returns:
             None
         """
@@ -318,13 +320,13 @@ class ConnectionHandler:
     def _is_command_response(message: dict) -> bool:
         """
         Determines if a message is a response to a previously sent command.
-        
+
         Command responses are identified by having an integer 'id' field,
         which corresponds to the ID of the original command.
-        
+
         Args:
             message (dict): The message to check.
-            
+
         Returns:
             bool: True if the message is a command response, False otherwise.
         """
@@ -333,13 +335,13 @@ class ConnectionHandler:
     async def _handle_command_message(self, message: dict):
         """
         Processes messages that are responses to previously sent commands.
-        
+
         This method resolves the future associated with the command ID,
         allowing the calling code to continue execution with the response.
-        
+
         Args:
             message (dict): The command response message to process.
-            
+
         Returns:
             None
         """
@@ -351,13 +353,13 @@ class ConnectionHandler:
     async def _handle_event_message(self, message: dict):
         """
         Processes messages that are spontaneous event notifications.
-        
+
         This method delegates event processing to the events handler,
         which will invoke any registered callbacks for the event type.
-        
+
         Args:
             message (dict): The event message to process.
-            
+
         Returns:
             None
         """
@@ -368,7 +370,7 @@ class ConnectionHandler:
     def __repr__(self):
         """
         Returns a string representation of the ConnectionHandler for debugging.
-        
+
         Returns:
             str: A string representation of the ConnectionHandler.
         """
@@ -377,7 +379,7 @@ class ConnectionHandler:
     def __str__(self):
         """
         Returns a user-friendly string representation of the ConnectionHandler.
-        
+
         Returns:
             str: A string representation of the ConnectionHandler.
         """
@@ -386,7 +388,7 @@ class ConnectionHandler:
     async def __aenter__(self):
         """
         Async context manager entry point.
-        
+
         Returns:
             ConnectionHandler: The ConnectionHandler instance.
         """
@@ -395,15 +397,15 @@ class ConnectionHandler:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """
         Async context manager exit point.
-        
+
         This method ensures the connection is properly closed when
         exiting the context manager.
-        
+
         Args:
             exc_type: The exception type, if raised.
             exc_val: The exception value, if raised.
             exc_tb: The traceback, if an exception was raised.
-            
+
         Returns:
             None
         """

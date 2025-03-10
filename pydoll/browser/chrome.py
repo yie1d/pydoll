@@ -8,17 +8,17 @@ from pydoll.browser.options import Options
 class Chrome(Browser):
     """
     A class that implements the Chrome browser functionality.
-    
+
     This class provides specific implementation for launching and
     controlling Google Chrome browsers.
     """
-    
+
     def __init__(
         self, options: Options | None = None, connection_port: int = 9222
     ):
         """
         Initializes the Chrome browser instance.
-        
+
         Args:
             options (Options | None): An instance of Options class to configure
                 the browser. If None, default options will be used.
@@ -31,13 +31,13 @@ class Chrome(Browser):
     def _get_default_binary_location():
         """
         Gets the default location of the Chrome browser executable.
-        
+
         This method determines the default Chrome executable path based
         on the operating system.
-        
+
         Returns:
             str: The path to the Chrome browser executable.
-            
+
         Raises:
             ValueError: If the operating system is not supported or
                 the browser executable is not found at the default location.
