@@ -11,9 +11,9 @@ from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.connection.connection import ConnectionHandler
 from pydoll.element import WebElement
+from pydoll.exceptions import InvalidFileExtension
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
-from pydoll.exceptions import InvalidFileExtension
 
 
 class Page(FindElementsMixin):  # noqa: PLR0904
@@ -202,10 +202,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             path (str): The file path to save the screenshot to.
         """
         fmt = path.split('.')[-1]
-        if fmt not in ['jpeg', 'jpg', 'png']:
+        if fmt not in {'jpeg', 'jpg', 'png'}:
             raise InvalidFileExtension(f'{fmt} extension is not supported.')
 
-        response = await self._execute_command(PageCommands.screenshot(fmt=fmt))
+        response = await self._execute_command(
+            PageCommands.screenshot(fmt=fmt)
+        )
         screenshot_b64 = response['result']['data'].encode('utf-8')
         screenshot_bytes = decode_image_to_bytes(screenshot_b64)
         async with aiofiles.open(path, 'wb') as file:

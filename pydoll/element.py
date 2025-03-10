@@ -189,7 +189,7 @@ class WebElement(FindElementsMixin):
             'scale': 1,
         }
         screenshot = await self._connection_handler.execute_command(
-            PageCommands.screenshot(format='jpeg', clip=clip)
+            PageCommands.screenshot(fmt='jpeg', clip=clip)
         )
         async with aiofiles.open(path, 'wb') as file:
             image_bytes = decode_image_to_bytes(screenshot['result']['data'])

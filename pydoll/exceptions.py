@@ -81,6 +81,7 @@ class ElementNotInteractable(Exception):
     def __str__(self):
         return self.message
 
+
 class InvalidFileExtension(Exception):
     message = 'The file extension provided is not supported'
 
