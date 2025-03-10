@@ -27,11 +27,13 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
 ## ⭐ Extraordinary Features
 
 - **Zero Webdrivers!** Say goodbye to webdriver compatibility and configuration headaches
-- **Native Captcha Bypass!** Naturally passes through Cloudflare Turnstile and reCAPTCHA v3
+- **Native Captcha Bypass!** Naturally passes through Cloudflare Turnstile and reCAPTCHA v3 *
 - **Performance** thanks to native asynchronous programming
 - **Realistic Interactions** that simulate human behavior
 - **Advanced Event System** for complex and reactive automations
 
+> Note: for cloudflare captcha, you have to perform a click in the checkbox. Just find a div containing the iframe and use the `.click()` method. Automatic detection and click coming soon! 
+  
 ## Table of Contents
 
 - [Installation](#-installation)
