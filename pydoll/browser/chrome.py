@@ -1,4 +1,4 @@
-import os
+import platform
 
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import BrowserOptionsManager
@@ -42,19 +42,21 @@ class Chrome(Browser):
             ValueError: If the operating system is not supported or
                 the browser executable is not found at the default location.
         """
-        os_name = os.name
-        match os_name:
-            case 'nt':
-                browser_path = (
-                    r'C:\Program Files\Google\Chrome\Application\chrome.exe'
-                )
-                return BrowserOptionsManager.validate_browser_path(
-                    browser_path
-                )
-            case 'posix':
-                browser_path = '/usr/bin/google-chrome'
-                return BrowserOptionsManager.validate_browser_path(
-                    browser_path
-                )
-            case _:
-                raise ValueError('Unsupported OS')
+        os_name = platform.system()
+        browser_paths = {
+            'Windows':
+                r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            'Linux':
+                '/usr/bin/google-chrome',
+            'Darwin':
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        }
+
+        browser_path = browser_paths.get(os_name)
+
+        if not browser_path:
+            raise ValueError('Unsupported OS')
+
+        return BrowserOptionsManager.validate_browser_path(
+            browser_path
+        )
