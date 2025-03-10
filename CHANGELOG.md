@@ -1,3 +1,9 @@
+## 1.2.2 (2025-03-10)
+
+### Fix
+
+- Get file extension from file path and changes use of reserved word 'format' to 'fmt'
+
 ## 1.2.1 (2025-03-09)
 
 ### Fix
