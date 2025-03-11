@@ -84,8 +84,11 @@ async def test_get_cookies(page):
 async def test_set_cookies(page):
     test_cookies = [{'name': 'test', 'value': 'value'}]
     await page.set_cookies(test_cookies)
-    page._connection_handler.execute_command.assert_called_once_with(
+    page._connection_handler.execute_command.assert_any_call(
         NetworkCommands.set_cookies(test_cookies), timeout=60
+    )
+    page._connection_handler.execute_command.assert_any_call(
+        StorageCommands.set_cookies(test_cookies), timeout=60
     )
 
 
