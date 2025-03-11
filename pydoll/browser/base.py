@@ -81,9 +81,7 @@ class Browser(ABC):  # noqa: PLR0904
             self.options.arguments,
         )
         await self._verify_browser_running()
-
         await self._configure_proxy(proxy_config[0], proxy_config[1])
-
         await self._init_first_page()
 
     async def set_download_path(self, path: str):
