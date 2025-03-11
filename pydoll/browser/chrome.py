@@ -1,4 +1,3 @@
-import os
 import platform
 
 from pydoll.browser.base import Browser
@@ -15,21 +14,20 @@ class Chrome(Browser):
     @staticmethod
     def _get_default_binary_location():
         os_name = platform.system()
-
-        if os_name == 'Windows':
-            possible_paths = [
+        browser_paths = {
+            'Windows':
                 r'C:\Program Files\Google\Chrome\Application\chrome.exe',
-                r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-            ]
-            for path in possible_paths:
-                if os.path.exists(path):
-                    return BrowserOptionsManager.validate_browser_path(path)
-            raise ValueError("Chrome not found in default Windows locations.")
-        elif os_name == 'Linux':
-            browser_path = '/usr/bin/google-chrome'
-        elif os_name == 'Darwin':
-            browser_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-        else:
+            'Linux':
+                '/usr/bin/google-chrome',
+            'Darwin':
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        }
+
+        browser_path = browser_paths.get(os_name)
+
+        if not browser_path:
             raise ValueError('Unsupported OS')
 
-        return BrowserOptionsManager.validate_browser_path(browser_path)
+        return BrowserOptionsManager.validate_browser_path(
+            browser_path
+        )
