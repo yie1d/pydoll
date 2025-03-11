@@ -7,14 +7,14 @@ from pydoll.constants import By, Scripts
 
 class DomCommands:
     """
-    A class to define commands for interacting with the Document
-    Object Model (DOM) using the Chrome DevTools Protocol (CDP).
-    The commands allow for various operations on DOM nodes,
-    such as enabling the DOM domain, retrieving the
-    DOM document, describing nodes, and querying elements.
-
+    A class for interacting with the Document Object Model (DOM) using the Chrome DevTools Protocol.
+    
+    This class provides methods to interact with DOM nodes through CDP commands, including
+    enabling the DOM domain, retrieving document structure, querying elements, and manipulating
+    DOM nodes.
+    
     Attributes:
-        SelectorType (Literal): A type definition for supported selector types.
+        SelectorType (Literal): Supported selector types for finding elements in the DOM.
     """
 
     SelectorType = Literal[
@@ -43,14 +43,30 @@ class DomCommands:
 
     @classmethod
     def scroll_into_view(cls, object_id: str) -> dict:
-        """Generates the command to scroll a specific DOM node into view."""
+        """
+        Generates a command to scroll a specific DOM node into view.
+        
+        Args:
+            object_id (str): The object ID of the DOM node to scroll into view.
+            
+        Returns:
+            dict: The CDP command to scroll the node into view.
+        """
         command = copy.deepcopy(cls.SCROLL_INTO_VIEW_IF_NEEDED)
         command['params']['objectId'] = object_id
         return command
 
     @classmethod
     def get_outer_html(cls, object_id: int) -> dict:
-        """Generates the command to get the outer HTML"""
+        """
+        Generates a command to get the outer HTML of a DOM node.
+        
+        Args:
+            object_id (int): The object ID of the DOM node.
+            
+        Returns:
+            dict: The CDP command to retrieve the outer HTML.
+        """
         command = copy.deepcopy(cls.GET_OUTER_HTML)
         command['params']['objectId'] = object_id
         return command
@@ -58,21 +74,39 @@ class DomCommands:
     @classmethod
     def dom_document(cls) -> dict:
         """
-        Generates the command to get the root DOM node of the current page.
+        Generates a command to get the root DOM node of the current page.
+        
+        Returns:
+            dict: The CDP command to retrieve the DOM document.
         """
         return cls.DOM_DOCUMENT
 
     @classmethod
     def request_node(cls, object_id: str) -> dict:
-        """Generates the command to request a specific DOM node by its object
-        ID."""
+        """
+        Generates a command to request a specific DOM node by its object ID.
+        
+        Args:
+            object_id (str): The object ID of the DOM node to request.
+            
+        Returns:
+            dict: The CDP command to request the node.
+        """
         command = copy.deepcopy(cls.REQUEST_NODE_TEMPLATE)
         command['params']['objectId'] = object_id
         return command
 
     @classmethod
     def describe_node(cls, object_id: str) -> dict:
-        """Generates the command to describe a specific DOM node."""
+        """
+        Generates a command to describe a specific DOM node.
+        
+        Args:
+            object_id (str): The object ID of the DOM node to describe.
+            
+        Returns:
+            dict: The CDP command to describe the node.
+        """
         command = copy.deepcopy(cls.DESCRIBE_NODE_TEMPLATE)
         command['params']['objectId'] = object_id
         return command
@@ -80,7 +114,13 @@ class DomCommands:
     @classmethod
     def box_model(cls, object_id: str) -> dict:
         """
-        Generates the command to get the box model of a specific DOM node.
+        Generates a command to get the box model of a specific DOM node.
+        
+        Args:
+            object_id (str): The object ID of the DOM node.
+            
+        Returns:
+            dict: The CDP command to retrieve the box model.
         """
         command = copy.deepcopy(cls.BOX_MODEL_TEMPLATE)
         command['params']['objectId'] = object_id
@@ -88,12 +128,22 @@ class DomCommands:
 
     @classmethod
     def enable_dom_events(cls) -> dict:
-        """Generates the command to enable the DOM domain."""
+        """
+        Generates a command to enable the DOM domain in CDP.
+        
+        Returns:
+            dict: The CDP command to enable the DOM domain.
+        """
         return cls.ENABLE
 
     @classmethod
     def get_current_url(cls) -> dict:
-        """Generates the command to get the current URL of the page."""
+        """
+        Generates a command to get the current URL of the page.
+        
+        Returns:
+            dict: The CDP command to retrieve the current URL.
+        """
         return RuntimeCommands.evaluate_script('window.location.href')
 
     @classmethod
@@ -103,8 +153,18 @@ class DomCommands:
         value: str,
         object_id: str = '',
     ) -> dict:
-        """Generates a command to find a DOM element based on the specified
-        criteria."""
+        """
+        Generates a command to find a DOM element based on the specified criteria.
+        
+        Args:
+            by (SelectorType): The selector strategy to use (CSS_SELECTOR, XPATH, etc.).
+            value (str): The selector value to search for.
+            object_id (str, optional): The object ID of a node to search within.
+                If provided, the search is relative to this node. Defaults to empty string.
+                
+        Returns:
+            dict: The CDP command to find the element.
+        """
         escaped_value = value.replace('"', '\\"')
         match by:
             case By.CLASS_NAME:
@@ -137,8 +197,18 @@ class DomCommands:
         value: str,
         object_id: str = '',
     ) -> dict:
-        """Generates a command to find multiple DOM elements based on the
-        specified criteria."""
+        """
+        Generates a command to find multiple DOM elements based on the specified criteria.
+        
+        Args:
+            by (SelectorType): The selector strategy to use (CSS_SELECTOR, XPATH, etc.).
+            value (str): The selector value to search for.
+            object_id (str, optional): The object ID of a node to search within.
+                If provided, the search is relative to this node. Defaults to empty string.
+                
+        Returns:
+            dict: The CDP command to find the elements.
+        """
         escaped_value = value.replace('"', '\\"')
         match by:
             case By.CLASS_NAME:
@@ -166,7 +236,17 @@ class DomCommands:
 
     @classmethod
     def _find_element_by_xpath(cls, xpath: str, object_id: str) -> dict:
-        """Creates a command to find a DOM element by XPath."""
+        """
+        Creates a command to find a DOM element by XPath.
+        
+        Args:
+            xpath (str): The XPath expression to evaluate.
+            object_id (str): The object ID of a node to search within.
+                If provided, the search is relative to this node.
+                
+        Returns:
+            dict: The CDP command to find the element using XPath.
+        """
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
@@ -187,7 +267,17 @@ class DomCommands:
 
     @classmethod
     def _find_elements_by_xpath(cls, xpath: str, object_id: str) -> dict:
-        """Creates a command to find multiple DOM elements by XPath."""
+        """
+        Creates a command to find multiple DOM elements by XPath.
+        
+        Args:
+            xpath (str): The XPath expression to evaluate.
+            object_id (str): The object ID of a node to search within.
+                If provided, the search is relative to this node.
+                
+        Returns:
+            dict: The CDP command to find multiple elements using XPath.
+        """
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
@@ -208,5 +298,13 @@ class DomCommands:
 
     @staticmethod
     def _ensure_relative_xpath(xpath: str) -> str:
-        """Ensures that the XPath expression is relative."""
+        """
+        Ensures that the XPath expression is relative.
+        
+        Args:
+            xpath (str): The XPath expression to check and possibly modify.
+            
+        Returns:
+            str: The XPath expression with a prepended dot if necessary to make it relative.
+        """
         return f'.{xpath}' if not xpath.startswith('.') else xpath
