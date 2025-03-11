@@ -73,6 +73,7 @@ class Browser(ABC):  # noqa: PLR0904
         )
 
         self._setup_user_dir()
+        proxy_config = self._proxy_manager.get_proxy_credentials()
 
         self._browser_process_manager.start_browser_process(
             binary_location,
@@ -81,7 +82,6 @@ class Browser(ABC):  # noqa: PLR0904
         )
         await self._verify_browser_running()
 
-        proxy_config = self._proxy_manager.get_proxy_credentials()
         await self._configure_proxy(proxy_config[0], proxy_config[1])
 
         await self._init_first_page()
