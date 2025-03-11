@@ -1,3 +1,9 @@
+## 1.2.3 (2025-03-11)
+
+### Fix
+
+- refactor proxy configuration retrieval for cleaner code flow
+
 ## 1.2.2 (2025-03-10)
 
 ### Fix
