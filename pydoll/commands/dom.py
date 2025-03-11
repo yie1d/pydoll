@@ -7,14 +7,16 @@ from pydoll.constants import By, Scripts
 
 class DomCommands:
     """
-    A class for interacting with the Document Object Model (DOM) using the Chrome DevTools Protocol.
-    
-    This class provides methods to interact with DOM nodes through CDP commands, including
-    enabling the DOM domain, retrieving document structure, querying elements, and manipulating
-    DOM nodes.
-    
+    A class for interacting with the Document Object Model (DOM) using the
+    Chrome DevTools Protocol.
+
+    This class provides methods to interact with DOM nodes through CDP
+    commands, including enabling the DOM domain, retrieving document
+    structure, querying elements, and manipulating DOM nodes.
+
     Attributes:
-        SelectorType (Literal): Supported selector types for finding elements in the DOM.
+        SelectorType (Literal): Supported selector types for finding elements
+            in the DOM.
     """
 
     SelectorType = Literal[
@@ -45,10 +47,10 @@ class DomCommands:
     def scroll_into_view(cls, object_id: str) -> dict:
         """
         Generates a command to scroll a specific DOM node into view.
-        
+
         Args:
             object_id (str): The object ID of the DOM node to scroll into view.
-            
+
         Returns:
             dict: The CDP command to scroll the node into view.
         """
@@ -60,10 +62,10 @@ class DomCommands:
     def get_outer_html(cls, object_id: int) -> dict:
         """
         Generates a command to get the outer HTML of a DOM node.
-        
+
         Args:
             object_id (int): The object ID of the DOM node.
-            
+
         Returns:
             dict: The CDP command to retrieve the outer HTML.
         """
@@ -75,7 +77,7 @@ class DomCommands:
     def dom_document(cls) -> dict:
         """
         Generates a command to get the root DOM node of the current page.
-        
+
         Returns:
             dict: The CDP command to retrieve the DOM document.
         """
@@ -85,10 +87,10 @@ class DomCommands:
     def request_node(cls, object_id: str) -> dict:
         """
         Generates a command to request a specific DOM node by its object ID.
-        
+
         Args:
             object_id (str): The object ID of the DOM node to request.
-            
+
         Returns:
             dict: The CDP command to request the node.
         """
@@ -100,10 +102,10 @@ class DomCommands:
     def describe_node(cls, object_id: str) -> dict:
         """
         Generates a command to describe a specific DOM node.
-        
+
         Args:
             object_id (str): The object ID of the DOM node to describe.
-            
+
         Returns:
             dict: The CDP command to describe the node.
         """
@@ -115,10 +117,10 @@ class DomCommands:
     def box_model(cls, object_id: str) -> dict:
         """
         Generates a command to get the box model of a specific DOM node.
-        
+
         Args:
             object_id (str): The object ID of the DOM node.
-            
+
         Returns:
             dict: The CDP command to retrieve the box model.
         """
@@ -130,7 +132,7 @@ class DomCommands:
     def enable_dom_events(cls) -> dict:
         """
         Generates a command to enable the DOM domain in CDP.
-        
+
         Returns:
             dict: The CDP command to enable the DOM domain.
         """
@@ -140,7 +142,7 @@ class DomCommands:
     def get_current_url(cls) -> dict:
         """
         Generates a command to get the current URL of the page.
-        
+
         Returns:
             dict: The CDP command to retrieve the current URL.
         """
@@ -154,14 +156,17 @@ class DomCommands:
         object_id: str = '',
     ) -> dict:
         """
-        Generates a command to find a DOM element based on the specified criteria.
-        
+        Generates a command to find a DOM element based on the specified
+        criteria.
+
         Args:
-            by (SelectorType): The selector strategy to use (CSS_SELECTOR, XPATH, etc.).
+            by (SelectorType): The selector strategy to use
+                (CSS_SELECTOR, XPATH, etc.).
             value (str): The selector value to search for.
-            object_id (str, optional): The object ID of a node to search within.
-                If provided, the search is relative to this node. Defaults to empty string.
-                
+            object_id (str, optional): The object ID of a node to
+                search within. If provided, the search is relative to
+                this node. Defaults to empty string.
+
         Returns:
             dict: The CDP command to find the element.
         """
@@ -198,14 +203,17 @@ class DomCommands:
         object_id: str = '',
     ) -> dict:
         """
-        Generates a command to find multiple DOM elements based on the specified criteria.
-        
+        Generates a command to find multiple DOM elements based on the
+        specified criteria.
+
         Args:
-            by (SelectorType): The selector strategy to use (CSS_SELECTOR, XPATH, etc.).
+            by (SelectorType): The selector strategy to use
+                (CSS_SELECTOR, XPATH, etc.).
             value (str): The selector value to search for.
-            object_id (str, optional): The object ID of a node to search within.
-                If provided, the search is relative to this node. Defaults to empty string.
-                
+            object_id (str, optional): The object ID of a node to
+                search within. If provided, the search is relative to
+                this node. Defaults to empty string.
+
         Returns:
             dict: The CDP command to find the elements.
         """
@@ -238,12 +246,12 @@ class DomCommands:
     def _find_element_by_xpath(cls, xpath: str, object_id: str) -> dict:
         """
         Creates a command to find a DOM element by XPath.
-        
+
         Args:
             xpath (str): The XPath expression to evaluate.
             object_id (str): The object ID of a node to search within.
                 If provided, the search is relative to this node.
-                
+
         Returns:
             dict: The CDP command to find the element using XPath.
         """
@@ -269,12 +277,12 @@ class DomCommands:
     def _find_elements_by_xpath(cls, xpath: str, object_id: str) -> dict:
         """
         Creates a command to find multiple DOM elements by XPath.
-        
+
         Args:
             xpath (str): The XPath expression to evaluate.
             object_id (str): The object ID of a node to search within.
                 If provided, the search is relative to this node.
-                
+
         Returns:
             dict: The CDP command to find multiple elements using XPath.
         """
@@ -300,11 +308,12 @@ class DomCommands:
     def _ensure_relative_xpath(xpath: str) -> str:
         """
         Ensures that the XPath expression is relative.
-        
+
         Args:
             xpath (str): The XPath expression to check and possibly modify.
-            
+
         Returns:
-            str: The XPath expression with a prepended dot if necessary to make it relative.
+            str: The XPath expression with a prepended dot if necessary
+                to make it relative.
         """
         return f'.{xpath}' if not xpath.startswith('.') else xpath

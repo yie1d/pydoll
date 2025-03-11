@@ -1,19 +1,26 @@
 class TargetCommands:
     """
     A class for managing browser targets using Chrome DevTools Protocol.
-    
-    This class provides methods to create commands for interacting with browser targets,
-    including creating, activating, attaching to, and closing targets through CDP commands.
-    
+
+    This class provides methods to create commands for interacting with
+    browser targets, including creating, activating, attaching to, and closing
+    targets through CDP commands.
+
     Attributes:
-        ACTIVATE_TARGET (dict): Template for the Target.activateTarget command.
-        ATTACH_TO_TARGET (dict): Template for the Target.attachToTarget command.
-        CLOSE_TARGET (dict): Template for the Target.closeTarget command.
-        CREATE_TARGET (dict): Template for the Target.createTarget command.
-        GET_TARGETS (dict): Template for the Target.getTargets command.
-        GET_TARGET_INFO (dict): Template for the Target.getTargetInfo command.
+        ACTIVATE_TARGET (dict): Template for the
+            Target.activateTarget command.
+        ATTACH_TO_TARGET (dict): Template for the
+            Target.attachToTarget command.
+        CLOSE_TARGET (dict): Template for the
+            Target.closeTarget command.
+        CREATE_TARGET (dict): Template for the
+            Target.createTarget command.
+        GET_TARGETS (dict): Template for the
+            Target.getTargets command.
+        GET_TARGET_INFO (dict): Template for the
+            Target.getTargetInfo command.
     """
-    
+
     ACTIVATE_TARGET = {'method': 'Target.activateTarget', 'params': {}}
     ATTACH_TO_TARGET = {'method': 'Target.attachToTarget', 'params': {}}
     CLOSE_TARGET = {'method': 'Target.closeTarget', 'params': {}}
@@ -25,10 +32,10 @@ class TargetCommands:
     def activate_target(cls, target_id: str) -> dict:
         """
         Generates a command to activate a specific browser target.
-        
+
         Args:
             target_id (str): The ID of the target to activate.
-            
+
         Returns:
             dict: The CDP command to activate the target.
         """
@@ -40,10 +47,10 @@ class TargetCommands:
     def attach_to_target(cls, target_id: str) -> dict:
         """
         Generates a command to attach to a specific browser target.
-        
+
         Args:
             target_id (str): The ID of the target to attach to.
-            
+
         Returns:
             dict: The CDP command to attach to the target.
         """
@@ -55,10 +62,10 @@ class TargetCommands:
     def close_target(cls, target_id: str) -> dict:
         """
         Generates a command to close a specific browser target.
-        
+
         Args:
             target_id (str): The ID of the target to close.
-            
+
         Returns:
             dict: The CDP command to close the target.
         """
@@ -69,11 +76,12 @@ class TargetCommands:
     @classmethod
     def create_target(cls, url: str) -> dict:
         """
-        Generates a command to create a new browser target with the specified URL.
-        
+        Generates a command to create a new browser target with the
+        specified URL.
+
         Args:
             url (str): The URL to navigate to in the new target.
-            
+
         Returns:
             dict: The CDP command to create a new target.
         """
@@ -84,8 +92,9 @@ class TargetCommands:
     @classmethod
     def get_targets(cls) -> dict:
         """
-        Generates a command to retrieve information about all available targets.
-        
+        Generates a command to retrieve information about all
+        available targets.
+
         Returns:
             dict: The CDP command to get all targets.
         """

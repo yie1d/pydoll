@@ -3,17 +3,20 @@ import copy
 
 class RuntimeCommands:
     """
-    A class for interacting with the JavaScript runtime using Chrome DevTools Protocol.
-    
-    This class provides methods to create commands for evaluating JavaScript expressions,
-    calling functions on JavaScript objects, and retrieving object properties through CDP.
-    
+    A class for interacting with the JavaScript runtime using Chrome
+    DevTools Protocol.
+
+    This class provides methods to create commands for evaluating JavaScript
+    expressions, calling functions on JavaScript objects, and retrieving
+    object properties through CDP.
+
     Attributes:
         EVALUATE_TEMPLATE (dict): Template for the Runtime.evaluate command.
-        CALL_FUNCTION_ON_TEMPLATE (dict): Template for the Runtime.callFunctionOn command.
+        CALL_FUNCTION_ON_TEMPLATE (dict): Template for the
+            Runtime.callFunctionOn command.
         GET_PROPERTIES (dict): Template for the Runtime.getProperties command.
     """
-    
+
     EVALUATE_TEMPLATE = {'method': 'Runtime.evaluate', 'params': {}}
     CALL_FUNCTION_ON_TEMPLATE = {
         'method': 'Runtime.callFunctionOn',
@@ -27,11 +30,12 @@ class RuntimeCommands:
     @classmethod
     def get_properties(cls, object_id: str) -> dict:
         """
-        Generates a command to get the properties of a specific JavaScript object.
-        
+        Generates a command to get the properties of a specific
+        JavaScript object.
+
         Args:
             object_id (str): The object ID of the JavaScript object.
-            
+
         Returns:
             dict: The CDP command to retrieve the object's properties.
         """
@@ -48,14 +52,18 @@ class RuntimeCommands:
         return_by_value: bool = False,
     ) -> dict:
         """
-        Generates a command to call a function on a specific JavaScript object.
-        
+        Generates a command to call a function on a specific
+        JavaScript object.
+
         Args:
-            object_id (str): The object ID of the JavaScript object to call the function on.
-            function_declaration (str): The JavaScript function to execute on the object.
-            return_by_value (bool, optional): Whether to return the result by value instead 
-                of as a remote object reference. Defaults to False.
-                
+            object_id (str): The object ID of the JavaScript object to call
+                the function on.
+            function_declaration (str): The JavaScript function to execute
+                on the object.
+            return_by_value (bool, optional): Whether to return the result by
+                value instead of as a remote object reference. Defaults to
+                False.
+
         Returns:
             dict: The CDP command to call the function on the specified object.
         """
@@ -69,10 +77,10 @@ class RuntimeCommands:
     def evaluate_script(cls, expression: str) -> dict:
         """
         Generates a command to evaluate JavaScript code in the browser context.
-        
+
         Args:
             expression (str): The JavaScript expression to evaluate.
-            
+
         Returns:
             dict: The CDP command to evaluate the JavaScript expression.
         """
