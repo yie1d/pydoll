@@ -1,4 +1,3 @@
-
 <p align="center">
     <h1>🚀 Pydoll: Async Web Automation in Python!</h1>
 </p>
@@ -50,6 +49,14 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
   - [Event System](#event-system)
   - [Concurrent Scraping](#concurrent-scraping)
   - [Proxy Configuration](#proxy-configuration)
+- [Event Monitoring](#-event-monitoring)
+  - [Page Events](#page-events)
+  - [Network Events](#network-events)
+  - [DOM Events](#dom-events)
+  - [Fetch Events](#fetch-events)
+- [Troubleshooting](#-troubleshooting)
+- [Best Practices](#-best-practices)
+- [Contributing](#-contributing)
 
 ## 🔥 Installation
 
@@ -84,7 +91,9 @@ asyncio.run(main())
 
 ### Browser Interface
 
-Powerful interface for global browser control:
+The Browser domain provides direct control over the browser itself, offering global methods to manage the entire browser instance. Unlike page-specific operations, these methods affect the browser as a whole, allowing you to control multiple pages, handle window properties, manage cookies across all domains, and monitor events throughout the entire browsing session.
+
+Here's an example of how to use the Browser domain:
 
 ```python
 async def browser_examples():
@@ -96,6 +105,163 @@ async def browser_examples():
         # Advanced settings with a simple command
         await browser.set_window_maximized()
 ```
+
+#### Browser Management
+
+Now, let's dive into the methods of the Browser domain.
+
+##### `async start() -> None`
+Fires up your browser and gets everything ready for automation magic!
+
+```python
+async with Chrome() as browser:
+    await browser.start()  # Starts the browser
+```
+
+##### `async stop() -> None`
+Gracefully shuts down the browser when you're done.
+
+```python
+await browser.stop()  # Manually stops the browser
+```
+
+##### `async get_page() -> Page`
+Grabs an existing page or creates a fresh one if needed - super convenient!
+
+```python
+# Gets an existing page or creates a new one
+page = await browser.get_page()
+await page.go_to("https://www.example.com")
+```
+
+##### `async new_page(url: str = '') -> str`
+Opens a brand new page and returns its ID for future reference.
+Always prefer using the `get_page` method to get a page instance.
+
+```python
+# Creates a new page and navigates directly to a URL
+page_id = await browser.new_page("https://www.example.com")
+```
+
+##### `async get_page_by_id(page_id: str) -> Page`
+Lets you access any specific page using its ID - perfect for multi-tab automation!
+
+```python
+# Gets a specific page by ID
+page = await browser.get_page_by_id(page_id)
+```
+
+##### `async get_targets() -> list`
+Shows you all open pages in the browser - great for keeping track of everything.
+
+```python
+# Lists all open pages in the browser
+targets = await browser.get_targets()
+for target in targets:
+    print(f"Page: {target.get('title')} - URL: {target.get('url')}")
+```
+
+Want to switch between tabs or pages? It's super easy! First, get all your targets:
+
+```python
+targets = await browser.get_targets()
+```
+
+You'll get something like this:
+
+```python
+[{'targetId': 'F4729A95E0E4F9456BB6A853643518AF', 'type': 'page', 'title': 'New Tab', 'url': 'chrome://newtab/', 'attached': False, 'canAccessOpener': False, 'browserContextId': 'C76015D1F1C690B7BC295E1D81C8935F'}, {'targetId': '1C44D55BEEE43F44C52D69D8FC5C3685', 'type': 'iframe', 'title': 'chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=', 'url': 'chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=', 'attached': False, 'canAccessOpener': False, 'browserContextId': 'C76015D1F1C690B7BC295E1D81C8935F'}]
+```
+
+Then just pick the page you want:
+
+```python
+target = next(target for target in targets if target['title'] == 'New Tab')
+```
+
+And switch to it:
+
+```python
+new_tab_page = await browser.get_page_by_id(target['targetId'])
+```
+
+Now you can control this page as if it were the only one open! Switch between tabs effortlessly by keeping references to each page.
+
+##### `async set_window_bounds(bounds: dict) -> None`
+Position and size your browser window exactly how you want it!
+
+```python
+# Sets the size and position of the window
+await browser.set_window_bounds({
+    'left': 100, 
+    'top': 100, 
+    'width': 1024, 
+    'height': 768
+})
+```
+
+##### `async set_window_maximized() -> None`
+Make your browser take up the full screen with one simple command.
+
+```python
+# Maximizes the browser window
+await browser.set_window_maximized()
+```
+
+##### `async set_window_minimized() -> None`
+Hide the browser window when you don't need to see it.
+
+```python
+# Minimizes the browser window
+await browser.set_window_minimized()
+```
+
+##### `async get_cookies() -> list[dict]`
+Peek into all cookies stored by the browser - great for debugging or session management!
+
+```python
+# Gets all cookies
+cookies = await browser.get_cookies()
+for cookie in cookies:
+    print(f"Name: {cookie['name']}, Value: {cookie['value']}")
+```
+
+##### `async set_cookies(cookies: list[dict]) -> None`
+Set up custom cookies for authentication or testing scenarios.
+
+```python
+# Sets cookies in the browser
+await browser.set_cookies([
+    {
+        'name': 'session_id',
+        'value': '12345',
+        'domain': 'example.com',
+        'path': '/',
+        'expires': -1,  # Session
+        'secure': True
+    }
+])
+```
+
+##### `async delete_all_cookies() -> None`
+Wipe all cookies clean - perfect for testing from a fresh state!
+
+```python
+# Clears all cookies
+await browser.delete_all_cookies()
+```
+
+##### `async set_download_path(path: str) -> None`
+Tell your browser exactly where to save downloaded files.
+
+```python
+# Sets the directory to save downloads
+await browser.set_download_path("/path/to/downloads")
+```
+
+##### `async on(event_name: str, callback: callable, temporary: bool = False) -> int`
+Registers a callback for a specific event. You can read more about the events in the [Event Monitoring](#event-monitoring) section.
+
 
 ### Page Interface
 
