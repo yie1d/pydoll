@@ -17,6 +17,10 @@ class BrowserCommands:
 
     CLOSE = {'method': 'Browser.close'}
     GET_WINDOW_ID = {'method': 'Browser.WindowID'}
+    GET_WINDOW_ID_BY_TARGET = {
+        'method': 'Browser.getWindowForTarget',
+        'params': {},
+    }
     SET_WINDOW_BOUNDS_TEMPLATE = {
         'method': 'Browser.setWindowBounds',
         'params': {},
@@ -61,6 +65,21 @@ class BrowserCommands:
             dict: The command to be sent to the browser.
         """
         return cls.GET_WINDOW_ID
+
+    @classmethod
+    def get_window_id_by_target(cls, target_id: str) -> dict:
+        """
+        Generates the command to get the ID of the current window.
+
+        Args:
+            target_id (str): The target_id to set for the window.
+
+        Returns:
+            dict: The command to be sent to the browser.
+        """
+        command = cls.GET_WINDOW_ID_BY_TARGET.copy()
+        command['params']['targetId'] = target_id
+        return command
 
     @classmethod
     def set_window_bounds(cls, window_id: int, bounds: dict) -> dict:
