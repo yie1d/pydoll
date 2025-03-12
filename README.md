@@ -49,11 +49,6 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
   - [Event System](#event-system)
   - [Concurrent Scraping](#concurrent-scraping)
   - [Proxy Configuration](#proxy-configuration)
-- [Event Monitoring](#-event-monitoring)
-  - [Page Events](#page-events)
-  - [Network Events](#network-events)
-  - [DOM Events](#dom-events)
-  - [Fetch Events](#fetch-events)
 - [Troubleshooting](#-troubleshooting)
 - [Best Practices](#-best-practices)
 - [Contributing](#-contributing)
@@ -265,17 +260,259 @@ Registers a callback for a specific event. You can read more about the events in
 
 ### Page Interface
 
-Individual page control with surgical precision:
+The Page Interface is the heart of your automation! 🌟 This domain provides precise control over individual pages, representing a single tab in the browser and enabling interactions with web content, event handling, screenshots, and much more. This is where the real magic happens!
+
+Here's how to use the Page interface:
 
 ```python
 async def page_examples():
-    page = await browser.get_page()
-    
     # Smooth navigation, even on protected sites
-    await page.go_to('https://site-with-recaptcha.com')
+    await page.go_to('https://example.com')
+    
+    # Retrieve information about the page
+    current_url = await page.current_url
+    content = await page.page_source
     
     # Capture perfect screenshots
     await page.get_screenshot('/screenshots/evidence.png')
+    
+    # Handle cookies with ease
+    cookies = await page.get_cookies()
+    await page.set_cookies([{'name': 'session', 'value': 'xyz123'}])
+    
+    # Execute JavaScript on the page
+    await page.execute_script('return document.title')
+```
+
+#### Page Management
+
+Let's explore the awesome ways to control your pages:
+
+##### `async go_to(url: str, timeout=300) -> None`
+Navigate to any URL with smart loading detection - works beautifully with protected sites!
+
+```python
+# Navigate to a URL with custom timeout
+await page.go_to("https://www.example.com", timeout=60)
+```
+
+##### `async refresh() -> None`
+Refresh your page with a single command - perfect for testing state changes.
+
+```python
+# Refresh the page when needed
+await page.refresh()
+```
+
+##### `async close() -> None`
+Close the current tab while keeping your browser session alive.
+
+```python
+# Close the page when done
+await page.close()
+```
+
+##### `async current_url -> str`
+Instantly know exactly where you are in your automation journey.
+
+```python
+# Check the current URL
+url = await page.current_url
+print(f"We are at: {url}")
+```
+
+##### `async page_source -> str`
+Get the complete HTML source with one command - perfect for scraping or debugging.
+
+```python
+# Capture the complete HTML of the page
+html = await page.page_source
+```
+
+##### `async get_cookies() -> list[dict]`
+See all cookies for the current page - great for debugging authentication issues!
+
+```python
+# Get all cookies
+cookies = await page.get_cookies()
+for cookie in cookies:
+    print(f"Name: {cookie['name']}, Value: {cookie['value']}")
+```
+
+##### `async set_cookies(cookies: list[dict]) -> None`
+Set up exactly the cookies you need for testing logged-in states or specific scenarios.
+
+```python
+# Set custom cookies
+await page.set_cookies([
+    {
+        'name': 'session_id',
+        'value': '12345',
+        'domain': 'example.com',
+        'path': '/',
+        'expires': -1,  # Session
+        'secure': True
+    }
+])
+```
+
+##### `async delete_all_cookies() -> None`
+Start fresh with a clean cookie state - perfect for testing login flows!
+
+```python
+# Clear all cookies to start fresh
+await page.delete_all_cookies()
+```
+
+##### `async get_screenshot(path: str) -> None`
+Capture visual evidence of your automation in action!
+
+```python
+# Capture a screenshot of the entire page
+await page.get_screenshot("/path/to/screenshot.png")
+```
+
+##### `async print_to_pdf(path: str) -> None`
+Generate beautiful PDF reports directly from your pages.
+
+```python
+# Convert the page to PDF
+await page.print_to_pdf("/path/to/document.pdf")
+```
+
+##### `async get_pdf_base64() -> str`
+Get PDF data ready for processing or sending in API requests.
+
+```python
+# Get PDF in base64 format for processing
+pdf_base64 = await page.get_pdf_base64()
+```
+
+##### `async has_dialog() -> bool`
+Never be surprised by unexpected alerts or confirmations again!
+
+```python
+# Check if there's an alert or confirmation
+if await page.has_dialog():
+    # Handle the dialog
+```
+
+##### `async get_dialog_message() -> str`
+Read what those pesky dialogs are trying to tell you.
+
+```python
+# Read the dialog message
+if await page.has_dialog():
+    message = await page.get_dialog_message()
+    print(f"Dialog says: {message}")
+```
+
+##### `async accept_dialog() -> None`
+Automatically dismiss dialogs to keep your automation flowing smoothly.
+
+```python
+# Automatically accept any dialog
+if await page.has_dialog():
+    await page.accept_dialog()
+```
+
+
+##### `async set_download_path(path: str) -> None`
+Control exactly where your files go - per page or globally!
+
+```python
+# Configure custom download folder
+await page.set_download_path("/my_downloads")
+```
+
+##### `async get_network_logs(matches: list[str] = []) -> list`
+See exactly what requests your page is making - filter for just what you need!
+
+```python
+# Capture requests to specific APIs
+await page.enable_network_events() # this is obligatory!
+await page.go_to('https://example.com')
+logs = await page.get_network_logs(['/example-api', '/another-api'])
+```
+
+This will give you detailed insights like:
+
+```python
+{
+  "method": "Network.requestWillBeSent",
+  "params": {
+    "requestId": "764F3179D5C6D0A1A3F67E7C0ECD88DB",
+    "loaderId": "764F3179D5C6D0A1A3F67E7C0ECD88DB",
+    "documentURL": "https://google.com/",
+    "request": {
+      "url": "https://google.com/",
+      "method": "GET",
+      "headers": {
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Linux\""
+      },
+      "mixedContentType": "none",
+      "initialPriority": "VeryHigh",
+      "referrerPolicy": "strict-origin-when-cross-origin",
+      "isSameSite": true
+    },
+    "timestamp": 152714.232433,
+    "wallTime": 1741737850.444337,
+    "initiator": {
+      "type": "other"
+    },
+    "redirectHasExtraInfo": false,
+    "type": "Document",
+    "frameId": "2EC0B50381EB2D8CF48BE3CF1D933B59",
+    "hasUserGesture": false
+  }
+}
+```
+
+##### `async get_network_response_bodies(matches: list[str] = []) -> list`
+Capture the actual response data from your API calls - perfect for validation!
+
+```python
+# Get responses from API requests
+responses = await page.get_network_response_bodies(['google.com'])
+```
+
+You'll get something like this:
+
+```python
+[
+    {
+        'body': '...',
+        'base64Encoded': False
+    }
+]
+```
+
+##### `async get_network_response_body(request_id: str) -> tuple`
+Target specific requests for detailed analysis.
+
+```python
+# Retrieve a specific response body
+logs = await page.get_network_logs(['api/products'])
+body, encoded = await page.get_network_response_body(logs[0]['params']['requestId'])
+```
+
+##### `async on(event_name: str, callback: callable, temporary: bool = False) -> int`
+Make your automation reactive by responding to page events in real-time! Check out the [Event System](#event-system) section for more details.
+
+##### `async execute_script(script: str, element: WebElement = None)`
+Unleash the full power of JavaScript directly from your Python code!
+
+```python
+# Execute JavaScript on the page
+title = await page.execute_script('return document.title')
+
+# Execute JavaScript on a specific element
+button = await page.find_element(By.CSS_SELECTOR, 'button')
+await page.execute_script('arguments[0].click()', button)
 ```
 
 ### WebElement Interface
