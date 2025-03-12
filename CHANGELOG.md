@@ -1,3 +1,9 @@
+## 1.3.0 (2025-03-12)
+
+### Feat
+
+- add method to retrieve screenshot as base64 encoded string
+
 ## 1.2.4 (2025-03-11)
 
 ### Fix
