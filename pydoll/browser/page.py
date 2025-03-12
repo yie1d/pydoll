@@ -248,6 +248,18 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         async with aiofiles.open(path, 'wb') as file:
             await file.write(screenshot_bytes)
 
+    async def get_screenshot_base64(self):
+        """
+        Retrieves the screenshot of the page as a base64 encoded string.
+
+        Returns:
+            str: The base64 encoded screenshot.
+
+        # TODO: remove the duplicated logic
+        """
+        response = await self._execute_command(PageCommands.screenshot())
+        return response['result']['data']
+
     async def set_download_path(self, path: str):
         """
         Sets the download path for the page.
