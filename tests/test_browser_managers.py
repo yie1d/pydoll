@@ -139,7 +139,7 @@ def test_add_default_arguments():
 
 
 def test_validate_browser_paths_valid():
-    with patch('os.path.exists', return_value=True):
+    with patch('os.path.exists', return_value=True), patch('os.access', return_value=True):
         result = BrowserOptionsManager.validate_browser_paths(['/fake/path'])
         assert result == '/fake/path'
 
@@ -158,7 +158,10 @@ def test_validate_browser_paths_multiple():
             return True
         return False
 
-    with patch('os.path.exists', side_effect=fake_exists):
+    def fake_access(path, mode):
+        return path == '/second/fake/path'
+
+    with patch('os.path.exists', side_effect=fake_exists), patch('os.access', side_effect=fake_access):
         result = BrowserOptionsManager.validate_browser_paths([
             '/first/fake/path',
             '/second/fake/path'

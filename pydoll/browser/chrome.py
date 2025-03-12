@@ -1,4 +1,3 @@
-import os
 import platform
 
 from pydoll.browser.base import Browser
