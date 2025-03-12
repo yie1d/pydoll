@@ -256,7 +256,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         # TODO: remove the duplicated logic
         """
         response = await self._execute_command(PageCommands.screenshot())
-        return response['result']['data'].encode('utf-8')
+        return response['result']['data']
 
     async def set_download_path(self, path: str):
         """
