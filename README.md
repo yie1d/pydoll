@@ -48,8 +48,6 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
 - [Advanced Features](#-advanced-features)
   - [Event System](#event-system)
   - [Concurrent Scraping](#concurrent-scraping)
-  - [Proxy Configuration](#proxy-configuration)
-- [Troubleshooting](#-troubleshooting)
 - [Best Practices](#-best-practices)
 - [Contributing](#-contributing)
 
@@ -81,6 +79,23 @@ async def main():
 
 asyncio.run(main())
 ```
+
+If you need to configure the browser, you can do it like this:
+
+```python
+from pydoll.browser.chrome import Chrome
+from pydoll.browser.options import Options
+
+options = Options()
+# Public or private proxy, you choose!
+options.add_argument('--proxy-server=username:password@ip:port')
+# Needs to change the default browser location? No worries!
+options.binary_location = '/path/to/your/browser'
+async with Chrome(options=options) as browser:
+    await browser.start()
+```
+
+Here you can find all the options available: [Chromium Command Line Switches](https://peter.sh/experiments/chromium-command-line-switches/)
 
 ## 🎯 Core Components
 
@@ -517,37 +532,287 @@ await page.execute_script('arguments[0].click()', button)
 
 ### WebElement Interface
 
-Interact with elements like a real user:
+A WebElement represents a DOM element in the browser, allowing you to interact with it in ways that simulate real human behavior. This section explores the most useful methods for interacting with web elements.
+
+
+##### `value -> str`
+Get the current value of the element - perfect for checking form fields.
 
 ```python
-async def element_examples():
-    # Natural and precise interactions
-    input_field = await page.find_element(By.CSS_SELECTOR, 'input')
-    await input_field.type_keys('Hello World')  # Realistic typing!
-    
-    # Intuitive chained operations
-    dropdown = await page.find_element(By.CSS_SELECTOR, 'select')
-    await dropdown.select_option('value')
+# Check the value of an input field
+input_element = await page.find_element(By.CSS_SELECTOR, 'input')
+print(f"Current value: {input_element.value}")
+```
 
-    # Realistic clicks with offset
-    button = await page.find_element(By.CSS_SELECTOR, 'button')
-    await button.click(x_offset=5, y_offset=10)
+##### `class_name -> str`
+Access the element's CSS classes - useful for style verification.
+
+```python
+# Check CSS classes
+button = await page.find_element(By.CSS_SELECTOR, 'button')
+print(f"Classes: {button.class_name}")
+```
+
+##### `id -> str`
+Retrieve the element's ID - perfect for unique identification.
+
+```python
+# Get the element's ID
+element = await page.find_element(By.CSS_SELECTOR, 'div')
+print(f"ID: {element.id}")
+```
+
+##### `is_enabled -> bool`
+Quickly check if the element is enabled for interaction.
+
+```python
+# Check if a button is enabled before clicking
+button = await page.find_element(By.CSS_SELECTOR, 'button')
+if button.is_enabled:
+    await button.click()
+```
+
+##### `async bounds -> list`
+Get the exact coordinates of the element's bounding box.
+
+```python
+# Get the element's coordinates
+element = await page.find_element(By.CSS_SELECTOR, 'div')
+bounds = await element.bounds
+print(f"Coordinates: {bounds}")
+```
+
+##### `async inner_html -> str`
+Retrieve the element's inner HTML - perfect for scraping!
+
+```python
+# Get the inner HTML of a container
+container = await page.find_element(By.CSS_SELECTOR, '.container')
+html = await container.inner_html
+print(f"Inner HTML: {html}")
+```
+
+##### `async get_element_text() -> str`
+Get the text contained in the element - clean and ready to use.
+
+```python
+# Get the element's text
+element = await page.find_element(By.CSS_SELECTOR, 'p')
+text = await element.get_element_text()
+print(f"Text: {text}")
+```
+
+##### `get_attribute(name: str) -> str`
+Access any attribute of the element directly.
+
+```python
+# Get a custom attribute value
+link = await page.find_element(By.CSS_SELECTOR, 'a')
+href = link.get_attribute('href')
+data_id = link.get_attribute('data-id')
+```
+
+##### `async scroll_into_view()`
+Ensure the element is visible before interacting with it.
+
+```python
+# Make sure the element is visible
+button = await page.find_element(By.CSS_SELECTOR, 'button.footer')
+await button.scroll_into_view()
+await button.click()
+```
+
+##### `async click(x_offset: int = 0, y_offset: int = 0)`
+Click elements with amazing precision - even with offsets.
+
+```python
+# Click with custom offset
+slider = await page.find_element(By.CSS_SELECTOR, '.slider')
+# Click 10px to the right of the element's center
+await slider.click(x_offset=10, y_offset=0)
+```
+
+##### `async click_using_js()`
+Click problematic elements that might be obscured or dynamic.
+
+```python
+# Use JavaScript to click difficult elements
+overlay_button = await page.find_element(By.CSS_SELECTOR, '.overlay-button')
+await overlay_button.click_using_js()
+```
+
+##### `async send_keys(text: str)`
+Send text to form fields quickly.
+
+```python
+# Fill a text field
+input_field = await page.find_element(By.CSS_SELECTOR, 'input[name="username"]')
+await input_field.send_keys("user123")
+```
+
+##### `async type_keys(text: str)`
+Type realistically, key by key, simulating human input.
+
+```python
+# Type like a real human - with pauses between each key
+password_field = await page.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+await password_field.type_keys("secure_password123")  # Realistic typing!
+```
+
+##### `async get_screenshot(path: str)`
+Capture an image of just the element - perfect for testing or evidence.
+
+```python
+# Capture screenshots of specific elements
+error_message = await page.find_element(By.CSS_SELECTOR, '.error-message')
+await error_message.get_screenshot('/screenshots/error.png')
+```
+
+The WebElement interface also inherits element finding capabilities from FindElementsMixin, allowing you to find child elements:
+
+##### `async find_element(by: By, value: str, raise_exc: bool = True)`
+Find a child element within this element.
+
+```python
+# Find an element within another
+container = await page.find_element(By.CSS_SELECTOR, '.container')
+button = await container.find_element(By.CSS_SELECTOR, 'button')
+await button.click()
+```
+
+##### `async find_elements(by: By, value: str, raise_exc: bool = True)`
+Find all matching child elements within this element.
+
+```python
+# Find all items in a list
+list_container = await page.find_element(By.CSS_SELECTOR, 'ul.items')
+list_items = await list_container.find_elements(By.CSS_SELECTOR, 'li')
+# Iterate through found items
+for item in list_items:
+    text = await item.get_element_text()
+    print(f"Item: {text}")
+```
+
+##### `async wait_element(by: By, value: str, timeout: int = 10, raise_exc: bool = True)`
+Wait until a child element appears within this element.
+
+```python
+# Wait for an element to appear within another
+modal = await page.find_element(By.CSS_SELECTOR, '.modal')
+# Wait up to 5 seconds for confirm button to appear in the modal
+confirm_button = await modal.wait_element(By.CSS_SELECTOR, '.confirm', timeout=5)
+await confirm_button.click()
 ```
 
 ## 🚀 Advanced Features
 
 ### Event System
 
-Powerful event system for intelligent automation:
+Pydoll's event system is where the magic really happens! Monitor and react to browser events in real-time for incredibly dynamic automation.
+
+##### `async on(event_name: str, callback: callable, temporary: bool = False) -> int`
+Register custom callbacks for any browser event. First, enable the events you want to track. Keep in mind that you can use the global or local event listener.
+If you want to use the local listener, enable the events on the page instance.
+It's really useful, don't you think?
 
 ```python
 from pydoll.events.page import PageEvents
+# Monitors all navigation events on any page
+async def on_page_loaded(event):
+    print(f"🌐 Navigating to: {event['params'].get('url')}")
 
-async def event_example():
-    await page.enable_page_events()
-    # React to events in real-time!
-    await page.on(PageEvents.PAGE_LOADED, 
-                  lambda e: print('Page loaded successfully!'))
+await browser.enable_page_events()  # Activates page events
+await browser.on(PageEvents.PAGE_LOADED, on_page_loaded) # Global listener!
+# Needs to be locally? Use the page.on method!
+await page.on(PageEvents.PAGE_LOADED, on_page_loaded)
+```
+
+Need to pass extra parameters to your callback? No problem!
+
+```python
+from functools import partial
+
+async def on_page_loaded(page, event):
+    print(f"📄 Page loaded: {await page.current_url}")
+
+await browser.on(PageEvents.PAGE_LOADED, partial(on_page_loaded, page))
+```
+
+##### `async enable_page_events() -> None`
+Track everything happening on your pages - loading states, navigation, DOM changes, and more! This works globally or locally. Just use the browser or the page instance to enable the events.
+
+```python
+# Enables page event monitoring
+await browser.enable_page_events() # global
+```
+
+
+##### `async enable_network_events() -> None`
+See all network activity in real-time - perfect for debugging or monitoring specific API calls!
+
+```python
+from pydoll.events.network import NetworkEvents
+
+async def on_request(event):
+    print(f"🔄 Request to: {event['params']['request']['url']} will be sent")
+
+await browser.enable_network_events()
+await browser.on(NetworkEvents.REQUEST_WILL_BE_SENT, on_request)
+
+await page.go_to('https://www.google.com') # This will trigger the on_request callback
+```
+
+##### `async enable_dom_events() -> None`
+Watch the page structure change in real-time and react accordingly!
+
+```python
+from pydoll.events.dom import DomEvents
+
+async def on_dom_event(event):
+    print(f"🔄 The DOM has been updated!")
+
+await browser.enable_dom_events()
+await browser.on(DomEvents.DOCUMENT_UPDATED, on_dom_event)
+```
+
+##### `async enable_fetch_events(handle_auth_requests: bool = False, resource_type: str = '') -> None`
+The ultimate power tool - intercept and modify network requests before they're even sent!
+
+```python
+# Intercepts all network requests
+from pydoll.events.fetch import FetchEvents
+from pydoll.commands.fetch import FetchCommands
+from functools import partial
+
+async def interceptor(page, event):
+    request_id = event['params']['requestId']
+    request_url = event['params']['request']['url']
+    print(f"🕵️ Intercepting request to: {request_url}")
+    
+    # Customize the request however you want!
+    await page._execute_command(
+        FetchCommands.continue_request(
+            request_id=request_id,
+            method='GET', # change the HTTP method
+            headers={'X-Custom-Header': 'CustomValue'}, # add your own headers
+            post_data='Hello World', # modify the request body
+            url='https://www.google.com', # even change the destination URL!
+            intercept_response=True # and intercept the response too
+        )
+    )
+
+await browser.enable_fetch_events(resource_type='xhr') # only intercept XHR requests
+await browser.on(FetchEvents.REQUEST_PAUSED, partial(interceptor, page))
+```
+
+With this power, you can transform your automation into something truly intelligent!
+
+##### `async disable_fetch_events() -> None`
+Turn off request interception when you're done.
+
+```python
+# Disables request interception
+await browser.disable_fetch_events()
 ```
 
 ### Concurrent Scraping
@@ -564,27 +829,16 @@ async def concurrent_example():
     # Just declare the scrape_page method and see the magic happens!
 ```
 
-### Proxy Configuration
+## 🌟 Best Practices
 
-Robust proxy support, including authentication:
+Get the most out of Pydoll with these tips:
 
-```python
-async def proxy_example():
-    options = Options()
-    # Private or public proxies, you choose!
-    options.add_argument('--proxy-server=username:password@ip:port')
-    
-    async with Chrome(options=options) as browser:
-        await browser.start()
-```
+- Use asynchronous patterns throughout your code for maximum performance
+- Prefer specific selectors (IDs, data attributes) over generic ones
+- Add proper error handling for robust automation
+- Use the event system for reactive scenarios rather than constant polling
+- Close browser instances when done to avoid memory leaks
 
+## 🤝 Contributing
 
-For exploring all available methods and additional features, check out:
-- Browser interface: [pydoll/browser/base.py](./pydoll/browser/base.py)
-- Page interface: [pydoll/browser/page.py](./pydoll/browser/page.py)
-- WebElement interface: [pydoll/element.py](./pydoll/element.py)
-- Chrome options: [Chromium Command Line Switches](https://peter.sh/experiments/chromium-command-line-switches/)
-
-## 🎉 Start Now!
-
-Feel free to use, open issues and contributing!
+We'd love your help making Pydoll even better! Check out our contribution guidelines to get started. Whether it's fixing bugs, adding features, or improving documentation - all contributions are welcome!
