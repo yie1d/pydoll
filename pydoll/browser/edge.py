@@ -1,9 +1,9 @@
+import os
 import platform
 
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import BrowserOptionsManager
 from pydoll.browser.options import Options
-from pydoll.exceptions import BrowserNotRunning
 
 
 class Edge(Browser):
@@ -25,12 +25,15 @@ class Edge(Browser):
         options.add_argument(f'--remote-debugging-port={connection_port}')
         options.add_argument('--remote-allow-origins=*')
 
+        # Set default user data directory if not already set
+        if not any('--user-data-dir=' in arg for arg in options.arguments):
+            user_data_dir = os.path.join(os.path.expanduser('~'), '.edge_automation')
+            os.makedirs(user_data_dir, exist_ok=True)
+            options.add_argument(f'--user-data-dir={user_data_dir}')
+
         # Initialize base class first so we can use its methods
         super().__init__(options, connection_port)
         
-        # Setup user data directory if not already set
-        if not any('--user-data-dir=' in arg for arg in self.options.arguments):
-            self._setup_user_dir()
 
     @staticmethod
     def _get_default_binary_location():
