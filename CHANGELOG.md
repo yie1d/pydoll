@@ -1,3 +1,9 @@
+## 1.3.1 (2025-03-12)
+
+### Fix
+
+- remove unnecessary encoding from screenshot response data
+
 ## 1.3.0 (2025-03-12)
 
 ### Feat
