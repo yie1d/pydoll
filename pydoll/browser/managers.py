@@ -275,7 +275,7 @@ class BrowserOptionsManager:
         options.arguments.append('--no-default-browser-check')
 
     @staticmethod
-    def validate_browser_path(path: str) -> str:
+    def validate_browser_paths(paths: list[str]) -> str:
         """
         Validates the provided browser executable path.
 
@@ -283,7 +283,8 @@ class BrowserOptionsManager:
         the specified path.
 
         Args:
-            path (str): The path to the browser executable.
+            paths (list[str]): Lista de caminhos possíveis do navegador.
+
 
         Returns:
             str: The validated browser path if it exists.
@@ -291,6 +292,7 @@ class BrowserOptionsManager:
         Raises:
             ValueError: If the browser executable is not found at the path.
         """
-        if not os.path.exists(path):
-            raise ValueError(f'Browser not found: {path}')
-        return path
+        for path in paths:
+            if os.path.exists(path) and os.access(path, os.X_OK):
+                return path
+        raise ValueError(f"No valid browser path found in: {paths}")

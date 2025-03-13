@@ -360,21 +360,52 @@ async def test__get_valid_page_key_error(mock_browser):
         TargetCommands.create_target(''), timeout=60
     )
 
-@pytest.mark.parametrize('os_name, expected_browser_path', [
-    ('Windows', r'C:\Program Files\Google\Chrome\Application\chrome.exe'),
-    ('Linux', '/usr/bin/google-chrome'),
-    ('Darwin', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
-])
+
+@pytest.mark.parametrize(
+    'os_name, expected_browser_paths, mock_return_value',
+    [
+        (
+                'Windows',
+                [
+                    r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+                    r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+                ],
+                r'C:\Program Files\Google\Chrome\Application\chrome.exe'
+        ),
+        (
+                'Linux',
+                ['/usr/bin/google-chrome'],
+                '/usr/bin/google-chrome'
+        ),
+        (
+                'Darwin',
+                ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        ),
+    ]
+)
 @patch('platform.system')
-@patch.object(BrowserOptionsManager, 'validate_browser_path')
-def test__get_default_binary_location(mock_validate_browser_path, mock_platform_system, os_name, expected_browser_path):
+@patch.object(BrowserOptionsManager, 'validate_browser_paths')
+def test__get_default_binary_location(
+        mock_validate_browser_paths,
+        mock_platform_system,
+        os_name,
+        expected_browser_paths,
+        mock_return_value
+):
     mock_platform_system.return_value = os_name
-    mock_validate_browser_path.return_value = expected_browser_path
-
+    mock_validate_browser_paths.return_value = mock_return_value
     path = Chrome._get_default_binary_location()
-    mock_validate_browser_path.assert_called_once_with(expected_browser_path)
+    mock_validate_browser_paths.assert_called_once_with(expected_browser_paths)
 
-    assert path == expected_browser_path
+    assert path == mock_return_value
+
+
+def test__get_default_binary_location_unsupported_os():
+    with patch('platform.system', return_value='SomethingElse'):
+        with pytest.raises(ValueError, match='Unsupported OS'):
+            Chrome._get_default_binary_location()
+
 
 @patch('platform.system')
 def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_platform_system):

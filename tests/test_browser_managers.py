@@ -138,13 +138,34 @@ def test_add_default_arguments():
     assert '--no-default-browser-check' in options.arguments
 
 
-def test_validate_browser_path_valid():
-    with patch('os.path.exists', return_value=True):
-        result = BrowserOptionsManager.validate_browser_path('/fake/path')
+def test_validate_browser_paths_valid():
+    with patch('os.path.exists', return_value=True), patch('os.access', return_value=True):
+        result = BrowserOptionsManager.validate_browser_paths(['/fake/path'])
         assert result == '/fake/path'
 
 
-def test_validate_browser_path_invalid():
+def test_validate_browser_paths_invalid():
     with patch('os.path.exists', return_value=False):
         with pytest.raises(ValueError):
-            BrowserOptionsManager.validate_browser_path('/fake/path')
+            BrowserOptionsManager.validate_browser_paths(['/fake/path'])
+
+
+def test_validate_browser_paths_multiple():
+    def fake_exists(path):
+        match path:
+            case "/first/fake/path":
+                return False
+            case "/second/fake/path":
+                return True
+            case _:
+                return False
+
+    def fake_access(path, mode):
+        return path == '/second/fake/path'
+
+    with patch('os.path.exists', side_effect=fake_exists), patch('os.access', side_effect=fake_access):
+        result = BrowserOptionsManager.validate_browser_paths([
+            '/first/fake/path',
+            '/second/fake/path'
+        ])
+        assert result == '/second/fake/path'
