@@ -5,6 +5,7 @@ from contextlib import suppress
 from tempfile import TemporaryDirectory
 
 from pydoll.browser.options import Options
+from pydoll.browser.constants import BrowserType
 
 
 class ProxyManager:
@@ -118,13 +119,13 @@ class BrowserOptionsManager:
     @staticmethod
     def initialize_options(options: Options | None) -> Options:
         """
-        Inicializa as opções para o navegador.
+        Initializes the options for the browser.
 
         Args:
-            options (Options | None): Uma instância da classe Options ou None.
+            options (Options | None): An instance of the Options class or None.
 
         Returns:
-            Options: A instância de opções inicializada.
+            Options: The initialized options instance.
         """
         if options is None:
             return Options()
@@ -134,9 +135,30 @@ class BrowserOptionsManager:
 
     @staticmethod
     def add_default_arguments(options: Options):
-        """Adiciona argumentos padrão aos argumentos fornecidos"""
+        """Adds default arguments to the provided options"""
         options.arguments.append('--no-first-run')
         options.arguments.append('--no-default-browser-check')
+        
+        # Add browser-specific arguments
+        if options.browser_type == BrowserType.EDGE:
+            BrowserOptionsManager._add_edge_arguments(options)
+        elif options.browser_type == BrowserType.CHROME:
+            BrowserOptionsManager._add_chrome_arguments(options)
+
+    @staticmethod
+    def _add_edge_arguments(options: Options):
+        """Adds Edge-specific arguments to the options"""
+        options.add_argument('--disable-crash-reporter')
+        options.add_argument('--disable-features=TranslateUI')
+        options.add_argument('--disable-component-update')
+        options.add_argument('--disable-background-networking')
+        options.add_argument('--remote-allow-origins=*')
+
+    @staticmethod
+    def _add_chrome_arguments(options: Options):
+        """Adds Chrome-specific arguments to the options"""
+        options.add_argument('--remote-allow-origins=*')
+        # Add other Chrome-specific arguments here
 
     @staticmethod
     def validate_browser_path(path: str) -> str:

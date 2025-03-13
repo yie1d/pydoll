@@ -12,7 +12,7 @@ from pydoll.browser.managers import (
     ProxyManager,
     BrowserOptionsManager
 )
-from pydoll.browser.options import Options
+from pydoll.browser.options import EdgeOptions, Options
 from pydoll.browser.page import Page
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
@@ -521,7 +521,7 @@ async def test_edge_cleanup(mock_browser):
 @pytest.mark.asyncio
 async def test_edge_specific_arguments(mock_browser):
     """Test Edge-specific startup arguments are correctly set"""
-    options = Options()
+    options = EdgeOptions()
     browser = ConcreteEdge(options=options)
     
     # Verify Edge-specific arguments are added
