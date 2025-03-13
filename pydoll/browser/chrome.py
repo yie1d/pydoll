@@ -1,6 +1,5 @@
 import platform
 from typing import Optional
-from typing import Optional
 
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import BrowserOptionsManager
@@ -16,14 +15,22 @@ class Chrome(Browser):
     """
 
     def __init__(
-        self, options: Options | None = None, connection_port: int = 9222
+        self,
+        options: Optional[Options] = None,
+        connection_port: Optional[int] = None,
     ):
+        """
+        Initializes the Chrome browser instance.
+
+        Args:
+            options (Options | None): An instance of Options class to configure
+                the browser. If None, default options will be used.
+            connection_port (int): The port to connect to the browser.
+                Defaults to 9222.
+        """
         if options is None:
             options = ChromeOptions()
-        
-        # Initialize base class with options and port
         super().__init__(options, connection_port)
-        
 
     @staticmethod
     def _get_default_binary_location():

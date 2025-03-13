@@ -9,7 +9,9 @@ from pydoll.browser.options import EdgeOptions, Options
 
 class Edge(Browser):
     def __init__(
-        self, options: Options | None = None, connection_port: int = 9222
+        self,
+        options: Optional[Options] = None,
+        connection_port: Optional[int] = None,
     ):
         if options is None:
             options = EdgeOptions()
