@@ -1,3 +1,10 @@
+## 1.3.2 (2025-03-13)
+
+### Fix
+
+- fixed the tests and used lint for the OS multi path support
+- support multiple default Chrome paths on each OS
+
 ## 1.3.1 (2025-03-12)
 
 ### Fix
