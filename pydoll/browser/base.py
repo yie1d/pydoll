@@ -256,26 +256,15 @@ class Browser(ABC):  # noqa: PLR0904
 
         if response.get('error'):
             pages = await self.get_targets()
-            valid_page = next(
-                (page for page in pages if page.get('type') == 'page' and page.get('attached')),
-                None
+            target_id = await self._get_valid_target_id(pages)
+            response = await self._execute_command(
+                BrowserCommands.get_window_id_by_target(target_id)
             )
 
-            if not valid_page:
-                raise RuntimeError("No valid attached browser page found.")
+        if window_id := response.get('result', {}).get('windowId'):
+            return window_id
 
-            target_id = valid_page.get('targetId')
-            if not target_id:
-                raise RuntimeError("Valid page found but missing 'targetId'.")
-
-            command = BrowserCommands.get_window_id_by_target(target_id)
-            response = await self._execute_command(command)
-
-        try:
-            return response['result']['windowId']
-        except KeyError:
-            error_message = response.get('error', {}).get('message', "Unknown error")
-            raise RuntimeError(f"Failed to get window ID: {error_message}")
+        raise RuntimeError(response.get('error', {}))
 
     async def set_window_bounds(self, bounds: dict):
         """
@@ -548,7 +537,7 @@ class Browser(ABC):  # noqa: PLR0904
             'url', ''
         )
 
-    async def _get_valid_page(self, pages) -> str:
+    async def _get_valid_page(self, pages: list) -> str:
         """
         Gets the ID of a valid page or creates a new one.
 
@@ -569,6 +558,31 @@ class Browser(ABC):  # noqa: PLR0904
                 pass
 
         return await self.new_page()
+
+    @staticmethod
+    async def _get_valid_target_id(pages: list) -> str:
+        """
+        Retrieves the target ID of a valid attached browser page.
+
+        Returns:
+            str: The target ID of a valid page.
+
+        """
+
+        valid_page = next(
+            (page for page in pages
+             if page.get('type') == 'page' and page.get('attached')),
+            None
+        )
+
+        if not valid_page:
+            raise RuntimeError("No valid attached browser page found.")
+
+        target_id = valid_page.get('targetId')
+        if not target_id:
+            raise RuntimeError("Valid page found but missing 'targetId'.")
+
+        return target_id
 
     async def _is_browser_running(self, timeout: int = 10) -> bool:
         """

@@ -32,7 +32,6 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         self._network_events_enabled = False
         self._fetch_events_enabled = False
         self._dom_events_enabled = False
-        self._page_id = page_id
 
     @property
     def page_events_enabled(self) -> bool:
