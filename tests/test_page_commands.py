@@ -33,7 +33,7 @@ def test_screenshot_jpeg():
         },
     }
     assert (
-        PageCommands.screenshot(format='jpeg', quality=80) == expected_command
+        PageCommands.screenshot(fmt='jpeg', quality=80) == expected_command
     )
 
 
@@ -45,7 +45,7 @@ def test_screenshot_png():
             'quality': 100,
         },
     }
-    assert PageCommands.screenshot(format='png') == expected_command
+    assert PageCommands.screenshot(fmt='png') == expected_command
 
 
 def test_screenshot_with_clip():
