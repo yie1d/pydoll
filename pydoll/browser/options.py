@@ -8,7 +8,7 @@ class Options:
     the binary location of the browser executable.
     """
 
-    def __init__(self, browser_type=None):
+    def __init__(self):
         """
         Initializes the Options instance.
 
@@ -17,7 +17,6 @@ class Options:
         """
         self._arguments = []
         self._binary_location = ''
-        self.browser_type = browser_type
 
     @property
     def arguments(self) -> list:
@@ -76,8 +75,8 @@ class Options:
 
 class ChromeOptions(Options):
     def __init__(self):
-        super().__init__(browser_type=BrowserType.CHROME)
+        super().__init__()
 
 class EdgeOptions(Options):
     def __init__(self):
-        super().__init__(browser_type=BrowserType.EDGE)
+        super().__init__()

@@ -274,10 +274,10 @@ class BrowserOptionsManager:
         options.arguments.append('--no-first-run')
         options.arguments.append('--no-default-browser-check')
         
-        # Add browser-specific arguments
-        if options.browser_type == BrowserType.EDGE:
+        # Add browser-specific arguments based on options type
+        if isinstance(options, EdgeOptions):
             BrowserOptionsManager._add_edge_arguments(options)
-        elif options.browser_type == BrowserType.CHROME:
+        elif isinstance(options, ChromeOptions):
             BrowserOptionsManager._add_chrome_arguments(options)
 
     @staticmethod

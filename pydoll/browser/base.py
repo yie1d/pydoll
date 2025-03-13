@@ -12,7 +12,7 @@ from pydoll.browser.managers import (
     ProxyManager,
     TempDirectoryManager,
 )
-from pydoll.browser.options import Options
+from pydoll.browser.options import EdgeOptions, Options
 from pydoll.browser.page import Page
 from pydoll.commands.browser import BrowserCommands
 from pydoll.commands.dom import DomCommands
@@ -578,7 +578,7 @@ class Browser(ABC):  # noqa: PLR0904
         """Prepares the user data directory if necessary."""
         if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
             # Check if this is an Edge browser
-            if self.options.browser_type == BrowserType.EDGE:
+            if isinstance(self.options, EdgeOptions):
                 # For Edge browser, use a fixed user data directory
                 user_data_dir = os.path.join(os.path.expanduser('~'), '.edge_automation')
                 os.makedirs(user_data_dir, exist_ok=True)
