@@ -4,19 +4,15 @@ from typing import Optional
 
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import BrowserOptionsManager
-from pydoll.browser.options import EdgeOptions, Options
-
-
+from pydoll.browser.options import Options
+from pydoll.browser.constants import BrowserType
 class Edge(Browser):
     def __init__(
         self,
         options: Optional[Options] = None,
         connection_port: Optional[int] = None,
     ):
-        if options is None:
-            options = EdgeOptions()
-        # Initialize base class with options and port
-        super().__init__(options, connection_port)
+        super().__init__(options, connection_port, BrowserType.EDGE)
         
 
     @staticmethod

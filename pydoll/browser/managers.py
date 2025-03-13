@@ -4,7 +4,7 @@ import subprocess
 from contextlib import suppress
 from tempfile import TemporaryDirectory
 
-from pydoll.browser.options import Options
+from pydoll.browser.options import ChromeOptions, EdgeOptions, Options
 from pydoll.browser.constants import BrowserType
 
 
@@ -236,20 +236,36 @@ class TempDirectoryManager:
 
 class BrowserOptionsManager:
     @staticmethod
-    def initialize_options(options: Options | None) -> Options:
+    def initialize_options(options: Options | None, browser_type: BrowserType) -> Options:
         """
-        Initializes the options for the browser.
+        Initialize browser options based on browser type.
+
+        Creates a new options instance based on browser type if none is provided,
+        or validates and returns the provided options instance.
 
         Args:
-            options (Options | None): An instance of the Options class or None.
+            options (Options | None): Browser options instance. If None, a new instance
+                will be created based on browser_type
+            browser_type (BrowserType): Type of browser, used to create appropriate
+                options instance
 
         Returns:
-            Options: The initialized options instance.
+            Options: The initialized browser options instance
+
+        Raises:
+            ValueError: If provided options is not an instance of Options class
         """
         if options is None:
-            return Options()
+            if browser_type == BrowserType.CHROME:
+                return ChromeOptions()
+            elif browser_type == BrowserType.EDGE:
+                return EdgeOptions()
+            else:
+                return Options()
+        
         if not isinstance(options, Options):
             raise ValueError('Invalid options')
+            
         return options
 
     @staticmethod
