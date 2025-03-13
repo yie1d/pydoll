@@ -62,6 +62,12 @@ class NetworkCommands:
         This is useful when you want to ensure that your application retrieves
         the most up-to-date resources from the server instead of loading
         potentially stale data from the cache.
+
+        Args:
+            None
+
+        Returns:
+            dict: A command to clear the browser's cache.
         """
         return cls.CLEAR_BROWSER_CACHE
 
@@ -73,6 +79,12 @@ class NetworkCommands:
         This can be beneficial for testing scenarios where you need
         to simulate a fresh user session without any previously stored
         cookies that might affect the application's behavior.
+
+        Args:
+            None
+
+        Returns:
+            dict: A command to clear all cookies in the browser.
         """
         return cls.CLEAR_BROWSER_COOKIES
 
@@ -106,6 +118,12 @@ class NetworkCommands:
         network events, which can be useful during specific operations
         where you don't want to be notified about every network request
         and response.
+
+        Args:
+            None
+
+        Returns:
+            dict: A command to disable network event notifications.
         """
         return cls.DISABLE
 
@@ -117,6 +135,12 @@ class NetworkCommands:
         This allows you to start receiving network-related events again after
         they have been disabled. It's essential to call this before you expect
         to receive network events.
+
+        Args:
+            None
+
+        Returns:
+            dict: A command to enable network event notifications.
         """
         return cls.ENABLE
 
@@ -279,6 +303,12 @@ class NetworkCommands:
 
         This can be useful for diagnostics, testing, or ensuring that your
         application behaves as expected when accessing cookies.
+
+        Args:
+            None
+
+        Returns:
+            dict: A command to retrieve all cookies in the browser.
         """
         return cls.GET_ALL_COOKIES
 
