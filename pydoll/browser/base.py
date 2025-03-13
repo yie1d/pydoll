@@ -77,7 +77,9 @@ class Browser(ABC):  # noqa: PLR0904
             exc_val: The exception value, if raised.
             exc_tb: The traceback, if an exception was raised.
         """
-        await self.stop()
+        if await self._is_browser_running():
+            await self.stop()
+
         await self._connection_handler.close()
 
     async def start(self) -> None:
@@ -137,6 +139,7 @@ class Browser(ABC):  # noqa: PLR0904
         page_id = (
             await self.new_page() if not self._pages else self._pages.pop()
         )
+
         return Page(self._connection_port, page_id)
 
     async def delete_all_cookies(self):
@@ -243,10 +246,25 @@ class Browser(ABC):  # noqa: PLR0904
         Retrieves the ID of the current browser window.
 
         Returns:
-            str: The ID of the current browser window.
+            int: The ID of the current browser window.
+
+        Raises:
+            RuntimeError: If unable to retrieve the window ID.
         """
-        response = await self._execute_command(BrowserCommands.get_window_id())
-        return response['result']['windowId']
+        command = BrowserCommands.get_window_id()
+        response = await self._execute_command(command)
+
+        if response.get('error'):
+            pages = await self.get_targets()
+            target_id = await self._get_valid_target_id(pages)
+            response = await self._execute_command(
+                BrowserCommands.get_window_id_by_target(target_id)
+            )
+
+        if window_id := response.get('result', {}).get('windowId'):
+            return window_id
+
+        raise RuntimeError(response.get('error', {}))
 
     async def set_window_bounds(self, bounds: dict):
         """
@@ -519,7 +537,7 @@ class Browser(ABC):  # noqa: PLR0904
             'url', ''
         )
 
-    async def _get_valid_page(self, pages) -> str:
+    async def _get_valid_page(self, pages: list) -> str:
         """
         Gets the ID of a valid page or creates a new one.
 
@@ -541,6 +559,31 @@ class Browser(ABC):  # noqa: PLR0904
 
         return await self.new_page()
 
+    @staticmethod
+    async def _get_valid_target_id(pages: list) -> str:
+        """
+        Retrieves the target ID of a valid attached browser page.
+
+        Returns:
+            str: The target ID of a valid page.
+
+        """
+
+        valid_page = next(
+            (page for page in pages
+             if page.get('type') == 'page' and page.get('attached')),
+            None
+        )
+
+        if not valid_page:
+            raise RuntimeError("No valid attached browser page found.")
+
+        target_id = valid_page.get('targetId')
+        if not target_id:
+            raise RuntimeError("Valid page found but missing 'targetId'.")
+
+        return target_id
+
     async def _is_browser_running(self, timeout: int = 10) -> bool:
         """
         Checks if the browser process is currently running.
@@ -553,9 +596,10 @@ class Browser(ABC):  # noqa: PLR0904
             if await self._connection_handler.ping():
                 return True
             await asyncio.sleep(1)
+
         return False
 
-    async def _execute_command(self, command: str):
+    async def _execute_command(self, command: dict):
         """
         Executes a command through the connection handler.
 

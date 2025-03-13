@@ -157,6 +157,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         if self._connection_handler.dialog:
             return True
+
         return False
 
     async def get_dialog_message(self) -> str:
