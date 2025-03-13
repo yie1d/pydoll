@@ -30,10 +30,10 @@ class ConcreteBrowser(Browser):
 @pytest_asyncio.fixture
 async def mock_browser():
     with patch.multiple(
-            Browser,
-            _get_default_binary_location=MagicMock(
-                return_value='/fake/path/to/browser'
-            ),
+        Browser,
+        _get_default_binary_location=MagicMock(
+            return_value='/fake/path/to/browser'
+        ),
     ), patch(
         'pydoll.browser.managers.BrowserProcessManager',
         autospec=True,

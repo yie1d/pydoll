@@ -152,11 +152,13 @@ def test_validate_browser_paths_invalid():
 
 def test_validate_browser_paths_multiple():
     def fake_exists(path):
-        if path == '/first/fake/path':
-            return False
-        elif path == '/second/fake/path':
-            return True
-        return False
+        match path:
+            case "/first/fake/path":
+                return False
+            case "/second/fake/path":
+                return True
+            case _:
+                return False
 
     def fake_access(path, mode):
         return path == '/second/fake/path'
