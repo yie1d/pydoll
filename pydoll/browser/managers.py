@@ -186,6 +186,10 @@ class BrowserProcessManager:
         """
         if self._process:
             self._process.terminate()
+            try:
+                self._process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                self._process.kill()
 
 
 class TempDirectoryManager:
