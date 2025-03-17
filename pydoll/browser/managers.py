@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from contextlib import suppress
 from tempfile import TemporaryDirectory
+import subprocess
 
 from pydoll.browser.options import Options
 
@@ -186,7 +187,10 @@ class BrowserProcessManager:
         """
         if self._process:
             self._process.terminate()
-            self._process.wait()
+            try:
+                self._process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                self._process.kill()
 
 
 class TempDirectoryManager:
