@@ -12,15 +12,17 @@ from pydoll.browser.managers import (
 )
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
-from pydoll.commands.browser import BrowserCommands
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.network import NetworkCommands
-from pydoll.commands.page import PageCommands
-from pydoll.commands.storage import StorageCommands
-from pydoll.commands.target import TargetCommands
+from pydoll.commands import (
+    BrowserCommands,
+    DomCommands,
+    FetchCommands,
+    NetworkCommands,
+    PageCommands,
+    StorageCommands,
+    TargetCommands,
+)
 from pydoll.connection.connection import ConnectionHandler
-from pydoll.events.fetch import FetchEvents
+from pydoll.events import FetchEvents
 
 
 class Browser(ABC):  # noqa: PLR0904
