@@ -395,7 +395,7 @@ class WebElement(FindElementsMixin):
         Sets the value of the file input to these file paths.
 
         Args:
-            files (List[str, Path, Sequence[Union[str, Path]]]): Files to upload.
+            files (Union[str, Path, List[Union[str, Path]]]): Files to upload.
         """
         if (self._attributes.get('tag_name', '').lower() != 'input' or
                 self._attributes.get('type', '').lower() != 'file'):

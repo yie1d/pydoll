@@ -37,19 +37,20 @@ class FileUploadCommands:
             cls,
             files: Union[str, Path, List[Union[str, Path]]],
             object_id: Optional[str] = None,
-            backend_node_id: Optional[str] = None
+            backend_node_id: Optional[int] = None
     ) -> dict:
         """
         Sets the value of the file input to these file paths or files.
         
         Args:
-            files (Union[str, Path, List[Union[str, Path]]): Files to upload.
+            files (Union[str, Path, List[Union[str, Path]]]): Files to upload.
             object_id (Optional[str]): JavaScript object id of the node wrapper.
-            backend_node_id (Optional[str]): Identifier of the backend node.
+            backend_node_id (Optional[int]): Identifier of the backend node.
 
         Returns:
             dict: The CDP command to set the file input files.
         """
+        print(type(backend_node_id))
         command = copy.deepcopy(cls.SET_FILE_INPUT_FILES_TEMPLATE)
         if object_id is None and backend_node_id is None:
             raise ValueError("Either object_id or backend_node_id is required.")
