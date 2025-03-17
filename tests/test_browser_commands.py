@@ -1,4 +1,4 @@
-from pydoll.commands.browser import BrowserCommands
+from pydoll.commands import BrowserCommands
 
 
 def test_close():

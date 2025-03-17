@@ -1,4 +1,4 @@
-from pydoll.commands.network import NetworkCommands
+from pydoll.commands import NetworkCommands
 
 
 def test_clear_browser_cache():

@@ -5,10 +5,12 @@ import aiofiles
 from bs4 import BeautifulSoup
 
 from pydoll import exceptions
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.input import InputCommands
-from pydoll.commands.page import PageCommands
-from pydoll.commands.runtime import RuntimeCommands
+from pydoll.commands import (
+    DomCommands,
+    InputCommands,
+    PageCommands,
+    RuntimeCommands,
+)
 from pydoll.connection.connection import ConnectionHandler
 from pydoll.constants import Scripts
 from pydoll.mixins.find_elements import FindElementsMixin

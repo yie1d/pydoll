@@ -8,8 +8,10 @@ from pydoll.exceptions import (
     ElementNotInteractable,
     ElementNotFound,
 )
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.input import InputCommands
+from pydoll.commands import (
+    DomCommands,
+    InputCommands,
+)
 
 from pydoll.element import WebElement
 

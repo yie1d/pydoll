@@ -1,10 +1,10 @@
 # tests/test_dom_commands.py
 import pytest
 from unittest.mock import patch
-from pydoll.commands.dom import (
+from pydoll.commands import (
     DomCommands,
+    RuntimeCommands,
 )
-from pydoll.commands.runtime import RuntimeCommands
 from pydoll.constants import By
 
 
