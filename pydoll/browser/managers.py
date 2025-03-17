@@ -186,7 +186,7 @@ class BrowserProcessManager:
         """
         if self._process:
             self._process.terminate()
-
+            self._process.wait()
 
 class TempDirectoryManager:
     def __init__(self, temp_dir_factory=TemporaryDirectory):
