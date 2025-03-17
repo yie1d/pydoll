@@ -3,7 +3,6 @@ import shutil
 import subprocess
 from contextlib import suppress
 from tempfile import TemporaryDirectory
-import subprocess
 
 from pydoll.browser.options import Options
 
