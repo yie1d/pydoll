@@ -1,3 +1,6 @@
+import copy
+
+
 class PageCommands:
     """
     PageCommands class provides a set of commands to interact with the
@@ -32,6 +35,7 @@ class PageCommands:
     }
     HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
     CLOSE = {'method': 'Page.close'}
+    SET_INTERCEPT_FILE_CHOOSER_DIALOG = {"method": "Page.setInterceptFileChooserDialog", "params": {}}
 
     @classmethod
     def handle_dialog(cls, accept: bool = True) -> dict:
@@ -185,3 +189,18 @@ class PageCommands:
                   containing the method to close the current page.
         """
         return cls.CLOSE
+
+    @classmethod
+    def set_intercept_file_chooser_dialog(cls, enabled: bool) -> dict:
+        """
+        Generates the command to set whether to intercept file chooser dialogs.
+
+        Args:
+            enabled: A boolean value indicating whether to enable or disable the interception of file chooser dialogs.
+
+        Returns:
+
+        """
+        command = copy.deepcopy(cls.SET_INTERCEPT_FILE_CHOOSER_DIALOG)
+        command['params']['enabled'] = enabled
+        return command
