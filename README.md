@@ -843,4 +843,12 @@ Get the most out of Pydoll with these tips:
 
 ## 🤝 Contributing
 
-We'd love your help making Pydoll even better! Check out our contribution guidelines to get started. Whether it's fixing bugs, adding features, or improving documentation - all contributions are welcome!
+We'd love your help making Pydoll even better! Check out our [contribution guidelines](CONTRIBUTING.md) to get started. Whether it's fixing bugs, adding features, or improving documentation - all contributions are welcome!
+
+Please make sure to:
+- Write tests for new features or bug fixes
+- Follow our coding style and conventions
+- Use conventional commits for your pull requests
+- Run the lint and test checks before submitting
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions on how to contribute to the project.
