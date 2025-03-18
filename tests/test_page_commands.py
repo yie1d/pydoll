@@ -133,3 +133,13 @@ def test_enable_page():
 def test_disable_page():
     expected_command = {'method': 'Page.disable'}
     assert PageCommands.disable_page() == expected_command
+
+
+def test_enable_intercept_file_chooser_dialog():
+    expected_command = {'method': 'Page.setInterceptFileChooserDialog', 'params': {'enabled': True}}
+    assert PageCommands.set_intercept_file_chooser_dialog(True) == expected_command
+
+
+def test_disable_intercept_file_chooser_dialog():
+    expected_command = {'method': 'Page.setInterceptFileChooserDialog', 'params': {'enabled': False}}
+    assert PageCommands.set_intercept_file_chooser_dialog(False) == expected_command
