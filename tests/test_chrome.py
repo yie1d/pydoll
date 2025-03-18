@@ -246,7 +246,6 @@ async def test_context_manager(mock_browser):
 
 @pytest.mark.asyncio
 async def test_enable_events(mock_browser):
-    # O método enable_page_events foi removido, então não testamos mais
     await mock_browser.enable_fetch_events(
         handle_auth_requests=True, resource_type='XHR'
     )
@@ -408,21 +407,18 @@ async def test_register_event_callback_page_event():
     browser = ConcreteBrowser()
     browser._connection_handler = mock_conn_handler
     
-    # Testando que eventos de página não são permitidos no Browser
     with pytest.raises(exceptions.EventNotSupported) as excinfo:
         await browser.on(
             PageEvents.PAGE_LOADED, AsyncMock()
         )
     assert 'Page events are not supported in the browser domain' in str(excinfo.value)
     
-    # Testando para outro evento de página também
     with pytest.raises(exceptions.EventNotSupported) as excinfo:
         await browser.on(
             PageEvents.DOM_CONTENT_LOADED, AsyncMock()
         )
     assert 'Page events are not supported in the browser domain' in str(excinfo.value)
     
-    # Testando com evento que está na lista ALL_EVENTS
     for event in PageEvents.ALL_EVENTS:
         with pytest.raises(exceptions.EventNotSupported):
             await browser.on(event, AsyncMock())
