@@ -236,7 +236,7 @@ class TempDirectoryManager:
 
 class BrowserOptionsManager:
     @staticmethod
-    def initialize_options(options: Options | None, browser_type: BrowserType) -> Options:
+    def initialize_options(options: Options | None, browser_type: BrowserType = None) -> Options:
         """
         Initialize browser options based on browser type.
 
