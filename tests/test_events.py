@@ -85,3 +85,23 @@ def test_page_events():
     assert PageEvents.WINDOW_OPENED == 'Page.windowOpen'
     assert PageEvents.DOCUMENT_OPENED == 'Page.documentOpened'
     assert PageEvents.FILE_CHOOSER_OPENED == 'Page.fileChooserOpened'
+
+
+def test_page_events_all_events():
+    assert PageEvents.PAGE_LOADED in PageEvents.ALL_EVENTS
+    assert PageEvents.DOM_CONTENT_LOADED in PageEvents.ALL_EVENTS
+    assert PageEvents.FILE_CHOOSER_OPENED in PageEvents.ALL_EVENTS
+    assert PageEvents.FRAME_ATTACHED in PageEvents.ALL_EVENTS
+    assert PageEvents.FRAME_DETACHED in PageEvents.ALL_EVENTS
+    assert PageEvents.FRAME_NAVIGATED in PageEvents.ALL_EVENTS
+    assert PageEvents.JS_DIALOG_CLOSED in PageEvents.ALL_EVENTS
+    assert PageEvents.JS_DIALOG_OPENING in PageEvents.ALL_EVENTS
+    assert PageEvents.LIFECYCLE_EVENT in PageEvents.ALL_EVENTS
+    assert PageEvents.WINDOW_OPENED in PageEvents.ALL_EVENTS
+    assert PageEvents.DOCUMENT_OPENED in PageEvents.ALL_EVENTS
+    assert PageEvents.FRAME_STARTED_LOADING in PageEvents.ALL_EVENTS
+    assert PageEvents.FRAME_STOPPED_LOADING in PageEvents.ALL_EVENTS
+    assert PageEvents.DOWNLOAD_PROGRESS in PageEvents.ALL_EVENTS
+    assert PageEvents.DOWNLOAD_WILL_BEGIN in PageEvents.ALL_EVENTS
+    assert PageEvents.NAVIGATED_WITHIN_DOCUMENT in PageEvents.ALL_EVENTS
+    assert len(PageEvents.ALL_EVENTS) == 16

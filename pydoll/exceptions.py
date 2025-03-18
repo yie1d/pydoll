@@ -87,3 +87,13 @@ class InvalidFileExtension(Exception):
 
     def __str__(self):
         return self.message
+
+
+class EventNotSupported(Exception):
+    message = 'The event is not supported'
+
+    def __init__(self, message: str = ''):
+        self.message = message or self.message
+
+    def __str__(self):
+        return self.message

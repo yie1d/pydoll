@@ -142,3 +142,22 @@ class PageEvents:
     This event is useful for tracking changes in the document state, such as
     anchor links or in-page navigation, without requiring a full page reload.
     """
+
+    ALL_EVENTS = [
+        PAGE_LOADED,
+        DOM_CONTENT_LOADED,
+        FILE_CHOOSER_OPENED,
+        FRAME_ATTACHED,
+        FRAME_DETACHED,
+        FRAME_NAVIGATED,
+        JS_DIALOG_CLOSED,
+        JS_DIALOG_OPENING,
+        LIFECYCLE_EVENT,
+        WINDOW_OPENED,
+        DOCUMENT_OPENED,
+        FRAME_STARTED_LOADING,
+        FRAME_STOPPED_LOADING,
+        DOWNLOAD_PROGRESS,
+        DOWNLOAD_WILL_BEGIN,
+        NAVIGATED_WITHIN_DOCUMENT,
+    ]
