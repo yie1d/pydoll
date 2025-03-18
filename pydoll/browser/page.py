@@ -1,21 +1,20 @@
 import asyncio
 import json
-
-import aiofiles
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Union, List
+from typing import List, Union
+
+import aiofiles
 
 from pydoll.commands.dom import DomCommands
 from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.file_upload import FileUploadCommands
 from pydoll.commands.network import NetworkCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
 from pydoll.commands.storage import StorageCommands
 from pydoll.connection.connection import ConnectionHandler
-from pydoll.events import PageEvents
 from pydoll.element import WebElement
+from pydoll.events import PageEvents
 from pydoll.exceptions import InvalidFileExtension
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
@@ -37,7 +36,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         self._network_events_enabled = False
         self._fetch_events_enabled = False
         self._dom_events_enabled = False
-        self._intercept_file_chooser_dialog = False
+        self._intercept_file_chooser_dialog_enabled = False
 
     @property
     def page_events_enabled(self) -> bool:
@@ -78,16 +77,16 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             bool: True if DOM events are enabled, False otherwise.
         """
         return self._dom_events_enabled
-    
+
     @property
-    def intercept_file_chooser_dialog(self) -> bool:
+    def intercept_file_chooser_dialog_enabled(self) -> bool:
         """
         Returns whether file chooser dialogs are being intercepted or not.
 
         Returns:
             bool: True if file chooser dialogs are being intercepted, False otherwise.
         """
-        return self._intercept_file_chooser_dialog
+        return self._intercept_file_chooser_dialog_enabled
 
     @property
     async def current_url(self) -> str:
@@ -444,6 +443,18 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         await self._execute_command(DomCommands.enable_dom_events())
         self._dom_events_enabled = True
 
+    async def enable_intercept_file_chooser_dialog(self):
+        """
+        Enable intercepting file chooser dialogs.
+        
+        When file chooser interception is enabled, native file chooser dialog is not shown. Instead, a protocol event Page.fileChooserOpened is emitted.
+
+        Returns:
+            None
+        """
+        await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(True))
+        self._intercept_file_chooser_dialog_enabled = True
+
     async def disable_fetch_events(self):
         """
         Disables fetch events for the page.
@@ -469,6 +480,18 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         await self._execute_command(PageCommands.disable_page())
         self._page_events_enabled = False
+
+    async def disable_intercept_file_chooser_dialog(self):
+        """
+        Disable intercepting file chooser dialogs.
+
+        When file chooser interception is disabled, native file chooser dialog is shown.
+
+        Returns:
+            None
+        """
+        await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(False))
+        self._intercept_file_chooser_dialog_enabled = False
 
     async def on(
         self, event_name: str, callback: callable, temporary: bool = False
@@ -568,21 +591,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             if asyncio.get_event_loop().time() - start_time > timeout:
                 raise asyncio.TimeoutError('Page load timed out')
             await asyncio.sleep(0.5)
-            
-    async def set_intercept_file_chooser_dialog(self, enabled: bool):
-        """
-        Enables or disables intercepting file chooser dialogs.
-        This feature is only available on Chromium-based browsers.
-        
-        Args:
-            enabled (bool): A boolean value indicating whether to enable or disable the interception of file chooser dialogs.
 
-        Returns:
-
-        """
-        await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(enabled))
-        self._intercept_file_chooser_dialog = enabled
-    
     @asynccontextmanager
     async def expect_file_chooser(self, files: Union[str, Path, List[Union[str, Path]]]):
         """
@@ -597,7 +606,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         async def event_handler(event):
             await self._execute_command(
-                FileUploadCommands.upload_files(
+                DomCommands.upload_files(
                     files=files, backend_node_id=event['params']['backendNodeId']
                 )
             )
@@ -608,8 +617,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         else:
             _before_page_events_enabled = True
 
-        if self.intercept_file_chooser_dialog is False:
-            await self.set_intercept_file_chooser_dialog(True)
+        if self.intercept_file_chooser_dialog_enabled is False:
+            await self.enable_intercept_file_chooser_dialog()
 
         await self.on(
             PageEvents.FILE_CHOOSER_OPENED,
@@ -619,8 +628,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         yield
 
-        if self.intercept_file_chooser_dialog is True:
-            await self.set_intercept_file_chooser_dialog(False)
-        
+        if self.intercept_file_chooser_dialog_enabled is True:
+            await self.disable_intercept_file_chooser_dialog()
+
         if _before_page_events_enabled is False:
             await self.disable_page_events()

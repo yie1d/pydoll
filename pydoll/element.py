@@ -1,14 +1,13 @@
 import asyncio
 import json
+from pathlib import Path
+from typing import List, Union
 
 import aiofiles
-from pathlib import Path
-from typing import Union, List
 from bs4 import BeautifulSoup
 
 from pydoll import exceptions
 from pydoll.commands.dom import DomCommands
-from pydoll.commands.file_upload import FileUploadCommands
 from pydoll.commands.input import InputCommands
 from pydoll.commands.page import PageCommands
 from pydoll.commands.runtime import RuntimeCommands
@@ -400,7 +399,7 @@ class WebElement(FindElementsMixin):
         if (self._attributes.get('tag_name', '').lower() != 'input' or
                 self._attributes.get('type', '').lower() != 'file'):
             raise exceptions.ElementNotInteractable('The element is not a file input.')
-        await self._execute_command(FileUploadCommands.upload_files(files=files, object_id=self._object_id))
+        await self._execute_command(DomCommands.upload_files(files=files, object_id=self._object_id))
 
     async def type_keys(self, text: str):
         """
