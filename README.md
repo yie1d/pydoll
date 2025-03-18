@@ -721,9 +721,7 @@ from pydoll.events.page import PageEvents
 async def on_page_loaded(event):
     print(f"🌐 Navigating to: {event['params'].get('url')}")
 
-await browser.enable_page_events()  # Activates page events
-await browser.on(PageEvents.PAGE_LOADED, on_page_loaded) # Global listener!
-# Needs to be locally? Use the page.on method!
+await page.enable_page_events()
 await page.on(PageEvents.PAGE_LOADED, on_page_loaded)
 ```
 
@@ -735,20 +733,21 @@ from functools import partial
 async def on_page_loaded(page, event):
     print(f"📄 Page loaded: {await page.current_url}")
 
-await browser.on(PageEvents.PAGE_LOADED, partial(on_page_loaded, page))
+await page.enable_page_events()
+await page.on(PageEvents.PAGE_LOADED, partial(on_page_loaded, page))
 ```
 
 ##### `async enable_page_events() -> None`
-Track everything happening on your pages - loading states, navigation, DOM changes, and more! This works globally or locally. Just use the browser or the page instance to enable the events.
+Track everything happening on your pages - loading states, navigation, DOM changes, and more! This only locally. Just use  the page instance to enable the events.
 
 ```python
 # Enables page event monitoring
-await browser.enable_page_events() # global
+await page.enable_page_events()
 ```
 
 
 ##### `async enable_network_events() -> None`
-See all network activity in real-time - perfect for debugging or monitoring specific API calls!
+See all network activity in real-time - perfect for debugging or monitoring specific API calls! Only works in the page domain.
 
 ```python
 from pydoll.events.network import NetworkEvents
@@ -756,14 +755,14 @@ from pydoll.events.network import NetworkEvents
 async def on_request(event):
     print(f"🔄 Request to: {event['params']['request']['url']} will be sent")
 
-await browser.enable_network_events()
-await browser.on(NetworkEvents.REQUEST_WILL_BE_SENT, on_request)
+await page.enable_network_events()
+await page.on(NetworkEvents.REQUEST_WILL_BE_SENT, on_request)
 
 await page.go_to('https://www.google.com') # This will trigger the on_request callback
 ```
 
 ##### `async enable_dom_events() -> None`
-Watch the page structure change in real-time and react accordingly!
+Watch the page structure change in real-time and react accordingly! Only works on the page domain.
 
 ```python
 from pydoll.events.dom import DomEvents
@@ -771,8 +770,8 @@ from pydoll.events.dom import DomEvents
 async def on_dom_event(event):
     print(f"🔄 The DOM has been updated!")
 
-await browser.enable_dom_events()
-await browser.on(DomEvents.DOCUMENT_UPDATED, on_dom_event)
+await page.enable_dom_events()
+await page.on(DomEvents.DOCUMENT_UPDATED, on_dom_event)
 ```
 
 ##### `async enable_fetch_events(handle_auth_requests: bool = False, resource_type: str = '') -> None`
@@ -803,6 +802,8 @@ async def interceptor(page, event):
 
 await browser.enable_fetch_events(resource_type='xhr') # only intercept XHR requests
 await browser.on(FetchEvents.REQUEST_PAUSED, partial(interceptor, page))
+
+await page.enable_fetch_events() # also works in the page domain!
 ```
 
 With this power, you can transform your automation into something truly intelligent!
@@ -813,6 +814,7 @@ Turn off request interception when you're done.
 ```python
 # Disables request interception
 await browser.disable_fetch_events()
+await page.disable_fetch_events()
 ```
 
 ### Concurrent Scraping
