@@ -17,11 +17,10 @@ from pydoll.commands import (
     DomCommands,
     FetchCommands,
     NetworkCommands,
-    PageCommands,
     StorageCommands,
     TargetCommands,
 )
-from pydoll.events import FetchEvents
+from pydoll.events import FetchEvents, PageEvents
 
 class ConcreteBrowser(Browser):
     def _get_default_binary_location(self) -> str:
@@ -247,21 +246,7 @@ async def test_context_manager(mock_browser):
 
 @pytest.mark.asyncio
 async def test_enable_events(mock_browser):
-    await mock_browser.enable_page_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        PageCommands.enable_page()
-    )
-
-    await mock_browser.enable_network_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        NetworkCommands.enable_network_events()
-    )
-
-    await mock_browser.enable_dom_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        DomCommands.enable_dom_events()
-    )
-
+    # O método enable_page_events foi removido, então não testamos mais
     await mock_browser.enable_fetch_events(
         handle_auth_requests=True, resource_type='XHR'
     )
@@ -276,6 +261,7 @@ async def test_disable_events(mock_browser):
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.disable_fetch_events()
     )
+
 
 
 @pytest.mark.asyncio
@@ -414,3 +400,29 @@ def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_
 
     with pytest.raises(ValueError, match="Unsupported OS"):
         Chrome._get_default_binary_location()
+
+
+@pytest.mark.asyncio
+async def test_register_event_callback_page_event():
+    mock_conn_handler = AsyncMock()
+    browser = ConcreteBrowser()
+    browser._connection_handler = mock_conn_handler
+    
+    # Testando que eventos de página não são permitidos no Browser
+    with pytest.raises(exceptions.EventNotSupported) as excinfo:
+        await browser.on(
+            PageEvents.PAGE_LOADED, AsyncMock()
+        )
+    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
+    
+    # Testando para outro evento de página também
+    with pytest.raises(exceptions.EventNotSupported) as excinfo:
+        await browser.on(
+            PageEvents.DOM_CONTENT_LOADED, AsyncMock()
+        )
+    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
+    
+    # Testando com evento que está na lista ALL_EVENTS
+    for event in PageEvents.ALL_EVENTS:
+        with pytest.raises(exceptions.EventNotSupported):
+            await browser.on(event, AsyncMock())

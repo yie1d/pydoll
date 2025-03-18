@@ -22,6 +22,14 @@ def test_enable_dom_events():
     )
 
 
+def test_disable_dom_events():
+    expected = {'method': 'DOM.disable'}
+    result = DomCommands.disable_dom_events()
+    assert result == expected, (
+        'The disable_dom_events method did not return the expected dictionary.'
+    )
+
+
 def test_dom_document():
     expected = {'method': 'DOM.getDocument'}
     result = DomCommands.dom_document()
