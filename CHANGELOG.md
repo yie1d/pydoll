@@ -1,3 +1,15 @@
+## 1.3.3 (2025-03-18)
+
+### Fix
+
+- solve browser invalid domain events issue
+- improve process termination
+- improve process management and deactivate websockets connection size limit
+
+### Refactor
+
+- import commands and evebts from __init__.py
+
 ## 1.3.2 (2025-03-13)
 
 ### Fix
