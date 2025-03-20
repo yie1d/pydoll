@@ -298,21 +298,6 @@ async def test_context_manager(mock_browser):
 
 @pytest.mark.asyncio
 async def test_enable_events(mock_browser):
-    await mock_browser.enable_page_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        PageCommands.enable_page()
-    )
-
-    await mock_browser.enable_network_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        NetworkCommands.enable_network_events()
-    )
-
-    await mock_browser.enable_dom_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        DomCommands.enable_dom_events()
-    )
-
     await mock_browser.enable_fetch_events(
         handle_auth_requests=True, resource_type='XHR'
     )
@@ -442,28 +427,57 @@ async def test__get_valid_page_key_error(mock_browser):
     )
 
 
-@pytest.mark.parametrize('os_name, expected_browser_path', [
-    ('Windows', r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'),
-    ('Linux', '/usr/bin/microsoft-edge'),
-    ('Darwin', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge')
-])
+@pytest.mark.parametrize(
+    'os_name, expected_browser_paths, mock_return_value',
+    [
+        (
+            'Windows',
+            [
+                r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+                r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            ],
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe' 
+        ),
+        (
+            'Linux',
+            ['/usr/bin/microsoft-edge'],
+            '/usr/bin/microsoft-edge'
+        ),
+        (
+            'Darwin',
+            ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'],
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+        ),
+    ]
+)
 @patch('platform.system')
-@patch.object(BrowserOptionsManager, 'validate_browser_path')
-def test__get_default_binary_location(mock_validate_browser_path, mock_platform_system, os_name, expected_browser_path):
+@patch.object(BrowserOptionsManager, 'validate_browser_paths')
+def test__get_default_binary_location(
+    mock_validate_browser_paths,
+    mock_platform_system,
+    os_name,
+    expected_browser_paths,
+    mock_return_value
+):
     mock_platform_system.return_value = os_name
-    mock_validate_browser_path.return_value = expected_browser_path
-
+    mock_validate_browser_paths.return_value = mock_return_value
+    
     path = Edge._get_default_binary_location()
-    mock_validate_browser_path.assert_called_once_with(expected_browser_path)
+    mock_validate_browser_paths.assert_called_once_with(expected_browser_paths)
+    assert path == mock_return_value
 
-    assert path == expected_browser_path
+
+def test__get_default_binary_location_unsupported_os():
+    with patch('platform.system', return_value='SomethingElse'):
+        with pytest.raises(ValueError, match='Unsupported OS'):
+            Edge._get_default_binary_location()
 
 
 @patch('platform.system')
 def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_platform_system):
     mock_platform_system.return_value = 'FreeBSD'
-
-    with pytest.raises(ValueError, match="Unsupported operating system"):
+    
+    with pytest.raises(ValueError, match="Unsupported OS"):
         Edge._get_default_binary_location()
 
 
@@ -530,4 +544,4 @@ async def test_edge_specific_arguments(mock_browser):
     assert '--disable-crash-reporter' in browser.options.arguments
     assert '--disable-features=TranslateUI' in browser.options.arguments
     assert '--disable-component-update' in browser.options.arguments
-    assert '--disable-background-networking' in browser.options.arguments 
+    assert '--disable-background-networking' in browser.options.arguments

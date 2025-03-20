@@ -552,20 +552,13 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._connection_handler.execute_command(
             command, timeout=60
         )
-
+    
     def _setup_user_dir(self):
         """Prepares the user data directory if necessary."""
         if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
-            # Check if this is an Edge browser
-            if isinstance(self.options, EdgeOptions):
-                # For Edge browser, use a fixed user data directory
-                user_data_dir = os.path.join(os.path.expanduser('~'), '.edge_automation')
-                os.makedirs(user_data_dir, exist_ok=True)
-                self.options.arguments.append(f'--user-data-dir={user_data_dir}')
-            else:
-                # For other browsers, use a temporary directory
-                temp_dir = self._temp_directory_manager.create_temp_dir()
-                self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
+            # For all browsers, use a temporary directory
+            temp_dir = self._temp_directory_manager.create_temp_dir()
+            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:
