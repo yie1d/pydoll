@@ -35,7 +35,10 @@ class PageCommands:
     }
     HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
     CLOSE = {'method': 'Page.close'}
-    SET_INTERCEPT_FILE_CHOOSER_DIALOG = {"method": "Page.setInterceptFileChooserDialog", "params": {}}
+    SET_INTERCEPT_FILE_CHOOSER_DIALOG = {
+        'method': 'Page.setInterceptFileChooserDialog',
+        'params': {},
+    }
 
     @classmethod
     def handle_dialog(cls, accept: bool = True) -> dict:
@@ -196,7 +199,8 @@ class PageCommands:
         Generates the command to set whether to intercept file chooser dialogs.
 
         Args:
-            enabled: A boolean value indicating whether to enable or disable the interception of file chooser dialogs.
+            enabled: A boolean value indicating whether to enable or disable
+                the interception of file chooser dialogs.
 
         Returns:
 

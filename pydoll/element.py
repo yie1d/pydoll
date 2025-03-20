@@ -389,17 +389,25 @@ class WebElement(FindElementsMixin):
         """
         await self._execute_command(InputCommands.insert_text(text))
 
-    async def set_input_files(self, files: Union[str, Path, List[Union[str, Path]]]):
+    async def set_input_files(
+        self, files: Union[str, Path, List[Union[str, Path]]]
+    ):
         """
         Sets the value of the file input to these file paths.
 
         Args:
             files (Union[str, Path, List[Union[str, Path]]]): Files to upload.
         """
-        if (self._attributes.get('tag_name', '').lower() != 'input' or
-                self._attributes.get('type', '').lower() != 'file'):
-            raise exceptions.ElementNotInteractable('The element is not a file input.')
-        await self._execute_command(DomCommands.upload_files(files=files, object_id=self._object_id))
+        if (
+            self._attributes.get('tag_name', '').lower() != 'input'
+            or self._attributes.get('type', '').lower() != 'file'
+        ):
+            raise exceptions.ElementNotInteractable(
+                'The element is not a file input.'
+            )
+        await self._execute_command(
+            DomCommands.upload_files(files=files, object_id=self._object_id)
+        )
 
     async def type_keys(self, text: str):
         """

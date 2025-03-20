@@ -43,7 +43,10 @@ class DomCommands:
         'method': 'DOM.scrollIntoViewIfNeeded',
         'params': {},
     }
-    SET_FILE_INPUT_FILES_TEMPLATE = {'method': 'DOM.setFileInputFiles', 'params': {}}
+    SET_FILE_INPUT_FILES_TEMPLATE = {
+        'method': 'DOM.setFileInputFiles',
+        'params': {},
+    }
 
     @classmethod
     def scroll_into_view(cls, object_id: str) -> dict:
@@ -321,7 +324,10 @@ class DomCommands:
         return f'.{xpath}' if not xpath.startswith('.') else xpath
 
     @staticmethod
-    def _ensure_file_exists(files: Union[str, Path, List[Union[str, Path]]], missing_ok: bool = False) -> List[str]:
+    def _ensure_file_exists(
+        files: Union[str, Path, List[Union[str, Path]]],
+        missing_ok: bool = False,
+    ) -> List[str]:
         """
         Ensures that the file exists.
 
@@ -340,27 +346,29 @@ class DomCommands:
         _has_ensure_files = []
         for filepath in files:
             if isinstance(filepath, str):
-                filepath = Path(filepath).absolute()
-            if missing_ok is False and filepath.is_file() is False:
-                raise FileExistsError(f"{filepath} does not exist.")
-            _has_ensure_files.append(str(filepath))
+                _filepath = Path(filepath).absolute()
+            else:
+                _filepath = filepath
+            if missing_ok is False and _filepath.is_file() is False:
+                raise FileExistsError(f'{_filepath} does not exist.')
+            _has_ensure_files.append(str(_filepath))
 
         return _has_ensure_files
 
     @classmethod
     def upload_files(
-            cls,
-            files: Union[str, Path, List[Union[str, Path]]],
-            object_id: Optional[str] = None,
-            backend_node_id: Optional[int] = None,
-            missing_ok: bool = False
+        cls,
+        files: Union[str, Path, List[Union[str, Path]]],
+        object_id: Optional[str] = None,
+        backend_node_id: Optional[int] = None,
+        missing_ok: bool = False,
     ) -> dict:
         """
         Sets the value of the file input to these file paths or files.
 
         Args:
             files (Union[str, Path, List[Union[str, Path]]]): Files to upload.
-            object_id (Optional[str]): JavaScript object id of the node wrapper.
+            object_id (Optional[str]): JavaScript object id of node wrapper.
             backend_node_id (Optional[int]): Identifier of the backend node.
             missing_ok (bool): If True, skips the file existence check.
 
@@ -369,7 +377,9 @@ class DomCommands:
         """
         command = copy.deepcopy(cls.SET_FILE_INPUT_FILES_TEMPLATE)
         if object_id is None and backend_node_id is None:
-            raise ValueError("Either object_id or backend_node_id is required.")
+            raise ValueError(
+                'Either object_id or backend_node_id is required.'
+            )
         if object_id is not None:
             command['params']['objectId'] = object_id
         if backend_node_id is not None:
