@@ -1,4 +1,4 @@
-from pydoll.commands.fetch import FetchCommands
+from pydoll.commands import FetchCommands
 
 
 def test_continue_request():

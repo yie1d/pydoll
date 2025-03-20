@@ -24,6 +24,7 @@ class DomCommands:
     ]
 
     ENABLE = {'method': 'DOM.enable'}
+    DISABLE = {'method': 'DOM.disable'}
     DOM_DOCUMENT = {'method': 'DOM.getDocument'}
     DESCRIBE_NODE_TEMPLATE = {'method': 'DOM.describeNode', 'params': {}}
     FIND_ELEMENT_TEMPLATE = {'method': 'DOM.querySelector', 'params': {}}
@@ -137,6 +138,13 @@ class DomCommands:
             dict: The CDP command to enable the DOM domain.
         """
         return cls.ENABLE
+
+    @classmethod
+    def disable_dom_events(cls) -> dict:
+        """
+        Generates a command to disable the DOM domain in CDP.
+        """
+        return cls.DISABLE
 
     @classmethod
     def get_current_url(cls) -> dict:

@@ -14,15 +14,15 @@ from pydoll.browser.managers import (
 )
 from pydoll.browser.options import EdgeOptions, Options
 from pydoll.browser.page import Page
-from pydoll.commands.browser import BrowserCommands
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.network import NetworkCommands
-from pydoll.commands.page import PageCommands
-from pydoll.commands.storage import StorageCommands
-from pydoll.commands.target import TargetCommands
+from pydoll.commands import (
+    BrowserCommands,
+    FetchCommands,
+    NetworkCommands,
+    StorageCommands,
+    TargetCommands,
+)
 from pydoll.connection.connection import ConnectionHandler
-from pydoll.events.fetch import FetchEvents
+from pydoll.events import FetchEvents, PageEvents
 
 
 class Browser(ABC):  # noqa: PLR0904
@@ -82,7 +82,9 @@ class Browser(ABC):  # noqa: PLR0904
             exc_val: The exception value, if raised.
             exc_tb: The traceback, if an exception was raised.
         """
-        await self.stop()
+        if await self._is_browser_running():
+            await self.stop()
+
         await self._connection_handler.close()
 
     async def start(self) -> None:
@@ -142,6 +144,7 @@ class Browser(ABC):  # noqa: PLR0904
         page_id = (
             await self.new_page() if not self._pages else self._pages.pop()
         )
+
         return Page(self._connection_port, page_id)
 
     async def delete_all_cookies(self):
@@ -190,6 +193,10 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             int: The ID of the registered callback.
         """
+        if event_name in PageEvents.ALL_EVENTS:
+            raise exceptions.EventNotSupported(
+                'Page events are not supported in the browser domain.'
+            )
 
         async def callback_wrapper(event):
             asyncio.create_task(callback(event))
@@ -234,7 +241,7 @@ class Browser(ABC):  # noqa: PLR0904
         Stops the running browser process.
 
         Raises:
-            ValueError: If the browser is not currently running.
+            BrowserNotRunning: If the browser is not currently running.
         """
         if await self._is_browser_running():
             await self._execute_command(BrowserCommands.CLOSE)
@@ -248,10 +255,25 @@ class Browser(ABC):  # noqa: PLR0904
         Retrieves the ID of the current browser window.
 
         Returns:
-            str: The ID of the current browser window.
+            int: The ID of the current browser window.
+
+        Raises:
+            RuntimeError: If unable to retrieve the window ID.
         """
-        response = await self._execute_command(BrowserCommands.get_window_id())
-        return response['result']['windowId']
+        command = BrowserCommands.get_window_id()
+        response = await self._execute_command(command)
+
+        if response.get('error'):
+            pages = await self.get_targets()
+            target_id = await self._get_valid_target_id(pages)
+            response = await self._execute_command(
+                BrowserCommands.get_window_id_by_target(target_id)
+            )
+
+        if window_id := response.get('result', {}).get('windowId'):
+            return window_id
+
+        raise RuntimeError(response.get('error', {}))
 
     async def set_window_bounds(self, bounds: dict):
         """
@@ -281,51 +303,6 @@ class Browser(ABC):  # noqa: PLR0904
         window_id = await self.get_window_id()
         await self._execute_command(
             BrowserCommands.set_window_minimized(window_id)
-        )
-
-    async def enable_page_events(self):
-        """
-        Enables listening for page-related events over the websocket
-        connection. Once this method is invoked, the connection will emit
-        events pertaining to page activities, such as loading, navigation,
-        and DOM updates, to any registered event callbacks. For a comprehensive
-        list of available page events and their purposes, refer to the
-        PageEvents class documentation.
-        This functionality is crucial for monitoring and reacting to changes
-        in the page state in real-time.
-
-        This method has a global scope and can be used to listen
-        for events across all pages in the browser. Each Page instance also
-        has an `enable_page_events` method that allows for listening to events
-        on a specific page.
-
-        Returns:
-            None
-        """
-        await self._connection_handler.execute_command(
-            PageCommands.enable_page()
-        )
-
-    async def enable_network_events(self):
-        """
-        Activates listening for network events through the websocket
-        connection. After calling this method, the connection will emit
-        events related to network activities, such as resource loading and
-        response status, to any registered event callbacks. This is essential
-        for debugging network interactions and analyzing resource requests.
-        For details on available network events, consult the NetworkEvents
-        class documentation.
-
-        This method has a global scope and can be used to listen
-        for events across all pages in the browser. Each Page instance also
-        has an `enable_network_events` method that allows for listening to
-        events on a specific page.
-
-        Returns:
-            None
-        """
-        await self._connection_handler.execute_command(
-            NetworkCommands.enable_network_events()
         )
 
     async def enable_fetch_events(
@@ -360,27 +337,6 @@ class Browser(ABC):  # noqa: PLR0904
             FetchCommands.enable_fetch_events(
                 handle_auth_requests, resource_type
             )
-        )
-
-    async def enable_dom_events(self):
-        """
-        Enables DOM-related events for the websocket connection. When invoked,
-        this method allows the connection to listen for changes in the DOM,
-        including node additions, removals, and attribute changes. This feature
-        is vital for applications that need to react to dynamic changes in
-        the page structure. For a full list of available DOM events, refer to
-        the DomCommands class documentation.
-
-        This method has a global scope and can be used to listen
-        for events across all pages in the browser. Each Page instance also has
-        an `enable_dom_events` method that allows for listening to events on
-        a specific page.
-
-        Returns:
-            None
-        """
-        await self._connection_handler.execute_command(
-            DomCommands.enable_dom_events()
         )
 
     async def disable_fetch_events(self):
@@ -524,7 +480,7 @@ class Browser(ABC):  # noqa: PLR0904
             'url', ''
         )
 
-    async def _get_valid_page(self, pages) -> str:
+    async def _get_valid_page(self, pages: list) -> str:
         """
         Gets the ID of a valid page or creates a new one.
 
@@ -535,16 +491,38 @@ class Browser(ABC):  # noqa: PLR0904
             str: The target ID of an existing or new page.
         """
         valid_page = next(
-            (page for page in pages if self._is_valid_page(page)), None
+            (page for page in pages if self._is_valid_page(page)), {}
         )
 
-        if valid_page:
-            try:
-                return valid_page['targetId']
-            except KeyError:
-                pass
+        if valid_page.get('targetId', None):
+            return valid_page['targetId']
 
         return await self.new_page()
+
+    @staticmethod
+    async def _get_valid_target_id(pages: list) -> str:
+        """
+        Retrieves the target ID of a valid attached browser page.
+
+        Returns:
+            str: The target ID of a valid page.
+
+        """
+
+        valid_page = next(
+            (page for page in pages
+             if page.get('type') == 'page' and page.get('attached')),
+            None
+        )
+
+        if not valid_page:
+            raise RuntimeError("No valid attached browser page found.")
+
+        target_id = valid_page.get('targetId')
+        if not target_id:
+            raise RuntimeError("Valid page found but missing 'targetId'.")
+
+        return target_id
 
     async def _is_browser_running(self, timeout: int = 10) -> bool:
         """
@@ -558,9 +536,10 @@ class Browser(ABC):  # noqa: PLR0904
             if await self._connection_handler.ping():
                 return True
             await asyncio.sleep(1)
+
         return False
 
-    async def _execute_command(self, command: str):
+    async def _execute_command(self, command: dict):
         """
         Executes a command through the connection handler.
 

@@ -1,10 +1,10 @@
 # tests/test_dom_commands.py
 import pytest
 from unittest.mock import patch
-from pydoll.commands.dom import (
+from pydoll.commands import (
     DomCommands,
+    RuntimeCommands,
 )
-from pydoll.commands.runtime import RuntimeCommands
 from pydoll.constants import By
 
 
@@ -19,6 +19,14 @@ def test_enable_dom_events():
     result = DomCommands.enable_dom_events()
     assert result == expected, (
         'The enable_dom_events method did not return the expected dictionary.'
+    )
+
+
+def test_disable_dom_events():
+    expected = {'method': 'DOM.disable'}
+    result = DomCommands.disable_dom_events()
+    assert result == expected, (
+        'The disable_dom_events method did not return the expected dictionary.'
     )
 
 

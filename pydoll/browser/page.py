@@ -3,12 +3,14 @@ import json
 
 import aiofiles
 
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.network import NetworkCommands
-from pydoll.commands.page import PageCommands
-from pydoll.commands.runtime import RuntimeCommands
-from pydoll.commands.storage import StorageCommands
+from pydoll.commands import (
+    DomCommands,
+    FetchCommands,
+    NetworkCommands,
+    PageCommands,
+    RuntimeCommands,
+    StorageCommands,
+)
 from pydoll.connection.connection import ConnectionHandler
 from pydoll.element import WebElement
 from pydoll.exceptions import InvalidFileExtension
@@ -157,6 +159,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         """
         if self._connection_handler.dialog:
             return True
+
         return False
 
     async def get_dialog_message(self) -> str:

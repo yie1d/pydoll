@@ -46,13 +46,18 @@ class Chrome(Browser):
                 the browser executable is not found at the default location.
         """
         os_name = platform.system()
+
         browser_paths = {
-            'Windows':
+            'Windows': [
                 r'C:\Program Files\Google\Chrome\Application\chrome.exe',
-            'Linux':
+                r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            ],
+            'Linux': [
                 '/usr/bin/google-chrome',
-            'Darwin':
-                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+            ],
+            'Darwin': [
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            ]
         }
 
         browser_path = browser_paths.get(os_name)
@@ -60,6 +65,6 @@ class Chrome(Browser):
         if not browser_path:
             raise ValueError('Unsupported OS')
 
-        return BrowserOptionsManager.validate_browser_path(
+        return BrowserOptionsManager.validate_browser_paths(
             browser_path
         )

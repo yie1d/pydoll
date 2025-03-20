@@ -1,4 +1,4 @@
-from pydoll.commands.input import InputCommands
+from pydoll.commands import InputCommands
 
 
 def test_mouse_press():

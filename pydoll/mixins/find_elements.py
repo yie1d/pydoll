@@ -1,8 +1,10 @@
 import asyncio
 
 from pydoll import exceptions
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.runtime import RuntimeCommands
+from pydoll.commands import (
+    DomCommands,
+    RuntimeCommands,
+)
 
 
 def create_web_element(*args, **kwargs):
