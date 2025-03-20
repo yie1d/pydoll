@@ -86,63 +86,77 @@ def test_box_model():
 
 def test_upload_files():
     from pathlib import Path
-    
+
     object_id = 'oiukw'
     backend_node_id = 9527
-    single_files = r'C:\path\to\file1.txt'
-    multi_files = [r'C:\path\to\file1.txt', Path(r'C:\path\to\file2.txt')]
-    
+    single_files = str(Path('/fake/path/file1.txt').absolute())
+    multi_files = [str(Path('/fake/path/file1.txt').absolute()), Path('/fake/path/file2.txt').absolute()]
+
     expected = {
-        'method': 'DOM.setFileInputFiles', 
-        'params': {
-            'objectId': object_id,
-            'files': [single_files]
-        }
+        'method': 'DOM.setFileInputFiles',
+        'params': {'objectId': object_id, 'files': [single_files]},
     }
-    assert DomCommands.upload_files(single_files, object_id=object_id, missing_ok=True) == expected, (
-        'The upload_files method did not return the expected dictionary.'
-    )
-    assert DomCommands.upload_files(Path(single_files), object_id=object_id, missing_ok=True) == expected, (
-        'The upload_files method did not return the expected dictionary.'
-    )
-    
+    assert (
+        DomCommands.upload_files(
+            single_files, object_id=object_id, missing_ok=True
+        )
+        == expected
+    ), 'The upload_files method did not return the expected dictionary.'
+    assert (
+        DomCommands.upload_files(
+            Path(single_files), object_id=object_id, missing_ok=True
+        )
+        == expected
+    ), 'The upload_files method did not return the expected dictionary.'
+
     expected_multi_files = {
-        'method': 'DOM.setFileInputFiles', 
+        'method': 'DOM.setFileInputFiles',
         'params': {
             'objectId': object_id,
-            'files': list(map(str, multi_files))
-        }
+            'files': list(map(str, multi_files)),
+        },
     }
-    
-    assert DomCommands.upload_files(multi_files, object_id=object_id, missing_ok=True) == expected_multi_files, (
-        'The upload_files method did not return the expected dictionary.'
-    )
+
+    assert (
+        DomCommands.upload_files(
+            multi_files, object_id=object_id, missing_ok=True
+        )
+        == expected_multi_files
+    ), 'The upload_files method did not return the expected dictionary.'
 
     expected_with_backend_id = {
         'method': 'DOM.setFileInputFiles',
-        'params': {
-            'backendNodeId': backend_node_id,
-            'files': [single_files]
-        }
+        'params': {'backendNodeId': backend_node_id, 'files': [single_files]},
     }
-    assert DomCommands.upload_files(single_files, backend_node_id=backend_node_id, missing_ok=True) == expected_with_backend_id, (
-        'The upload_files method did not return the expected dictionary.'
-    )
-    assert DomCommands.upload_files(Path(single_files), backend_node_id=backend_node_id, missing_ok=True) == expected_with_backend_id, (
-        'The upload_files method did not return the expected dictionary.'
-    )
+    assert (
+        DomCommands.upload_files(
+            single_files, backend_node_id=backend_node_id, missing_ok=True
+        )
+        == expected_with_backend_id
+    ), 'The upload_files method did not return the expected dictionary.'
+    assert (
+        DomCommands.upload_files(
+            Path(single_files),
+            backend_node_id=backend_node_id,
+            missing_ok=True,
+        )
+        == expected_with_backend_id
+    ), 'The upload_files method did not return the expected dictionary.'
 
     expected_multi_files_with_backend_id = {
         'method': 'DOM.setFileInputFiles',
         'params': {
             'backendNodeId': backend_node_id,
-            'files': list(map(str, multi_files))
-        }
+            'files': list(map(str, multi_files)),
+        },
     }
 
-    assert DomCommands.upload_files(multi_files, backend_node_id=backend_node_id, missing_ok=True) == expected_multi_files_with_backend_id, (
-        'The upload_files method did not return the expected dictionary.'
-    )
+    assert (
+        DomCommands.upload_files(
+            multi_files, backend_node_id=backend_node_id, missing_ok=True
+        )
+        == expected_multi_files_with_backend_id
+    ), 'The upload_files method did not return the expected dictionary.'
 
     with pytest.raises(FileExistsError):
         DomCommands.upload_files(multi_files, object_id=object_id)
