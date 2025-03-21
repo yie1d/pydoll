@@ -652,6 +652,25 @@ input_field = await page.find_element(By.CSS_SELECTOR, 'input[name="username"]')
 await input_field.send_keys("user123")
 ```
 
+##### `async set_input_files(files: Union[str, Path, List[Union[str, Path]]])`
+Send files to an input element:
+
+```python
+file_input_field = await page.find_element(By.XPATH, '//input[@type="file"]')
+# Single-file upload
+await file_input_field.set_input_files(r'c:\demo\demo1.file')
+# Multi-file uploads
+await file_input_field.set_input_files([r'c:\demo\demo1.file', r'c:\demo\demo2.file'])
+```
+
+You can also do this with the `expect_file_chooser` context manager:
+```python
+async with page.expect_file_chooser(files=r'c:\demo\demo1.file'):
+    file_input_field = await page.find_element(By.XPATH, '//button[@id="upload-button-demo"]')
+    await file_input_field.click()
+```
+This way supports any type of elements, not only inputs.
+
 ##### `async type_keys(text: str)`
 Type realistically, key by key, simulating human input.
 
