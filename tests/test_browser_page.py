@@ -1,10 +1,11 @@
 import pytest
 import pytest_asyncio
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, ANY
 
 from pydoll.browser.page import Page
 from pydoll.element import WebElement
+from pydoll.events import PageEvents
 
 from pydoll.commands import (
     DomCommands,
@@ -423,3 +424,36 @@ async def test__wait_page_load_timeout(page):
     with patch('pydoll.browser.page.asyncio.sleep', AsyncMock()):
         with pytest.raises(asyncio.TimeoutError):
             await page._wait_page_load(timeout=0.1)
+
+
+@pytest.mark.asyncio
+async def test_enable_intercept_file_chooser_dialog(page):
+    await page.enable_intercept_file_chooser_dialog()
+    assert page.intercept_file_chooser_dialog_enabled
+    page._connection_handler.execute_command.assert_called_once_with(
+        PageCommands.set_intercept_file_chooser_dialog(True), timeout=60
+    )
+
+
+@pytest.mark.asyncio
+async def test_disable_intercept_file_chooser_dialog(page):
+    await page.disable_intercept_file_chooser_dialog()
+    assert not page.intercept_file_chooser_dialog_enabled
+    page._connection_handler.execute_command.assert_called_once_with(
+        PageCommands.set_intercept_file_chooser_dialog(False), timeout=60
+    )
+
+
+@pytest.mark.asyncio
+async def test_expect_file_chooser(page):
+    files = ['file1.txt', 'file2.txt']
+    async with page.expect_file_chooser(files=files):
+        assert page.page_events_enabled
+        assert page.intercept_file_chooser_dialog_enabled
+        page._connection_handler.register_callback.assert_called_with(
+            PageEvents.FILE_CHOOSER_OPENED, ANY, True
+        )
+    assert not page.intercept_file_chooser_dialog_enabled
+    await page.disable_intercept_file_chooser_dialog()
+    assert not page.intercept_file_chooser_dialog_enabled
+
