@@ -53,6 +53,7 @@ class Keyboard(Keys):
         ')': 41,
         '<': 60,
         '>': 62,
+        '.': 190,
     }
 
     def __init__(self):
