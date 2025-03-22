@@ -12,15 +12,18 @@ class ConcreteBrowser(Browser):
 
 @pytest_asyncio.fixture
 async def mock_browser():
-    with patch.multiple(
+    with (
+        patch.multiple(
             Browser,
             _get_default_binary_location=MagicMock(
                 return_value='/fake/path/to/browser'
             ),
-    ), patch(
-        'pydoll.connection.connection.ConnectionHandler',
-        autospec=True,
-    ) as mock_conn_handler:
+        ),
+        patch(
+            'pydoll.connection.connection.ConnectionHandler',
+            autospec=True,
+        ) as mock_conn_handler,
+    ):
         browser = ConcreteBrowser()
         browser._connection_handler = mock_conn_handler.return_value
         browser._connection_handler.execute_command = AsyncMock()
@@ -42,17 +45,23 @@ async def test_get_window_id_success(mock_browser):
 
 @pytest.mark.asyncio
 async def test_get_window_id_with_error_and_retry(mock_browser):
-    mock_browser._execute_command = AsyncMock(side_effect=[
-        {'error': 'some error'},
-        {'result': {
-            'targetInfos': [{
-                'type': 'page',
-                'attached': True,
-                'targetId': 'target1'
-            }]
-        }},
-        {'result': {'windowId': 123}}
-    ])
+    mock_browser._execute_command = AsyncMock(
+        side_effect=[
+            {'error': 'some error'},
+            {
+                'result': {
+                    'targetInfos': [
+                        {
+                            'type': 'page',
+                            'attached': True,
+                            'targetId': 'target1',
+                        }
+                    ]
+                }
+            },
+            {'result': {'windowId': 123}},
+        ]
+    )
 
     result = await mock_browser.get_window_id()
     assert result == 123
@@ -70,11 +79,7 @@ async def test_get_window_id_failure(mock_browser):
 
 @pytest.mark.asyncio
 async def test_get_valid_target_id_success(mock_browser):
-    pages = [{
-        'type': 'page',
-        'attached': True,
-        'targetId': 'target1'
-    }]
+    pages = [{'type': 'page', 'attached': True, 'targetId': 'target1'}]
     result = await mock_browser._get_valid_target_id(pages)
     assert result == 'target1'
 
@@ -82,18 +87,18 @@ async def test_get_valid_target_id_success(mock_browser):
 @pytest.mark.asyncio
 async def test_get_valid_target_id_no_valid_page(mock_browser):
     pages = []
-    with pytest.raises(RuntimeError, match="No valid attached browser page found."):
+    with pytest.raises(
+        RuntimeError, match='No valid attached browser page found.'
+    ):
         await mock_browser._get_valid_target_id(pages)
 
 
 @pytest.mark.asyncio
 async def test_get_valid_target_id_missing_target_id(mock_browser):
-    pages = [{
-        'type': 'page',
-        'attached': True,
-        'targetId': None
-    }]
-    with pytest.raises(RuntimeError, match="Valid page found but missing 'targetId'."):
+    pages = [{'type': 'page', 'attached': True, 'targetId': None}]
+    with pytest.raises(
+        RuntimeError, match="Valid page found but missing 'targetId'."
+    ):
         await mock_browser._get_valid_target_id(pages)
 
 
@@ -105,4 +110,6 @@ async def test_get_window_id_by_target(mock_browser):
             'targetId': 'target1',
         },
     }
-    assert BrowserCommands.get_window_id_by_target('target1') == expected_command
+    assert (
+        BrowserCommands.get_window_id_by_target('target1') == expected_command
+    )

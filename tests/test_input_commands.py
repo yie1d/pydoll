@@ -67,9 +67,9 @@ def test_key_down():
             'code': 'Enter',
             'windowsVirtualKeyCode': code,
             'modifiers': 0,
-            'text': '\r'
+            'text': '\r',
         },
-        'id': 1
+        'id': 1,
     }
     assert InputCommands.key_down(Keys.ENTER, 1) == expected_command
 
@@ -83,8 +83,8 @@ def test_key_up():
             'key': key,
             'code': 'Enter',
             'windowsVirtualKeyCode': code,
-            'modifiers': 0
+            'modifiers': 0,
         },
-        'id': 2
+        'id': 2,
     }
     assert InputCommands.key_up(Keys.ENTER, 2) == expected_command

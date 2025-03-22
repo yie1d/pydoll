@@ -139,12 +139,12 @@ class InputCommands:
         special_code = cls.KEYBOARD.get_special_code(key)
 
         key_down = {
-            "type": "keyDown",
-            "key": key,
-            "code": special_code,
-            "windowsVirtualKeyCode": vk_code,
-            "modifiers": modifiers,
-            "text": special_key,
+            'type': 'keyDown',
+            'key': key,
+            'code': special_code,
+            'windowsVirtualKeyCode': vk_code,
+            'modifiers': modifiers,
+            'text': special_key,
         }
 
         command = cls.KEY_PRESS_TEMPLATE.copy()
@@ -182,11 +182,11 @@ class InputCommands:
         special_code = cls.KEYBOARD.get_special_code(key)
 
         key_up = {
-            "type": "keyUp",
-            "key": key,
-            "code": special_code,
-            "windowsVirtualKeyCode": vk_code,
-            "modifiers": modifiers,
+            'type': 'keyUp',
+            'key': key,
+            'code': special_code,
+            'windowsVirtualKeyCode': vk_code,
+            'modifiers': modifiers,
         }
 
         command = cls.KEY_PRESS_TEMPLATE.copy()

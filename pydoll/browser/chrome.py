@@ -57,7 +57,7 @@ class Chrome(Browser):
             ],
             'Darwin': [
                 '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-            ]
+            ],
         }
 
         browser_path = browser_paths.get(os_name)
@@ -65,6 +65,4 @@ class Chrome(Browser):
         if not browser_path:
             raise ValueError('Unsupported OS')
 
-        return BrowserOptionsManager.validate_browser_paths(
-            browser_path
-        )
+        return BrowserOptionsManager.validate_browser_paths(browser_path)

@@ -506,13 +506,16 @@ class Browser(ABC):  # noqa: PLR0904
         """
 
         valid_page = next(
-            (page for page in pages
-             if page.get('type') == 'page' and page.get('attached')),
-            None
+            (
+                page
+                for page in pages
+                if page.get('type') == 'page' and page.get('attached')
+            ),
+            None,
         )
 
         if not valid_page:
-            raise RuntimeError("No valid attached browser page found.")
+            raise RuntimeError('No valid attached browser page found.')
 
         target_id = valid_page.get('targetId')
         if not target_id:

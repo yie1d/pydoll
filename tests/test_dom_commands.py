@@ -98,7 +98,10 @@ def test_upload_files():
     object_id = 'oiukw'
     backend_node_id = 9527
     single_files = str(Path('/fake/path/file1.txt').absolute())
-    multi_files = [str(Path('/fake/path/file1.txt').absolute()), Path('/fake/path/file2.txt').absolute()]
+    multi_files = [
+        str(Path('/fake/path/file1.txt').absolute()),
+        Path('/fake/path/file2.txt').absolute(),
+    ]
 
     expected = {
         'method': 'DOM.setFileInputFiles',

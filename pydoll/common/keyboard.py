@@ -2,62 +2,57 @@ from pydoll.common.keys import Keys
 
 
 class Keyboard(Keys):
-    MODIFIER_KEYS = {
-        "Alt": 1,
-        "Control": 2,
-        "Meta": 4,
-        "Shift": 8
-    }
+    MODIFIER_KEYS = {'Alt': 1, 'Control': 2, 'Meta': 4, 'Shift': 8}
     SHIFT_MAP = {
-        "1": "!",
-        "2": "@",
-        "3": "#",
-        "4": "$",
-        "5": "%",
-        "6": "^",
-        "7": "&",
-        "8": "*",
-        "9": "(",
-        "0": ")",
-        "-": "_",
-        "=": "+",
-        "[": "{",
-        "]": "}",
-        "\\": "|",
-        ";": ":",
+        '1': '!',
+        '2': '@',
+        '3': '#',
+        '4': '$',
+        '5': '%',
+        '6': '^',
+        '7': '&',
+        '8': '*',
+        '9': '(',
+        '0': ')',
+        '-': '_',
+        '=': '+',
+        '[': '{',
+        ']': '}',
+        '\\': '|',
+        ';': ':',
         "'": '"',
-        ",": "<",
-        ".": ">",
-        "/": "?"
+        ',': '<',
+        '.': '>',
+        '/': '?',
     }
     SHIFT_CODES = {
-        "\\": "Backslash",
-        "|": "Backslash",
-        "[": "BracketLeft",
-        "]": "BracketRight",
-        ";": "Semicolon",
-        ":": "Semicolon",
-        "/": "Slash",
-        "?": "Slash",
-        ".": "Period",
-        ",": "Comma",
-        "-": "Minus",
-        "+": "Equal",
-        "=": "Equal"
+        '\\': 'Backslash',
+        '|': 'Backslash',
+        '[': 'BracketLeft',
+        ']': 'BracketRight',
+        ';': 'Semicolon',
+        ':': 'Semicolon',
+        '/': 'Slash',
+        '?': 'Slash',
+        '.': 'Period',
+        ',': 'Comma',
+        '-': 'Minus',
+        '+': 'Equal',
+        '=': 'Equal',
     }
     SHIFT_SPECIAL = {
-        "?": 63,
-        "|": 124,
-        "~": 126,
-        "+": 43,
-        "_": 95,
-        ":": 58,
-        "!": 33,
-        "*": 42,
-        "(": 57,
-        ")": 41,
-        "<": 60,
-        ">": 62
+        '?': 63,
+        '|': 124,
+        '~': 126,
+        '+': 43,
+        '_': 95,
+        ':': 58,
+        '!': 33,
+        '*': 42,
+        '(': 57,
+        ')': 41,
+        '<': 60,
+        '>': 62,
     }
 
     def __init__(self):
@@ -75,15 +70,15 @@ class Keyboard(Keys):
             key_code (int): The key code of the key to be pressed.
         """
         if key_code in cls.SPACE:
-            return " "
+            return ' '
         elif key_code in cls.ENTER:
-            return "\r"
-        elif modifiers & 8 and key != "Shift":
+            return '\r'
+        elif modifiers & 8 and key != 'Shift':
             return cls.SHIFT_MAP.get(key, key.upper())
         elif len(key) == 1 and key.isprintable():
             return key
 
-        return ""
+        return ''
 
     @classmethod
     def get_special_code(cls, key) -> str:
@@ -96,12 +91,10 @@ class Keyboard(Keys):
 
         """
         code = cls.SHIFT_CODES.get(key, key)
-        key_type = (
-            f"Digit{key}" if key.isdigit() else f"Key{key.upper()}"
-        )
+        key_type = f'Digit{key}' if key.isdigit() else f'Key{key.upper()}'
         if len(key) == 1:
             return key_type
         elif code in cls.MODIFIER_KEYS.keys():
-            return f"{code}Left"
+            return f'{code}Left'
 
         return code

@@ -36,6 +36,7 @@ class FindElementsMixin:
     elements. Classes that include this mixin will gain the ability to locate
     elements in web pages.
     """
+
     async def wait_element(
         self,
         by: DomCommands.SelectorType,

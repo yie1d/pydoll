@@ -56,7 +56,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self._selector = selector
         self._connection_handler = connection_handler
         self._attributes = {}
-        self._last_input = ""
+        self._last_input = ''
         self._command_id = 0
         self._def_attributes(attributes_list)
 
@@ -177,9 +177,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         return json.loads(response['result']['result']['value'])
 
     async def _execute_script(
-            self,
-            script: str,
-            return_by_value: bool = False
+        self, script: str, return_by_value: bool = False
     ):
         """
         Executes a JavaScript script in the context of this element.
@@ -324,10 +322,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             )
 
     async def click(
-            self,
-            x_offset: int = 0,
-            y_offset: int = 0,
-            hold_time: float = 0.1,
+        self,
+        x_offset: int = 0,
+        y_offset: int = 0,
+        hold_time: float = 0.1,
     ):
         """
         Clicks on the element using mouse events.
@@ -488,10 +486,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             interval (float): The interval between two keys.
         """
         for _ in self._last_input:
-            await self.send_keys(("Backspace", 8))
+            await self.send_keys(('Backspace', 8))
             await asyncio.sleep(interval)
 
-        self._last_input = ""
+        self._last_input = ''
 
         return True
 

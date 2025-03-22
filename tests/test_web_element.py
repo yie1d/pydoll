@@ -278,9 +278,10 @@ async def test_send_keys_text(web_element):
 
     await web_element.send_keys(test_text)
 
-    assert web_element._connection_handler.execute_command.call_count == len(
-        test_text
-    ) * 2
+    assert (
+        web_element._connection_handler.execute_command.call_count
+        == len(test_text) * 2
+    )
 
     count = 1
     for char, key_code in keys:

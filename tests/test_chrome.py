@@ -6,10 +6,7 @@ import pytest_asyncio
 from pydoll import exceptions
 from pydoll.browser.chrome import Chrome
 from pydoll.browser.base import Browser
-from pydoll.browser.managers import (
-    ProxyManager,
-    BrowserOptionsManager
-)
+from pydoll.browser.managers import ProxyManager, BrowserOptionsManager
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
 from pydoll.commands import (
@@ -22,6 +19,7 @@ from pydoll.commands import (
 )
 from pydoll.events import FetchEvents, PageEvents
 
+
 class ConcreteBrowser(Browser):
     def _get_default_binary_location(self) -> str:
         return '/fake/path/to/browser'
@@ -29,24 +27,30 @@ class ConcreteBrowser(Browser):
 
 @pytest_asyncio.fixture
 async def mock_browser():
-    with patch.multiple(
-        Browser,
-        _get_default_binary_location=MagicMock(
-            return_value='/fake/path/to/browser'
+    with (
+        patch.multiple(
+            Browser,
+            _get_default_binary_location=MagicMock(
+                return_value='/fake/path/to/browser'
+            ),
         ),
-    ), patch(
-        'pydoll.browser.managers.BrowserProcessManager',
-        autospec=True,
-    ) as mock_process_manager, patch(
-        'pydoll.browser.managers.TempDirectoryManager',
-        autospec=True,
-    ) as mock_temp_dir_manager, patch(
-        'pydoll.connection.connection.ConnectionHandler',
-        autospec=True,
-    ) as mock_conn_handler, patch(
-        'pydoll.browser.managers.ProxyManager',
-        autospec=True,
-    ) as mock_proxy_manager:
+        patch(
+            'pydoll.browser.managers.BrowserProcessManager',
+            autospec=True,
+        ) as mock_process_manager,
+        patch(
+            'pydoll.browser.managers.TempDirectoryManager',
+            autospec=True,
+        ) as mock_temp_dir_manager,
+        patch(
+            'pydoll.connection.connection.ConnectionHandler',
+            autospec=True,
+        ) as mock_conn_handler,
+        patch(
+            'pydoll.browser.managers.ProxyManager',
+            autospec=True,
+        ) as mock_proxy_manager,
+    ):
         options = Options()
         options.binary_location = None
 
@@ -262,7 +266,6 @@ async def test_disable_events(mock_browser):
     )
 
 
-
 @pytest.mark.asyncio
 async def test__continue_request(mock_browser):
     await mock_browser._continue_request({'params': {'requestId': 'request1'}})
@@ -351,33 +354,29 @@ async def test__get_valid_page_key_error(mock_browser):
     'os_name, expected_browser_paths, mock_return_value',
     [
         (
-                'Windows',
-                [
-                    r'C:\Program Files\Google\Chrome\Application\chrome.exe',
-                    r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-                ],
-                r'C:\Program Files\Google\Chrome\Application\chrome.exe'
+            'Windows',
+            [
+                r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+                r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            ],
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
         ),
+        ('Linux', ['/usr/bin/google-chrome'], '/usr/bin/google-chrome'),
         (
-                'Linux',
-                ['/usr/bin/google-chrome'],
-                '/usr/bin/google-chrome'
+            'Darwin',
+            ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         ),
-        (
-                'Darwin',
-                ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
-                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-        ),
-    ]
+    ],
 )
 @patch('platform.system')
 @patch.object(BrowserOptionsManager, 'validate_browser_paths')
 def test__get_default_binary_location(
-        mock_validate_browser_paths,
-        mock_platform_system,
-        os_name,
-        expected_browser_paths,
-        mock_return_value
+    mock_validate_browser_paths,
+    mock_platform_system,
+    os_name,
+    expected_browser_paths,
+    mock_return_value,
 ):
     mock_platform_system.return_value = os_name
     mock_validate_browser_paths.return_value = mock_return_value
@@ -394,10 +393,12 @@ def test__get_default_binary_location_unsupported_os():
 
 
 @patch('platform.system')
-def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_platform_system):
+def test__get_default_binary_location_throws_exception_if_os_not_supported(
+    mock_platform_system,
+):
     mock_platform_system.return_value = 'FreeBSD'
 
-    with pytest.raises(ValueError, match="Unsupported OS"):
+    with pytest.raises(ValueError, match='Unsupported OS'):
         Chrome._get_default_binary_location()
 
 
@@ -406,19 +407,19 @@ async def test_register_event_callback_page_event():
     mock_conn_handler = AsyncMock()
     browser = ConcreteBrowser()
     browser._connection_handler = mock_conn_handler
-    
+
     with pytest.raises(exceptions.EventNotSupported) as excinfo:
-        await browser.on(
-            PageEvents.PAGE_LOADED, AsyncMock()
-        )
-    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
-    
+        await browser.on(PageEvents.PAGE_LOADED, AsyncMock())
+    assert 'Page events are not supported in the browser domain' in str(
+        excinfo.value
+    )
+
     with pytest.raises(exceptions.EventNotSupported) as excinfo:
-        await browser.on(
-            PageEvents.DOM_CONTENT_LOADED, AsyncMock()
-        )
-    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
-    
+        await browser.on(PageEvents.DOM_CONTENT_LOADED, AsyncMock())
+    assert 'Page events are not supported in the browser domain' in str(
+        excinfo.value
+    )
+
     for event in PageEvents.ALL_EVENTS:
         with pytest.raises(exceptions.EventNotSupported):
             await browser.on(event, AsyncMock())
