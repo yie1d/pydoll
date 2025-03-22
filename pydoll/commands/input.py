@@ -150,7 +150,6 @@ class InputCommands:
         command = cls.KEY_PRESS_TEMPLATE.copy()
         command['id'] = command_id
         command['params'] = key_down
-        print(command)
         return command
 
     @classmethod
@@ -193,5 +192,4 @@ class InputCommands:
         command = cls.KEY_PRESS_TEMPLATE.copy()
         command['id'] = command_id
         command['params'] = key_up
-        print(command)
         return command

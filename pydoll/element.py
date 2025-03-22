@@ -443,7 +443,6 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         Args:
             key (list|tuple): The key to press.
-
         """
         self._command_id += 1
         await self._execute_command(
@@ -456,7 +455,6 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         Args:
             key (list|tuple): The key to release.
-
         """
         self._command_id += 1
         await self._execute_command(
@@ -482,7 +480,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             await self.key_up(key)
             await asyncio.sleep(interval)
 
-    async def backspace(self, interval: float = 0.1):
+    async def backspace(self, interval: float = 0.1) -> bool:
         """
         Backspaces the key at the element.
 
