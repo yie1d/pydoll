@@ -19,7 +19,7 @@ from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
 
-class WebElement(FindElementsMixin):
+class WebElement(FindElementsMixin):  # noqa: PLR0904
     """
     Represents a DOM element in the browser.
 
@@ -28,6 +28,7 @@ class WebElement(FindElementsMixin):
     attributes, and other common web element interactions. It inherits element
     finding capabilities from FindElementsMixin.
     """
+
     def __init__(
         self,
         object_id: str,
@@ -55,6 +56,8 @@ class WebElement(FindElementsMixin):
         self._selector = selector
         self._connection_handler = connection_handler
         self._attributes = {}
+        self._last_input = ""
+        self._command_id = 0
         self._def_attributes(attributes_list)
 
     def __repr__(self):
@@ -174,7 +177,9 @@ class WebElement(FindElementsMixin):
         return json.loads(response['result']['result']['value'])
 
     async def _execute_script(
-        self, script: str, return_by_value: bool = False
+            self,
+            script: str,
+            return_by_value: bool = False
     ):
         """
         Executes a JavaScript script in the context of this element.
@@ -318,7 +323,12 @@ class WebElement(FindElementsMixin):
                 'Element is not interactable.'
             )
 
-    async def click(self, x_offset: int = 0, y_offset: int = 0):
+    async def click(
+            self,
+            x_offset: int = 0,
+            y_offset: int = 0,
+            hold_time: float = 0.1,
+    ):
         """
         Clicks on the element using mouse events.
 
@@ -331,6 +341,8 @@ class WebElement(FindElementsMixin):
                 Defaults to 0.
             y_offset (int): Vertical offset from the center of the element.
                 Defaults to 0.
+            hold_time (float, optional): The duration (in seconds) to hold
+                the mouse button before releasing.
 
         Raises:
             ElementNotVisible: If the element is not visible on the page.
@@ -365,7 +377,7 @@ class WebElement(FindElementsMixin):
         press_command = InputCommands.mouse_press(*position_to_click)
         release_command = InputCommands.mouse_release(*position_to_click)
         await self._connection_handler.execute_command(press_command)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(hold_time)
         await self._connection_handler.execute_command(release_command)
 
     async def click_option_tag(self):
@@ -382,7 +394,7 @@ class WebElement(FindElementsMixin):
         script = Scripts.CLICK_OPTION_TAG.replace('{self.value}', self.value)
         await self._execute_command(RuntimeCommands.evaluate_script(script))
 
-    async def send_keys(self, text: str):
+    async def insert_text(self, text: str):
         """
         Sends a sequence of keys to the element.
 
@@ -411,16 +423,79 @@ class WebElement(FindElementsMixin):
             DomCommands.upload_files(files=files, object_id=self._object_id)
         )
 
-    async def type_keys(self, text: str):
+    async def type_keys(self, text: str, interval: float = 0.1):
         """
         Types in a realistic manner by sending keys one by one.
 
         Args:
             text (str): The text to send to the element.
+            interval (float): The interval between two keys.
         """
         for char in text:
             await self._execute_command(InputCommands.key_press(char))
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(interval)
+
+        self._last_input = text
+
+    async def key_down(self, key: list | tuple):
+        """
+        Simulates pressing down a key.
+
+        Args:
+            key (list|tuple): The key to press.
+
+        """
+        self._command_id += 1
+        await self._execute_command(
+            InputCommands.key_down(key, self._command_id)
+        )
+
+    async def key_up(self, key: list | tuple):
+        """
+        Simulates releasing a key.
+
+        Args:
+            key (list|tuple): The key to release.
+
+        """
+        self._command_id += 1
+        await self._execute_command(
+            InputCommands.key_up(key, self._command_id)
+        )
+
+    async def send_keys(self, keys: str | tuple, interval: float = 0.1):
+        """
+        Dispatches an event.
+
+        Args:
+            keys (str | tuple): The event to dispatch.
+            interval (float): The interval between two keys.
+        """
+        if isinstance(keys, str):
+            self._last_input = keys
+            keys = [(char, ord(char.upper())) for char in keys]
+        elif isinstance(keys, tuple):
+            keys = [keys]
+
+        for key in keys:
+            await self.key_down(key)
+            await self.key_up(key)
+            await asyncio.sleep(interval)
+
+    async def backspace(self, interval: float = 0.1):
+        """
+        Backspaces the key at the element.
+
+        Args:
+            interval (float): The interval between two keys.
+        """
+        for _ in self._last_input:
+            await self.send_keys(("Backspace", 8))
+            await asyncio.sleep(interval)
+
+        self._last_input = ""
+
+        return True
 
     def _is_option_tag(self):
         """
