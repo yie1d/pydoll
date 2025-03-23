@@ -138,11 +138,7 @@ async def main():
         # Navigate and interact just like with Chrome
         await page.go_to('https://example.com')
         await browser.set_window_maximized()
-        
-        # Use all the same methods and features
-        title = await page.title()
-        print(f"Page title: {title}")
-        
+
         # All Pydoll features work the same with Edge!
         await asyncio.sleep(2)
 
