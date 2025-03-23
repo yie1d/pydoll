@@ -201,18 +201,18 @@ async def browser_demo():
 
 | Method | Description | Example |
 |--------|-------------|---------|
-| `async start()` | 🔥 Fire up your browser and get ready for automation magic! | `await browser.start()` |
-| `async stop()` | 👋 Gracefully shut down your browser when the mission is complete | `await browser.stop()` |
-| `async get_page()` | ✨ Magically grab an existing page or create a fresh one | `page = await browser.get_page()` |
-| `async new_page(url='')` | 🆕 Spawn a brand new page with explosive speed | `page_id = await browser.new_page()` |
-| `async get_page_by_id(page_id)` | 🔍 Find and control any specific page with pinpoint precision | `page = await browser.get_page_by_id(id)` |
-| `async get_targets()` | 🎯 Discover all open pages - perfect for multi-tab wizardry | `targets = await browser.get_targets()` |
-| `async set_window_bounds(bounds)` | 📐 Reshape your browser window exactly how you want it | `await browser.set_window_bounds({'width': 1024})` |
-| `async set_window_maximized()` | 💪 Make your browser take up the entire screen with one command | `await browser.set_window_maximized()` |
-| `async get_cookies()` | 🍪 Peek into all cookies for ultimate session control | `cookies = await browser.get_cookies()` |
-| `async set_cookies(cookies)` | 🧁 Set up custom cookies for instant authentication | `await browser.set_cookies([{...}])` |
-| `async delete_all_cookies()` | 🧹 Wipe cookies clean for a fresh browsing experience | `await browser.delete_all_cookies()` |
-| `async set_download_path(path)` | 📂 Tell your browser exactly where to save your precious files | `await browser.set_download_path('/downloads')` |
+| `async start()` | 🔥 Launch your browser and prepare for automation | `await browser.start()` |
+| `async stop()` | 👋 Close the browser gracefully when finished | `await browser.stop()` |
+| `async get_page()` | ✨ Get an existing page or create a new one | `page = await browser.get_page()` |
+| `async new_page(url='')` | 🆕 Create a new page in the browser | `page_id = await browser.new_page()` |
+| `async get_page_by_id(page_id)` | 🔍 Find and control a specific page by ID | `page = await browser.get_page_by_id(id)` |
+| `async get_targets()` | 🎯 List all open pages in the browser | `targets = await browser.get_targets()` |
+| `async set_window_bounds(bounds)` | 📐 Size and position the browser window | `await browser.set_window_bounds({'width': 1024})` |
+| `async set_window_maximized()` | 💪 Maximize the browser window | `await browser.set_window_maximized()` |
+| `async get_cookies()` | 🍪 Get all browser cookies | `cookies = await browser.get_cookies()` |
+| `async set_cookies(cookies)` | 🧁 Set custom cookies for authentication | `await browser.set_cookies([{...}])` |
+| `async delete_all_cookies()` | 🧹 Clear all cookies for a fresh state | `await browser.delete_all_cookies()` |
+| `async set_download_path(path)` | 📂 Configure where downloaded files are saved | `await browser.set_download_path('/downloads')` |
 
 ### Page Interface
 
@@ -242,20 +242,20 @@ async def page_demo():
 
 | Method | Description | Example |
 |--------|-------------|---------|
-| `async go_to(url, timeout=300)` | 🚀 Blast off to any URL with intelligent loading detection | `await page.go_to('https://example.com')` |
-| `async refresh()` | 🔄 Refresh your page with a single command - instant content updates! | `await page.refresh()` |
-| `async close()` | 🚪 Close the current tab while keeping your browser alive | `await page.close()` |
-| `async current_url` | 🧭 Instantly know exactly where you are in your automation journey | `url = await page.current_url` |
-| `async page_source` | 📝 Grab the complete HTML with one magical command | `html = await page.page_source` |
-| `async get_screenshot(path)` | 📸 Capture visual evidence of your automation conquests | `await page.get_screenshot('shot.png')` |
-| `async print_to_pdf(path)` | 📄 Transform any page into a beautiful PDF document | `await page.print_to_pdf('page.pdf')` |
-| `async has_dialog()` | 🔔 Never be surprised by unexpected alerts again | `if await page.has_dialog():` |
-| `async accept_dialog()` | 👍 Make those pesky dialogs disappear with one command | `await page.accept_dialog()` |
-| `async execute_script(script, element)` | ⚡ Unleash the full power of JavaScript directly from Python | `await page.execute_script('alert("Hi!")')` |
-| `async get_network_logs(matches=[])` | 🕸️ See exactly what requests your page is making behind the scenes | `logs = await page.get_network_logs()` |
-| `async find_element(by, value)` | 🔎 Find any element with laser-like precision | `el = await page.find_element(By.ID, 'btn')` |
-| `async find_elements(by, value)` | 🔍 Gather multiple elements in one swoop | `items = await page.find_elements(By.CSS, 'li')` |
-| `async wait_element(by, value, timeout=10)` | ⏳ Intelligently wait for elements to appear - no more sleeps! | `await page.wait_element(By.ID, 'loaded', 5)` |
+| `async go_to(url, timeout=300)` | 🚀 Navigate to a URL with loading detection | `await page.go_to('https://example.com')` |
+| `async refresh()` | 🔄 Reload the current page | `await page.refresh()` |
+| `async close()` | 🚪 Close the current tab | `await page.close()` |
+| `async current_url` | 🧭 Get the current page URL | `url = await page.current_url` |
+| `async page_source` | 📝 Get the page's HTML content | `html = await page.page_source` |
+| `async get_screenshot(path)` | 📸 Save a screenshot of the page | `await page.get_screenshot('shot.png')` |
+| `async print_to_pdf(path)` | 📄 Convert the page to a PDF document | `await page.print_to_pdf('page.pdf')` |
+| `async has_dialog()` | 🔔 Check if a dialog is present | `if await page.has_dialog():` |
+| `async accept_dialog()` | 👍 Dismiss alert and confirmation dialogs | `await page.accept_dialog()` |
+| `async execute_script(script, element)` | ⚡ Run JavaScript code on the page | `await page.execute_script('alert("Hi!")')` |
+| `async get_network_logs(matches=[])` | 🕸️ Monitor network requests | `logs = await page.get_network_logs()` |
+| `async find_element(by, value)` | 🔎 Find an element on the page | `el = await page.find_element(By.ID, 'btn')` |
+| `async find_elements(by, value)` | 🔍 Find multiple elements matching a selector | `items = await page.find_elements(By.CSS, 'li')` |
+| `async wait_element(by, value, timeout=10)` | ⏳ Wait for an element to appear | `await page.wait_element(By.ID, 'loaded', 5)` |
 
 ### WebElement Interface
 
@@ -282,21 +282,21 @@ async def element_demo():
 
 | Method | Description | Example |
 |--------|-------------|---------|
-| `value` | 💬 Get the current value of any input - perfect for validation | `value = input_field.value` |
-| `class_name` | 🎨 Access element's CSS classes for style verification | `classes = element.class_name` |
-| `id` | 🏷️ Grab the element's unique ID for perfect identification | `id = element.id` |
-| `is_enabled` | ✅ Check if an element is ready for interaction | `if button.is_enabled:` |
-| `async bounds` | 📏 Get the exact coordinates for pixel-perfect interaction | `coords = await element.bounds` |
-| `async inner_html` | 🧩 Peek inside an element's HTML structure | `html = await element.inner_html` |
-| `async get_element_text()` | 📜 Extract clean text content - no HTML mess | `text = await element.get_element_text()` |
-| `get_attribute(name)` | 📊 Access any attribute with lightning speed | `href = link.get_attribute('href')` |
-| `async scroll_into_view()` | 👁️ Make sure elements are visible before clicking | `await element.scroll_into_view()` |
-| `async click(x_offset=0, y_offset=0)` | 👆 Click elements with amazing precision - even with custom offsets | `await button.click()` |
-| `async click_using_js()` | 🔮 Use JavaScript magic to click problematic elements | `await overlay_button.click_using_js()` |
-| `async send_keys(text)` | ⌨️ Enter text into fields at maximum speed | `await input.send_keys("text")` |
-| `async type_keys(text, interval=0.1)` | 👨‍💻 Type like a real human with customizable speed | `await input.type_keys("hello", 0.2)` |
-| `async get_screenshot(path)` | 📷 Grab pictures of specific elements - perfect for debugging | `await error.get_screenshot('error.png')` |
-| `async set_input_files(files)` | 📤 Upload files with incredible ease | `await input.set_input_files('file.pdf')` |
+| `value` | 💬 Get the value of an input element | `value = input_field.value` |
+| `class_name` | 🎨 Get the element's CSS classes | `classes = element.class_name` |
+| `id` | 🏷️ Get the element's ID attribute | `id = element.id` |
+| `is_enabled` | ✅ Check if the element is enabled | `if button.is_enabled:` |
+| `async bounds` | 📏 Get the element's position and size | `coords = await element.bounds` |
+| `async inner_html` | 🧩 Get the element's inner HTML content | `html = await element.inner_html` |
+| `async get_element_text()` | 📜 Get the element's text content | `text = await element.get_element_text()` |
+| `get_attribute(name)` | 📊 Get any attribute from the element | `href = link.get_attribute('href')` |
+| `async scroll_into_view()` | 👁️ Scroll the element into viewport | `await element.scroll_into_view()` |
+| `async click(x_offset=0, y_offset=0)` | 👆 Click the element with optional offsets | `await button.click()` |
+| `async click_using_js()` | 🔮 Click using JavaScript for hidden elements | `await overlay_button.click_using_js()` |
+| `async send_keys(text)` | ⌨️ Send text to input fields | `await input.send_keys("text")` |
+| `async type_keys(text, interval=0.1)` | 👨‍💻 Type text with realistic timing | `await input.type_keys("hello", 0.2)` |
+| `async get_screenshot(path)` | 📷 Take a screenshot of the element | `await error.get_screenshot('error.png')` |
+| `async set_input_files(files)` | 📤 Upload files with file inputs | `await input.set_input_files('file.pdf')` |
 
 ## 🚀 Advanced Features
 
@@ -332,18 +332,18 @@ await page.on(DomEvents.DOCUMENT_UPDATED, lambda e: print("DOM updated!"))
 
 ### Request Interception
 
-Pydoll gives you superpowers to intercept and modify network requests before they're even sent! This is where the real magic happens - you can transform, block, or enhance any request on the fly.
+Pydoll gives you the power to intercept and modify network requests before they're sent! This allows you to customize headers or modify request data on the fly.
 
-#### Basic Interception
+#### Basic Request Modification
 
-The simplest form of request interception lets you monitor and modify requests:
+The request interception system lets you monitor and modify requests before they're sent:
 
 ```python
 from pydoll.events.fetch import FetchEvents
 from pydoll.commands.fetch import FetchCommands
 from functools import partial
 
-async def basic_interceptor(page, event):
+async def request_interceptor(page, event):
     request_id = event['params']['requestId']
     url = event['params']['request']['url']
     
@@ -358,7 +358,7 @@ async def basic_interceptor(page, event):
 
 # Enable interception and register your handler
 await page.enable_fetch_events()
-await page.on(FetchEvents.REQUEST_PAUSED, partial(basic_interceptor, page))
+await page.on(FetchEvents.REQUEST_PAUSED, partial(request_interceptor, page))
 ```
 
 #### Adding Custom Headers
@@ -400,41 +400,6 @@ await page.enable_fetch_events()
 await page.on(FetchEvents.REQUEST_PAUSED, partial(auth_header_interceptor, page))
 ```
 
-#### Blocking Unwanted Requests
-
-Block ads, trackers, or any other unwanted requests:
-
-```python
-async def ad_blocker_interceptor(page, event):
-    request_id = event['params']['requestId']
-    url = event['params']['request']['url']
-    
-    # List of domains to block
-    blocked_domains = ['ads.example.com', 'tracker.example.com', 'analytics']
-    
-    # Check if this request should be blocked
-    should_block = any(domain in url for domain in blocked_domains)
-    
-    if should_block:
-        print(f"🛑 Blocking request to: {url}")
-        await page._execute_command(
-            FetchCommands.fail_request(
-                request_id=request_id,
-                error_reason='Blocked'
-            )
-        )
-    else:
-        # Continue with the request
-        await page._execute_command(
-            FetchCommands.continue_request(
-                request_id=request_id
-            )
-        )
-
-await page.enable_fetch_events()
-await page.on(FetchEvents.REQUEST_PAUSED, partial(ad_blocker_interceptor, page))
-```
-
 #### Modifying Request Body
 
 Change POST data before it's sent:
@@ -471,71 +436,6 @@ async def modify_request_body(page, event):
 
 await page.enable_fetch_events()
 await page.on(FetchEvents.REQUEST_PAUSED, partial(modify_request_body, page))
-```
-
-#### Intercepting and Modifying Responses
-
-You can even capture and modify responses before the page sees them:
-
-```python
-async def response_modifier(page, event):
-    request_id = event['params']['requestId']
-    request_url = event['params']['request']['url']
-    
-    # First, continue the request but ask to intercept the response
-    if 'api/products' in request_url:
-        await page._execute_command(
-            FetchCommands.continue_request(
-                request_id=request_id,
-                intercept_response=True  # This is the key flag
-            )
-        )
-    else:
-        # For other requests, just let them through
-        await page._execute_command(
-            FetchCommands.continue_request(
-                request_id=request_id
-            )
-        )
-
-# Handle the intercepted response
-async def handle_response(page, event):
-    request_id = event['params']['requestId']
-    
-    # Check if this is a response interception event
-    if 'responseStatusCode' in event['params']:
-        # Get the original response body
-        response_body = await page._execute_command({
-            'method': 'Fetch.getResponseBody',
-            'params': {'requestId': request_id}
-        })
-        
-        body = response_body.get('body', '{}')
-        is_base64 = response_body.get('base64Encoded', False)
-        
-        # Decode if needed and modify the response
-        if is_base64:
-            import base64
-            body = base64.b64decode(body).decode('utf-8')
-        
-        # Modify the response (in this example, we're appending data)
-        # In a real scenario, you'd parse and modify the JSON
-        modified_body = body.replace('"inStock": false', '"inStock": true')
-        
-        # Send the modified response
-        await page._execute_command(
-            FetchCommands.fulfill_request(
-                request_id=request_id,
-                response_code=200,
-                response_headers={'Content-Type': 'application/json'},
-                body=modified_body
-            )
-        )
-
-# Register both event handlers
-await page.enable_fetch_events()
-await page.on(FetchEvents.REQUEST_PAUSED, partial(response_modifier, page))
-await page.on(FetchEvents.REQUEST_PAUSED, partial(handle_response, page))
 ```
 
 ### Filtering Request Types
@@ -592,6 +492,17 @@ Please make sure to:
 - Follow coding style and conventions
 - Use conventional commits for pull requests
 - Run lint and test checks before submitting
+
+## 🔮 Coming Soon
+
+Get ready for these upcoming features in Pydoll:
+
+🔹 **Auto-detection of Cloudflare Captcha** - Automatic solving without manual intervention  
+🔹 **Fingerprint Generation & Rotation** - Dynamic browser fingerprints to avoid detection  
+🔹 **Proxy Rotation** - Seamless IP switching for extended scraping sessions  
+🔹 **Shadow DOM Access** - Navigate and interact with Shadow Root elements  
+
+Stay tuned and star the repository to get updates when these features are released!
 
 ## 📄 License
 
