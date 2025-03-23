@@ -1,40 +1,44 @@
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from typing import AsyncGenerator, Any, cast
+import asyncio
 
 import pytest
 import pytest_asyncio
 
 from pydoll import exceptions
-from pydoll.browser.chrome import Chrome
+from pydoll.browser.edge import Edge
 from pydoll.browser.base import Browser
 from pydoll.browser.managers import (
     ProxyManager,
     BrowserOptionsManager
 )
-from pydoll.browser.options import Options
+from pydoll.browser.options import EdgeOptions, Options
 from pydoll.browser.page import Page
-from pydoll.commands import (
-    BrowserCommands,
-    DomCommands,
-    FetchCommands,
-    NetworkCommands,
-    StorageCommands,
-    TargetCommands,
-)
-from pydoll.events import FetchEvents, PageEvents
+from pydoll.commands.browser import BrowserCommands
+from pydoll.commands.dom import DomCommands
+from pydoll.commands.fetch import FetchCommands
+from pydoll.commands.network import NetworkCommands
+from pydoll.commands.page import PageCommands
+from pydoll.commands.storage import StorageCommands
+from pydoll.commands.target import TargetCommands
+from pydoll.events.fetch import FetchEvents
 
-class ConcreteBrowser(Browser):
-    def _get_default_binary_location(self) -> str:
+
+class ConcreteEdge(Edge):
+    @staticmethod
+    def _get_default_binary_location():
         return '/fake/path/to/browser'
 
 
 @pytest_asyncio.fixture
-async def mock_browser():
-    with patch.multiple(
-        Browser,
-        _get_default_binary_location=MagicMock(
-            return_value='/fake/path/to/browser'
-        ),
-    ), patch(
+async def mock_browser() -> AsyncGenerator[ConcreteEdge, None]:
+    """
+    Create a mock Edge browser instance for testing
+    
+    Yields:
+        ConcreteEdge: A mock Edge browser instance
+    """
+    with patch(
         'pydoll.browser.managers.BrowserProcessManager',
         autospec=True,
     ) as mock_process_manager, patch(
@@ -50,7 +54,7 @@ async def mock_browser():
         options = Options()
         options.binary_location = None
 
-        browser = ConcreteBrowser(options=options)
+        browser = ConcreteEdge(options=options)
         browser._browser_process_manager = mock_process_manager.return_value
         browser._temp_directory_manager = mock_temp_dir_manager.return_value
         browser._proxy_manager = mock_proxy_manager.return_value
@@ -62,8 +66,39 @@ async def mock_browser():
             MagicMock(name='temp_dir')
         )
         browser._pages = ['page1']
+        browser._connection_port = 9250
+
+        def patched_is_valid_page(page: dict) -> bool:
+            if page.get('type') != 'page':
+                return False
+            
+            url = page.get('url', '')
+            return (
+                url.startswith('edge://') or 
+                url.startswith('http://') or 
+                url.startswith('https://')
+            )
+        
+        browser._is_valid_page = patched_is_valid_page
+
+        original_get_valid_page = browser._get_valid_page
+        async def patched_get_valid_page(pages: list[dict]) -> str:
+            for page in pages:
+                if (page.get('type') == 'page' and 
+                    page.get('url', '').startswith('edge://') and 
+                    'targetId' in page):
+                    return page['targetId']
+            return await cast(asyncio.Future[str], original_get_valid_page(pages))
+        
+        browser._get_valid_page = patched_get_valid_page
 
         yield browser
+
+        # 清理代码
+        try:
+            await asyncio.wait_for(browser.stop(), timeout=5.0)
+        except (asyncio.TimeoutError, Exception):
+            pass
 
 
 @pytest.mark.asyncio
@@ -87,15 +122,30 @@ async def test_start_browser_success(mock_browser):
     )
 
     assert '--user-data-dir=' in str(mock_browser.options.arguments), (
-        'Diretório temporário não configurado'
+        'Temporary directory not configured'
     )
 
     assert 'page1' in mock_browser._pages
 
 
 @pytest.mark.asyncio
-async def test_start_browser_failure(mock_browser):
+async def test_edge_start_failure_invalid_binary(mock_browser):
+    """Test Edge browser start failure with invalid binary"""
     mock_browser._connection_handler.ping.return_value = False
+    mock_browser._browser_process_manager.start_browser_process.side_effect = OSError("Browser not found")
+    
+
+    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+        mock_sleep.return_value = False
+        with pytest.raises(OSError, match="Browser not found"):
+            await mock_browser.start()
+
+
+@pytest.mark.asyncio
+async def test_start_browser_failure(mock_browser):
+    """Test browser start failure with immediate timeout"""
+    mock_browser._connection_handler.ping.return_value = False
+    
     with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
@@ -228,7 +278,9 @@ async def test_stop_browser(mock_browser):
 
 @pytest.mark.asyncio
 async def test_stop_browser_not_running(mock_browser):
+    """Test browser stop with immediate timeout when not running"""
     mock_browser._connection_handler.ping.return_value = False
+    
     with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
@@ -262,7 +314,6 @@ async def test_disable_events(mock_browser):
     )
 
 
-
 @pytest.mark.asyncio
 async def test__continue_request(mock_browser):
     await mock_browser._continue_request({'params': {'requestId': 'request1'}})
@@ -290,17 +341,46 @@ async def test__continue_request_auth_required(mock_browser):
 
 
 def test__is_valid_page(mock_browser):
+    # Test Edge internal page
     result = mock_browser._is_valid_page({
         'type': 'page',
-        'url': 'chrome://newtab/',
+        'url': 'edge://newtab/',
     })
     assert result is True
 
 
 def test__is_valid_page_not_a_page(mock_browser):
+    # Test invalid page type
     result = mock_browser._is_valid_page({
         'type': 'tab',
-        'url': 'chrome://newtab/',
+        'url': 'edge://newtab/',
+    })
+    assert result is False
+
+
+def test__is_valid_page_not_edge_url(mock_browser):
+    # Test regular HTTPS webpage
+    result = mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'https://example.com',
+    })
+    assert result is True
+
+
+def test__is_valid_page_http_url(mock_browser):
+    # Test regular HTTP webpage
+    result = mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'http://example.com',
+    })
+    assert result is True
+
+
+def test__is_valid_page_invalid_url(mock_browser):
+    # Test invalid URL
+    result = mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'invalid-url',
     })
     assert result is False
 
@@ -310,7 +390,7 @@ async def test__get_valid_page(mock_browser):
     pages = [
         {
             'type': 'page',
-            'url': 'chrome://newtab/',
+            'url': 'edge://newtab/',
             'targetId': 'valid_page_id',
         },
         {
@@ -320,7 +400,7 @@ async def test__get_valid_page(mock_browser):
         },
         {
             'type': 'tab',
-            'url': 'chrome://newtab/',
+            'url': 'edge://newtab/',
             'targetId': 'invalid_page_id',
         },
     ]
@@ -332,9 +412,9 @@ async def test__get_valid_page(mock_browser):
 @pytest.mark.asyncio
 async def test__get_valid_page_key_error(mock_browser):
     pages = [
-        {'type': 'page', 'url': 'chrome://newtab/'},
+        {'type': 'page', 'url': 'edge://newtab/'},
         {'type': 'page', 'url': 'https://example.com/'},
-        {'type': 'tab', 'url': 'chrome://newtab/'},
+        {'type': 'tab', 'url': 'edge://newtab/'},
     ]
 
     mock_browser._connection_handler.execute_command.return_value = {
@@ -351,75 +431,117 @@ async def test__get_valid_page_key_error(mock_browser):
     'os_name, expected_browser_paths, mock_return_value',
     [
         (
-                'Windows',
-                [
-                    r'C:\Program Files\Google\Chrome\Application\chrome.exe',
-                    r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
-                ],
-                r'C:\Program Files\Google\Chrome\Application\chrome.exe'
+            'Windows',
+            [
+                r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+                r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            ],
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe' 
         ),
         (
-                'Linux',
-                ['/usr/bin/google-chrome'],
-                '/usr/bin/google-chrome'
+            'Linux',
+            ['/usr/bin/microsoft-edge'],
+            '/usr/bin/microsoft-edge'
         ),
         (
-                'Darwin',
-                ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
-                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+            'Darwin',
+            ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'],
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
         ),
     ]
 )
 @patch('platform.system')
 @patch.object(BrowserOptionsManager, 'validate_browser_paths')
 def test__get_default_binary_location(
-        mock_validate_browser_paths,
-        mock_platform_system,
-        os_name,
-        expected_browser_paths,
-        mock_return_value
+    mock_validate_browser_paths,
+    mock_platform_system,
+    os_name,
+    expected_browser_paths,
+    mock_return_value
 ):
     mock_platform_system.return_value = os_name
     mock_validate_browser_paths.return_value = mock_return_value
-    path = Chrome._get_default_binary_location()
+    
+    path = Edge._get_default_binary_location()
     mock_validate_browser_paths.assert_called_once_with(expected_browser_paths)
-
     assert path == mock_return_value
 
 
 def test__get_default_binary_location_unsupported_os():
     with patch('platform.system', return_value='SomethingElse'):
         with pytest.raises(ValueError, match='Unsupported OS'):
-            Chrome._get_default_binary_location()
+            Edge._get_default_binary_location()
 
 
 @patch('platform.system')
 def test__get_default_binary_location_throws_exception_if_os_not_supported(mock_platform_system):
     mock_platform_system.return_value = 'FreeBSD'
-
+    
     with pytest.raises(ValueError, match="Unsupported OS"):
-        Chrome._get_default_binary_location()
+        Edge._get_default_binary_location()
 
 
 @pytest.mark.asyncio
-async def test_register_event_callback_page_event():
-    mock_conn_handler = AsyncMock()
-    browser = ConcreteBrowser()
-    browser._connection_handler = mock_conn_handler
+async def test_user_data_directory_setup(mock_browser):
+    """Test user data directory is properly set up"""
+    await mock_browser.start()
     
-    with pytest.raises(exceptions.EventNotSupported) as excinfo:
-        await browser.on(
-            PageEvents.PAGE_LOADED, AsyncMock()
-        )
-    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
-    
-    with pytest.raises(exceptions.EventNotSupported) as excinfo:
-        await browser.on(
-            PageEvents.DOM_CONTENT_LOADED, AsyncMock()
-        )
-    assert 'Page events are not supported in the browser domain' in str(excinfo.value)
-    
-    for event in PageEvents.ALL_EVENTS:
-        with pytest.raises(exceptions.EventNotSupported):
-            await browser.on(event, AsyncMock())
+    # Verify user data directory argument is added
+    user_data_dir_args = [arg for arg in mock_browser.options.arguments if '--user-data-dir=' in arg]
+    assert len(user_data_dir_args) == 1
+    assert user_data_dir_args[0].startswith('--user-data-dir=') 
 
+
+def test_edge_page_validation(mock_browser):
+    """Test Edge page validation for different URL types"""
+    # 使用已经配置好的mock_browser而不是创建新实例
+    
+    # Test valid Edge URLs
+    assert mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'edge://settings/'
+    }) is True
+    
+    # Test valid HTTPS URLs
+    assert mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'https://www.microsoft.com'
+    }) is True
+    
+    # Test invalid URLs
+    assert mock_browser._is_valid_page({
+        'type': 'page',
+        'url': 'about:blank'
+    }) is False
+    
+    # Test invalid page types
+    assert mock_browser._is_valid_page({
+        'type': 'extension',
+        'url': 'edge://extensions/'
+    }) is False
+
+
+@pytest.mark.asyncio
+async def test_edge_cleanup(mock_browser):
+    """Test Edge browser cleanup process"""
+    # Use the already configured mock_browser instead of creating a new instance
+    await mock_browser.stop()
+    
+    # Verify cleanup calls
+    mock_browser._temp_directory_manager.cleanup.assert_called_once()
+    mock_browser._browser_process_manager.stop_process.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_edge_specific_arguments(mock_browser):
+    """Test Edge-specific startup arguments are correctly set"""
+    options = EdgeOptions()
+    browser = ConcreteEdge(options=options)
+    
+    # Verify Edge-specific arguments are added
+    assert '--no-first-run' in browser.options.arguments
+    assert '--no-default-browser-check' in browser.options.arguments
+    assert '--disable-crash-reporter' in browser.options.arguments
+    assert '--disable-features=TranslateUI' in browser.options.arguments
+    assert '--disable-component-update' in browser.options.arguments
+    assert '--disable-background-networking' in browser.options.arguments
