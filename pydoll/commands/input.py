@@ -1,3 +1,6 @@
+from pydoll.common.keyboard import Keyboard
+
+
 class InputCommands:
     """
     A class to define input commands for simulating user interactions
@@ -11,6 +14,7 @@ class InputCommands:
     }
     KEY_PRESS_TEMPLATE = {'method': 'Input.dispatchKeyEvent', 'params': {}}
     INSERT_TEXT_TEMPLATE = {'method': 'Input.insertText', 'params': {}}
+    KEYBOARD = Keyboard()
 
     @classmethod
     def mouse_press(cls, x: int, y: int) -> dict:
@@ -103,4 +107,89 @@ class InputCommands:
         command['params'] = {
             'text': text,
         }
+        return command
+
+    @classmethod
+    def key_down(cls, key: list | tuple, command_id: int) -> dict:
+        """
+        Generates the command to simulate pressing a key on the keyboard.
+
+        This method creates a command following the Chrome DevTools
+            Protocol (CDP)
+        to simulate a "keyDown" event, which represents pressing a key.
+
+        Args:
+            key (list | tuple): The key and code of the key to be pressed.
+            command_id (int): The id of the command to be sent.
+
+        Returns:
+            dict: A dictionary containing the command to be sent to
+                the browser.
+        """
+        key, key_code = key
+        if key in cls.KEYBOARD.MODIFIER_KEYS:
+            cls.KEYBOARD.modifiers.add(key)
+
+        modifiers = sum(
+            cls.KEYBOARD.MODIFIER_KEYS[k] for k in cls.KEYBOARD.modifiers
+        )
+
+        special_key = cls.KEYBOARD.get_special_key(key, modifiers, key_code)
+        vk_code = cls.KEYBOARD.SHIFT_SPECIAL.get(special_key, key_code)
+        special_code = cls.KEYBOARD.get_special_code(key)
+
+        key_down = {
+            'type': 'keyDown',
+            'key': key,
+            'code': special_code,
+            'windowsVirtualKeyCode': vk_code,
+            'modifiers': modifiers,
+            'text': special_key,
+        }
+
+        command = cls.KEY_PRESS_TEMPLATE.copy()
+        command['id'] = command_id
+        command['params'] = key_down
+        return command
+
+    @classmethod
+    def key_up(cls, key: list | tuple, command_id) -> dict:
+        """
+        Generates the command to simulate releasing a key on the keyboard.
+
+        This method creates a command following the Chrome DevTools
+            Protocol (CDP)
+        to simulate a "keyUp" event, which represents releasing a key.
+
+        Args:
+            key (list | tuple): The character of the key to be released.
+            command_id (int): The id of the command to be sent.
+
+        Returns:
+            dict: A dictionary containing the command to be sent to
+                the browser.
+        """
+        key, key_code = key
+        if key in cls.KEYBOARD.MODIFIER_KEYS:
+            cls.KEYBOARD.modifiers.discard(key)
+
+        modifiers = sum(
+            cls.KEYBOARD.MODIFIER_KEYS[k] for k in cls.KEYBOARD.modifiers
+        )
+
+        special_key = cls.KEYBOARD.SHIFT_MAP.get(key, key)
+        vk_code = cls.KEYBOARD.SHIFT_SPECIAL.get(special_key, key_code)
+        special_code = cls.KEYBOARD.get_special_code(key)
+
+        key_up = {
+            'type': 'keyUp',
+            'key': key,
+            'code': special_code,
+            'windowsVirtualKeyCode': vk_code,
+            'modifiers': modifiers,
+        }
+
+        command = cls.KEY_PRESS_TEMPLATE.copy()
+        command['id'] = command_id
+        command['params'] = key_up
         return command

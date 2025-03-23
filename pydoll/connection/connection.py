@@ -180,7 +180,10 @@ class ConnectionHandler:
         Closes the WebSocket connection and clears all event callbacks.
         """
         await self.clear_callbacks()
-        await self._ws_connection.close()
+
+        if self._ws_connection is not None:
+            await self._ws_connection.close()
+
         logger.info('WebSocket connection closed.')
 
     async def _ensure_active_connection(self):
@@ -209,7 +212,8 @@ class ConnectionHandler:
         ws_address = await self._resolve_ws_address()
         logger.info(f'Connecting to {ws_address}')
         self._ws_connection = await self._ws_connector(
-            ws_address, max_size=1024 * 1024 * 10  # 10MB
+            ws_address,
+            max_size=1024 * 1024 * 10,  # 10MB
         )
         self._receive_task = asyncio.create_task(self._receive_events())
         logger.debug('WebSocket connection established')

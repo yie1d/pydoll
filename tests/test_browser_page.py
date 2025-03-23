@@ -456,4 +456,3 @@ async def test_expect_file_chooser(page):
     assert not page.intercept_file_chooser_dialog_enabled
     await page.disable_intercept_file_chooser_dialog()
     assert not page.intercept_file_chooser_dialog_enabled
-

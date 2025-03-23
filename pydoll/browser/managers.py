@@ -327,4 +327,4 @@ class BrowserOptionsManager:
         for path in paths:
             if os.path.exists(path) and os.access(path, os.X_OK):
                 return path
-        raise ValueError(f"No valid browser path found in: {paths}")
+        raise ValueError(f'No valid browser path found in: {paths}')

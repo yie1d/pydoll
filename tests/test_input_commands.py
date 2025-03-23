@@ -1,4 +1,5 @@
 from pydoll.commands import InputCommands
+from pydoll.common.keys import Keys
 
 
 def test_mouse_press():
@@ -54,3 +55,36 @@ def test_insert_text():
         },
     }
     assert InputCommands.insert_text(text) == expected_command
+
+
+def test_key_down():
+    key, code = Keys.ENTER
+    expected_command = {
+        'method': 'Input.dispatchKeyEvent',
+        'params': {
+            'type': 'keyDown',
+            'key': key,
+            'code': 'Enter',
+            'windowsVirtualKeyCode': code,
+            'modifiers': 0,
+            'text': '\r',
+        },
+        'id': 1,
+    }
+    assert InputCommands.key_down(Keys.ENTER, 1) == expected_command
+
+
+def test_key_up():
+    key, code = Keys.ENTER
+    expected_command = {
+        'method': 'Input.dispatchKeyEvent',
+        'params': {
+            'type': 'keyUp',
+            'key': key,
+            'code': 'Enter',
+            'windowsVirtualKeyCode': code,
+            'modifiers': 0,
+        },
+        'id': 2,
+    }
+    assert InputCommands.key_up(Keys.ENTER, 2) == expected_command

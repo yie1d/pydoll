@@ -83,7 +83,7 @@ class Browser(ABC):  # noqa: PLR0904
             exc_val: The exception value, if raised.
             exc_tb: The traceback, if an exception was raised.
         """
-        if await self._is_browser_running():
+        if await self._is_browser_running(timeout=2):
             await self.stop()
 
         await self._connection_handler.close()
@@ -248,6 +248,7 @@ class Browser(ABC):  # noqa: PLR0904
             await self._execute_command(BrowserCommands.CLOSE)
             self._browser_process_manager.stop_process()
             self._temp_directory_manager.cleanup()
+            await self._connection_handler.close()
         else:
             raise exceptions.BrowserNotRunning('Browser is not running')
 
@@ -511,13 +512,16 @@ class Browser(ABC):  # noqa: PLR0904
         """
 
         valid_page = next(
-            (page for page in pages
-             if page.get('type') == 'page' and page.get('attached')),
-            None
+            (
+                page
+                for page in pages
+                if page.get('type') == 'page' and page.get('attached')
+            ),
+            None,
         )
 
         if not valid_page:
-            raise RuntimeError("No valid attached browser page found.")
+            raise RuntimeError('No valid attached browser page found.')
 
         target_id = valid_page.get('targetId')
         if not target_id:

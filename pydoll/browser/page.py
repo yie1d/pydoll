@@ -303,7 +303,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Args:
             path (str): The file path to save the PDF file to.
         """
-        response = await self._execute_command(PageCommands.print_to_pdf(path))
+        response = await self._execute_command(PageCommands.print_to_pdf())
         pdf_b64 = response['result']['data'].encode('utf-8')
         pdf_bytes = decode_image_to_bytes(pdf_b64)
         async with aiofiles.open(path, 'wb') as file:
