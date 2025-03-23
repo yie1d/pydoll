@@ -1,3 +1,20 @@
+## 1.4.0 (2025-03-23)
+
+### Feat
+
+- Update initialize_options method to allow optional browser_type parameter
+- Refactor Edge browser options handling to use EdgeOptions class
+- Supports initialization options based on browser type
+- Edge browser constructors to support optional connection port parameters
+- Add Microsoft Edge browser support
+- 为 Edge 浏览器添加默认用户数据目录支持
+- Add Microsoft Edge browser support
+
+### Refactor
+
+- Clean up imports and improve code formatting across browser modules
+- Simplify user data directory setup and enhance Edge browser path handling
+
 ## 1.3.3 (2025-03-18)
 
 ### Fix
