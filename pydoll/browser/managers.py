@@ -4,8 +4,8 @@ import subprocess
 from contextlib import suppress
 from tempfile import TemporaryDirectory
 
-from pydoll.browser.options import ChromeOptions, EdgeOptions, Options
 from pydoll.browser.constants import BrowserType
+from pydoll.browser.options import ChromeOptions, EdgeOptions, Options
 
 
 class ProxyManager:
@@ -65,8 +65,8 @@ class ProxyManager:
                 argument and the proxy value if found, None otherwise.
         """
         for index, arg in enumerate(self.options.arguments):
-            if arg.startswith('--proxy-server='):
-                return index, arg.split('=', 1)[1]
+            if arg.startswith("--proxy-server="):
+                return index, arg.split("=", 1)[1]
         return None
 
     @staticmethod
@@ -88,12 +88,12 @@ class ProxyManager:
                 - str: Password (or None if no credentials)
                 - str: Clean proxy URL without credentials
         """
-        if '@' not in proxy_value:
+        if "@" not in proxy_value:
             return False, None, None, proxy_value
 
         try:
-            creds_part, server_part = proxy_value.split('@', 1)
-            username, password = creds_part.split(':', 1)
+            creds_part, server_part = proxy_value.split("@", 1)
+            username, password = creds_part.split(":", 1)
             return True, username, password, server_part
         except ValueError:
             return False, None, None, proxy_value
@@ -113,7 +113,7 @@ class ProxyManager:
         Returns:
             None
         """
-        self.options.arguments[index] = f'--proxy-server={clean_proxy}'
+        self.options.arguments[index] = f"--proxy-server={clean_proxy}"
 
 
 class BrowserProcessManager:
@@ -150,11 +150,13 @@ class BrowserProcessManager:
         Returns:
             subprocess.Popen: The started browser process.
         """
-        self._process = self._process_creator([
-            binary_location,
-            f'--remote-debugging-port={port}',
-            *arguments,
-        ])
+        self._process = self._process_creator(
+            [
+                binary_location,
+                f"--remote-debugging-port={port}",
+                *arguments,
+            ]
+        )
         return self._process
 
     @staticmethod
@@ -240,24 +242,29 @@ class TempDirectoryManager:
 
 class BrowserOptionsManager:
     @staticmethod
-    def initialize_options(options: Options | None, browser_type: BrowserType = None) -> Options:
+    def initialize_options(
+        options: Options | None, browser_type: BrowserType = None
+    ) -> Options:
         """
         Initialize browser options based on browser type.
 
-        Creates a new options instance based on browser type if none is provided,
-        or validates and returns the provided options instance.
+        Creates a new options instance based on browser type if none
+        is provided, or validates and returns the provided
+        options instance.
 
         Args:
-            options (Options | None): Browser options instance. If None, a new instance
+            options (Options | None): Browser options instance.
+            If None, a new instance
                 will be created based on browser_type
-            browser_type (BrowserType): Type of browser, used to create appropriate
-                options instance
+            browser_type (BrowserType): Type of browser, used to create
+            appropriate options instance
 
         Returns:
             Options: The initialized browser options instance
 
         Raises:
-            ValueError: If provided options is not an instance of Options class
+            ValueError: If provided options is not an instance
+            of Options class
         """
         if options is None:
             if browser_type == BrowserType.CHROME:
@@ -266,18 +273,18 @@ class BrowserOptionsManager:
                 return EdgeOptions()
             else:
                 return Options()
-        
+
         if not isinstance(options, Options):
-            raise ValueError('Invalid options')
-            
+            raise ValueError("Invalid options")
+
         return options
 
     @staticmethod
     def add_default_arguments(options: Options):
         """Adds default arguments to the provided options"""
-        options.arguments.append('--no-first-run')
-        options.arguments.append('--no-default-browser-check')
-        
+        options.arguments.append("--no-first-run")
+        options.arguments.append("--no-default-browser-check")
+
         # Add browser-specific arguments based on options type
         if isinstance(options, EdgeOptions):
             BrowserOptionsManager._add_edge_arguments(options)
@@ -287,16 +294,16 @@ class BrowserOptionsManager:
     @staticmethod
     def _add_edge_arguments(options: Options):
         """Adds Edge-specific arguments to the options"""
-        options.add_argument('--disable-crash-reporter')
-        options.add_argument('--disable-features=TranslateUI')
-        options.add_argument('--disable-component-update')
-        options.add_argument('--disable-background-networking')
-        options.add_argument('--remote-allow-origins=*')
+        options.add_argument("--disable-crash-reporter")
+        options.add_argument("--disable-features=TranslateUI")
+        options.add_argument("--disable-component-update")
+        options.add_argument("--disable-background-networking")
+        options.add_argument("--remote-allow-origins=*")
 
     @staticmethod
     def _add_chrome_arguments(options: Options):
         """Adds Chrome-specific arguments to the options"""
-        options.add_argument('--remote-allow-origins=*')
+        options.add_argument("--remote-allow-origins=*")
         # Add other Chrome-specific arguments here
 
     @staticmethod

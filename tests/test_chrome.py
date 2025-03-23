@@ -422,3 +422,4 @@ async def test_register_event_callback_page_event():
     for event in PageEvents.ALL_EVENTS:
         with pytest.raises(exceptions.EventNotSupported):
             await browser.on(event, AsyncMock())
+

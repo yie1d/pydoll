@@ -1,7 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
-import os
 from random import randint
 
 from pydoll import exceptions
@@ -12,7 +11,7 @@ from pydoll.browser.managers import (
     ProxyManager,
     TempDirectoryManager,
 )
-from pydoll.browser.options import EdgeOptions, Options
+from pydoll.browser.options import Options
 from pydoll.browser.page import Page
 from pydoll.commands import (
     BrowserCommands,
@@ -52,7 +51,9 @@ class Browser(ABC):  # noqa: PLR0904
         Raises:
             TypeError: If any of the arguments are not callable.
         """
-        self.options = BrowserOptionsManager.initialize_options(options, browser_type)
+        self.options = BrowserOptionsManager.initialize_options(
+            options, browser_type
+        )
         self._proxy_manager = ProxyManager(self.options)
         self._connection_port = (
             connection_port if connection_port else randint(9223, 9322)
@@ -552,13 +553,15 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._connection_handler.execute_command(
             command, timeout=60
         )
-    
+
     def _setup_user_dir(self):
         """Prepares the user data directory if necessary."""
-        if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
+        if "--user-data-dir" not in [
+            arg.split("=")[0] for arg in self.options.arguments
+        ]:
             # For all browsers, use a temporary directory
             temp_dir = self._temp_directory_manager.create_temp_dir()
-            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
+            self.options.arguments.append(f"--user-data-dir={temp_dir.name}")
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:

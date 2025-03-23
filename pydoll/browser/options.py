@@ -1,4 +1,3 @@
-from pydoll.browser.constants import BrowserType
 
 class Options:
     """
@@ -73,9 +72,11 @@ class Options:
         else:
             raise ValueError(f'Argument already exists: {argument}')
 
+
 class ChromeOptions(Options):
     def __init__(self):
         super().__init__()
+
 
 class EdgeOptions(Options):
     def __init__(self):
