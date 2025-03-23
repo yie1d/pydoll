@@ -27,8 +27,6 @@
 
 Pydoll is an innovative Python library that's redefining Chromium browser automation! Unlike other solutions, Pydoll **completely eliminates the need for webdrivers**, providing a much more fluid and reliable automation experience.
 
-
-
 ## ⭐ Extraordinary Features
 
 - **Zero Webdrivers!** Say goodbye to webdriver compatibility and configuration headaches
@@ -38,6 +36,119 @@ Pydoll is an innovative Python library that's redefining Chromium browser automa
 - **Advanced Event System** for complex and reactive automations
 
 > Note: for cloudflare captcha, you have to perform a click in the checkbox. Just find a div containing the iframe and use the `.click()` method. Automatic detection and click coming soon! 
+
+## 🎉 What's New in Version 1.4.0
+
+Hold onto your seats! Version 1.4.0 comes packed with jaw-dropping new features that take Pydoll to the next level:
+
+- **Advanced Keyboard Interactions!** Thanks to [@cleitonleonel](https://github.com/cleitonleonel), enjoy full keyboard control with the new Keys and Keyboard classes
+- **Seamless File Uploads!** [@yie1d](https://github.com/yie1d) brings you intuitive file handling capabilities for both input elements and file choosers
+- **Microsoft Edge Support!** [@Harris-H](https://github.com/Harris-H) expands our browser compatibility, now automation works flawlessly on Edge too
+
+### Enhanced Keyboard Control
+
+```python
+import asyncio
+
+from pydoll.browser.chrome import Chrome
+from pydoll.browser.options import Options
+from pydoll.common.keys import Keys
+from pydoll.constants import By
+
+options = Options()
+
+async def main():
+    async with Chrome(options=options) as browser:
+        await browser.start()
+        page = await browser.get_page()
+        await page.go_to('https://automationexercise.com/login')
+        await browser.set_window_maximized()
+
+        mail_field = await page.find_element(
+            By.CSS_SELECTOR, 'input[type=email]'
+        )
+        await mail_field.click()
+
+        await mail_field.type_keys("example@gmail.com", interval=0.3)
+        await mail_field.backspace(interval=0.2)
+        await mail_field.type_keys("example@gmail.com", interval=0.1)
+        await mail_field.backspace(interval=0.1)
+        await mail_field.send_keys(r"'1234567890()-=´[~]\,.;/")
+
+        await mail_field.send_keys(Keys.ENTER)
+
+        await mail_field.key_down(Keys.SHIFT)
+        await mail_field.send_keys(r"'1234567890-=´[~]\,.;/")
+        await mail_field.key_up(Keys.SHIFT)
+
+        await mail_field.send_keys(Keys.ENTER)
+
+        await asyncio.sleep(2)
+        await mail_field.send_keys(Keys.PAGEDOWN)
+        await asyncio.sleep(2)
+        await mail_field.send_keys(Keys.PAGEUP)
+
+        await asyncio.sleep(2)
+
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print('Closing at program.')
+```
+
+### Powerful File Upload Capabilities
+
+For input elements:
+```python
+file_input_field = await page.find_element(By.XPATH, '//input[@type="file"]')
+
+# Single-file upload
+await file_input_field.set_input_files(r'c:\demo\demo1.file')
+# Multi-file uploads
+await file_input_field.set_input_files([r'c:\demo\demo1.file', r'c:\demo\demo2.file'])
+```
+
+For other elements:
+```python
+async with page.expect_file_chooser(files=r'c:\demo\demo1.file'):
+    file_input_field = await page.find_element(By.XPATH, '//button[@id="upload-button-demo"]')
+    await file_input_field.click()
+```
+
+### Edge Browser Support
+
+```python
+import asyncio
+from pydoll.browser import Edge
+from pydoll.browser.options import EdgeOptions
+from pydoll.constants import By
+
+async def main():
+    # Configure Edge options if needed
+    options = EdgeOptions()
+    # options.add_argument('--headless')  # Run Edge in headless mode
+    
+    # Start Edge browser without webdriver configuration!
+    async with Edge(options=options) as browser:
+        await browser.start()
+        page = await browser.get_page()
+        
+        # Navigate and interact just like with Chrome
+        await page.go_to('https://example.com')
+        await browser.set_window_maximized()
+        
+        # Use all the same methods and features
+        title = await page.title()
+        print(f"Page title: {title}")
+        
+        # All Pydoll features work the same with Edge!
+        await asyncio.sleep(2)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
   
 ## Table of Contents
 
