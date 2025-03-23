@@ -470,7 +470,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         if isinstance(keys, str):
             self._last_input = keys
             keys = [(char, ord(char.upper())) for char in keys]
-        elif isinstance(keys, tuple):
+        elif not all(isinstance(k, tuple) for k in keys):
             keys = [keys]
 
         for key in keys:
@@ -478,20 +478,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             await self.key_up(key)
             await asyncio.sleep(interval)
 
-    async def backspace(self, interval: float = 0.1) -> bool:
+    async def backspace(self, interval: float = 0.1):
         """
         Backspaces the key at the element.
 
         Args:
             interval (float): The interval between two keys.
         """
-        for _ in self._last_input:
+        for _ in range(len(self._last_input)):
             await self.send_keys(('Backspace', 8))
             await asyncio.sleep(interval)
-
-        self._last_input = ''
-
-        return True
+            self._last_input = self._last_input[:-1]
 
     def _is_option_tag(self):
         """
