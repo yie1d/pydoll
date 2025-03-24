@@ -107,6 +107,14 @@ async def test_start_browser_failure(mock_browser):
 
 
 @pytest.mark.asyncio
+async def test_start_headless(mock_browser):
+    mock_browser._connection_handler.ping.return_value = True
+    await mock_browser.start(headless=True)
+
+    assert "--headless" in mock_browser.options.arguments
+
+
+@pytest.mark.asyncio
 async def test_proxy_configuration(mock_browser):
     mock_browser._proxy_manager.get_proxy_credentials = MagicMock(
         return_value=(True, ('user', 'pass'))
