@@ -210,7 +210,8 @@ class ConnectionHandler:
         ws_address = await self._resolve_ws_address()
         logger.info(f'Connecting to {ws_address}')
         self._ws_connection = await self._ws_connector(
-            ws_address, max_size=1024 * 1024 * 10  # 10MB
+            ws_address,
+            max_size=1024 * 1024 * 10,  # 10MB
         )
         self._receive_task = asyncio.create_task(self._receive_events())
         logger.debug('WebSocket connection established')

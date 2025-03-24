@@ -32,9 +32,7 @@ def test_screenshot_jpeg():
             'quality': 80,
         },
     }
-    assert (
-        PageCommands.screenshot(fmt='jpeg', quality=80) == expected_command
-    )
+    assert PageCommands.screenshot(fmt='jpeg', quality=80) == expected_command
 
 
 def test_screenshot_png():
@@ -136,10 +134,22 @@ def test_disable_page():
 
 
 def test_enable_intercept_file_chooser_dialog():
-    expected_command = {'method': 'Page.setInterceptFileChooserDialog', 'params': {'enabled': True}}
-    assert PageCommands.set_intercept_file_chooser_dialog(True) == expected_command
+    expected_command = {
+        'method': 'Page.setInterceptFileChooserDialog',
+        'params': {'enabled': True},
+    }
+    assert (
+        PageCommands.set_intercept_file_chooser_dialog(True)
+        == expected_command
+    )
 
 
 def test_disable_intercept_file_chooser_dialog():
-    expected_command = {'method': 'Page.setInterceptFileChooserDialog', 'params': {'enabled': False}}
-    assert PageCommands.set_intercept_file_chooser_dialog(False) == expected_command
+    expected_command = {
+        'method': 'Page.setInterceptFileChooserDialog',
+        'params': {'enabled': False},
+    }
+    assert (
+        PageCommands.set_intercept_file_chooser_dialog(False)
+        == expected_command
+    )

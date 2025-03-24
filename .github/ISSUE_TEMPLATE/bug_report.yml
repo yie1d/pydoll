@@ -100,7 +100,7 @@ body:
       description: A clear and concise description of what you expected to happen.
       placeholder: The method should return X or perform Y...
     validations:
-      required: true
+      required: false
   
   - type: textarea
     id: actual_behavior
@@ -109,7 +109,7 @@ body:
       description: What actually happened instead? Include full error messages and stack traces if applicable.
       placeholder: The method raised an exception...
     validations:
-      required: true
+      required: false
   
   - type: textarea
     id: logs
