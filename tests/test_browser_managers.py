@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch, ANY
 
 import pytest
 
@@ -105,8 +105,8 @@ def test_cleanup_temp_dirs(temp_manager):
         temp_manager.cleanup()
 
         assert mock_rmtree.call_count == 2
-        mock_rmtree.assert_any_call(mock_dir1.name)
-        mock_rmtree.assert_any_call(mock_dir2.name)
+        mock_rmtree.assert_any_call(mock_dir1.name, onerror=ANY)
+        mock_rmtree.assert_any_call(mock_dir2.name, onerror=ANY)
 
 
 def test_initialize_options_with_none():
