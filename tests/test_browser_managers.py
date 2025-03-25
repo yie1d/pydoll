@@ -109,6 +109,66 @@ def test_cleanup_temp_dirs(temp_manager):
         mock_rmtree.assert_any_call(mock_dir2.name, onerror=ANY)
 
 
+def test_retry_process_file(temp_manager):
+    mock_func = Mock()
+
+    # retry success
+    success_at = 5
+    mock_func.side_effect = [PermissionError] * (success_at - 1) + [None]
+    temp_manager.retry_process_file(mock_func, "/test/path", retry_times=success_at)
+    assert mock_func.call_count == success_at
+    
+    # exceed max retries
+    mock_func.reset_mock()
+    mock_func.side_effect = PermissionError
+    with pytest.raises(PermissionError):
+        temp_manager.retry_process_file(mock_func, "/test/path", retry_times=3)
+    assert mock_func.call_count == 3
+
+    # infinite_retries
+    mock_func.reset_mock()
+    mock_func.side_effect = [PermissionError] * 9 + [None]
+    temp_manager.retry_process_file(mock_func, "/test/path", retry_times=-1)
+    assert mock_func.call_count == 10
+
+
+def test_handle_cleanup_error(temp_manager):
+    func_mock = Mock()
+
+    # matched permission error
+    temp_manager.retry_process_file = Mock()
+    path = "/tmp/CrashpadMetrics-active.pma"
+
+    temp_manager.handle_cleanup_error(func_mock, path, (PermissionError, PermissionError(), None))
+    temp_manager.retry_process_file.assert_called_once_with(func_mock, path)
+
+    # matched permission error
+    temp_manager.retry_process_file = Mock()
+    temp_manager.retry_process_file.side_effect = PermissionError
+    path = "/tmp/CrashpadMetrics-active.pma"
+    
+    with pytest.raises(PermissionError):
+        temp_manager.handle_cleanup_error(func_mock, path, (PermissionError, PermissionError(), None))
+
+    # unmatched permission error
+    temp_manager.retry_process_file = Mock()
+    path = "/tmp/test.file"
+    exc = PermissionError("Access denied")
+
+    with pytest.raises(PermissionError) as e:
+        temp_manager.handle_cleanup_error(func_mock, path, (PermissionError, exc, None))
+    assert e.value is exc
+
+    # pass OSError
+    temp_manager.handle_cleanup_error(func_mock, "/tmp/path", (OSError, OSError(), None))
+
+    # raise other Exception
+    exc = ValueError("Test")
+    with pytest.raises(ValueError) as e:
+        temp_manager.handle_cleanup_error(func_mock, "/tmp/path", (ValueError, exc, None))
+    assert e.value is exc
+
+
 def test_initialize_options_with_none():
     result = BrowserOptionsManager.initialize_options(None)
 

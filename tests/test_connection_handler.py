@@ -149,6 +149,11 @@ async def test_close(connection_handler):
     connection_handler.clear_callbacks.assert_awaited_once()
     connection_handler._ws_connection.close.assert_awaited_once()
 
+    connection_handler._ws_connection.close.side_effect = websockets.ConnectionClosed(
+        1000, 'Normal Closure', rcvd_then_sent=True
+    )
+    await connection_handler.close()
+
 
 @pytest.mark.asyncio
 async def test_execute_command_connection_closed(connection_handler_closed):

@@ -232,6 +232,62 @@ class TempDirectoryManager:
         self._temp_dirs.append(temp_dir)
         return temp_dir
 
+    @staticmethod
+    def retry_process_file(
+            func: callable,
+            path: str,
+            retry_times: int = 10
+    ):
+        """
+        Repeatedly attempts to execute a function until it succeeds or the
+         number of retries is exhausted.
+
+        Args:
+            func (callable): process function to execute.
+            path (str): The path of the temporary directory.:
+            retry_times (int): The number of times to retry the process.
+                Defaults to 10.
+
+        Returns:
+
+        """
+        retry_time = 0
+        while retry_times < 0 or retry_time < retry_times:
+            retry_time += 1
+            try:
+                func(path)
+                break
+            except PermissionError:
+                time.sleep(.1)
+        else:
+            raise PermissionError
+
+    def handle_cleanup_error(self, func: callable, path: str, exc_info: tuple):
+        """
+        Handles errors during directory removal.
+
+        Args:
+            func (callable): The function that raised the exception.
+            path (str): The path of the temporary directory.:
+            exc_info (tuple): The exception information. From sys.exc_info()
+
+        Returns:
+
+        """
+        matches = ['CrashpadMetrics-active.pma']
+        exc_type, exc_value, _ = exc_info
+
+        if exc_type is PermissionError:
+            if Path(path).name in matches:
+                try:
+                    self.retry_process_file(func, path)
+                    return
+                except PermissionError:
+                    raise exc_value
+        elif exc_type is OSError:
+            return
+        raise exc_value
+
     def cleanup(self):
         """
         Cleans up all temporary directories created by this manager.
@@ -243,54 +299,8 @@ class TempDirectoryManager:
         Returns:
             None
         """
-
-        def retry_process_file(
-                func: callable,
-                path: str,
-                retry_times: int = 10
-        ):
-            """
-            Repeatedly attempts to execute a function until it succeeds or the
-             number of retries is exhausted.
-
-            Args:
-                func (callable): process function to execute.
-                path (str): The path of the temporary directory.:
-                retry_times (int): The number of times to retry the process.
-                    Defaults to 10.
-
-            Returns:
-
-            """
-            retry_time = 0
-            while retry_times < 0 or retry_time < retry_times:
-                retry_time += 1
-                try:
-                    func(path)
-                    break
-                except PermissionError:
-                    time.sleep(.1)
-            else:
-                raise PermissionError
-
-        def handle_error(func: callable, path: str, exc_info: tuple):
-            """Handles errors during directory removal."""
-            matches = ['CrashpadMetrics-active.pma']
-            exc_type, exc_value, _ = exc_info
-
-            if exc_type is PermissionError:
-                if Path(path).name in matches:
-                    try:
-                        retry_process_file(func, path)
-                        return
-                    except PermissionError:
-                        raise exc_value
-            elif exc_type is OSError:
-                return
-            raise exc_value
-
         for temp_dir in self._temp_dirs:
-            shutil.rmtree(temp_dir.name, onerror=handle_error)
+            shutil.rmtree(temp_dir.name, onerror=self.handle_cleanup_error)
 
 
 class BrowserOptionsManager:
