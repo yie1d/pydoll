@@ -1,3 +1,15 @@
+## 1.5.0 (2025-03-26)
+
+### Feat
+
+- add flag to run browser on headless mode on start function
+
+### Fix
+
+- Wait for the file `CrashpadMetrics-active.pma` to be deoccupied and cleaned up
+- Catch websockets.ConnectionClosed errors on duplicate close()
+- move connection closed log inside if statement
+
 ## 1.4.0 (2025-03-23)
 
 ### Feat
