@@ -181,7 +181,10 @@ class ConnectionHandler:
         """
         await self.clear_callbacks()
         if self._ws_connection is not None:
-            await self._ws_connection.close()
+            try:
+                await self._ws_connection.close()
+            except websockets.ConnectionClosed as e:
+                logger.info(f'WebSocket connection has closed: {e}')
             logger.info('WebSocket connection closed.')
 
     async def _ensure_active_connection(self):
