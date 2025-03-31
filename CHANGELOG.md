@@ -1,3 +1,9 @@
+## 1.5.1 (2025-03-31)
+
+### Fix
+
+- handle headers input as list or dictionary in fetch command
+
 ## 1.5.0 (2025-03-26)
 
 ### Feat
