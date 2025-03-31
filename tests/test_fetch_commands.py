@@ -16,7 +16,7 @@ def test_continue_request():
             'url': url,
             'method': method,
             'postData': post_data,
-            'headers': headers,
+            'headers': [{'name': 'Content-Type', 'value': 'application/json'}],
             'interceptResponse': intercept_response,
         },
     }
