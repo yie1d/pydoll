@@ -79,7 +79,11 @@ class FetchCommands:
         if post_data:
             continue_request_template['params']['postData'] = post_data
         if headers:
-            continue_request_template['params']['headers'] = headers
+            if isinstance(headers, list):
+                continue_request_template['params']['headers'] = headers
+            else:
+                headers = [{"name": key, "value": value} for key, value in headers.items()]
+                continue_request_template['params']['headers'] = headers
         if intercept_response:
             continue_request_template['params']['interceptResponse'] = (
                 intercept_response
