@@ -82,7 +82,10 @@ class FetchCommands:
             if isinstance(headers, list):
                 continue_request_template['params']['headers'] = headers
             else:
-                headers = [{"name": key, "value": value} for key, value in headers.items()]
+                headers = [
+                    {"name": key, "value": value}
+                    for key, value in headers.items()
+                ]
                 continue_request_template['params']['headers'] = headers
         if intercept_response:
             continue_request_template['params']['interceptResponse'] = (
