@@ -214,6 +214,53 @@ async def browser_demo():
 | `async delete_all_cookies()` | 🧹 Clear all cookies for a fresh state | `await browser.delete_all_cookies()` |
 | `async set_download_path(path)` | 📂 Configure where downloaded files are saved | `await browser.set_download_path('/downloads')` |
 
+### Tab Switching & Management
+
+Want to switch between tabs or pages? It's super easy! First, get all your targets:
+
+```python
+targets = await browser.get_targets()
+```
+
+You'll get something like this:
+
+```python
+[
+    {
+        'targetId': 'F4729A95E0E4F9456BB6A853643518AF', 
+        'type': 'page', 
+        'title': 'New Tab', 
+        'url': 'chrome://newtab/', 
+        'attached': False, 
+        'canAccessOpener': False, 
+        'browserContextId': 'C76015D1F1C690B7BC295E1D81C8935F'
+    }, 
+    {
+        'targetId': '1C44D55BEEE43F44C52D69D8FC5C3685', 
+        'type': 'iframe', 
+        'title': 'chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=', 
+        'url': 'chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=', 
+        'attached': False, 
+        'canAccessOpener': False, 
+        'browserContextId': 'C76015D1F1C690B7BC295E1D81C8935F'
+    }
+]
+```
+
+Then just pick the page you want:
+
+```python
+target = next(target for target in targets if target['title'] == 'New Tab')
+```
+
+And switch to it:
+
+```python
+new_tab_page = await browser.get_page_by_id(target['targetId'])
+```
+
+Now you can control this page as if it were the only one open! Switch between tabs effortlessly by keeping references to each page.
+
 ### Page Interface
 
 The Page interface lets you control individual browser tabs and interact with web content:
