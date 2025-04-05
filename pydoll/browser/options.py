@@ -1,4 +1,3 @@
-
 class Options:
     """
     A class to manage command-line options for a browser instance.

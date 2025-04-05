@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch, ANY
-
+from pydoll.constants import By
 from pydoll.browser.page import Page
 from pydoll.element import WebElement
 from pydoll.events import PageEvents
@@ -456,3 +456,206 @@ async def test_expect_file_chooser(page):
     assert not page.intercept_file_chooser_dialog_enabled
     await page.disable_intercept_file_chooser_dialog()
     assert not page.intercept_file_chooser_dialog_enabled
+
+
+@pytest.mark.asyncio
+async def test_expect_and_bypass_cloudflare_captcha(page):
+    mock_event = AsyncMock()
+    mock_event.set = MagicMock()
+    mock_event.wait = AsyncMock()
+    
+    mock_element = AsyncMock()
+
+    page.find_element = AsyncMock(return_value=mock_element)
+    
+    page.enable_page_events = AsyncMock()
+    page.disable_page_events = AsyncMock()
+    page._connection_handler.remove_callback = AsyncMock()
+    
+    callback_id = 123
+    page.on = AsyncMock(return_value=callback_id)
+    
+
+    page._page_events_enabled = False
+    
+    with patch('asyncio.Event', return_value=mock_event):
+        async with page.expect_and_bypass_cloudflare_captcha():
+            assert page.enable_page_events.called
+            
+            callback_func = page.on.call_args[0][1]
+            
+            await callback_func({})
+            
+            assert page.find_element.called
+            assert mock_element.click.called
+            assert mock_event.set.called
+        
+        assert mock_event.wait.called
+        
+        page._connection_handler.remove_callback.assert_called_once_with(callback_id)
+        assert page.disable_page_events.called
+
+
+@pytest.mark.asyncio
+async def test_expect_and_bypass_cloudflare_captcha_no_element(page):
+    mock_event = AsyncMock()
+    mock_event.set = MagicMock()
+    mock_event.wait = AsyncMock()
+    
+    page.find_element = AsyncMock(return_value=None)
+    
+    page.enable_page_events = AsyncMock()
+    page.disable_page_events = AsyncMock()
+    page._connection_handler.remove_callback = AsyncMock()
+    
+    callback_id = 123
+    page.on = AsyncMock(return_value=callback_id)
+    
+    page._page_events_enabled = True
+    
+    with patch('asyncio.Event', return_value=mock_event):
+        async with page.expect_and_bypass_cloudflare_captcha():
+            assert not page.enable_page_events.called
+            
+            callback_func = page.on.call_args[0][1]
+            await callback_func({})
+            
+            assert page.find_element.called
+            assert mock_event.set.called
+        
+        assert mock_event.wait.called
+        page._connection_handler.remove_callback.assert_called_once_with(callback_id)
+        assert not page.disable_page_events.called
+
+
+@pytest.mark.asyncio
+async def test_expect_and_bypass_cloudflare_captcha_custom_selector(page):
+    mock_event = AsyncMock()
+    mock_event.set = MagicMock()
+    mock_event.wait = AsyncMock()
+    
+    mock_element = AsyncMock()
+    
+    page.find_element = AsyncMock(return_value=mock_element)
+    page.execute_script = AsyncMock()
+    
+    page.enable_page_events = AsyncMock()
+    page._connection_handler.remove_callback = AsyncMock()
+    
+    callback_id = 456
+    page.on = AsyncMock(return_value=callback_id)
+    
+    custom_selector = (By.ID, 'custom-captcha')
+    
+    with patch('asyncio.Event', return_value=mock_event):
+        async with page.expect_and_bypass_cloudflare_captcha(custom_selector=custom_selector):
+            callback_func = page.on.call_args[0][1]
+            await callback_func({})
+            
+            page.find_element.assert_called_once_with(
+                By.ID, 'custom-captcha', raise_exc=False
+            )
+            
+            assert page.execute_script.called
+            assert mock_element.click.called
+            assert mock_event.set.called
+        
+        assert mock_event.wait.called
+        page._connection_handler.remove_callback.assert_called_once_with(callback_id)
+
+@pytest.mark.asyncio
+async def test_enable_auto_solve_cloudflare_captcha(page):
+    # Mock necessary components
+    page.enable_page_events = AsyncMock()
+    page.wait_element = AsyncMock()
+    page.execute_script = AsyncMock()
+    
+    callback_id = 789
+    # Mock the on method to return a callback ID
+    page.on = AsyncMock(return_value=callback_id)
+    
+    # Test with default params
+    await page.enable_auto_solve_cloudflare_captcha()
+    
+    # Verify the callback was registered and the ID was returned
+    assert page.on.called
+    assert page.on.call_args[0][0] == PageEvents.PAGE_LOADED
+    
+    # Test when page events are not enabled
+    page.on.reset_mock()
+    page._page_events_enabled = False
+    await page.enable_auto_solve_cloudflare_captcha()
+    
+    # Verify page events were enabled
+    assert page.enable_page_events.called
+    
+    # Test with custom params
+    page.on.reset_mock()
+    custom_selector = (By.ID, 'custom-captcha')
+    timeout = 10
+    await page.enable_auto_solve_cloudflare_captcha(custom_selector=custom_selector, timeout=timeout)
+    
+    # Verify the callback was registered with custom params
+    assert page.on.called
+
+
+@pytest.mark.asyncio
+async def test_disable_auto_solve_cloudflare_captcha(page):
+    # Mock the remove_callback method
+    page._connection_handler.remove_callback = AsyncMock(return_value=True)
+    
+    # Test removing a callback
+    callback_id = 789
+    page._cloudflare_captcha_callback_id = callback_id
+    await page.disable_auto_solve_cloudflare_captcha()
+    
+    # Verify the callback was removed
+    page._connection_handler.remove_callback.assert_called_once_with(callback_id)
+
+
+@pytest.mark.asyncio
+async def test_bypass_cloudflare_functionality(page):
+    # Mock element and methods
+    mock_element = AsyncMock()
+    page.wait_element = AsyncMock(return_value=mock_element)
+    page.execute_script = AsyncMock()
+    
+    # Call the _bypass_cloudflare method directly
+    await page._bypass_cloudflare({})
+    
+    # Verify element was found and interacted with
+    assert page.wait_element.called
+    assert page.execute_script.called
+    assert mock_element.click.called
+    
+    # Test with custom selector and timeout
+    page.wait_element.reset_mock()
+    page.execute_script.reset_mock()
+    mock_element.click.reset_mock()
+    
+    custom_selector = (By.ID, 'custom-captcha')
+    await page._bypass_cloudflare({}, custom_selector=custom_selector, timeout=10)
+    
+    # Verify correct parameters were used
+    page.wait_element.assert_called_once_with(
+        By.ID, 'custom-captcha', timeout=10, raise_exc=False
+    )
+    
+    # Test exception handling
+    page.wait_element = AsyncMock(side_effect=Exception("Test error"))
+    
+    # This should not raise an exception
+    await page._bypass_cloudflare({})
+
+
+@pytest.mark.asyncio
+async def test_bypass_cloudflare_no_element(page):
+    # Test when no element is found
+    page.wait_element = AsyncMock(return_value=None)
+    page.execute_script = AsyncMock()
+    
+    # This should complete without errors even though no element is found
+    await page._bypass_cloudflare({})
+    
+    # Script execution and click should not be called
+    assert not page.execute_script.called
