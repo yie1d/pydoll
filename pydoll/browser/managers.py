@@ -68,8 +68,8 @@ class ProxyManager:
                 argument and the proxy value if found, None otherwise.
         """
         for index, arg in enumerate(self.options.arguments):
-            if arg.startswith("--proxy-server="):
-                return index, arg.split("=", 1)[1]
+            if arg.startswith('--proxy-server='):
+                return index, arg.split('=', 1)[1]
         return None
 
     @staticmethod
@@ -91,12 +91,12 @@ class ProxyManager:
                 - str: Password (or None if no credentials)
                 - str: Clean proxy URL without credentials
         """
-        if "@" not in proxy_value:
+        if '@' not in proxy_value:
             return False, None, None, proxy_value
 
         try:
-            creds_part, server_part = proxy_value.split("@", 1)
-            username, password = creds_part.split(":", 1)
+            creds_part, server_part = proxy_value.split('@', 1)
+            username, password = creds_part.split(':', 1)
             return True, username, password, server_part
         except ValueError:
             return False, None, None, proxy_value
@@ -116,7 +116,7 @@ class ProxyManager:
         Returns:
             None
         """
-        self.options.arguments[index] = f"--proxy-server={clean_proxy}"
+        self.options.arguments[index] = f'--proxy-server={clean_proxy}'
 
 
 class BrowserProcessManager:
@@ -153,13 +153,11 @@ class BrowserProcessManager:
         Returns:
             subprocess.Popen: The started browser process.
         """
-        self._process = self._process_creator(
-            [
-                binary_location,
-                f"--remote-debugging-port={port}",
-                *arguments,
-            ]
-        )
+        self._process = self._process_creator([
+            binary_location,
+            f'--remote-debugging-port={port}',
+            *arguments,
+        ])
         return self._process
 
     @staticmethod
@@ -233,11 +231,7 @@ class TempDirectoryManager:
         return temp_dir
 
     @staticmethod
-    def retry_process_file(
-            func: callable,
-            path: str,
-            retry_times: int = 10
-    ):
+    def retry_process_file(func: callable, path: str, retry_times: int = 10):
         """
         Repeatedly attempts to execute a function until it succeeds or the
          number of retries is exhausted.
@@ -258,7 +252,7 @@ class TempDirectoryManager:
                 func(path)
                 break
             except PermissionError:
-                time.sleep(.1)
+                time.sleep(0.1)
         else:
             raise PermissionError
 
@@ -338,15 +332,15 @@ class BrowserOptionsManager:
                 return Options()
 
         if not isinstance(options, Options):
-            raise ValueError("Invalid options")
+            raise ValueError('Invalid options')
 
         return options
 
     @staticmethod
     def add_default_arguments(options: Options):
         """Adds default arguments to the provided options"""
-        options.arguments.append("--no-first-run")
-        options.arguments.append("--no-default-browser-check")
+        options.arguments.append('--no-first-run')
+        options.arguments.append('--no-default-browser-check')
 
         # Add browser-specific arguments based on options type
         if isinstance(options, EdgeOptions):
@@ -357,16 +351,16 @@ class BrowserOptionsManager:
     @staticmethod
     def _add_edge_arguments(options: Options):
         """Adds Edge-specific arguments to the options"""
-        options.add_argument("--disable-crash-reporter")
-        options.add_argument("--disable-features=TranslateUI")
-        options.add_argument("--disable-component-update")
-        options.add_argument("--disable-background-networking")
-        options.add_argument("--remote-allow-origins=*")
+        options.add_argument('--disable-crash-reporter')
+        options.add_argument('--disable-features=TranslateUI')
+        options.add_argument('--disable-component-update')
+        options.add_argument('--disable-background-networking')
+        options.add_argument('--remote-allow-origins=*')
 
     @staticmethod
     def _add_chrome_arguments(options: Options):
         """Adds Chrome-specific arguments to the options"""
-        options.add_argument("--remote-allow-origins=*")
+        options.add_argument('--remote-allow-origins=*')
         # Add other Chrome-specific arguments here
 
     @staticmethod

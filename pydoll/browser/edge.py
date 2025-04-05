@@ -49,18 +49,24 @@ class Edge(Browser):
         os_name = platform.system()
 
         browser_paths = {
-            "Windows": [
-                (r"C:\Program Files\Microsoft\Edge\Application"
-                 r"\msedge.exe"),
-                (r"C:\Program Files (x86)\Microsoft\Edge"
-                 r"\Application\msedge.exe"),
+            'Windows': [
+                (
+                    r'C:\Program Files\Microsoft\Edge\Application'
+                    r'\msedge.exe'
+                ),
+                (
+                    r'C:\Program Files (x86)\Microsoft\Edge'
+                    r'\Application\msedge.exe'
+                ),
             ],
-            "Linux": [
-                "/usr/bin/microsoft-edge",
+            'Linux': [
+                '/usr/bin/microsoft-edge',
             ],
-            "Darwin": [
-                ("/Applications/Microsoft Edge.app/Contents/MacOS"
-                 "/Microsoft Edge"),
+            'Darwin': [
+                (
+                    '/Applications/Microsoft Edge.app/Contents/MacOS'
+                    '/Microsoft Edge'
+                ),
             ],
         }
 
@@ -69,6 +75,4 @@ class Edge(Browser):
         if not browser_path:
             raise ValueError('Unsupported OS')
 
-        return BrowserOptionsManager.validate_browser_paths(
-            browser_path
-        )
+        return BrowserOptionsManager.validate_browser_paths(browser_path)

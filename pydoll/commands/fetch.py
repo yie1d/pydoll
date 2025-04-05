@@ -83,7 +83,7 @@ class FetchCommands:
                 continue_request_template['params']['headers'] = headers
             else:
                 headers = [
-                    {"name": key, "value": value}
+                    {'name': key, 'value': value}
                     for key, value in headers.items()
                 ]
                 continue_request_template['params']['headers'] = headers

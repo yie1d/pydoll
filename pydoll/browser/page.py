@@ -1,6 +1,8 @@
 import asyncio
 import json
+import logging
 from contextlib import asynccontextmanager
+from functools import partial
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
@@ -22,6 +24,8 @@ from pydoll.exceptions import InvalidFileExtension
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
+logger = logging.getLogger(__name__)
+
 
 class Page(FindElementsMixin):  # noqa: PLR0904
     def __init__(self, connection_port: int, page_id: str):
@@ -40,6 +44,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         self._fetch_events_enabled = False
         self._dom_events_enabled = False
         self._intercept_file_chooser_dialog_enabled = False
+        self._cloudflare_captcha_callback_id = None
 
     @property
     def page_events_enabled(self) -> bool:
@@ -649,11 +654,42 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if _before_page_events_enabled is False:
             await self.disable_page_events()
 
+    async def _bypass_cloudflare(
+        self,
+        event: dict,
+        custom_selector: Optional[Tuple[By, str]] = None,
+        timeout: int = 5,
+    ):
+        """
+        Attempt to bypass Cloudflare Turnstile captcha when detected.
+
+        Args:
+            event (dict): The event payload (unused)
+            custom_selector (Optional[Tuple[By, str]]): Custom selector
+                to locate the captcha element. Defaults to
+                (By.CLASS_NAME, 'cf-turnstile').
+            timeout (int): Timeout for the captcha element to be found
+                in seconds. Defaults to 5 seconds.
+        """
+        try:
+            selector = custom_selector or (By.CLASS_NAME, 'cf-turnstile')
+            if element := await self.wait_element(
+                *selector, timeout=timeout, raise_exc=False
+            ):
+                # adjust the div size to shadow root size
+                await self.execute_script(
+                    'argument.style="width: 300px"', element
+                )
+                await asyncio.sleep(2)
+                await element.click()
+        except Exception as exc:
+            logger.error(f'Error in cloudflare bypass: {exc}')
+
     @asynccontextmanager
     async def expect_and_bypass_cloudflare_captcha(
         self,
         custom_selector: Optional[Tuple[By, str]] = None,
-        timeout: Optional[int] = 5
+        timeout: Optional[int] = 5,
     ):
         """
         Context manager to handle Cloudflare Turnstile captcha.
@@ -679,19 +715,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         async def bypass_cloudflare(_: dict):
             try:
-                selector = custom_selector or (By.CLASS_NAME, 'cf-turnstile')
-                if element := await self.wait_element(
-                    *selector,
-                    timeout=timeout,
-                    raise_exc=False
-                ):
-                    # adjust the div size to shadow root size
-                    await self.execute_script(
-                        'argument.style="width: 300px"',
-                        element
-                    )
-                    await asyncio.sleep(2)
-                    await element.click()
+                await self._bypass_cloudflare(_, custom_selector, timeout)
             finally:
                 captcha_processed.set()
 
@@ -709,3 +733,51 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             await self._connection_handler.remove_callback(callback_id)
             if not _before_page_events_enabled:
                 await self.disable_page_events()
+
+    async def enable_auto_solve_cloudflare_captcha(
+        self,
+        custom_selector: Optional[Tuple[By, str]] = None,
+        timeout: int = 5,
+    ):
+        """
+        Enables automatic solving of Cloudflare Turnstile captcha.
+
+        This method sets up a callback that will automatically attempt to
+        bypass the Cloudflare captcha when the page loads. Unlike the
+        context manager version, this keeps the callback active until
+        explicitly disabled.
+
+        Args:
+            custom_selector (Optional[Tuple[By, str]]): Custom selector
+                to locate the captcha element. Defaults to
+                (By.CLASS_NAME, 'cf-turnstile').
+            timeout (int): Timeout for the captcha element to be
+                found in seconds. Defaults to 5 seconds.
+
+        Returns:
+            int: Callback ID that can be used to disable the auto-solving
+        """
+        if not self.page_events_enabled:
+            await self.enable_page_events()
+
+        callback = partial(
+            self._bypass_cloudflare,
+            custom_selector=custom_selector,
+            timeout=timeout,
+        )
+
+        self._cloudflare_captcha_callback_id = await self.on(
+            PageEvents.PAGE_LOADED, callback
+        )
+
+    async def disable_auto_solve_cloudflare_captcha(self):
+        """
+        Disables automatic solving of Cloudflare Turnstile captcha.
+
+        Returns:
+            None
+        """
+        await self._connection_handler.remove_callback(
+            self._cloudflare_captcha_callback_id
+        )
+        self._cloudflare_captcha_callback_id = None

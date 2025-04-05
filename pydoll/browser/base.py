@@ -36,7 +36,7 @@ class Browser(ABC):  # noqa: PLR0904
         self,
         options: Options | None = None,
         connection_port: int = None,
-        browser_type: BrowserType = None
+        browser_type: BrowserType = None,
     ):
         """
         Initializes the Browser instance.
@@ -565,12 +565,12 @@ class Browser(ABC):  # noqa: PLR0904
 
     def _setup_user_dir(self):
         """Prepares the user data directory if necessary."""
-        if "--user-data-dir" not in [
-            arg.split("=")[0] for arg in self.options.arguments
+        if '--user-data-dir' not in [
+            arg.split('=')[0] for arg in self.options.arguments
         ]:
             # For all browsers, use a temporary directory
             temp_dir = self._temp_directory_manager.create_temp_dir()
-            self.options.arguments.append(f"--user-data-dir={temp_dir.name}")
+            self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:
