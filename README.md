@@ -98,6 +98,158 @@ async with Chrome(options=options) as browser:
 
 Version 1.4.0 comes packed with amazing new features:
 
+### 🛡️ Automatic Cloudflare Turnstile Captcha Handling
+
+Seamlessly bypass Cloudflare Turnstile captchas with two powerful approaches:
+
+#### Approach 1: Context Manager (Synchronous with main execution)
+
+This approach waits for the captcha to be handled before continuing execution:
+
+```python
+import asyncio
+from pydoll.browser import Chrome
+
+async def example_with_context_manager():
+    browser = Chrome()
+    await browser.start()
+    page = await browser.get_page()
+    
+    print("Using context manager approach...")
+    # The context manager will wait for the captcha to be processed
+    # before exiting and continuing execution
+    async with page.expect_and_bypass_cloudflare_captcha(timeout=5):
+        await page.go_to('https://2captcha.com/demo/cloudflare-turnstile')
+        print("Page loaded, waiting for captcha to be handled...")
+    
+    # This code will only run after the captcha has been handled
+    print("Captcha handling completed, now we can continue...")
+    # Your post-captcha logic here
+    await asyncio.sleep(3)
+    await browser.stop()
+
+if __name__ == '__main__':
+    asyncio.run(example_with_context_manager())
+```
+
+#### Approach 2: Enable/Disable (Background processing)
+
+This approach handles captchas in the background without blocking execution:
+
+```python
+import asyncio
+from pydoll.browser import Chrome
+
+async def example_with_enable_disable():
+    browser = Chrome()
+    await browser.start()
+    page = await browser.get_page()
+    
+    print("Using enable/disable approach...")
+    # Enable automatic captcha solving before navigating
+    await page.enable_auto_solve_cloudflare_captcha(timeout=5)
+    
+    # Navigate to the page - captcha will be handled automatically in the background
+    await page.go_to('https://2captcha.com/demo/cloudflare-turnstile')
+    print("Page loaded, captcha will be handled in the background...")
+    
+    # Continue with other operations immediately
+    # Consider adding some delay to give time for captcha to be solved
+    await asyncio.sleep(5)
+    
+    # Disable auto-solving when no longer needed
+    await page.disable_auto_solve_cloudflare_captcha()
+    print("Auto-solving disabled")
+    
+    await browser.stop()
+
+if __name__ == '__main__':
+    asyncio.run(example_with_enable_disable())
+```
+
+### Which approach should you choose?
+
+Not sure which method to use? Let's simplify:
+
+#### Approach 1: Context Manager (Like a traffic light)
+
+```python
+async with page.expect_and_bypass_cloudflare_captcha():
+    await page.go_to('https://protected-site.com')
+    # All code inside waits for the captcha to be solved
+```
+
+**How it works:** 
+- The code pauses at the end of the context manager until the captcha is resolved
+- Ensures any code after the `async with` block only executes after the captcha is handled
+
+**When to use it:**
+- When you need to be certain the captcha is solved before continuing
+- In sequential operations where the next steps depend on successful login
+- In situations where timing is crucial (like purchasing tickets, logging in, etc.)
+- When you prefer simpler, straightforward code
+
+**Practical example:** Logging into a protected site
+```python
+async with page.expect_and_bypass_cloudflare_captcha():
+    await page.go_to('https://site-with-captcha.com/login')
+    # Here the context manager waits for the captcha to be resolved
+    
+# Now we can safely log in
+await page.find_element(By.ID, 'username').type_keys('user123')
+await page.find_element(By.ID, 'password').type_keys('password123')
+await page.find_element(By.ID, 'login-button').click()
+```
+
+#### Approach 2: Enable/Disable (Like a background assistant)
+
+```python
+callback_id = await page.enable_auto_solve_cloudflare_captcha()
+# Code continues immediately, solving captcha in the background
+```
+
+**How it works:**
+- It's like having an assistant working in the background while you do other things
+- Doesn't block your main code - continues executing immediately
+- The captcha will be handled automatically when it appears, without pausing your script
+- You need to manage timing yourself (by adding delays if necessary)
+
+**When to use it:**
+- When you're navigating across multiple pages and want continuous protection
+- In scripts that perform many independent tasks in parallel
+- For "exploratory" navigation where exact timing isn't crucial
+- In long-running automation scenarios where you want to leave the handler "turned on"
+
+**Practical example:** Continuous navigation across multiple pages
+```python
+# Activate protection for the entire session
+await page.enable_auto_solve_cloudflare_captcha()
+
+# Navigate through multiple pages with background protection
+await page.go_to('https://site1.com')
+await page.go_to('https://site2.com')
+await page.go_to('https://site3.com')
+
+# Optionally disable when no longer needed
+await page.disable_auto_solve_cloudflare_captcha()
+```
+
+⚠️ **Tip for the Enable/Disable approach:** Consider adding small delays before interacting with critical elements, to give time for the captcha to be solved in the background:
+
+```python
+# Enable background solving
+await page.enable_auto_solve_cloudflare_captcha()
+
+# Navigate to protected page
+await page.go_to('https://protected-site.com')
+
+# Small delay to give time for the captcha to be solved in the background
+await asyncio.sleep(3)
+
+# Now interact with the page
+await page.find_element(By.ID, 'important-button').click()
+```
+
 ### 🔤 Advanced Keyboard Control
 
 Full keyboard simulation thanks to [@cleitonleonel](https://github.com/cleitonleonel):
@@ -303,6 +455,9 @@ async def page_demo():
 | `async find_element(by, value)` | 🔎 Find an element on the page | `el = await page.find_element(By.ID, 'btn')` |
 | `async find_elements(by, value)` | 🔍 Find multiple elements matching a selector | `items = await page.find_elements(By.CSS, 'li')` |
 | `async wait_element(by, value, timeout=10)` | ⏳ Wait for an element to appear | `await page.wait_element(By.ID, 'loaded', 5)` |
+| `async expect_and_bypass_cloudflare_captcha(custom_selector=None, timeout=5)` | 🛡️ Context manager that waits for captcha to be solved | `async with page.expect_and_bypass_cloudflare_captcha():` |
+| `async enable_auto_solve_cloudflare_captcha(custom_selector=None, timeout=5)` | 🤖 Enable automatic Cloudflare captcha solving | `await page.enable_auto_solve_cloudflare_captcha()` |
+| `async disable_auto_solve_cloudflare_captcha()` | 🔌 Disable automatic Cloudflare captcha solving | `await page.disable_auto_solve_cloudflare_captcha()` |
 
 ### WebElement Interface
 
