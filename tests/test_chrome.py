@@ -115,6 +115,63 @@ async def test_start_headless(mock_browser):
 
 
 @pytest.mark.asyncio
+async def test_connect_to_existing_browser(mock_browser):
+    """Test connecting to an existing browser instance instead of starting a new one."""
+    # Setup mocks for a successful connection
+    mock_browser._connection_handler.ping.return_value = True
+    
+    # Mock the necessary internal methods
+    mock_browser._verify_browser_running = AsyncMock()
+    mock_browser._init_first_page = AsyncMock()
+    
+    # Set a test page ID in the _pages list
+    mock_browser._pages = ['existing_page_id']
+    
+    # Call the connect method
+    page = await mock_browser.connect()
+    
+    # Verify that verify_browser_running was called
+    mock_browser._verify_browser_running.assert_called_once()
+    
+    # Verify that init_first_page was called
+    mock_browser._init_first_page.assert_called_once()
+    
+    # Verify that a Page instance was returned with the correct connection port and page ID
+    assert isinstance(page, Page)
+    assert page._connection_handler._connection_port == mock_browser._connection_port
+    assert page._connection_handler._page_id == 'existing_page_id'
+    
+    # Verify that the page ID was removed from the _pages list
+    assert len(mock_browser._pages) == 0
+    
+    # Verify that start_browser_process was NOT called
+    mock_browser._browser_process_manager.start_browser_process.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_connect_browser_not_running(mock_browser):
+    """Test connect method when browser is not running."""
+    # Setup mocks for a browser that is not running
+    mock_browser._connection_handler.ping.return_value = False
+    mock_browser._init_first_page = AsyncMock()
+    
+    # Make _verify_browser_running raise an exception
+    mock_browser._verify_browser_running = AsyncMock(
+        side_effect=exceptions.BrowserNotRunning('Browser is not running')
+    )
+    
+    # Check that connect raises the appropriate exception
+    with pytest.raises(exceptions.BrowserNotRunning):
+        await mock_browser.connect()
+    
+    # Verify that _verify_browser_running was called
+    mock_browser._verify_browser_running.assert_called_once()
+    
+    # Verify that _init_first_page was NOT called
+    mock_browser._init_first_page.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_proxy_configuration(mock_browser):
     mock_browser._proxy_manager.get_proxy_credentials = MagicMock(
         return_value=(True, ('user', 'pass'))
