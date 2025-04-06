@@ -96,7 +96,7 @@ async with Chrome(options=options) as browser:
 
 ## 🎉 What's New
 
-Version 1.4.0 comes packed with amazing new features:
+Version 1.6.0 comes packed with amazing new features:
 
 ### 🛡️ Automatic Cloudflare Turnstile Captcha Handling
 
@@ -728,7 +728,6 @@ Please make sure to:
 
 Get ready for these upcoming features in Pydoll:
 
-🔹 **Auto-detection of Cloudflare Captcha** - Automatic solving without manual intervention  
 🔹 **Fingerprint Generation & Rotation** - Dynamic browser fingerprints to avoid detection  
 🔹 **Proxy Rotation** - Seamless IP switching for extended scraping sessions  
 🔹 **Shadow DOM Access** - Navigate and interact with Shadow Root elements  
