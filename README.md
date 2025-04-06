@@ -47,7 +47,7 @@
 🔹 **Powerful Event System** for reactive automations  
 🔹 **Multi-browser Support** including Chrome and Edge
 
-> *Note: For Cloudflare captcha, click the checkbox by finding the div containing the iframe and using the `.click()` method. Automatic detection coming soon!
+
 
 ## 🔥 Installation
 
@@ -250,6 +250,34 @@ await asyncio.sleep(3)
 await page.find_element(By.ID, 'important-button').click()
 ```
 
+### 🔌 Connect to Existing Browser
+
+Connect to an already running Chrome/Edge instance without launching a new browser process:
+
+```python
+import asyncio
+from pydoll.browser import Chrome
+
+async def main():
+    # Connect to Chrome already running on port 1234
+    browser = Chrome(connection_port=1234)
+    page = await browser.connect()
+    
+    # Control the browser as usual
+    await page.go_to('https://google.com')
+    
+    # No need to call browser.stop() as we didn't start this instance
+
+asyncio.run(main())
+```
+
+This is perfect for:
+- Debugging scripts without restarting the browser
+- Connecting to remote debugging sessions
+- Working with custom browser configurations
+- Integrating with existing browser instances
+
+
 ### 🔤 Advanced Keyboard Control
 
 Full keyboard simulation thanks to [@cleitonleonel](https://github.com/cleitonleonel):
@@ -365,6 +393,7 @@ async def browser_demo():
 | `async set_cookies(cookies)` | 🧁 Set custom cookies for authentication | `await browser.set_cookies([{...}])` |
 | `async delete_all_cookies()` | 🧹 Clear all cookies for a fresh state | `await browser.delete_all_cookies()` |
 | `async set_download_path(path)` | 📂 Configure where downloaded files are saved | `await browser.set_download_path('/downloads')` |
+| `async connect()` | 🔌 Connect to an existing browser instance | `page = await browser.connect()` |
 
 ### Tab Switching & Management
 

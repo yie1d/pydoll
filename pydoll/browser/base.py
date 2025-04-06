@@ -119,6 +119,18 @@ class Browser(ABC):  # noqa: PLR0904
         await self._configure_proxy(proxy_config[0], proxy_config[1])
         await self._init_first_page()
 
+    async def connect(self) -> Page:
+        """
+        If the specified port is already in use, just return the page
+        instance to the user.
+
+        Returns:
+            Page: The page instance.
+        """
+        await self._verify_browser_running()
+        await self._init_first_page()
+        return Page(self._connection_port, self._pages.pop())
+
     async def set_download_path(self, path: str):
         """
         Sets the download path for the browser.
@@ -483,8 +495,9 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             bool: True if the page is a valid new tab, False otherwise.
         """
-        return page.get('type') == 'page' and 'chrome://newtab/' in page.get(
-            'url', ''
+        return (
+            page.get('type') == 'page'
+            and 'chrome-extension://' not in page.get('url', '')
         )
 
     async def _get_valid_page(self, pages: list) -> str:
