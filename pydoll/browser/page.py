@@ -658,7 +658,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         self,
         event: dict,
         custom_selector: Optional[Tuple[By, str]] = None,
-        timeout: int = 5,
+        time_before_click: int = 2,
+        time_to_wait_captcha: int = 5,
     ):
         """
         Attempt to bypass Cloudflare Turnstile captcha when detected.
@@ -668,19 +669,21 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             custom_selector (Optional[Tuple[By, str]]): Custom selector
                 to locate the captcha element. Defaults to
                 (By.CLASS_NAME, 'cf-turnstile').
-            timeout (int): Timeout for the captcha element to be found
-                in seconds. Defaults to 5 seconds.
+            time_before_click (int): Time to wait before clicking the captcha
+                element in seconds. Defaults to 2 seconds.
+            time_to_wait_captcha (int): Timeout for the captcha element to be
+                found in seconds. Defaults to 5 seconds.
         """
         try:
             selector = custom_selector or (By.CLASS_NAME, 'cf-turnstile')
             if element := await self.wait_element(
-                *selector, timeout=timeout, raise_exc=False
+                *selector, timeout=time_to_wait_captcha, raise_exc=False
             ):
                 # adjust the div size to shadow root size
                 await self.execute_script(
                     'argument.style="width: 300px"', element
                 )
-                await asyncio.sleep(2)
+                await asyncio.sleep(time_before_click)
                 await element.click()
         except Exception as exc:
             logger.error(f'Error in cloudflare bypass: {exc}')
@@ -689,7 +692,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
     async def expect_and_bypass_cloudflare_captcha(
         self,
         custom_selector: Optional[Tuple[By, str]] = None,
-        timeout: Optional[int] = 5,
+        time_before_click: int = 2,
+        time_to_wait_captcha: Optional[int] = 5,
     ):
         """
         Context manager to handle Cloudflare Turnstile captcha.
@@ -705,8 +709,10 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             custom_selector (Optional[Tuple[By, str]]): Custom selector
                 to locate the captcha element. Defaults to
                 (By.CLASS_NAME, 'cf-turnstile').
-            timeout (Optional[int]): Timeout for the captcha element to be
-                found. Defaults to 5 seconds.
+            time_before_click (int): Time to wait before clicking the captcha
+                element in seconds. Defaults to 2 seconds.
+            time_to_wait_captcha (Optional[int]): Timeout for the captcha
+                element to be found in seconds. Defaults to 5 seconds.
 
         Returns:
             None
@@ -715,7 +721,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         async def bypass_cloudflare(_: dict):
             try:
-                await self._bypass_cloudflare(_, custom_selector, timeout)
+                await self._bypass_cloudflare(
+                    _,
+                    custom_selector,
+                    time_before_click,
+                    time_to_wait_captcha,
+                )
             finally:
                 captcha_processed.set()
 
@@ -737,7 +748,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
     async def enable_auto_solve_cloudflare_captcha(
         self,
         custom_selector: Optional[Tuple[By, str]] = None,
-        timeout: int = 5,
+        time_before_click: int = 2,
+        time_to_wait_captcha: int = 5,
     ):
         """
         Enables automatic solving of Cloudflare Turnstile captcha.
@@ -751,7 +763,9 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             custom_selector (Optional[Tuple[By, str]]): Custom selector
                 to locate the captcha element. Defaults to
                 (By.CLASS_NAME, 'cf-turnstile').
-            timeout (int): Timeout for the captcha element to be
+            time_before_click (int): Time to wait before clicking the captcha
+                element in seconds. Defaults to 2 seconds.
+            time_to_wait_captcha (int): Timeout for the captcha element to be
                 found in seconds. Defaults to 5 seconds.
 
         Returns:
@@ -763,7 +777,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         callback = partial(
             self._bypass_cloudflare,
             custom_selector=custom_selector,
-            timeout=timeout,
+            time_before_click=time_before_click,
+            time_to_wait_captcha=time_to_wait_captcha,
         )
 
         self._cloudflare_captcha_callback_id = await self.on(

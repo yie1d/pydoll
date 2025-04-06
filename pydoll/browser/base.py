@@ -495,10 +495,9 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             bool: True if the page is a valid new tab, False otherwise.
         """
-        return (
-            page.get('type') == 'page'
-            and 'chrome-extension://' not in page.get('url', '')
-        )
+        return page.get(
+            'type'
+        ) == 'page' and 'chrome-extension://' not in page.get('url', '')
 
     async def _get_valid_page(self, pages: list) -> str:
         """

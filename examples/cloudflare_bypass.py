@@ -1,6 +1,7 @@
 import asyncio
 
 from pydoll.browser import Chrome
+from pydoll.constants import By
 
 
 async def example_with_context_manager():
@@ -14,8 +15,10 @@ async def example_with_context_manager():
     page = await browser.get_page()
 
     print('Using context manager approach...')
-    async with page.expect_and_bypass_cloudflare_captcha():
-        await page.go_to('https://2captcha.com/demo/cloudflare-turnstile')
+    async with page.expect_and_bypass_cloudflare_captcha(
+        custom_selector=(By.ID, 'TAYH8'), time_before_click=5
+    ):
+        await page.go_to('https://www.planetminecraft.com/account/sign_in/')
         print('Page loaded, waiting for captcha to be handled...')
 
     print('Captcha handling completed, now we can continue...')
@@ -40,7 +43,7 @@ async def example_with_enable_disable():
     await page.enable_auto_solve_cloudflare_captcha()
 
     # Navigate to the page - captcha will be handled automatically
-    await page.go_to('https://2captcha.com/demo/cloudflare-turnstile')
+    await page.go_to('https://www.planetminecraft.com/account/sign_in/')
     print('Page loaded, captcha will be handled in the background...')
 
     # Continue with other operations immediately
@@ -56,9 +59,9 @@ async def example_with_enable_disable():
 
 async def main():
     # Choose which example to run
-    # await example_with_context_manager()
+    await example_with_context_manager()
     # Or uncomment the line below to run the enable/disable example
-    await example_with_enable_disable()
+    # await example_with_enable_disable()
 
 
 if __name__ == '__main__':
