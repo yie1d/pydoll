@@ -1,5 +1,6 @@
 import asyncio
 import json
+import warnings
 from pathlib import Path
 from typing import List, Union
 
@@ -254,9 +255,16 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         Retrieves the text of the element.
 
+        Deprecated: Use the `text` property instead.
+
         Returns:
             str: The text of the element.
         """
+        warnings.warn(
+            'get_element_text() is deprecated and will be removed soon.'
+            'Use the `await element.text` property instead.',
+            DeprecationWarning,
+        )
         outer_html = await self.inner_html
         soup = BeautifulSoup(outer_html, 'html.parser')
         text_inside = soup.get_text(strip=True)
