@@ -1,3 +1,9 @@
+## 1.7.0 (2025-04-06)
+
+### Feat
+
+- refactor captcha handling with adjustable wait times and parameters
+
 ## 1.6.0 (2025-04-06)
 
 ### Feat
