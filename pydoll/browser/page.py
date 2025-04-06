@@ -711,8 +711,8 @@ class Page(FindElementsMixin):  # noqa: PLR0904
                 (By.CLASS_NAME, 'cf-turnstile').
             time_before_click (int): Time to wait before clicking the captcha
                 element in seconds. Defaults to 2 seconds.
-            time_to_wait_captcha (Optional[int]): Timeout for the captcha element
-                to be found in seconds. Defaults to 5 seconds.
+            time_to_wait_captcha (Optional[int]): Timeout for the captcha
+                element to be found in seconds. Defaults to 5 seconds.
 
         Returns:
             None
@@ -721,7 +721,12 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         async def bypass_cloudflare(_: dict):
             try:
-                await self._bypass_cloudflare(_, custom_selector, time_before_click, time_to_wait_captcha)
+                await self._bypass_cloudflare(
+                    _,
+                    custom_selector,
+                    time_before_click,
+                    time_to_wait_captcha,
+                )
             finally:
                 captcha_processed.set()
 
