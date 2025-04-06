@@ -96,7 +96,7 @@ async with Chrome(options=options) as browser:
 
 ## 🎉 What's New
 
-Version 1.4.0 comes packed with amazing new features:
+Version 1.7.0 comes packed with amazing new features:
 
 ### 🛡️ Automatic Cloudflare Turnstile Captcha Handling
 
@@ -758,15 +758,6 @@ Please make sure to:
 - Use conventional commits for pull requests
 - Run lint and test checks before submitting
 
-## 🔮 Coming Soon
-
-Get ready for these upcoming features in Pydoll:
-
-🔹 **Proxy Rotation** - Seamless IP switching for extended scraping sessions  
-🔹 **Shadow DOM Access** - Navigate and interact with Shadow Root elements  
-
-Stay tuned and star the repository to get updates when these features are released!
-
 ## 📞 Professional Support
 
 Need specialized help with your automation projects? I offer professional services for those who need:
@@ -780,6 +771,15 @@ Need specialized help with your automation projects? I offer professional servic
 ### Contact:
 - Telegram: [@thalissonvs](https://t.me/thalissonvs)
 - LinkedIn: [Thalison Fernandes](https://www.linkedin.com/in/thalison-fernandes/)
+  
+## 🔮 Coming Soon
+
+Get ready for these upcoming features in Pydoll:
+
+🔹 **Proxy Rotation** - Seamless IP switching for extended scraping sessions  
+🔹 **Shadow DOM Access** - Navigate and interact with Shadow Root elements  
+
+Stay tuned and star the repository to get updates when these features are released!
 
 ## 📄 License
 
