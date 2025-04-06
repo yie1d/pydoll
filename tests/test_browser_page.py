@@ -592,8 +592,8 @@ async def test_enable_auto_solve_cloudflare_captcha(page):
     # Test with custom params
     page.on.reset_mock()
     custom_selector = (By.ID, 'custom-captcha')
-    timeout = 10
-    await page.enable_auto_solve_cloudflare_captcha(custom_selector=custom_selector, timeout=timeout)
+    time_to_wait_captcha = 10
+    await page.enable_auto_solve_cloudflare_captcha(custom_selector=custom_selector, time_to_wait_captcha=time_to_wait_captcha)
     
     # Verify the callback was registered with custom params
     assert page.on.called
@@ -634,7 +634,7 @@ async def test_bypass_cloudflare_functionality(page):
     mock_element.click.reset_mock()
     
     custom_selector = (By.ID, 'custom-captcha')
-    await page._bypass_cloudflare({}, custom_selector=custom_selector, timeout=10)
+    await page._bypass_cloudflare({}, custom_selector=custom_selector, time_to_wait_captcha=10)
     
     # Verify correct parameters were used
     page.wait_element.assert_called_once_with(
