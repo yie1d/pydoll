@@ -1,3 +1,11 @@
+## 1.6.0 (2025-04-06)
+
+### Feat
+
+- add connect method to handle existing port scenarios
+- create enable_auto_solve_cloudflare_captcha method
+- add context manager to bypass Cloudflare Turnstile captcha
+
 ## 1.5.1 (2025-03-31)
 
 ### Fix
