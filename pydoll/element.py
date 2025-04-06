@@ -76,6 +76,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             f'{self.__class__.__name__}({attrs})(object_id={self._object_id})'
         )
 
+    @property
+    async def text(self) -> str:
+        """
+        Retrieves the text of the element.
+
+        Returns:
+            str: The text of the element.
+        """
+        outer_html = await self.inner_html
+        soup = BeautifulSoup(outer_html, 'html.parser')
+        return soup.get_text(strip=True)
+
     def _def_attributes(self, attributes_list: list):
         """
         Defines element attributes from a flat list of key-value pairs.
