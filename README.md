@@ -758,19 +758,18 @@ Please make sure to:
 - Use conventional commits for pull requests
 - Run lint and test checks before submitting
 
-## 📞 Professional Support
+## 💖 Support My Work
 
-Need specialized help with your automation projects? I offer professional services for those who need:
+If you find my projects helpful, consider [sponsoring me on GitHub](https://github.com/sponsors/thalissonvs).  
+You’ll get access to exclusive perks like prioritized support, custom features, and more!
 
-- 🔧 **Custom Integration** - Integrate Pydoll into your existing systems
-- 🚀 **Performance Optimization** - Make your automation scripts faster and more reliable
-- 🛡️ **Bypass Solutions** - Help with complex captcha or anti-bot challenges
-- 🎓 **Training & Consultation** - Learn advanced techniques and best practices
-- 💼 **Enterprise Support** - Priority assistance for business-critical applications
+Can’t sponsor right now? No problem — you can still help a lot by:
+- ⭐ Starring the repo
+- 🐦 Sharing it on social media
+- 📝 Writing blog posts or tutorials
+- 💬 Giving feedback or reporting issues
 
-### Contact:
-- Telegram: [@thalissonvs](https://t.me/thalissonvs)
-- LinkedIn: [Thalison Fernandes](https://www.linkedin.com/in/thalison-fernandes/)
+Every bit of support makes a difference — thank you! 🙌
   
 ## 🔮 Coming Soon
 
