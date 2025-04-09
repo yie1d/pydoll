@@ -23,8 +23,9 @@
 ## Dependencies
 <!-- List any new or updated dependencies -->
 
-## Deprecations
-<!-- List any deprecated features or APIs -->
+## Deprecations 
+- While `get_element_text()` is still supported, it is **recommended** to use the new async property `element.text`.
+
 
 ## Documentation
 <!-- Link to updated documentation -->
