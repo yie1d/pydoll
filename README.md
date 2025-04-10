@@ -17,9 +17,6 @@
     <img src="https://tokei.rs/b1/github/thalissonvs/pydoll?category=files" alt="Files">
     <img src="https://tokei.rs/b1/github/thalissonvs/pydoll?category=comments" alt="Comments">
 </p>
-<p align="center">
-    <a href="https://trendshift.io/repositories/13125" target="_blank"><img src="https://trendshift.io/api/badge/repositories/13125" alt="thalissonvs%2Fpydoll | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
 
 <p align="center">
   <b>Pydoll</b> is revolutionizing browser automation! Unlike other solutions, it <b>eliminates the need for webdrivers</b>, 
