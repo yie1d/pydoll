@@ -97,14 +97,15 @@ The documentation includes:
 
 ## Sponsors
 
-Pydoll is proudly supported by these amazing sponsors who believe in the future of webdriver-free automation. Their contributions make it possible for us to maintain and improve this project.
+[CapSolver](https://www.capsolver.com/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll) is an AI-powered tool that easily bypasses Captchas, allowing uninterrupted access to public data with fast, reliable, and cost-effective. And please enjoy the code PYDOLL to get an extra 6% balance! and register [here](https://dashboard.capsolver.com/passport/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll)
 
 <p align="left">
-  <a href="https://www.capsolver.com/" target="_blank">
-    <img src="https://github.com/user-attachments/assets/c1014035-f67b-4c48-bac7-86042f2aa645" alt="Pydoll Sponsors" width="1200" />
+  <a href="https://www.capsolver.com/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll" target="_blank">
+    <img src="https://github.com/user-attachments/assets/aaf49563-2b93-49c3-8f9c-c2dccc8dc0c8" alt="Pydoll Sponsors" width="1200" />
   </a>
 </p>
 
+Pydoll is proudly supported by these amazing sponsors who believe in the future of webdriver-free automation. Their contributions make it possible for us to maintain and improve this project.
 Interested in becoming a sponsor? Check out our [GitHub Sponsors page](https://github.com/sponsors/thalissonvs) for more information about the perks and benefits of sponsoring this project!
 
 ## Contributing
