@@ -2,7 +2,7 @@ import copy
 from pathlib import Path
 from typing import List, Literal, Optional, Union
 
-from pydoll.protocol.commands.runtime import RuntimeCommands
+from pydoll.protocol.commands.runtime_commands import RuntimeCommands
 from pydoll.constants import By, Scripts
 
 

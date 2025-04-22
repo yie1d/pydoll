@@ -7,85 +7,7 @@ from pydoll import exceptions
 logger = logging.getLogger(__name__)
 
 
-class CommandManager:
-    """
-    Manages the lifecycle of commands sent to the browser.
-
-    This class handles the creation of command futures, command ID generation,
-    and resolution of command responses. It maintains a mapping of command IDs
-    to their corresponding futures, allowing asynchronous command execution.
-    """
-
-    def __init__(self):
-        """
-        Initializes the CommandManager.
-
-        Sets up internal state for tracking pending commands and
-        initializes the command ID counter.
-
-        Returns:
-            None
-        """
-        self._pending_commands: dict[int, asyncio.Future] = {}
-        self._id = 1
-
-    def create_command_future(self, command: dict) -> asyncio.Future:
-        """
-        Creates a future for a command and assigns it a unique ID.
-
-        This method assigns a unique ID to the command, creates a future
-        to track its completion, and stores the future in the pending
-        commands dictionary.
-
-        Args:
-            command (dict): The command to prepare for execution.
-
-        Returns:
-            asyncio.Future: A future that will be resolved when the command
-                completes.
-        """
-        command['id'] = self._id
-        future = asyncio.Future()
-        self._pending_commands[self._id] = future
-        self._id += 1
-        return future
-
-    def resolve_command(self, response_id: int, result: str):
-        """
-        Resolves a pending command with its result.
-
-        This method sets the result for the future associated with the
-        command ID and removes it from the pending commands dictionary.
-
-        Args:
-            response_id (int): The ID of the command to resolve.
-            result (str): The result data for the command.
-
-        Returns:
-            None
-        """
-        if response_id in self._pending_commands:
-            self._pending_commands[response_id].set_result(result)
-            del self._pending_commands[response_id]
-
-    def remove_pending_command(self, command_id: int):
-        """
-        Removes a pending command without resolving it.
-
-        This method is useful for handling timeouts or cancellations,
-        allowing cleanup of command futures that will never be resolved.
-
-        Args:
-            command_id (int): The ID of the command to remove.
-
-        Returns:
-            None
-        """
-        if command_id in self._pending_commands:
-            del self._pending_commands[command_id]
-
-
-class EventsHandler:
+class EventsManager:
     """
     Manages event callbacks, event processing, and network logs.
 
@@ -96,7 +18,7 @@ class EventsHandler:
 
     def __init__(self):
         """
-        Initializes the EventsHandler.
+        Initializes the EventsManager.
 
         Sets up internal state for tracking event callbacks, initializes
         the callback ID counter, and creates empty collections for network
@@ -109,7 +31,7 @@ class EventsHandler:
         self._callback_id = 0
         self.network_logs = []
         self.dialog = {}
-        logger.info('EventsHandler initialized')
+        logger.info('EventsManager initialized')
 
     def register_callback(
         self, event_name: str, callback: Callable, temporary: bool = False

@@ -6,7 +6,7 @@ from typing import Callable
 import websockets
 
 from pydoll import exceptions
-from pydoll.connection.managers import CommandManager, EventsHandler
+from pydoll.connection.managers import CommandsManager, EventsManager
 from pydoll.utils import get_browser_ws_address
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,8 @@ class ConnectionHandler:
         self._ws_address_resolver = ws_address_resolver
         self._ws_connector = ws_connector
         self._ws_connection = None
-        self._command_manager = CommandManager()
-        self._events_handler = EventsHandler()
+        self._command_manager = CommandsManager()
+        self._events_handler = EventsManager()
         logger.info('ConnectionHandler initialized.')
 
     @property

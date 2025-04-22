@@ -43,7 +43,7 @@ async def mock_browser():
             autospec=True,
         ) as mock_temp_dir_manager,
         patch(
-            'pydoll.connection.connection.ConnectionHandler',
+            'pydoll.connection.ConnectionHandler',
             autospec=True,
         ) as mock_conn_handler,
         patch(

@@ -16,7 +16,7 @@ from pydoll.protocol.commands import (
     RuntimeCommands,
     StorageCommands,
 )
-from pydoll.connection.connection import ConnectionHandler
+from pydoll.connection import ConnectionHandler
 from pydoll.constants import By
 from pydoll.elements.web_element import WebElement
 from pydoll.protocol.events import PageEvents

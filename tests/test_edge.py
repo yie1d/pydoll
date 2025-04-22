@@ -47,7 +47,7 @@ async def mock_browser() -> AsyncGenerator[ConcreteEdge, None]:
         'pydoll.browser.managers.TempDirectoryManager',
         autospec=True,
     ) as mock_temp_dir_manager, patch(
-        'pydoll.connection.connection.ConnectionHandler',
+        'pydoll.connection.ConnectionHandler',
         autospec=True,
     ) as mock_conn_handler, patch(
         'pydoll.browser.managers.ProxyManager',

@@ -19,7 +19,7 @@ from pydoll.elements.web_element import WebElement
 @pytest_asyncio.fixture
 async def mock_connection_handler():
     with patch(
-        'pydoll.connection.connection.ConnectionHandler', autospec=True
+        'pydoll.connection.ConnectionHandler', autospec=True
     ) as mock:
         handler = mock.return_value
         handler.execute_command = AsyncMock()

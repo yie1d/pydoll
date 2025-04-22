@@ -8,7 +8,7 @@ import aiofiles
 from bs4 import BeautifulSoup
 
 from pydoll import exceptions
-from pydoll.connection.connection import ConnectionHandler
+from pydoll.connection import ConnectionHandler
 from pydoll.constants import Scripts
 from pydoll.elements.mixins import FindElementsMixin
 from pydoll.protocol.commands import (

@@ -20,7 +20,7 @@ async def mock_browser():
             ),
         ),
         patch(
-            'pydoll.connection.connection.ConnectionHandler',
+            'pydoll.connection.ConnectionHandler',
             autospec=True,
         ) as mock_conn_handler,
     ):

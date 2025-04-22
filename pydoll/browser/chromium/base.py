@@ -20,7 +20,7 @@ from pydoll.protocol.commands import (
     StorageCommands,
     TargetCommands,
 )
-from pydoll.connection.connection import ConnectionHandler
+from pydoll.connection import ConnectionHandler
 from pydoll.protocol.events import FetchEvents, PageEvents
 
 

@@ -1,4 +1,4 @@
-from pydoll.elements.mixins.find_elements import FindElementsMixin
+from pydoll.elements.mixins.find_elements_mixin import FindElementsMixin
 
 
 __all__ = [

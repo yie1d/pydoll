@@ -1,7 +1,7 @@
-from pydoll.browser.managers.browser_options import BrowserOptionsManager
-from pydoll.browser.managers.browser_process import BrowserProcessManager
-from pydoll.browser.managers.proxy import ProxyManager
-from pydoll.browser.managers.temp_dir import TempDirectoryManager
+from pydoll.browser.managers.browser_options_manager import BrowserOptionsManager
+from pydoll.browser.managers.browser_process_manager import BrowserProcessManager
+from pydoll.browser.managers.proxy_manager import ProxyManager
+from pydoll.browser.managers.temp_dir_manager import TempDirectoryManager
 
 
 __all__ = [
