@@ -31,6 +31,31 @@
   <a href="#-license">License</a>
 </p>
 
+## Big Updates Are in the Works!
+
+I'm working on a major update for **pydoll**, bringing several improvements and exciting new features. This version introduces some breaking changes, and I'm taking time to make things cleaner, faster, and easier to maintain.
+
+### What's changing?
+- Refactored module and file structure for better clarity and maintainability
+- Improved logging system for easier debugging and issue tracking
+- Static typing support using `mypy`
+- A modern, dynamic way to query elements (moving away from the Selenium-style approach)
+
+### New Features Coming
+- `connect_to_remote` to support remote browser connections
+- `set_browser_prefs` in the `Options` class to more concise and pragmatic Chrome configuration
+- Shadow DOM interaction support
+- HTML extension interface interaction
+- Improved click system (hover, drag, move – like `ActionChains`)
+- Dynamic proxy switching (no need to restart browser)
+
+### What to Expect
+This is a big shift and may take a bit of time. While v2 is in progress:
+- Releases may slow down temporarily
+- Focus will shift to bugfixes and issue responses
+
+Thanks for your continued support, and stay tuned!
+
 ## Key Features
 
 🔹 **Zero Webdrivers!** Say goodbye to webdriver compatibility nightmares  
@@ -97,7 +122,7 @@ The documentation includes:
 
 ## Sponsors
 
-[CapSolver](https://www.capsolver.com/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll) is an AI-powered tool that easily bypasses Captchas, allowing uninterrupted access to public data with fast, reliable, and cost-effective. And please enjoy the code PYDOLL to get an extra 6% balance! and register [here](https://dashboard.capsolver.com/passport/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll)
+[CapSolver](https://www.capsolver.com/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll) is an AI-powered tool that easily bypasses Captchas, allowing uninterrupted access to public data with fast, reliable, and cost-effective. And please enjoy the code PYDOLL to get an extra 6% balance! You can register [here](https://dashboard.capsolver.com/passport/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll).
 
 <p align="left">
   <a href="https://www.capsolver.com/?utm_source=github&utm_medium=banner_repo&utm_campaign=scraping&utm_term=pydoll" target="_blank">
