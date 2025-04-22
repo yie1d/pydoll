@@ -4,7 +4,7 @@ from functools import partial
 from random import randint
 
 from pydoll import exceptions
-from pydoll.browser.constants import BrowserType
+from pydoll.constants import BrowserType
 from pydoll.browser.managers import (
     BrowserOptionsManager,
     BrowserProcessManager,

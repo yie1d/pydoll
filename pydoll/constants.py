@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class By(str, Enum):
@@ -177,3 +177,8 @@ class Keys:
     BACKSLASH = ('Backslash', 220)
     BRACKETRIGHT = ('BracketRight', 221)
     QUOTE = ('Quote', 222)
+
+
+class BrowserType(Enum):
+    CHROME = auto()
+    EDGE = auto()

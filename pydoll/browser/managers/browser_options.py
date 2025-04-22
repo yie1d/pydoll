@@ -1,6 +1,6 @@
 import os
 
-from pydoll.browser.constants import BrowserType
+from pydoll.constants import BrowserType
 from pydoll.browser.options import ChromeOptions, EdgeOptions, Options
 
 
