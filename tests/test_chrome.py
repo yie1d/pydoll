@@ -9,7 +9,7 @@ from pydoll.browser.base import Browser
 from pydoll.browser.managers import ProxyManager, BrowserOptionsManager
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     BrowserCommands,
     DomCommands,
     FetchCommands,
@@ -17,7 +17,7 @@ from pydoll.commands import (
     StorageCommands,
     TargetCommands,
 )
-from pydoll.events import FetchEvents, PageEvents
+from pydoll.protocol.events import FetchEvents, PageEvents
 
 
 class ConcreteBrowser(Browser):

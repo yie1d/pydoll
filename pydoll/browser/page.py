@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Union
 
 import aiofiles
 
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     DomCommands,
     FetchCommands,
     NetworkCommands,
@@ -19,7 +19,7 @@ from pydoll.commands import (
 from pydoll.connection.connection import ConnectionHandler
 from pydoll.constants import By
 from pydoll.element import WebElement
-from pydoll.events import PageEvents
+from pydoll.protocol.events import PageEvents
 from pydoll.exceptions import InvalidFileExtension
 from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes

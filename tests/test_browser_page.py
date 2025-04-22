@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch, ANY
 from pydoll.constants import By
 from pydoll.browser.page import Page
 from pydoll.element import WebElement
-from pydoll.events import PageEvents
+from pydoll.protocol.events import PageEvents
 
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     DomCommands,
     RuntimeCommands,
     NetworkCommands,

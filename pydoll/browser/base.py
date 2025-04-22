@@ -13,7 +13,7 @@ from pydoll.browser.managers import (
 )
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     BrowserCommands,
     FetchCommands,
     NetworkCommands,
@@ -21,7 +21,7 @@ from pydoll.commands import (
     TargetCommands,
 )
 from pydoll.connection.connection import ConnectionHandler
-from pydoll.events import FetchEvents, PageEvents
+from pydoll.protocol.events import FetchEvents, PageEvents
 
 
 class Browser(ABC):  # noqa: PLR0904

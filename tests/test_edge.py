@@ -14,14 +14,16 @@ from pydoll.browser.managers import (
 )
 from pydoll.browser.options import EdgeOptions, Options
 from pydoll.browser.page import Page
-from pydoll.commands.browser import BrowserCommands
-from pydoll.commands.dom import DomCommands
-from pydoll.commands.fetch import FetchCommands
-from pydoll.commands.network import NetworkCommands
-from pydoll.commands.page import PageCommands
-from pydoll.commands.storage import StorageCommands
-from pydoll.commands.target import TargetCommands
-from pydoll.events.fetch import FetchEvents
+from pydoll.protocol.commands import (
+    BrowserCommands,
+    DomCommands,
+    FetchCommands,
+    NetworkCommands,
+    PageCommands,
+    StorageCommands,
+    TargetCommands,
+)
+from pydoll.protocol.events import FetchEvents
 
 
 class ConcreteEdge(Edge):
