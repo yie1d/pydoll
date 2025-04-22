@@ -1,4 +1,4 @@
-from pydoll.commands import InputCommands
+from pydoll.protocol.commands import InputCommands
 from pydoll.constants import Keys
 
 

@@ -18,10 +18,10 @@ from pydoll.protocol.commands import (
 )
 from pydoll.connection.connection import ConnectionHandler
 from pydoll.constants import By
-from pydoll.element import WebElement
+from pydoll.elements.web_element import WebElement
 from pydoll.protocol.events import PageEvents
 from pydoll.exceptions import InvalidFileExtension
-from pydoll.mixins.find_elements import FindElementsMixin
+from pydoll.elements.mixins import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
 logger = logging.getLogger(__name__)

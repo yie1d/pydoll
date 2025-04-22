@@ -8,12 +8,12 @@ from pydoll.exceptions import (
     ElementNotInteractable,
     ElementNotFound,
 )
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     DomCommands,
     InputCommands,
 )
 
-from pydoll.element import WebElement
+from pydoll.elements.web_element import WebElement
 
 
 @pytest_asyncio.fixture
@@ -283,10 +283,10 @@ async def test__is_element_on_top(web_element):
 
 
 @pytest.mark.asyncio
-async def test_type_keys(web_element):
+async def test_type_text(web_element):
     test_text = 'Hi'
     with patch('asyncio.sleep') as mock_sleep:
-        await web_element.type_keys(test_text)
+        await web_element.type_text(test_text)
 
     assert web_element._connection_handler.execute_command.call_count == len(
         test_text

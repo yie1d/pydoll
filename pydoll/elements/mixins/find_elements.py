@@ -1,7 +1,7 @@
 import asyncio
 
 from pydoll import exceptions
-from pydoll.commands import (
+from pydoll.protocol.commands import (
     DomCommands,
     RuntimeCommands,
 )
@@ -22,7 +22,7 @@ def create_web_element(*args, **kwargs):
     Returns:
         WebElement: A new WebElement instance.
     """
-    from pydoll.element import WebElement  # noqa: PLC0415
+    from pydoll.elements.web_element import WebElement  # noqa: PLC0415
 
     return WebElement(*args, **kwargs)
 
