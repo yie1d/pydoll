@@ -6,8 +6,8 @@ import pytest
 import pytest_asyncio
 
 from pydoll import exceptions
-from pydoll.browser.edge import Edge
-from pydoll.browser.base import Browser
+from pydoll.browser.chromium.edge import Edge
+from pydoll.browser.chromium.base import Browser
 from pydoll.browser.managers import (
     ProxyManager,
     BrowserOptionsManager
@@ -137,7 +137,7 @@ async def test_edge_start_failure_invalid_binary(mock_browser):
     mock_browser._browser_process_manager.start_browser_process.side_effect = OSError("Browser not found")
     
 
-    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+    with patch('pydoll.browser.chromium.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(OSError, match="Browser not found"):
             await mock_browser.start()
@@ -148,7 +148,7 @@ async def test_start_browser_failure(mock_browser):
     """Test browser start failure with immediate timeout"""
     mock_browser._connection_handler.ping.return_value = False
     
-    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+    with patch('pydoll.browser.chromium.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
             await mock_browser.start()
@@ -283,7 +283,7 @@ async def test_stop_browser_not_running(mock_browser):
     """Test browser stop with immediate timeout when not running"""
     mock_browser._connection_handler.ping.return_value = False
     
-    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+    with patch('pydoll.browser.chromium.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
             await mock_browser.stop()

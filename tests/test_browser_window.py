@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from pydoll.browser.base import Browser
+from pydoll.browser.chromium.base import Browser
 from pydoll.protocol.commands import BrowserCommands
 
 

@@ -4,8 +4,8 @@ import pytest
 import pytest_asyncio
 
 from pydoll import exceptions
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.base import Browser
+from pydoll.browser.chromium.chrome import Chrome
+from pydoll.browser.chromium.base import Browser
 from pydoll.browser.managers import ProxyManager, BrowserOptionsManager
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
@@ -100,7 +100,7 @@ async def test_start_browser_success(mock_browser):
 @pytest.mark.asyncio
 async def test_start_browser_failure(mock_browser):
     mock_browser._connection_handler.ping.return_value = False
-    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+    with patch('pydoll.browser.chromium.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
             await mock_browser.start()
@@ -298,7 +298,7 @@ async def test_stop_browser(mock_browser):
 @pytest.mark.asyncio
 async def test_stop_browser_not_running(mock_browser):
     mock_browser._connection_handler.ping.return_value = False
-    with patch('pydoll.browser.base.asyncio.sleep', AsyncMock()) as mock_sleep:
+    with patch('pydoll.browser.chromium.base.asyncio.sleep', AsyncMock()) as mock_sleep:
         mock_sleep.return_value = False
         with pytest.raises(exceptions.BrowserNotRunning):
             await mock_browser.stop()
