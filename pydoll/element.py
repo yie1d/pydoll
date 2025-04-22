@@ -450,7 +450,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             interval (float): The interval between two keys.
         """
         for char in text:
-            await self._execute_command(InputCommands.key_press(char))
+            await self._execute_command(InputCommands.char_press(char))
             await asyncio.sleep(interval)
 
         self._last_input = text

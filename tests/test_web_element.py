@@ -317,10 +317,10 @@ async def test_type_keys(web_element):
         test_text
     )
     web_element._connection_handler.execute_command.assert_any_call(
-        InputCommands.key_press('H'), timeout=60
+        InputCommands.char_press('H'), timeout=60
     )
     web_element._connection_handler.execute_command.assert_any_call(
-        InputCommands.key_press('i'), timeout=60
+        InputCommands.char_press('i'), timeout=60
     )
 
 

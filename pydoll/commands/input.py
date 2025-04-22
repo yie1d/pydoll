@@ -1,6 +1,3 @@
-from pydoll.common.keyboard import Keyboard
-
-
 class InputCommands:
     """
     A class to define input commands for simulating user interactions
@@ -14,7 +11,6 @@ class InputCommands:
     }
     KEY_PRESS_TEMPLATE = {'method': 'Input.dispatchKeyEvent', 'params': {}}
     INSERT_TEXT_TEMPLATE = {'method': 'Input.insertText', 'params': {}}
-    KEYBOARD = Keyboard()
 
     @classmethod
     def mouse_press(cls, x: int, y: int) -> dict:
@@ -70,7 +66,7 @@ class InputCommands:
         return command
 
     @classmethod
-    def key_press(cls, char: str) -> dict:
+    def char_press(cls, char: str) -> dict:
         """
         Generates the command to simulate pressing a key on the keyboard.
 
@@ -110,7 +106,7 @@ class InputCommands:
         return command
 
     @classmethod
-    def key_down(cls, key: list | tuple, command_id: int) -> dict:
+    def key_down(cls, key: list | tuple, command_id: int, modifiers) -> dict:
         """
         Generates the command to simulate pressing a key on the keyboard.
 
@@ -126,30 +122,17 @@ class InputCommands:
             dict: A dictionary containing the command to be sent to
                 the browser.
         """
-        key, key_code = key
-        if key in cls.KEYBOARD.MODIFIER_KEYS:
-            cls.KEYBOARD.modifiers.add(key)
-
-        modifiers = sum(
-            cls.KEYBOARD.MODIFIER_KEYS[k] for k in cls.KEYBOARD.modifiers
-        )
-
-        special_key = cls.KEYBOARD.get_special_key(key, modifiers, key_code)
-        vk_code = cls.KEYBOARD.SHIFT_SPECIAL.get(special_key, key_code)
-        special_code = cls.KEYBOARD.get_special_code(key)
-
-        key_down = {
+        press_key, key_code = key
+        params = {
             'type': 'keyDown',
-            'key': key,
-            'code': special_code,
-            'windowsVirtualKeyCode': vk_code,
-            'modifiers': modifiers,
-            'text': special_key,
+            'key': press_key,
+            'windowsVirtualKeyCode': key_code,
         }
+        if modifiers:
+            params['modifiers'] = modifiers
 
         command = cls.KEY_PRESS_TEMPLATE.copy()
-        command['id'] = command_id
-        command['params'] = key_down
+        command['params'] = params
         return command
 
     @classmethod
@@ -169,27 +152,12 @@ class InputCommands:
             dict: A dictionary containing the command to be sent to
                 the browser.
         """
-        key, key_code = key
-        if key in cls.KEYBOARD.MODIFIER_KEYS:
-            cls.KEYBOARD.modifiers.discard(key)
-
-        modifiers = sum(
-            cls.KEYBOARD.MODIFIER_KEYS[k] for k in cls.KEYBOARD.modifiers
-        )
-
-        special_key = cls.KEYBOARD.SHIFT_MAP.get(key, key)
-        vk_code = cls.KEYBOARD.SHIFT_SPECIAL.get(special_key, key_code)
-        special_code = cls.KEYBOARD.get_special_code(key)
-
-        key_up = {
+        press_key, key_code = key
+        params = {
             'type': 'keyUp',
-            'key': key,
-            'code': special_code,
-            'windowsVirtualKeyCode': vk_code,
-            'modifiers': modifiers,
+            'key': press_key,
+            'windowsVirtualKeyCode': key_code,
         }
-
         command = cls.KEY_PRESS_TEMPLATE.copy()
-        command['id'] = command_id
-        command['params'] = key_up
+        command['params'] = params
         return command
