@@ -283,31 +283,6 @@ async def test__is_element_on_top(web_element):
 
 
 @pytest.mark.asyncio
-async def test_send_keys_text(web_element):
-    test_text = 'Hello World'
-    keys = [(char, ord(char.upper())) for char in test_text]
-
-    await web_element.send_keys(test_text)
-
-    assert (
-        web_element._connection_handler.execute_command.call_count
-        == len(test_text) * 2
-    )
-
-    count = 1
-    for char, key_code in keys:
-        web_element._connection_handler.execute_command.assert_any_call(
-            InputCommands.key_down((char, key_code), count), timeout=60
-        )
-        count += 1
-
-        web_element._connection_handler.execute_command.assert_any_call(
-            InputCommands.key_up((char, key_code), count), timeout=60
-        )
-        count += 1
-
-
-@pytest.mark.asyncio
 async def test_type_keys(web_element):
     test_text = 'Hi'
     with patch('asyncio.sleep') as mock_sleep:

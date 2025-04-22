@@ -2,21 +2,21 @@ import asyncio
 import json
 import warnings
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 
 import aiofiles
 from bs4 import BeautifulSoup
 
 from pydoll import exceptions
-from pydoll.commands import (
+from pydoll.connection.connection import ConnectionHandler
+from pydoll.constants import Scripts
+from pydoll.elements.mixins import FindElementsMixin
+from pydoll.protocol.commands import (
     DomCommands,
     InputCommands,
     PageCommands,
     RuntimeCommands,
 )
-from pydoll.connection.connection import ConnectionHandler
-from pydoll.constants import Scripts
-from pydoll.mixins.find_elements import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
 
@@ -419,7 +419,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Args:
             text (str): The text to send to the element.
         """
-        await self._execute_command(InputCommands.paste_text(text))
+        await self._execute_command(InputCommands.insert_text(text))
 
     async def set_input_files(
         self, files: Union[str, Path, List[Union[str, Path]]]
@@ -441,7 +441,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             DomCommands.upload_files(files=files, object_id=self._object_id)
         )
 
-    async def type_keys(self, text: str, interval: float = 0.1):
+    async def type_text(self, text: str, interval: float = 0.1):
         """
         Types in a realistic manner by sending keys one by one.
 
@@ -453,18 +453,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             await self._execute_command(InputCommands.char_press(char))
             await asyncio.sleep(interval)
 
-        self._last_input = text
-
-    async def key_down(self, key: list | tuple):
+    async def key_down(self, key: tuple, modifiers: int):
         """
         Simulates pressing down a key.
 
         Args:
             key (list|tuple): The key to press.
         """
-        self._command_id += 1
         await self._execute_command(
-            InputCommands.key_down(key, self._command_id)
+            InputCommands.key_down(key, modifiers)
         )
 
     async def key_up(self, key: list | tuple):
@@ -474,41 +471,19 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Args:
             key (list|tuple): The key to release.
         """
-        self._command_id += 1
         await self._execute_command(
-            InputCommands.key_up(key, self._command_id)
+            InputCommands.key_up(key)
         )
 
-    async def send_keys(self, keys: str | tuple, interval: float = 0.1):
-        """
-        Dispatches an event.
-
-        Args:
-            keys (str | tuple): The event to dispatch.
-            interval (float): The interval between two keys.
-        """
-        if isinstance(keys, str):
-            self._last_input = keys
-            keys = [(char, ord(char.upper())) for char in keys]
-        elif not all(isinstance(k, tuple) for k in keys):
-            keys = [keys]
-
-        for key in keys:
-            await self.key_down(key)
-            await self.key_up(key)
-            await asyncio.sleep(interval)
-
-    async def backspace(self, interval: float = 0.1):
-        """
-        Backspaces the key at the element.
-
-        Args:
-            interval (float): The interval between two keys.
-        """
-        for _ in range(len(self._last_input)):
-            await self.send_keys(('Backspace', 8))
-            await asyncio.sleep(interval)
-            self._last_input = self._last_input[:-1]
+    async def press_keyboard_key(
+        self,
+        key: tuple,
+        modifiers: Optional[int] = None,
+        interval: float = 0.1
+    ):
+        await self.key_down(key, modifiers)
+        await asyncio.sleep(interval)
+        await self.key_up(key)
 
     def _is_option_tag(self):
         """

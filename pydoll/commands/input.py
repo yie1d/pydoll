@@ -87,7 +87,7 @@ class InputCommands:
         return command
 
     @classmethod
-    def insert_text(cls, text: str) -> dict:
+    def paste_text(cls, text: str) -> dict:
         """
         Generates the command to insert text into an input field.
 

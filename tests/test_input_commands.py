@@ -1,5 +1,5 @@
 from pydoll.commands import InputCommands
-from pydoll.common.keys import Keys
+from pydoll.constants import Keys
 
 
 def test_mouse_press():
@@ -46,7 +46,7 @@ def test_key_press():
     assert InputCommands.char_press(char) == expected_command
 
 
-def test_insert_text():
+def test_paste_text():
     text = 'hello'
     expected_command = {
         'method': 'Input.insertText',
@@ -54,4 +54,4 @@ def test_insert_text():
             'text': text,
         },
     }
-    assert InputCommands.insert_text(text) == expected_command
+    assert InputCommands.paste_text(text) == expected_command
