@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from pydoll.protocol.types.commands import WindowBoundsDict
+from pydoll.protocol.types.commands_types import WindowBoundsDict
 
 
 class ResponseResult(TypedDict, total=False):

@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import List, Optional
 
-from pydoll.protocol.types.commands import (
+from pydoll.protocol.types.commands_types import (
     CancelDownloadParams,
     Command,
     DownloadBehavior,
@@ -14,7 +14,7 @@ from pydoll.protocol.types.commands import (
     WindowBoundsDict,
     WindowState,
 )
-from pydoll.protocol.types.responses import (
+from pydoll.protocol.types.responses_types import (
     GetVersionResponse,
     GetWindowForTargetResponse,
     Response,
