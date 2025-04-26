@@ -1,12 +1,13 @@
 from typing import List, NotRequired, TypedDict
 
-from pydoll.protocol.types.commands.base_types import CommandParams
-from pydoll.protocol.types.enums import (
+from pydoll.constants import (
     AuthChallengeResponseValues,
-    RequestMethods,
+    NetworkErrorReason,
+    RequestMethod,
+    RequestStage,
     ResourceType,
-    RequestStage
 )
+from pydoll.protocol.types.commands.base_types import CommandParams
 
 
 class HeaderEntry(TypedDict):
@@ -33,7 +34,7 @@ class ContinueRequestParams(CommandParams):
 
     requestId: str
     url: NotRequired[str]
-    method: NotRequired[RequestMethods]
+    method: NotRequired[RequestMethod]
     postData: NotRequired[dict]
     headers: NotRequired[List[HeaderEntry]]
     interceptResponse: NotRequired[bool]
@@ -46,4 +47,32 @@ class ContinueWithAuthParams(CommandParams):
 
 class EnableParams(CommandParams):
     patterns: NotRequired[List[RequestPattern]]
-    handleAuthRequests: NotRequired[bool] 
+    handleAuthRequests: NotRequired[bool]
+
+
+class FailRequestParams(CommandParams):
+    requestId: str
+    errorReason: NetworkErrorReason
+
+
+class FulfillRequestParams(CommandParams):
+    requestId: str
+    responseCode: int
+    responseHeaders: NotRequired[List[HeaderEntry]]
+    body: NotRequired[dict]
+    responsePhrase: NotRequired[str]
+
+
+class GetResponseBodyParams(CommandParams):
+    requestId: str
+
+
+class TakeResponseBodyAsStreamParams(CommandParams):
+    requestId: str
+
+
+class ContinueResponseParams(CommandParams):
+    requestId: str
+    responseCode: NotRequired[int]
+    responsePhrase: NotRequired[str]
+    responseHeaders: NotRequired[List[HeaderEntry]]

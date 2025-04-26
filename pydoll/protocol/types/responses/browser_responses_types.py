@@ -1,4 +1,6 @@
-from pydoll.protocol.types.commands.browser_commands_types import WindowBoundsDict
+from pydoll.protocol.types.commands.browser_commands_types import (
+    WindowBoundsDict,
+)
 from pydoll.protocol.types.responses.base_types import Response, ResponseResult
 
 
@@ -28,4 +30,4 @@ class GetWindowForTargetResponse(Response):
 class GetVersionResponse(Response):
     """Response structure for GetVersion command."""
 
-    result: GetVersionResultDict 
+    result: GetVersionResultDict

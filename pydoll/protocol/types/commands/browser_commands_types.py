@@ -1,11 +1,7 @@
 from typing import List, NotRequired
 
+from pydoll.constants import DownloadBehavior, PermissionType, WindowState
 from pydoll.protocol.types.commands.base_types import CommandParams
-from pydoll.protocol.types.enums import (
-    DownloadBehavior,
-    PermissionType,
-    WindowState
-)
 
 
 class WindowBoundsDict(TypedDict):
@@ -58,4 +54,4 @@ class GrantPermissionsParams(CommandParams):
 
     permissions: List[PermissionType]
     origin: NotRequired[str]
-    browserContextId: NotRequired[str] 
+    browserContextId: NotRequired[str]

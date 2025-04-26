@@ -18,4 +18,4 @@ class Command(TypedDict, Generic[T_CommandResponse]):
     """
 
     method: str
-    params: NotRequired[CommandParams] 
+    params: NotRequired[CommandParams]

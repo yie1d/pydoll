@@ -16,4 +16,4 @@ class Response(TypedDict):
     """
 
     id: int
-    result: ResponseResult 
+    result: ResponseResult
