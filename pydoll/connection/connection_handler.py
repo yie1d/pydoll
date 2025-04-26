@@ -7,7 +7,7 @@ import websockets
 
 from pydoll import exceptions
 from pydoll.connection.managers import CommandsManager, EventsManager
-from pydoll.protocol.types.commands_types import Command, T_CommandResponse
+from pydoll.protocol.types.commands import Command, T_CommandResponse
 from pydoll.utils import get_browser_ws_address
 
 logger = logging.getLogger(__name__)

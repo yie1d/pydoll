@@ -1,24 +1,27 @@
 from copy import deepcopy
 from typing import List, Optional
 
-from pydoll.protocol.types.commands_types import (
+from pydoll.protocol.types.commands import (
     CancelDownloadParams,
-    Command,
-    DownloadBehavior,
     GetWindowForTargetParams,
     GrantPermissionsParams,
-    PermissionType,
     ResetPermissionsParams,
     SetDownloadBehaviorParams,
     SetWindowBoundsParams,
     WindowBoundsDict,
+    Command,
+)
+from pydoll.protocol.types.enums import (
+    DownloadBehavior,
+    PermissionType,
     WindowState,
 )
-from pydoll.protocol.types.responses_types import (
+from pydoll.protocol.types.responses import (
     GetVersionResponse,
     GetWindowForTargetResponse,
-    Response,
+    Response
 )
+
 
 
 class BrowserCommands:

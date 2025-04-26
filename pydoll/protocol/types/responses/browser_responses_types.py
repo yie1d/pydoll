@@ -1,24 +1,5 @@
-from typing import TypedDict
-
-from pydoll.protocol.types.commands_types import WindowBoundsDict
-
-
-class ResponseResult(TypedDict, total=False):
-    """Base structure for all response results."""
-
-    pass
-
-
-class Response(TypedDict):
-    """Base structure for all responses.
-
-    Attributes:
-        id: The ID that matches the command ID
-        result: The result data for the command
-    """
-
-    id: int
-    result: ResponseResult
+from pydoll.protocol.types.commands.browser_commands_types import WindowBoundsDict
+from pydoll.protocol.types.responses.base_types import Response, ResponseResult
 
 
 class GetWindowForTargetResultDict(ResponseResult):
@@ -47,4 +28,4 @@ class GetWindowForTargetResponse(Response):
 class GetVersionResponse(Response):
     """Response structure for GetVersion command."""
 
-    result: GetVersionResultDict
+    result: GetVersionResultDict 
