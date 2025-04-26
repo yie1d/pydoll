@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 from pydoll.protocol.types.commands.browser import (
-    Command,
     GetWindowForTargetParams,
     SetDownloadBehaviorParams,
     SetWindowBoundsParams,
@@ -9,6 +8,9 @@ from pydoll.protocol.types.commands.browser import (
     WindowState,
     DownloadBehavior
 )
+from pydoll.protocol.types.commands.common import Command
+from pydoll.protocol.types.responses.common import Response
+from pydoll.protocol.types.responses.browser import GetWindowForTargetResponse
 
 
 class BrowserCommands:
@@ -29,13 +31,12 @@ class BrowserCommands:
     """
 
     CLOSE = Command(method='Browser.close')
-    GET_WINDOW_ID = Command(method='Browser.WindowID')
     GET_WINDOW_ID_BY_TARGET = Command(method='Browser.getWindowForTarget')
     SET_WINDOW_BOUNDS_TEMPLATE = Command(method='Browser.setWindowBounds')
     SET_DOWNLOAD_BEHAVIOR = Command(method='Browser.setDownloadBehavior')
 
     @classmethod
-    def set_download_path(cls, path: str) -> Command:
+    def set_download_path(cls, path: str) -> Command[Response]:
         """
         Generates the command to set the download path for the browser.
 
@@ -54,7 +55,7 @@ class BrowserCommands:
         return command
 
     @classmethod
-    def close(cls) -> Command:
+    def close(cls) -> Command[Response]:
         """
         Generates the command to close the browser.
 
@@ -64,17 +65,7 @@ class BrowserCommands:
         return cls.CLOSE
 
     @classmethod
-    def get_window_id(cls) -> Command:
-        """
-        Generates the command to get the ID of the current window.
-
-        Returns:
-            Command: The command to be sent to the browser.
-        """
-        return cls.GET_WINDOW_ID
-
-    @classmethod
-    def get_window_id_by_target(cls, target_id: str) -> Command:
+    def get_window_id_by_target(cls, target_id: str) -> Command[GetWindowForTargetResponse]:
         """
         Generates the command to get the ID of the current window.
 
@@ -90,7 +81,7 @@ class BrowserCommands:
         return command
 
     @classmethod
-    def set_window_bounds(cls, window_id: int, bounds: WindowBoundsDict) -> Command:
+    def set_window_bounds(cls, window_id: int, bounds: WindowBoundsDict) -> Command[Response]:
         """
         Generates the command to set the bounds of a window.
 
@@ -112,7 +103,7 @@ class BrowserCommands:
         return command
 
     @classmethod
-    def set_window_maximized(cls, window_id: int) -> Command:
+    def set_window_maximized(cls, window_id: int) -> Command[Response]:
         """
         Generates the command to maximize a window.
 
@@ -126,7 +117,7 @@ class BrowserCommands:
         return cls.set_window_bounds(window_id, bounds)
 
     @classmethod
-    def set_window_minimized(cls, window_id: int) -> Command:
+    def set_window_minimized(cls, window_id: int) -> Command[Response]:
         """
         Generates the command to minimize a window.
 
