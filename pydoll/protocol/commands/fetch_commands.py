@@ -1,3 +1,34 @@
+from copy import deepcopy
+from typing import List, Optional
+
+from pydoll.constants import (
+    AuthChallengeResponseValues,
+    NetworkErrorReason,
+    RequestMethod,
+    RequestStage,
+    ResourceType,
+)
+from pydoll.protocol.types.commands import (
+    AuthChallengeResponseDict,
+    Command,
+    ContinueRequestParams,
+    ContinueResponseParams,
+    ContinueWithAuthParams,
+    EnableParams,
+    FailRequestParams,
+    FulfillRequestParams,
+    GetResponseBodyParams,
+    HeaderEntry,
+    RequestPattern,
+    TakeResponseBodyAsStreamParams,
+)
+from pydoll.protocol.types.responses import (
+    GetResponseBodyResponse,
+    Response,
+    TakeResponseBodyAsStreamResponse,
+)
+
+
 class FetchCommands:
     """
     A collection of command templates for handling fetch events in the browser.
@@ -9,44 +40,46 @@ class FetchCommands:
     authentication challenges.
 
     Attributes:
-        CONTINUE_REQUEST (dict): Template for continuing an intercepted fetch
+        CONTINUE_REQUEST (Command): Template for continuing an intercepted fetch
             request.
-        CONTINUE_REQUEST_WITH_AUTH (dict): Template for continuing a fetch
+        CONTINUE_REQUEST_WITH_AUTH (Command): Template for continuing a fetch
             request that requires authentication.
-        DISABLE (dict): Template for disabling fetch interception.
-        ENABLE (dict): Template for enabling fetch interception.
-        FAIL_REQUEST (dict): Template for simulating a failure in a fetch
+        DISABLE (Command): Template for disabling fetch interception.
+        ENABLE (Command): Template for enabling fetch interception.
+        FAIL_REQUEST (Command): Template for simulating a failure in a fetch
             request.
-        FULFILL_REQUEST (dict): Template for fulfilling a fetch request with
+        FULFILL_REQUEST (Command): Template for fulfilling a fetch request with
             custom responses.
-        GET_RESPONSE_BODY (dict): Template for retrieving the response body of
+        GET_RESPONSE_BODY (Command): Template for retrieving the response body of
             a fetch request.
-        CONTINUE_RESPONSE (dict): Template for continuing a fetch response for
+        CONTINUE_RESPONSE (Command): Template for continuing a fetch response for
             an intercepted request.
+        TAKE_RESPONSE_BODY_AS_STREAM (Command): Template for taking response body
+            as a stream.
     """
 
-    CONTINUE_REQUEST = {'method': 'Fetch.continueRequest', 'params': {}}
-    CONTINUE_REQUEST_WITH_AUTH = {
-        'method': 'Fetch.continueWithAuth',
-        'params': {},
-    }
-    DISABLE = {'method': 'Fetch.disable', 'params': {}}
-    ENABLE = {'method': 'Fetch.enable', 'params': {}}
-    FAIL_REQUEST = {'method': 'Fetch.failRequest', 'params': {}}
-    FULFILL_REQUEST = {'method': 'Fetch.fulfillRequest', 'params': {}}
-    GET_RESPONSE_BODY = {'method': 'Fetch.getResponseBody', 'params': {}}
-    CONTINUE_RESPONSE = {'method': 'Fetch.continueResponse', 'params': {}}
+    CONTINUE_REQUEST = Command(method='Fetch.continueRequest')
+    CONTINUE_REQUEST_WITH_AUTH = Command(method='Fetch.continueWithAuth')
+    DISABLE = Command(method='Fetch.disable')
+    ENABLE = Command(method='Fetch.enable')
+    FAIL_REQUEST = Command(method='Fetch.failRequest')
+    FULFILL_REQUEST = Command(method='Fetch.fulfillRequest')
+    GET_RESPONSE_BODY = Command(method='Fetch.getResponseBody')
+    CONTINUE_RESPONSE = Command(method='Fetch.continueResponse')
+    TAKE_RESPONSE_BODY_AS_STREAM = Command(
+        method='Fetch.takeResponseBodyAsStream'
+    )
 
     @classmethod
     def continue_request(  # noqa: PLR0913, PLR0917
         cls,
         request_id: str,
-        url: str = '',
-        method: str = '',
-        post_data: str = '',
-        headers: dict = {},
-        intercept_response: bool = False,
-    ):
+        url: Optional[str] = None,
+        method: Optional[RequestMethod] = None,
+        post_data: Optional[dict] = None,
+        headers: Optional[List[HeaderEntry]] = None,
+        intercept_response: Optional[bool] = None,
+    ) -> Command[Response]:
         """
         Creates a command to continue a paused fetch request.
 
@@ -56,47 +89,42 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to continue.
-            url (str, optional): The new URL for the fetch request. Defaults to
-                ''.
-            method (str, optional): The HTTP method to use (e.g., 'GET',
-                'POST'). Defaults to ''.
-            postData (str, optional): The body data to send with the fetch
-                request. Defaults to ''.
-            headers (dict, optional): A dictionary of HTTP headers to include
-              in the fetch request. Defaults to {}.
-            interceptResponse (bool, optional): Indicates if the response
-              should be intercepted. Defaults to False.
+            url (Optional[str]): The new URL for the fetch request. Defaults to None.
+            method (Optional[RequestMethod]): The HTTP method to use (e.g., 'GET',
+                'POST'). Defaults to None.
+            post_data (Optional[dict]): The body data to send with the fetch
+                request. Defaults to None.
+            headers (Optional[List[HeaderEntry]]): A list of HTTP headers to include
+              in the fetch request. Defaults to None.
+            intercept_response (Optional[bool]): Indicates if the response
+              should be intercepted. Defaults to None.
 
         Returns:
-            dict: A command template for continuing the fetch request.
+            Command[Response]: A command for continuing the fetch request.
         """
-        continue_request_template = cls.CONTINUE_REQUEST.copy()
-        continue_request_template['params']['requestId'] = request_id
+        continue_request_template = deepcopy(cls.CONTINUE_REQUEST)
+        params = ContinueRequestParams(requestId=request_id)
         if url:
-            continue_request_template['params']['url'] = url
+            params['url'] = url
         if method:
-            continue_request_template['params']['method'] = method
+            params['method'] = method
         if post_data:
-            continue_request_template['params']['postData'] = post_data
+            params['postData'] = post_data
         if headers:
-            if isinstance(headers, list):
-                continue_request_template['params']['headers'] = headers
-            else:
-                headers = [
-                    {'name': key, 'value': value}
-                    for key, value in headers.items()
-                ]
-                continue_request_template['params']['headers'] = headers
+            params['headers'] = headers
         if intercept_response:
-            continue_request_template['params']['interceptResponse'] = (
-                intercept_response
-            )
+            params['interceptResponse'] = intercept_response
+        continue_request_template['params'] = params
         return continue_request_template
 
     @classmethod
     def continue_request_with_auth(
-        cls, request_id: str, proxy_username: str, proxy_password: str
-    ):
+        cls,
+        request_id: str,
+        auth_challenge_response: AuthChallengeResponseValues,
+        proxy_username: Optional[str] = None,
+        proxy_password: Optional[str] = None,
+    ) -> Command[Response]:
         """
         Creates a command to continue a paused fetch request with
         authentication.
@@ -106,42 +134,55 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to continue.
-            proxy_username (str): The username for proxy authentication.
-            proxy_password (str): The password for proxy authentication.
+            auth_challenge_response (AuthChallengeResponseValues): The authentication
+                challenge response type.
+            proxy_username (Optional[str]): The username for proxy authentication.
+                Defaults to None.
+            proxy_password (Optional[str]): The password for proxy authentication.
+                Defaults to None.
 
         Returns:
-            dict: A command template for continuing the fetch request with
+            Command[Response]: A command for continuing the fetch request with
                 authentication.
         """
-        continue_request_with_auth_template = (
-            cls.CONTINUE_REQUEST_WITH_AUTH.copy()
+        continue_request_with_auth_template = deepcopy(
+            cls.CONTINUE_REQUEST_WITH_AUTH
         )
-        continue_request_with_auth_template['params']['requestId'] = request_id
-        continue_request_with_auth_template['params'][
-            'authChallengeResponse'
-        ] = {
-            'response': 'ProvideCredentials',
-            'username': proxy_username,
-            'password': proxy_password,
-        }
+        auth_challenge_response_dict = AuthChallengeResponseDict(
+            response=auth_challenge_response
+        )
+        if proxy_username:
+            auth_challenge_response_dict['username'] = proxy_username
+        if proxy_password:
+            auth_challenge_response_dict['password'] = proxy_password
+
+        params = ContinueWithAuthParams(
+            requestId=request_id,
+            authChallengeResponse=auth_challenge_response_dict,
+        )
+        continue_request_with_auth_template['params'] = params
         return continue_request_with_auth_template
 
     @classmethod
-    def disable_fetch_events(cls):
+    def disable_fetch_events(cls) -> Command[Response]:
         """
         Creates a command to disable fetch interception.
 
         This command stops the browser from intercepting fetch requests.
 
         Returns:
-            dict: A command template for disabling fetch interception.
+            Command[Response]: A command for disabling fetch interception.
         """
         return cls.DISABLE
 
     @classmethod
     def enable_fetch_events(
-        cls, handle_auth_requests: bool, resource_type: str
-    ):
+        cls,
+        handle_auth_requests: bool,
+        url_pattern: str = '*',
+        resource_type: Optional[ResourceType] = None,
+        request_stage: Optional[RequestStage] = None,
+    ) -> Command[Response]:
         """
         Creates a command to enable fetch interception.
 
@@ -152,28 +193,32 @@ class FetchCommands:
         Args:
             handle_auth_requests (bool): Indicates if authentication requests
                 should be handled.
-            resource_type (str): The type of resource to intercept (e.g.,
-                'Document', 'Image').
+            url_pattern (str): Pattern to match URLs for interception. Defaults to '*'.
+            resource_type (Optional[ResourceType]): The type of resource to intercept.
+                Defaults to None.
+            request_stage (Optional[RequestStage]): The stage of the request to intercept.
+                Defaults to None.
 
         Returns:
-            dict: A command template for enabling fetch interception.
+            Command[Response]: A command for enabling fetch interception.
         """
-        enable_fetch_events_template = cls.ENABLE.copy()
-        enable_fetch_events_template['params']['patterns'] = [
-            {'urlPattern': '*'}
-        ]
+        enable_fetch_events_template = deepcopy(cls.ENABLE)
+        request_pattern = RequestPattern(urlPattern=url_pattern)
         if resource_type:
-            enable_fetch_events_template['params']['patterns'][0][
-                'resourceType'
-            ] = resource_type
+            request_pattern['resourceType'] = resource_type
+        if request_stage:
+            request_pattern['requestStage'] = request_stage
 
-        enable_fetch_events_template['params']['handleAuthRequests'] = (
-            handle_auth_requests
+        params = EnableParams(
+            patterns=[request_pattern], handleAuthRequests=handle_auth_requests
         )
+        enable_fetch_events_template['params'] = params
         return enable_fetch_events_template
 
     @classmethod
-    def fail_request(cls, request_id: str, error_reason: str):
+    def fail_request(
+        cls, request_id: str, error_reason: NetworkErrorReason
+    ) -> Command[Response]:
         """
         Creates a command to simulate a failure in a fetch request.
 
@@ -182,14 +227,16 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to fail.
-            errorReason (str): A description of the failure reason.
+            error_reason (NetworkErrorReason): The reason for the failure.
 
         Returns:
-            dict: A command template for failing the fetch request.
+            Command[Response]: A command for failing the fetch request.
         """
-        fail_request_template = cls.FAIL_REQUEST.copy()
-        fail_request_template['params']['requestId'] = request_id
-        fail_request_template['params']['errorReason'] = error_reason
+        fail_request_template = deepcopy(cls.FAIL_REQUEST)
+        params = FailRequestParams(
+            requestId=request_id, errorReason=error_reason
+        )
+        fail_request_template['params'] = params
         return fail_request_template
 
     @classmethod
@@ -197,11 +244,10 @@ class FetchCommands:
         cls,
         request_id: str,
         response_code: int,
-        response_headers: dict = {},
-        binary_response_headers: str = '',
-        body: str = '',
-        response_phrase: str = '',
-    ):
+        response_headers: Optional[List[HeaderEntry]] = None,
+        body: Optional[dict] = None,
+        response_phrase: Optional[str] = None,
+    ) -> Command[Response]:
         """
         Creates a command to fulfill a fetch request with a custom response.
 
@@ -210,41 +256,34 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to fulfill.
-            responseCode (int): The HTTP status code to return.
-            responseHeaders (dict, optional): A dictionary of response headers.
-                Defaults to {}.
-            binaryResponseHeaders (str, optional): Binary response headers.
-                Defaults to ''.
-            body (str, optional): The body content of the response. Defaults to
-                ''.
-            responsePhrase (str, optional): The response phrase (e.g., 'OK',
-                'Not Found'). Defaults to ''.
+            response_code (int): The HTTP status code to return.
+            response_headers (Optional[List[HeaderEntry]]): A list of response headers.
+                Defaults to None.
+            body (Optional[dict]): The body content of the response. Defaults to None.
+            response_phrase (Optional[str]): The response phrase (e.g., 'OK',
+                'Not Found'). Defaults to None.
 
         Returns:
-            dict: A command template for fulfilling the fetch request.
+            Command[Response]: A command for fulfilling the fetch request.
         """
-        fulfill_request_template = cls.FULFILL_REQUEST.copy()
-        fulfill_request_template['params']['requestId'] = request_id
-        if response_code:
-            fulfill_request_template['params']['responseCode'] = response_code
+        fulfill_request_template = deepcopy(cls.FULFILL_REQUEST)
+        params = FulfillRequestParams(
+            requestId=request_id,
+            responseCode=response_code,
+        )
         if response_headers:
-            fulfill_request_template['params']['responseHeaders'] = (
-                response_headers
-            )
-        if binary_response_headers:
-            fulfill_request_template['params']['binaryResponseHeaders'] = (
-                binary_response_headers
-            )
+            params['responseHeaders'] = response_headers
         if body:
-            fulfill_request_template['params']['body'] = body
+            params['body'] = body
         if response_phrase:
-            fulfill_request_template['params']['responsePhrase'] = (
-                response_phrase
-            )
+            params['responsePhrase'] = response_phrase
+        fulfill_request_template['params'] = params
         return fulfill_request_template
 
     @classmethod
-    def get_response_body(cls, request_id: str):
+    def get_response_body(
+        cls, request_id: str
+    ) -> Command[GetResponseBodyResponse]:
         """
         Creates a command to retrieve the response body of a fetch request.
 
@@ -256,21 +295,21 @@ class FetchCommands:
                 from.
 
         Returns:
-            dict: A command template for getting the response body.
+            Command[GetResponseBodyResponse]: A command for getting the response body.
         """
-        get_response_body_template = cls.GET_RESPONSE_BODY.copy()
-        get_response_body_template['params']['requestId'] = request_id
+        get_response_body_template = deepcopy(cls.GET_RESPONSE_BODY)
+        params = GetResponseBodyParams(requestId=request_id)
+        get_response_body_template['params'] = params
         return get_response_body_template
 
     @classmethod
     def continue_response(
         cls,
         request_id: str,
-        response_code: int = '',
-        response_headers: dict = {},
-        binary_response_headers: str = '',
-        response_phrase: str = '',
-    ):
+        response_code: Optional[int] = None,
+        response_headers: Optional[List[HeaderEntry]] = None,
+        response_phrase: Optional[str] = None,
+    ) -> Command[Response]:
         """
         Creates a command to continue a fetch response for an intercepted
         request.
@@ -280,36 +319,51 @@ class FetchCommands:
         headers, and response phrase.
 
         Args:
-            requestId (str): The ID of the fetch request to continue the
+            request_id (str): The ID of the fetch request to continue the
                 response for.
-            responseCode (int, optional): The HTTP status code to send.
-                Defaults to ''.
-            responseHeaders (dict, optional): A dictionary of response headers.
-                Defaults to {}.
-            binaryResponseHeaders (str, optional): Binary response headers.
-                Defaults to ''.
-            responsePhrase (str, optional): The response phrase (e.g., 'OK').
-                Defaults to ''.
+            response_code (Optional[int]): The HTTP status code to send.
+                Defaults to None.
+            response_headers (Optional[List[HeaderEntry]]): A list of response headers.
+                Defaults to None.
+            response_phrase (Optional[str]): The response phrase (e.g., 'OK').
+                Defaults to None.
 
         Returns:
-            dict: A command template for continuing the fetch response.
+            Command[Response]: A command for continuing the fetch response.
         """
-        continue_response_template = cls.CONTINUE_RESPONSE.copy()
-        continue_response_template['params']['requestId'] = request_id
+        continue_response_template = deepcopy(cls.CONTINUE_RESPONSE)
+
+        params = ContinueResponseParams(requestId=request_id)
         if response_code:
-            continue_response_template['params']['responseCode'] = (
-                response_code
-            )
+            params['responseCode'] = response_code
         if response_headers:
-            continue_response_template['params']['responseHeaders'] = (
-                response_headers
-            )
-        if binary_response_headers:
-            continue_response_template['params']['binaryResponseHeaders'] = (
-                binary_response_headers
-            )
+            params['responseHeaders'] = response_headers
         if response_phrase:
-            continue_response_template['params']['responsePhrase'] = (
-                response_phrase
-            )
+            params['responsePhrase'] = response_phrase
+        continue_response_template['params'] = params
         return continue_response_template
+
+    @classmethod
+    def take_response_body_as_stream(
+        cls, request_id: str
+    ) -> Command[TakeResponseBodyAsStreamResponse]:
+        """
+        Creates a command to take the response body as a stream.
+
+        This command allows you to receive the response body as a stream
+        which can be useful for handling large responses.
+
+        Args:
+            request_id (str): The ID of the fetch request to take the response
+                body stream from.
+
+        Returns:
+            Command[TakeResponseBodyAsStreamResponse]: A command for taking the response
+                body as a stream.
+        """
+        take_response_body_as_stream_template = deepcopy(
+            cls.TAKE_RESPONSE_BODY_AS_STREAM
+        )
+        params = TakeResponseBodyAsStreamParams(requestId=request_id)
+        take_response_body_as_stream_template['params'] = params
+        return take_response_body_as_stream_template

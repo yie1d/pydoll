@@ -3,13 +3,13 @@ from typing import List, Optional
 
 from pydoll.protocol.types.commands import (
     CancelDownloadParams,
+    Command,
     GetWindowForTargetParams,
     GrantPermissionsParams,
     ResetPermissionsParams,
     SetDownloadBehaviorParams,
     SetWindowBoundsParams,
     WindowBoundsDict,
-    Command,
 )
 from pydoll.protocol.types.enums import (
     DownloadBehavior,
@@ -19,9 +19,8 @@ from pydoll.protocol.types.enums import (
 from pydoll.protocol.types.responses import (
     GetVersionResponse,
     GetWindowForTargetResponse,
-    Response
+    Response,
 )
-
 
 
 class BrowserCommands:
