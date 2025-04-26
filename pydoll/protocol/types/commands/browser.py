@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import TypedDict, NotRequired
 
+from pydoll.protocol.types.commands.common import CommandParams
+
 
 class WindowState(str, Enum):
     """Possible states for a browser window."""
@@ -13,22 +15,8 @@ class DownloadBehavior(str, Enum):
     """Possible behaviors for download handling."""
     ALLOW = 'allow'
     DENY = 'deny'
-
-
-class CommandParams(TypedDict, total=False):
-    """Base structure for command parameters. All fields are optional."""
-    pass
-
-
-class Command(TypedDict):
-    """Base structure for all commands.
-    
-    Attributes:
-        method: The command method name
-        params: Optional dictionary of parameters for the command
-    """
-    method: str
-    params: NotRequired[CommandParams]
+    ALLOW_AND_NAME = 'allowAndName'
+    DEFAULT = 'default'
 
 
 class WindowBoundsDict(TypedDict):
@@ -49,6 +37,8 @@ class SetDownloadBehaviorParams(CommandParams):
     """Parameters for setting download behavior."""
     behavior: DownloadBehavior
     downloadPath: str
+    browserContextId: NotRequired[str]
+    eventsEnabled: NotRequired[bool]
 
 
 class SetWindowBoundsParams(CommandParams):
