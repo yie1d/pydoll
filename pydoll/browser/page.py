@@ -8,6 +8,11 @@ from typing import List, Optional, Tuple, Union
 
 import aiofiles
 
+from pydoll.connection import ConnectionHandler
+from pydoll.constants import By
+from pydoll.elements.mixins import FindElementsMixin
+from pydoll.elements.web_element import WebElement
+from pydoll.exceptions import InvalidFileExtension
 from pydoll.protocol.commands import (
     DomCommands,
     FetchCommands,
@@ -16,12 +21,7 @@ from pydoll.protocol.commands import (
     RuntimeCommands,
     StorageCommands,
 )
-from pydoll.connection import ConnectionHandler
-from pydoll.constants import By
-from pydoll.elements.web_element import WebElement
 from pydoll.protocol.events import PageEvents
-from pydoll.exceptions import InvalidFileExtension
-from pydoll.elements.mixins import FindElementsMixin
 from pydoll.utils import decode_image_to_bytes
 
 logger = logging.getLogger(__name__)

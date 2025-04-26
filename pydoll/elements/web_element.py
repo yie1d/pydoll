@@ -2,7 +2,7 @@ import asyncio
 import json
 import warnings
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import aiofiles
 from bs4 import BeautifulSoup
@@ -460,9 +460,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Args:
             key (list|tuple): The key to press.
         """
-        await self._execute_command(
-            InputCommands.key_down(key, modifiers)
-        )
+        await self._execute_command(InputCommands.key_down(key, modifiers))
 
     async def key_up(self, key: list | tuple):
         """
@@ -471,15 +469,13 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Args:
             key (list|tuple): The key to release.
         """
-        await self._execute_command(
-            InputCommands.key_up(key)
-        )
+        await self._execute_command(InputCommands.key_up(key))
 
     async def press_keyboard_key(
         self,
         key: tuple,
         modifiers: Optional[int] = None,
-        interval: float = 0.1
+        interval: float = 0.1,
     ):
         await self.key_down(key, modifiers)
         await asyncio.sleep(interval)

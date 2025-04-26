@@ -7,8 +7,8 @@ import websockets
 
 from pydoll import exceptions
 from pydoll.connection.managers import CommandsManager, EventsManager
+from pydoll.protocol.types.commands import Command, T_CommandResponse
 from pydoll.utils import get_browser_ws_address
-from pydoll.protocol.types.commands.common import T_CommandResponse, Command
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -94,7 +94,9 @@ class ConnectionHandler:
         except Exception:
             return False
 
-    async def execute_command(self, command: Command[T_CommandResponse], timeout: int = 10) -> T_CommandResponse:
+    async def execute_command(
+        self, command: Command[T_CommandResponse], timeout: int = 10
+    ) -> T_CommandResponse:
         """
         Sends a command to the browser and awaits its response.
 

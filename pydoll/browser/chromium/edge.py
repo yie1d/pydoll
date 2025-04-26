@@ -2,9 +2,9 @@ import platform
 from typing import Optional
 
 from pydoll.browser.chromium.base import Browser
-from pydoll.constants import BrowserType
 from pydoll.browser.managers import BrowserOptionsManager
 from pydoll.browser.options import Options
+from pydoll.constants import BrowserType
 
 
 class Edge(Browser):

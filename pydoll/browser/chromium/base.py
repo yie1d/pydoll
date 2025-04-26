@@ -4,7 +4,6 @@ from functools import partial
 from random import randint
 
 from pydoll import exceptions
-from pydoll.constants import BrowserType
 from pydoll.browser.managers import (
     BrowserOptionsManager,
     BrowserProcessManager,
@@ -13,6 +12,8 @@ from pydoll.browser.managers import (
 )
 from pydoll.browser.options import Options
 from pydoll.browser.page import Page
+from pydoll.connection import ConnectionHandler
+from pydoll.constants import BrowserType
 from pydoll.protocol.commands import (
     BrowserCommands,
     FetchCommands,
@@ -20,7 +21,6 @@ from pydoll.protocol.commands import (
     StorageCommands,
     TargetCommands,
 )
-from pydoll.connection import ConnectionHandler
 from pydoll.protocol.events import FetchEvents, PageEvents
 
 
