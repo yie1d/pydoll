@@ -39,7 +39,7 @@ class SetWindowBoundsParams(CommandParams):
 class ResetPermissionsParams(CommandParams):
     """Parameters for resetting permissions."""
 
-    browserContextId: str
+    browserContextId: NotRequired[str]
 
 
 class CancelDownloadParams(CommandParams):
