@@ -7,7 +7,7 @@ from pydoll.constants import (
     RequestStage,
     ResourceType,
 )
-from pydoll.protocol.types.commands.base_types import CommandParams
+from pydoll.protocol.types.commands.base_commands_types import CommandParams
 
 
 class HeaderEntry(TypedDict):
@@ -45,7 +45,7 @@ class ContinueWithAuthParams(CommandParams):
     authChallengeResponse: AuthChallengeResponseDict
 
 
-class EnableParams(CommandParams):
+class FetchEnableParams(CommandParams):
     patterns: NotRequired[List[RequestPattern]]
     handleAuthRequests: NotRequired[bool]
 
