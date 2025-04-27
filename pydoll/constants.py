@@ -546,7 +546,7 @@ class PermissionsPolicyFeature(str, Enum):
     TRANSLATOR = 'translator'
     UNLOAD = 'unload'
     USB = 'usb'
-    USB_UNRESTRICTED = 'usb-unrestricted'
+    USB_UNRESTRICTED = 'usb-unresStricted'
     VERTICAL_SCROLL = 'vertical-scroll'
     WEB_APP_INSTALLATION = 'web-app-installation'
     WEB_PRINTING = 'web-printing'
