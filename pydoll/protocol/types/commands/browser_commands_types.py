@@ -1,7 +1,7 @@
 from typing import List, NotRequired
 
 from pydoll.constants import DownloadBehavior, PermissionType, WindowState
-from pydoll.protocol.types.commands.base_types import CommandParams
+from pydoll.protocol.types.commands.base_commands_types import CommandParams
 
 
 class WindowBoundsDict(TypedDict):
