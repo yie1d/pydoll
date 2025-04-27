@@ -1,6 +1,10 @@
-from copy import deepcopy
 from typing import List, Optional
 
+from pydoll.constants import (
+    DownloadBehavior,
+    PermissionType,
+    WindowState,
+)
 from pydoll.protocol.types.commands import (
     CancelDownloadParams,
     Command,
@@ -10,11 +14,6 @@ from pydoll.protocol.types.commands import (
     SetDownloadBehaviorParams,
     SetWindowBoundsParams,
     WindowBoundsDict,
-)
-from pydoll.protocol.types.enums import (
-    DownloadBehavior,
-    PermissionType,
-    WindowState,
 )
 from pydoll.protocol.types.responses import (
     GetVersionResponse,
@@ -30,29 +29,15 @@ class BrowserCommands:
     managing browser windows, such as closing windows, retrieving window IDs,
     and adjusting window bounds (size and state).
 
-    The following operations can be performed:
-    - Close the browser.
-    - Get the ID of the current window.
-    - Set the size and position of a specific window.
-    - Maximize or minimize a specific window.
-
-    Each method generates a command that can be sent to the browser
-    as part of the communication with the browser's underlying API.
+    The commands defined in this class provide functionality for:
+    - Managing browser windows and targets.
+    - Setting permissions and download behavior.
+    - Controlling browser windows (size, state).
+    - Retrieving browser information and versioning.
     """
 
-    GET_VERSION = Command(method='Browser.getVersion')
-    RESET_PERMISSIONS = Command(method='Browser.resetPermissions')
-    CANCEL_DOWNLOAD = Command(method='Browser.cancelDownload')
-    CRASH = Command(method='Browser.crash')
-    CRASH_GPU_PROCESS = Command(method='Browser.crashGpuProcess')
-    CLOSE = Command(method='Browser.close')
-    GET_WINDOW_ID_BY_TARGET = Command(method='Browser.getWindowForTarget')
-    SET_WINDOW_BOUNDS_TEMPLATE = Command(method='Browser.setWindowBounds')
-    SET_DOWNLOAD_BEHAVIOR = Command(method='Browser.setDownloadBehavior')
-    GRANT_PERMISSIONS = Command(method='Browser.grantPermissions')
-
-    @classmethod
-    def get_version(cls) -> Command[GetVersionResponse]:
+    @staticmethod
+    def get_version() -> Command[GetVersionResponse]:
         """
         Generates a command to get browser version information.
 
@@ -60,11 +45,11 @@ class BrowserCommands:
             Command[GetVersionResponse]: The CDP command that returns browser version details
                 including protocol version, product name, revision, and user agent.
         """
-        return cls.GET_VERSION
+        return Command(method='Browser.getVersion')
 
-    @classmethod
+    @staticmethod
     def reset_permissions(
-        cls, browser_context_id: Optional[str] = None
+        browser_context_id: Optional[str] = None,
     ) -> Command[Response]:
         """
         Generates a command to reset all permissions.
@@ -76,17 +61,14 @@ class BrowserCommands:
         Returns:
             Command[Response]: The CDP command that returns a basic success response.
         """
-        command = deepcopy(cls.RESET_PERMISSIONS)
+        params = ResetPermissionsParams()
         if browser_context_id:
-            params = ResetPermissionsParams(
-                browserContextId=browser_context_id
-            )
-            command['params'] = params
-        return command
+            params['browserContextId'] = browser_context_id
+        return Command(method='Browser.resetPermissions', params=params)
 
-    @classmethod
+    @staticmethod
     def cancel_download(
-        cls, guid: str, browser_context_id: Optional[str] = None
+        guid: str, browser_context_id: Optional[str] = None
     ) -> Command[Response]:
         """
         Generates a command to cancel a download.
@@ -99,15 +81,13 @@ class BrowserCommands:
         Returns:
             Command[Response]: The CDP command that returns a basic success response.
         """
-        command = deepcopy(cls.CANCEL_DOWNLOAD)
         params = CancelDownloadParams(guid=guid)
         if browser_context_id:
             params['browserContextId'] = browser_context_id
-        command['params'] = params
-        return command
+        return Command(method='Browser.cancelDownload', params=params)
 
-    @classmethod
-    def crash(cls) -> Command[Response]:
+    @staticmethod
+    def crash() -> Command[Response]:
         """
         Generates a command to crash the browser main process.
 
@@ -115,10 +95,10 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 before crashing the browser.
         """
-        return cls.CRASH
+        return Command(method='Browser.crash')
 
-    @classmethod
-    def crash_gpu_process(cls) -> Command[Response]:
+    @staticmethod
+    def crash_gpu_process() -> Command[Response]:
         """
         Generates a command to crash the browser GPU process.
 
@@ -126,10 +106,10 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 before crashing the GPU process.
         """
-        return cls.CRASH_GPU_PROCESS
+        return Command(method='Browser.crashGpuProcess')
 
-    @classmethod
-    def set_download_path(cls, path: str) -> Command[Response]:
+    @staticmethod
+    def set_download_path(path: str) -> Command[Response]:
         """
         Generates a command to set the download path for the browser.
 
@@ -140,15 +120,13 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 after setting the download path.
         """
-        command = deepcopy(cls.SET_DOWNLOAD_BEHAVIOR)
         params = SetDownloadBehaviorParams(
             behavior=DownloadBehavior.ALLOW, downloadPath=path
         )
-        command['params'] = params
-        return command
+        return Command(method='Browser.setDownloadBehavior', params=params)
 
-    @classmethod
-    def close(cls) -> Command[Response]:
+    @staticmethod
+    def close() -> Command[Response]:
         """
         Generates a command to close the browser.
 
@@ -156,11 +134,11 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 before closing the browser.
         """
-        return cls.CLOSE
+        return Command(method='Browser.close')
 
-    @classmethod
+    @staticmethod
     def get_window_id_by_target(
-        cls, target_id: str
+        target_id: str,
     ) -> Command[GetWindowForTargetResponse]:
         """
         Generates a command to get the ID of the current window.
@@ -172,14 +150,12 @@ class BrowserCommands:
             Command[GetWindowForTargetResponse]: The CDP command that returns window
                 information including windowId and bounds.
         """
-        command = deepcopy(cls.GET_WINDOW_ID_BY_TARGET)
         params = GetWindowForTargetParams(targetId=target_id)
-        command['params'] = params
-        return command
+        return Command(method='Browser.getWindowForTarget', params=params)
 
-    @classmethod
+    @staticmethod
     def set_window_bounds(
-        cls, window_id: int, bounds: WindowBoundsDict
+        window_id: int, bounds: WindowBoundsDict
     ) -> Command[Response]:
         """
         Generates a command to set the bounds of a window.
@@ -194,13 +170,11 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 after setting the window bounds.
         """
-        command = deepcopy(cls.SET_WINDOW_BOUNDS_TEMPLATE)
         params = SetWindowBoundsParams(windowId=window_id, bounds=bounds)
-        command['params'] = params
-        return command
+        return Command(method='Browser.setWindowBounds', params=params)
 
-    @classmethod
-    def set_window_maximized(cls, window_id: int) -> Command[Response]:
+    @staticmethod
+    def set_window_maximized(window_id: int) -> Command[Response]:
         """
         Generates a command to maximize a window.
 
@@ -212,10 +186,10 @@ class BrowserCommands:
                 after maximizing the window.
         """
         bounds = WindowBoundsDict(windowState=WindowState.MAXIMIZED)
-        return cls.set_window_bounds(window_id, bounds)
+        return BrowserCommands.set_window_bounds(window_id, bounds)
 
-    @classmethod
-    def set_window_minimized(cls, window_id: int) -> Command[Response]:
+    @staticmethod
+    def set_window_minimized(window_id: int) -> Command[Response]:
         """
         Generates a command to minimize a window.
 
@@ -227,11 +201,10 @@ class BrowserCommands:
                 after minimizing the window.
         """
         bounds = WindowBoundsDict(windowState=WindowState.MINIMIZED)
-        return cls.set_window_bounds(window_id, bounds)
+        return BrowserCommands.set_window_bounds(window_id, bounds)
 
-    @classmethod
+    @staticmethod
     def grant_permissions(
-        cls,
         permissions: List[PermissionType],
         origin: Optional[str] = None,
         browser_context_id: Optional[str] = None,
@@ -251,7 +224,6 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 after granting the specified permissions.
         """
-        command = deepcopy(cls.GRANT_PERMISSIONS)
         params = GrantPermissionsParams(permissions=permissions)
         if origin:
             params['origin'] = origin
@@ -259,5 +231,4 @@ class BrowserCommands:
         if browser_context_id:
             params['browserContextId'] = browser_context_id
 
-        command['params'] = params
-        return command
+        return Command(method='Browser.grantPermissions', params=params)
