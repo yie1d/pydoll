@@ -512,11 +512,6 @@ class NetworkCommands:
         return Command(method='Network.setAcceptedEncodings', params=params)
 
     @staticmethod
-    def clear_accepted_encodings_override() -> Command[Response]:
-        """Clears accepted encodings set by setAcceptedEncodings."""
-        return Command(method='Network.clearAcceptedEncodingsOverride')
-
-    @staticmethod
     def set_attach_debug_stack(enabled: bool) -> Command[Response]:
         """Specifies whether to attach a page script stack id in requests."""
         params = SetAttachDebugStackParams(enabled=enabled)
