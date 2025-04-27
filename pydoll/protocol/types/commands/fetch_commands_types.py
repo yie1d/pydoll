@@ -35,7 +35,7 @@ class ContinueRequestParams(CommandParams):
     requestId: str
     url: NotRequired[str]
     method: NotRequired[RequestMethod]
-    postData: NotRequired[dict]
+    postData: NotRequired[str]
     headers: NotRequired[List[HeaderEntry]]
     interceptResponse: NotRequired[bool]
 
