@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import List, Optional
 
 from pydoll.constants import (
@@ -14,7 +13,7 @@ from pydoll.protocol.types.commands import (
     ContinueRequestParams,
     ContinueResponseParams,
     ContinueWithAuthParams,
-    EnableParams,
+    FetchEnableParams,
     FailRequestParams,
     FulfillRequestParams,
     GetResponseBodyParams,
@@ -31,48 +30,23 @@ from pydoll.protocol.types.responses import (
 
 class FetchCommands:
     """
-    A collection of command templates for handling fetch events in the browser.
+    This class encapsulates the fetch commands of the Chrome DevTools Protocol (CDP).
 
-    This class provides a structured way to create and manage commands related
-    to fetch operations intercepted by the Fetch API. Each command corresponds
-    to specific actions that can be performed on fetch requests, such as
-    continuing a fetch request, fulfilling a fetch response, or handling
-    authentication challenges.
+    CDP's Fetch domain allows interception and modification of network requests
+    at the application layer. This enables developers to examine, modify, and
+    control network traffic, which is particularly useful for testing, debugging,
+    and advanced automation scenarios.
 
-    Attributes:
-        CONTINUE_REQUEST (Command): Template for continuing an intercepted fetch
-            request.
-        CONTINUE_REQUEST_WITH_AUTH (Command): Template for continuing a fetch
-            request that requires authentication.
-        DISABLE (Command): Template for disabling fetch interception.
-        ENABLE (Command): Template for enabling fetch interception.
-        FAIL_REQUEST (Command): Template for simulating a failure in a fetch
-            request.
-        FULFILL_REQUEST (Command): Template for fulfilling a fetch request with
-            custom responses.
-        GET_RESPONSE_BODY (Command): Template for retrieving the response body of
-            a fetch request.
-        CONTINUE_RESPONSE (Command): Template for continuing a fetch response for
-            an intercepted request.
-        TAKE_RESPONSE_BODY_AS_STREAM (Command): Template for taking response body
-            as a stream.
+    The commands defined in this class provide functionality for:
+    - Enabling and disabling fetch request interception
+    - Continuing, fulfilling, or failing intercepted requests
+    - Handling authentication challenges
+    - Retrieving and modifying response bodies
+    - Processing response data as streams
     """
 
-    CONTINUE_REQUEST = Command(method='Fetch.continueRequest')
-    CONTINUE_REQUEST_WITH_AUTH = Command(method='Fetch.continueWithAuth')
-    DISABLE = Command(method='Fetch.disable')
-    ENABLE = Command(method='Fetch.enable')
-    FAIL_REQUEST = Command(method='Fetch.failRequest')
-    FULFILL_REQUEST = Command(method='Fetch.fulfillRequest')
-    GET_RESPONSE_BODY = Command(method='Fetch.getResponseBody')
-    CONTINUE_RESPONSE = Command(method='Fetch.continueResponse')
-    TAKE_RESPONSE_BODY_AS_STREAM = Command(
-        method='Fetch.takeResponseBodyAsStream'
-    )
-
-    @classmethod
+    @staticmethod
     def continue_request(  # noqa: PLR0913, PLR0917
-        cls,
         request_id: str,
         url: Optional[str] = None,
         method: Optional[RequestMethod] = None,
@@ -102,7 +76,6 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for continuing the fetch request.
         """
-        continue_request_template = deepcopy(cls.CONTINUE_REQUEST)
         params = ContinueRequestParams(requestId=request_id)
         if url:
             params['url'] = url
@@ -114,12 +87,10 @@ class FetchCommands:
             params['headers'] = headers
         if intercept_response:
             params['interceptResponse'] = intercept_response
-        continue_request_template['params'] = params
-        return continue_request_template
+        return Command(method='Fetch.continueRequest', params=params)
 
-    @classmethod
+    @staticmethod
     def continue_request_with_auth(
-        cls,
         request_id: str,
         auth_challenge_response: AuthChallengeResponseValues,
         proxy_username: Optional[str] = None,
@@ -145,9 +116,6 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch request with
                 authentication.
         """
-        continue_request_with_auth_template = deepcopy(
-            cls.CONTINUE_REQUEST_WITH_AUTH
-        )
         auth_challenge_response_dict = AuthChallengeResponseDict(
             response=auth_challenge_response
         )
@@ -160,11 +128,10 @@ class FetchCommands:
             requestId=request_id,
             authChallengeResponse=auth_challenge_response_dict,
         )
-        continue_request_with_auth_template['params'] = params
-        return continue_request_with_auth_template
+        return Command(method='Fetch.continueWithAuth', params=params)
 
-    @classmethod
-    def disable_fetch_events(cls) -> Command[Response]:
+    @staticmethod
+    def disable_fetch_events() -> Command[Response]:
         """
         Creates a command to disable fetch interception.
 
@@ -173,11 +140,10 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for disabling fetch interception.
         """
-        return cls.DISABLE
+        return Command(method='Fetch.disable')
 
-    @classmethod
+    @staticmethod
     def enable_fetch_events(
-        cls,
         handle_auth_requests: bool,
         url_pattern: str = '*',
         resource_type: Optional[ResourceType] = None,
@@ -202,22 +168,20 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for enabling fetch interception.
         """
-        enable_fetch_events_template = deepcopy(cls.ENABLE)
         request_pattern = RequestPattern(urlPattern=url_pattern)
         if resource_type:
             request_pattern['resourceType'] = resource_type
         if request_stage:
             request_pattern['requestStage'] = request_stage
 
-        params = EnableParams(
+        params = FetchEnableParams(
             patterns=[request_pattern], handleAuthRequests=handle_auth_requests
         )
-        enable_fetch_events_template['params'] = params
-        return enable_fetch_events_template
+        return Command(method='Fetch.enable', params=params)
 
-    @classmethod
+    @staticmethod
     def fail_request(
-        cls, request_id: str, error_reason: NetworkErrorReason
+        request_id: str, error_reason: NetworkErrorReason
     ) -> Command[Response]:
         """
         Creates a command to simulate a failure in a fetch request.
@@ -232,16 +196,13 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for failing the fetch request.
         """
-        fail_request_template = deepcopy(cls.FAIL_REQUEST)
         params = FailRequestParams(
             requestId=request_id, errorReason=error_reason
         )
-        fail_request_template['params'] = params
-        return fail_request_template
+        return Command(method='Fetch.failRequest', params=params)
 
-    @classmethod
+    @staticmethod
     def fulfill_request(  # noqa: PLR0913, PLR0917
-        cls,
         request_id: str,
         response_code: int,
         response_headers: Optional[List[HeaderEntry]] = None,
@@ -266,7 +227,6 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for fulfilling the fetch request.
         """
-        fulfill_request_template = deepcopy(cls.FULFILL_REQUEST)
         params = FulfillRequestParams(
             requestId=request_id,
             responseCode=response_code,
@@ -277,13 +237,10 @@ class FetchCommands:
             params['body'] = body
         if response_phrase:
             params['responsePhrase'] = response_phrase
-        fulfill_request_template['params'] = params
-        return fulfill_request_template
+        return Command(method='Fetch.fulfillRequest', params=params)
 
-    @classmethod
-    def get_response_body(
-        cls, request_id: str
-    ) -> Command[GetResponseBodyResponse]:
+    @staticmethod
+    def get_response_body(request_id: str) -> Command[GetResponseBodyResponse]:
         """
         Creates a command to retrieve the response body of a fetch request.
 
@@ -297,14 +254,11 @@ class FetchCommands:
         Returns:
             Command[GetResponseBodyResponse]: A command for getting the response body.
         """
-        get_response_body_template = deepcopy(cls.GET_RESPONSE_BODY)
         params = GetResponseBodyParams(requestId=request_id)
-        get_response_body_template['params'] = params
-        return get_response_body_template
+        return Command(method='Fetch.getResponseBody', params=params)
 
-    @classmethod
+    @staticmethod
     def continue_response(
-        cls,
         request_id: str,
         response_code: Optional[int] = None,
         response_headers: Optional[List[HeaderEntry]] = None,
@@ -331,8 +285,6 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for continuing the fetch response.
         """
-        continue_response_template = deepcopy(cls.CONTINUE_RESPONSE)
-
         params = ContinueResponseParams(requestId=request_id)
         if response_code:
             params['responseCode'] = response_code
@@ -340,12 +292,11 @@ class FetchCommands:
             params['responseHeaders'] = response_headers
         if response_phrase:
             params['responsePhrase'] = response_phrase
-        continue_response_template['params'] = params
-        return continue_response_template
+        return Command(method='Fetch.continueResponse', params=params)
 
-    @classmethod
+    @staticmethod
     def take_response_body_as_stream(
-        cls, request_id: str
+        request_id: str,
     ) -> Command[TakeResponseBodyAsStreamResponse]:
         """
         Creates a command to take the response body as a stream.
@@ -361,9 +312,5 @@ class FetchCommands:
             Command[TakeResponseBodyAsStreamResponse]: A command for taking the response
                 body as a stream.
         """
-        take_response_body_as_stream_template = deepcopy(
-            cls.TAKE_RESPONSE_BODY_AS_STREAM
-        )
         params = TakeResponseBodyAsStreamParams(requestId=request_id)
-        take_response_body_as_stream_template['params'] = params
-        return take_response_body_as_stream_template
+        return Command(method='Fetch.takeResponseBodyAsStream', params=params)
