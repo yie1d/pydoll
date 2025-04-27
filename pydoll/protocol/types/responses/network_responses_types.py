@@ -1,10 +1,21 @@
 from typing import List, NotRequired, TypedDict
 
-from pydoll.constants import CookiePriority, CookieSameSite, CookieSourceScheme
-from pydoll.protocol.types.commands.network_commands_types import (
-    CookiePartitionKey,
+from pydoll.constants import (
+    ContentSecurityPolicySource,
+    CookiePriority,
+    CookieSameSite,
+    CookieSourceScheme,
+    CrossOriginEmbedderPolicyStatus,
+    CrossOriginOpenerPolicyStatus,
 )
-from pydoll.protocol.types.responses import ResponseResult
+from pydoll.protocol.types.commands import (
+    CookiePartitionKey,
+    HeaderEntry,
+)
+from pydoll.protocol.types.responses.base_responses_types import (
+    Response,
+    ResponseResult,
+)
 
 
 class SearchMatch(TypedDict):
@@ -35,75 +46,215 @@ class Cookie(TypedDict):
     partitionKeyOpaque: NotRequired[bool]
 
 
-class GetCookiesResponse(ResponseResult):
-    """Response for getCookies command."""
+class CrossOriginOpenerPolicyStatus(TypedDict):
+    value: CrossOriginOpenerPolicyStatus
+    reportOnlyValue: CrossOriginOpenerPolicyStatus
+    reportingEndpoint: NotRequired[str]
+    reportOnlyReportingEndpoint: NotRequired[str]
+
+
+class CrossOriginEmbedderPolicyStatus(TypedDict):
+    value: CrossOriginEmbedderPolicyStatus
+    reportOnlyValue: CrossOriginEmbedderPolicyStatus
+    reportingEndpoint: NotRequired[str]
+    reportOnlyReportingEndpoint: NotRequired[str]
+
+
+class ContentSecurityPolicyStatus(TypedDict):
+    """Content security policy status object."""
+
+    effectiveDirective: str
+    isEnforced: bool
+    source: ContentSecurityPolicySource
+
+
+class SecurityIsolationStatus(TypedDict):
+    """Security isolation status object."""
+
+    coop: NotRequired[CrossOriginOpenerPolicyStatus]
+    coep: NotRequired[CrossOriginEmbedderPolicyStatus]
+    csp: NotRequired[List[ContentSecurityPolicyStatus]]
+
+
+class LoadNetworkResourceOptions(TypedDict):
+    """Load network resource options object."""
+
+    disableCache: NotRequired[bool]
+    includeCredentials: NotRequired[bool]
+
+
+# Result dictionaries that inherit from ResponseResult
+class GetCookiesResultDict(ResponseResult):
+    """Response result for getCookies command."""
 
     cookies: List[Cookie]
 
 
-class GetRequestPostDataResponse(ResponseResult):
-    """Response for getRequestPostData command."""
+class GetRequestPostDataResultDict(ResponseResult):
+    """Response result for getRequestPostData command."""
 
     postData: str
 
 
-class GetResponseBodyResponse(ResponseResult):
-    """Response for getResponseBody command."""
+class GetResponseBodyResultDict(ResponseResult):
+    """Response result for getResponseBody command."""
 
     body: str
     base64Encoded: bool
 
 
-class GetResponseBodyForInterceptionResponse(ResponseResult):
-    """Response for getResponseBodyForInterception command."""
+class GetResponseBodyForInterceptionResultDict(ResponseResult):
+    """Response result for getResponseBodyForInterception command."""
 
     body: str
     base64Encoded: bool
 
 
-class GetCertificateResponse(ResponseResult):
-    """Response for getCertificate command."""
+class GetCertificateResultDict(ResponseResult):
+    """Response result for getCertificate command."""
 
     tableNames: List[str]
 
 
-class SearchInResponseBodyResponse(ResponseResult):
-    """Response for searchInResponseBody command."""
+class SearchInResponseBodyResultDict(ResponseResult):
+    """Response result for searchInResponseBody command."""
 
     result: List[SearchMatch]
 
 
-class SetCookieResponse(ResponseResult):
-    """Response for setCookie command."""
+class SetCookieResultDict(ResponseResult):
+    """Response result for setCookie command."""
 
     success: bool
 
 
-class StreamResourceContentResponse(ResponseResult):
-    """Response for streamResourceContent command."""
+class StreamResourceContentResultDict(ResponseResult):
+    """Response result for streamResourceContent command."""
 
     bufferedData: str
 
 
-class TakeResponseBodyForInterceptionAsStreamResponse(ResponseResult):
-    """Response for takeResponseBodyForInterceptionAsStream command."""
+class TakeResponseBodyForInterceptionAsStreamResultDict(ResponseResult):
+    """Response result for takeResponseBodyForInterceptionAsStream command."""
 
     stream: str
 
 
-class CanClearBrowserCacheResponse(ResponseResult):
+class CanClearBrowserCacheResultDict(ResponseResult):
+    """Response result for canClearBrowserCache command."""
+
+    result: bool
+
+
+class CanClearBrowserCookiesResultDict(ResponseResult):
+    """Response result for canClearBrowserCookies command."""
+
+    result: bool
+
+
+class CanEmulateNetworkConditionsResultDict(ResponseResult):
+    """Response result for canEmulateNetworkConditions command."""
+
+    result: bool
+
+
+class GetSecurityIsolationStatusResultDict(ResponseResult):
+    """Response result for getSecurityIsolationStatus command."""
+
+    status: SecurityIsolationStatus
+
+
+class LoadNetworkResourceResultDict(ResponseResult):
+    """Response result for loadNetworkResource command."""
+
+    success: bool
+    netError: NotRequired[float]
+    netErrorName: NotRequired[str]
+    httpStatusCode: NotRequired[float]
+    stream: NotRequired[str]
+    headers: NotRequired[List[HeaderEntry]]
+
+
+# Response classes that inherit from Response
+class GetCookiesResponse(Response):
+    """Response for getCookies command."""
+
+    result: GetCookiesResultDict
+
+
+class GetRequestPostDataResponse(Response):
+    """Response for getRequestPostData command."""
+
+    result: GetRequestPostDataResultDict
+
+
+class GetResponseBodyResponse(Response):
+    """Response for getResponseBody command."""
+
+    result: GetResponseBodyResultDict
+
+
+class GetResponseBodyForInterceptionResponse(Response):
+    """Response for getResponseBodyForInterception command."""
+
+    result: GetResponseBodyForInterceptionResultDict
+
+
+class GetCertificateResponse(Response):
+    """Response for getCertificate command."""
+
+    result: GetCertificateResultDict
+
+
+class SearchInResponseBodyResponse(Response):
+    """Response for searchInResponseBody command."""
+
+    result: SearchInResponseBodyResultDict
+
+
+class SetCookieResponse(Response):
+    """Response for setCookie command."""
+
+    result: SetCookieResultDict
+
+
+class StreamResourceContentResponse(Response):
+    """Response for streamResourceContent command."""
+
+    result: StreamResourceContentResultDict
+
+
+class TakeResponseBodyForInterceptionAsStreamResponse(Response):
+    """Response for takeResponseBodyForInterceptionAsStream command."""
+
+    result: TakeResponseBodyForInterceptionAsStreamResultDict
+
+
+class CanClearBrowserCacheResponse(Response):
     """Response for canClearBrowserCache command."""
 
-    result: bool
+    result: CanClearBrowserCacheResultDict
 
 
-class CanClearBrowserCookiesResponse(ResponseResult):
+class CanClearBrowserCookiesResponse(Response):
     """Response for canClearBrowserCookies command."""
 
-    result: bool
+    result: CanClearBrowserCookiesResultDict
 
 
-class CanEmulateNetworkConditionsResponse(ResponseResult):
+class CanEmulateNetworkConditionsResponse(Response):
     """Response for canEmulateNetworkConditions command."""
 
-    result: bool
+    result: CanEmulateNetworkConditionsResultDict
+
+
+class GetSecurityIsolationStatusResponse(Response):
+    """Response for getSecurityIsolationStatus command."""
+
+    result: GetSecurityIsolationStatusResultDict
+
+
+class LoadNetworkResourceResponse(Response):
+    """Response for loadNetworkResource command."""
+
+    result: LoadNetworkResourceResultDict
