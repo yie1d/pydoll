@@ -349,3 +349,231 @@ class ContentEncoding(str, Enum):
     DEFLATE = 'deflate'
     BR = 'br'
     ZSTD = 'zstd'
+
+
+class ScreenshotFormat(str, Enum):
+    """Screenshot formats."""
+
+    JPEG = 'jpeg'
+    PNG = 'png'
+    WEBP = 'webp'
+
+
+class TransitionType(str, Enum):
+    """Transition types."""
+
+    LINK = 'link'
+    TYPED = 'typed'
+    ADDRESS_BAR = 'address_bar'
+    AUTO_BOOKMARK = 'auto_bookmark'
+    AUTO_SUBFRAME = 'auto_subframe'
+    MANUAL_SUBFRAME = 'manual_subframe'
+    GENERATED = 'generated'
+    AUTO_TOPLEVEL = 'auto_toplevel'
+    FORM_SUBMIT = 'form_submit'
+    RELOAD = 'reload'
+    KEYWORD = 'keyword'
+    KEYWORD_GENERATED = 'keyword_generated'
+    OTHER = 'other'
+
+
+class ReferrerPolicy(str, Enum):
+    """Referrer policies."""
+
+    NO_REFERRER = 'noReferrer'
+    NO_REFERRER_WHEN_DOWNGRADE = 'noReferrerWhenDowngrade'
+    ORIGIN = 'origin'
+    ORIGIN_WHEN_CROSS_ORIGIN = 'originWhenCrossOrigin'
+    SAME_ORIGIN = 'sameOrigin'
+    STRICT_ORIGIN = 'strictOrigin'
+    STRICT_ORIGIN_WHEN_CROSS_ORIGIN = 'strictOriginWhenCrossOrigin'
+    UNSAFE_URL = 'unsafeUrl'
+
+
+class TransferMode(str, Enum):
+    """Transfer modes."""
+
+    RETURN_AS_STREAM = 'returnAsStream'
+    RETURN_AS_BASE64 = 'returnAsBase64'
+
+
+class AutoResponseMode(str, Enum):
+    NONE = 'none'
+    AUTO_ACCEPT = 'autoAccept'
+    AUTO_REJECT = 'autoReject'
+    AUTO_OPTOUT = 'autoOptout'
+
+
+class WebLifecycleState(str, Enum):
+    """Web lifecycle states."""
+
+    FROZEN = 'frozen'
+    ACTIVE = 'active'
+
+
+class ScreencastFormat(str, Enum):
+    """Screencast formats."""
+
+    JPEG = 'jpeg'
+    PNG = 'png'
+
+
+class OriginTrialStatus(str, Enum):
+    ENABLED = 'Enabled'
+    VALID_TOKEN_NOT_PROVIDED = 'ValidTokenNotProvided'
+    OS_NOT_SUPPORTED = 'OsNotSupported'
+    TRIAL_NOT_ALLOWED = 'TrialNotAllowed'
+
+
+class OriginTrialUsageRestriction(str, Enum):
+    NONE = 'None'
+    SUBSET = 'Subset'
+
+
+class OriginTrialTokenStatus(str, Enum):
+    SUCCESS = 'Success'
+    NOT_SUPPORTED = 'NotSupported'
+    INSECURE = 'Insecure'
+    EXPIRED = 'Expired'
+    WRONG_ORIGIN = 'WrongOrigin'
+    INVALID_SIGNATURE = 'InvalidSignature'
+    MALFORMED = 'Malformed'
+    WRONG_VERSION = 'WrongVersion'
+    FEATURE_DISABLED = 'FeatureDisabled'
+    TOKEN_DISABLED = 'TokenDisabled'
+    FEATURE_DISABLED_FOR_USER = 'FeatureDisabledForUser'
+    UNKNOWN_TRIAL = 'UnknownTrial'
+
+
+class PermissionsPolicyBlockReason(str, Enum):
+    HEADER = 'Header'
+    IFRAME_ATTRIBUTE = 'IframeAttribute'
+    IN_FANCED_FRAME_TREE = 'InFancedFrameTree'
+    IN_ISOLATED_APP = 'InIsolatedApp'
+
+
+class PermissionsPolicyFeature(str, Enum):
+    ACCELEROMETER = 'accelerometer'
+    ALL_SCREENS_CAPTURE = 'all-screens-capture'
+    AMBIENT_LIGHT_SENSOR = 'ambient-light-sensor'
+    ATTRIBUTION_REPORTING = 'attribution-reporting'
+    AUTOPLAY = 'autoplay'
+    BLUETOOTH = 'bluetooth'
+    BROWSING_TOPICS = 'browsing-topics'
+    CAMERA = 'camera'
+    CAPTURED_SURFACE_CONTROL = 'captured-surface-control'
+    CH_DPR = 'ch-dpr'
+    CH_DEVICE_MEMORY = 'ch-device-memory'
+    CH_DOWNLINK = 'ch-downlink'
+    CH_ECT = 'ch-ect'
+    CH_PREFERS_COLOR_SCHEME = 'ch-prefers-color-scheme'
+    CH_PREFERS_REDUCED_MOTION = 'ch-prefers-reduced-motion'
+    CH_PREFERS_REDUCED_TRANSPARENCY = 'ch-prefers-reduced-transparency'
+    CH_RTT = 'ch-rtt'
+    CH_SAVE_DATA = 'ch-save-data'
+    CH_UA = 'ch-ua'
+    CH_UA_ARCH = 'ch-ua-arch'
+    CH_UA_BITNESS = 'ch-ua-bitness'
+    CH_UA_HIGH_ENTROPY_VALUES = 'ch-ua-high-entropy-values'
+    CH_UA_PLATFORM = 'ch-ua-platform'
+    CH_UA_MODEL = 'ch-ua-model'
+    CH_UA_MOBILE = 'ch-ua-mobile'
+    CH_UA_FORM_FACTORS = 'ch-ua-form-factors'
+    CH_UA_FULL_VERSION = 'ch-ua-full-version'
+    CH_UA_FULL_VERSION_LIST = 'ch-ua-full-version-list'
+    CH_UA_PLATFORM_VERSION = 'ch-ua-platform-version'
+    CH_UA_WOW64 = 'ch-ua-wow64'
+    CH_VIEWPORT_HEIGHT = 'ch-viewport-height'
+    CH_VIEWPORT_WIDTH = 'ch-viewport-width'
+    CH_WIDTH = 'ch-width'
+    CLIPBOARD_READ = 'clipboard-read'
+    CLIPBOARD_WRITE = 'clipboard-write'
+    COMPUTE_PRESSURE = 'compute-pressure'
+    CONTROLLED_FRAME = 'controlled-frame'
+    CROSS_ORIGIN_ISOLATED = 'cross-origin-isolated'
+    DEFERRED_FETCH = 'deferred-fetch'
+    DEFERRED_FETCH_MINIMAL = 'deferred-fetch-minimal'
+    DEVICE_ATTRIBUTES = 'device-attributes'
+    DIGITAL_CREDENTIALS_GET = 'digital-credentials-get'
+    DIRECT_SOCKETS = 'direct-sockets'
+    DIRECT_SOCKETS_PRIVATE = 'direct-sockets-private'
+    DISPLAY_CAPTURE = 'display-capture'
+    DOCUMENT_DOMAIN = 'document-domain'
+    ENCRYPTED_MEDIA = 'encrypted-media'
+    EXECUTION_WHILE_OUT_OF_VIEWPORT = 'execution-while-out-of-viewport'
+    EXECUTION_WHILE_NOT_RENDERED = 'execution-while-not-rendered'
+    FENCED_UNPARTITIONED_STORAGE_READ = 'fenced-unpartitioned-storage-read'
+    FOCUS_WITHOUT_USER_ACTIVATION = 'focus-without-user-activation'
+    FULLSCREEN = 'fullscreen'
+    FROBULATE = 'frobulate'
+    GAMEPAD = 'gamepad'
+    GEOLOCATION = 'geolocation'
+    GYROSCOPE = 'gyroscope'
+    HID = 'hid'
+    IDENTITY_CREDENTIALS_GET = 'identity-credentials-get'
+    IDLE_DETECTION = 'idle-detection'
+    INTEREST_COHORT = 'interest-cohort'
+    JOIN_AD_INTEREST_GROUP = 'join-ad-interest-group'
+    KEYBOARD_MAP = 'keyboard-map'
+    LANGUAGE_DETECTOR = 'language-detector'
+    LOCAL_FONTS = 'local-fonts'
+    MAGNETOMETER = 'magnetometer'
+    MEDIA_PLAYBACK_WHILE_NOT_VISIBLE = 'media-playback-while-not-visible'
+    MICROPHONE = 'microphone'
+    MIDI = 'midi'
+    OTP_CREDENTIALS = 'otp-credentials'
+    PAYMENT = 'payment'
+    PICTURE_IN_PICTURE = 'picture-in-picture'
+    POPINS = 'popins'
+    PRIVATE_AGGREGATION = 'private-aggregation'
+    PRIVATE_STATE_TOKEN_ISSUANCE = 'private-state-token-issuance'
+    PRIVATE_STATE_TOKEN_REDEMPTION = 'private-state-token-redemption'
+    PUBLICKEY_CREDENTIALS_CREATE = 'publickey-credentials-create'
+    PUBLICKEY_CREDENTIALS_GET = 'publickey-credentials-get'
+    REWRITER = 'rewriter'
+    RUN_AD_AUCTION = 'run-ad-auction'
+    SCREEN_WAKE_LOCK = 'screen-wake-lock'
+    SERIAL = 'serial'
+    SHARED_AUTOFILL = 'shared-autofill'
+    SHARED_STORAGE = 'shared-storage'
+    SHARED_STORAGE_SELECT_URL = 'shared-storage-select-url'
+    SMART_CARD = 'smart-card'
+    SPEAKER_SELECTION = 'speaker-selection'
+    STORAGE_ACCESS = 'storage-access'
+    SUB_APPS = 'sub-apps'
+    SUMMARIZER = 'summarizer'
+    SYNC_XHR = 'sync-xhr'
+    TRANSLATOR = 'translator'
+    UNLOAD = 'unload'
+    USB = 'usb'
+    USB_UNRESTRICTED = 'usb-unrestricted'
+    VERTICAL_SCROLL = 'vertical-scroll'
+    WEB_APP_INSTALLATION = 'web-app-installation'
+    WEB_PRINTING = 'web-printing'
+    WEB_SHARE = 'web-share'
+    WINDOW_MANAGEMENT = 'window-management'
+    WRITER = 'writer'
+    XR_SPATIAL_TRACKING = 'xr-spatial-tracking'
+
+
+class CrossOriginOpenerPolicyStatus(str, Enum):
+    SAME_ORIGIN = 'SameOrigin'
+    SAME_ORIGIN_ALLOW_POPUPS = 'SameOriginAllowPopups'
+    RESTRICT_PROPERTIES = 'RestrictProperties'
+    UNSAFE_NONE = 'UnsafeNone'
+    SAME_ORIGIN_PLUS_COEP = 'SameOriginPlusCoep'
+    RESTRICT_PROPERTIES_PLUS_COEP = 'RestrictPropertiesPlusCoep'
+    NO_OPENER_ALLOW_POPUPS = 'NoopenerAllowPopups'
+
+
+class CrossOriginEmbedderPolicyStatus(str, Enum):
+    """Cross-origin embedder policy status values."""
+
+    NONE = 'None'
+    CREDENTIALLESS = 'Credentialless'
+    REQUIRE_CORP = 'RequireCorp'
+
+
+class ContentSecurityPolicySource(str, Enum):
+    HTTP = 'HTTP'
+    META = 'Meta'
