@@ -1,7 +1,10 @@
 from pydoll.protocol.types.commands.browser_commands_types import (
     WindowBoundsDict,
 )
-from pydoll.protocol.types.responses.base_types import Response, ResponseResult
+from pydoll.protocol.types.responses.base_responses_types import (
+    Response,
+    ResponseResult,
+)
 
 
 class GetWindowForTargetResultDict(ResponseResult):
