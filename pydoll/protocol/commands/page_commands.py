@@ -1,210 +1,861 @@
-import copy
+from typing import List, Literal, Optional
+
+from pydoll.constants import (
+    ReferrerPolicy,
+    ScreencastFormat,
+    ScreenshotFormat,
+    TransferMode,
+    TransitionType,
+    WebLifecycleState,
+)
+from pydoll.protocol.types.commands import (
+    AddCompilationCacheParams,
+    AddScriptToEvaluateOnNewDocumentParams,
+    AutoResponseMode,
+    CaptureScreenshotParams,
+    CaptureSnapshotParams,
+    Command,
+    CompilationCacheParams,
+    CreateIsolatedWorldParams,
+    FontFamilies,
+    FontSizes,
+    GenerateTestReportParams,
+    GetAdScriptAncestryIdsParams,
+    GetAppIdParams,
+    GetAppManifestParams,
+    GetOriginTrialsParams,
+    GetPermissionsPolicyStateParams,
+    GetResourceContentParams,
+    HandleJavaScriptDialogParams,
+    NavigateParams,
+    NavigateToHistoryEntryParams,
+    PageEnableParams,
+    PrintToPDFParams,
+    ProduceCompilationCacheParams,
+    ReloadParams,
+    RemoveScriptToEvaluateOnNewDocumentParams,
+    ScreencastFrameAckParams,
+    ScriptFontFamilies,
+    SearchInResourceParams,
+    SetAdBlockingEnabledParams,
+    SetBypassCSPParams,
+    SetDocumentContentParams,
+    SetFontFamiliesParams,
+    SetFontSizesParams,
+    SetInterceptFileChooserDialogParams,
+    SetLifecycleEventsEnabledParams,
+    SetPrerenderingAllowedParams,
+    SetRPHRegistrationModeParams,
+    SetSPCTransactionModeParams,
+    SetWebLifecycleStateParams,
+    StartScreencastParams,
+    Viewport,
+)
+from pydoll.protocol.types.responses import (
+    AddScriptToEvaluateOnNewDocumentResponse,
+    CaptureScreenshotResponse,
+    CaptureSnapshotResponse,
+    CreateIsolatedWorldResponse,
+    GetAdScriptAncestryIdsResponse,
+    GetAppIdResponse,
+    GetAppManifestResponse,
+    GetFrameTreeResponse,
+    GetInstallabilityErrorsResponse,
+    GetLayoutMetricsResponse,
+    GetNavigationHistoryResponse,
+    GetOriginTrialsResponse,
+    GetPermissionsPolicyStateResponse,
+    GetResourceContentResponse,
+    GetResourceTreeResponse,
+    NavigateResponse,
+    PrintToPDFResponse,
+    Response,
+    SearchInResourceResponse,
+)
 
 
 class PageCommands:
     """
-    PageCommands class provides a set of commands to interact with the
-    Page domain of the Chrome DevTools Protocol (CDP). These commands enable
-    users to perform operations related to web pages, such as capturing
-    screenshots, navigating to URLs, refreshing pages, printing to PDF,
-    and enabling the Page domain.
+    This class encapsulates the page commands of the Chrome DevTools Protocol (CDP).
 
-    The following operations can be performed:
-    - Capture a screenshot of the current page.
-    - Navigate to a specified URL.
-    - Refresh the current page, with an option to ignore the cache.
-    - Print the current page to a PDF document.
-    - Enable the Page domain for further interactions.
+    CDP's Page domain allows for interacting with browser pages, including navigation,
+    content manipulation, and page state monitoring. These commands provide powerful
+    capabilities for web automation, testing, and debugging.
 
-    Each method generates a command that can be sent to the browser as part of
-    the DevTools Protocol communication.
+    The commands defined in this class provide functionality for:
+    - Navigating to URLs and managing page history
+    - Capturing screenshots and generating PDFs
+    - Handling JavaScript dialogs
+    - Enabling and controlling page events
+    - Managing download behavior
+    - Manipulating page content and state
     """
 
-    SCREENSHOT_TEMPLATE = {
-        'method': 'Page.captureScreenshot',
-        'params': {},
-    }
-    GO_TO_TEMPLATE = {'method': 'Page.navigate', 'params': {}}
-    REFRESH_TEMPLATE = {'method': 'Page.reload', 'params': {}}
-    PRINT_TO_PDF_TEMPLATE = {'method': 'Page.printToPDF', 'params': {}}
-    ENABLE_PAGE = {'method': 'Page.enable'}
-    DISABLE_PAGE = {'method': 'Page.disable'}
-    SET_DOWNLOAD_BEHAVIOR = {
-        'method': 'Page.setDownloadBehavior',
-        'params': {},
-    }
-    HANDLE_DIALOG = {'method': 'Page.handleJavaScriptDialog', 'params': {}}
-    CLOSE = {'method': 'Page.close'}
-    SET_INTERCEPT_FILE_CHOOSER_DIALOG = {
-        'method': 'Page.setInterceptFileChooserDialog',
-        'params': {},
-    }
-
-    @classmethod
-    def handle_dialog(cls, accept: bool = True) -> dict:
+    @staticmethod
+    def add_script_to_evaluate_on_new_document(
+        source: str,
+        world_name: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        run_immediately: Optional[bool] = None,
+    ) -> Command[AddScriptToEvaluateOnNewDocumentResponse]:
         """
-        Generates the command to handle a JavaScript dialog.
+        Creates a command to add a script that will be evaluated when a new document is created.
 
         Args:
-            accept (bool): Whether to accept the dialog.
-                           If True, the dialog will be accepted.
-                           If False, the dialog will be dismissed.
+            source (str): Script source to be evaluated when a new document is created.
+            world_name (Optional[str]): If specified, creates an isolated world with the given name.
+            include_command_line_api (Optional[bool]): Whether to include command line API.
+            run_immediately (Optional[bool]): Whether to run the script immediately on existing contexts.
 
         Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for handling the dialog.
+            Command[AddScriptToEvaluateOnNewDocumentResponse]: Command object with the identifier of the added script.
         """
-        command = cls.HANDLE_DIALOG.copy()
-        command['params']['accept'] = accept
-        return command
+        params = AddScriptToEvaluateOnNewDocumentParams(source=source)
+        if world_name:
+            params['worldName'] = world_name
+        if include_command_line_api:
+            params['includeCommandLineAPI'] = include_command_line_api
+        if run_immediately:
+            params['runImmediately'] = run_immediately
 
-    @classmethod
-    def set_download_path(cls, path: str) -> dict:
+        return Command(
+            method='Page.addScriptToEvaluateOnNewDocument', params=params
+        )
+
+    @staticmethod
+    def bring_to_front() -> Command[Response]:
         """
-        Generates the command to set the download path for the browser.
+        Brings the page to front.
+        """
+        return Command(method='Page.bringToFront')
+
+    @staticmethod
+    def capture_screenshot(
+        format: Optional[ScreenshotFormat] = None,
+        quality: Optional[int] = None,
+        clip: Optional[Viewport] = None,
+        from_surface: Optional[bool] = None,
+        capture_beyond_viewport: Optional[bool] = None,
+        optimize_for_speed: Optional[bool] = None,
+    ) -> Command[CaptureScreenshotResponse]:
+        """
+        Creates a command to capture a screenshot of the current page.
 
         Args:
-            path (str): The path where the downloaded files should be saved.
+            format (Optional[str]): Image compression format (jpeg, png, or webp).
+            quality (Optional[int]): Compression quality from 0-100 (jpeg only).
+            clip (Optional[Viewport]): Region of the page to capture.
+            from_surface (Optional[bool]): Capture from the surface, not the view.
+            capture_beyond_viewport (Optional[bool]): Capture beyond the viewport.
+            optimize_for_speed (Optional[bool]): Optimize for speed, not for size.
 
         Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for setting
-                  the download path.
+            Command[CaptureScreenshotResponse]: Command object with base64-encoded image data.
         """
-        command = cls.SET_DOWNLOAD_BEHAVIOR.copy()
-        command['params']['behavior'] = 'allow'
-        command['params']['downloadPath'] = path
-        return command
-
-    @classmethod
-    def screenshot(
-        cls, fmt: str = 'jpeg', quality: int = 100, clip: dict = None
-    ) -> dict:
-        """
-        Generates the command to capture a screenshot of the current page.
-
-        Args:
-            fmt (str): The format of the image to be captured.
-                          Can be 'png' or 'jpeg'.
-            quality (int): The quality of the image to be captured,
-                           applicable only if the format is 'jpeg'.
-                           Value should be between 0 (lowest quality)
-                           and 100 (highest quality).
-
-        Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for the screenshot.
-        """
-        command = cls.SCREENSHOT_TEMPLATE.copy()
-        command['params']['format'] = fmt
-        command['params']['quality'] = quality
+        params = CaptureScreenshotParams()
+        if format:
+            params['format'] = format
+        if quality:
+            params['quality'] = quality
         if clip:
-            command['params']['clip'] = clip
-        return command
+            params['clip'] = clip
+        if from_surface:
+            params['fromSurface'] = from_surface
+        if capture_beyond_viewport:
+            params['captureBeyondViewport'] = capture_beyond_viewport
+        if optimize_for_speed:
+            params['optimizeForSpeed'] = optimize_for_speed
 
-    @classmethod
-    def go_to(cls, url: str) -> dict:
+        return Command(method='Page.captureScreenshot', params=params)
+
+    @staticmethod
+    def close() -> Command[Response]:
         """
-        Generates the command to navigate to a specific URL.
-
-        Args:
-            url (str): The URL to navigate to. It should be a valid URL format.
+        Creates a command to close the current page.
 
         Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for navigation.
+            Command[Response]: Command object to close the page.
         """
-        command = cls.GO_TO_TEMPLATE.copy()
-        command['params']['url'] = url
-        return command
+        return Command(method='Page.close')
 
-    @classmethod
-    def refresh(cls, ignore_cache: bool = False) -> dict:
+    @staticmethod
+    def create_isolated_world(
+        frame_id: str,
+        world_name: Optional[str] = None,
+        grant_universal_access: Optional[bool] = None,
+    ) -> Command[CreateIsolatedWorldResponse]:
         """
-        Generates the command to refresh the current page.
+        Creates a command to create an isolated world for the given frame.
 
         Args:
-            ignore_cache (bool): Whether to ignore the cache when refreshing.
-                                 If True, the cached resources will not be
-                                 used.
+            frame_id (str): ID of the frame in which to create the isolated world.
+            world_name (Optional[str]): Name to be reported in the Execution Context.
+            grant_universal_access (Optional[bool]): Whether to grant universal access.
 
         Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for page refresh.
+            Command[CreateIsolatedWorldResponse]: Command object with the execution context ID.
         """
-        command = cls.REFRESH_TEMPLATE.copy()
-        command['params']['ignoreCache'] = ignore_cache
-        return command
+        params = CreateIsolatedWorldParams(frameId=frame_id)
+        if world_name:
+            params['worldName'] = world_name
+        if grant_universal_access:
+            params['grantUniveralAccess'] = grant_universal_access
 
-    @classmethod
+        return Command(method='Page.createIsolatedWorld', params=params)
+
+    @staticmethod
+    def disable() -> Command[Response]:
+        """
+        Creates a command to disable page domain notifications.
+
+        Returns:
+            Command[Response]: Command object to disable the Page domain.
+        """
+        return Command(method='Page.disable')
+
+    @staticmethod
+    def enable(
+        enable_file_chooser_opened_event: Optional[bool] = None,
+    ) -> Command[Response]:
+        """
+        Creates a command to enable page domain notifications.
+
+        Args:
+            enable_file_chooser_opened_event (Optional[bool]): Whether to emit Page.fileChooserOpened event.
+
+        Returns:
+            Command[Response]: Command object to enable the Page domain.
+        """
+        params = PageEnableParams()
+        if enable_file_chooser_opened_event:
+            params['enableFileChooserOpenedEvent'] = (
+                enable_file_chooser_opened_event
+            )
+
+        return Command(method='Page.enable', params=params)
+
+    @staticmethod
+    def get_app_manifest(
+        manifest_id: Optional[str] = None,
+    ) -> Command[GetAppManifestResponse]:
+        """
+        Creates a command to get the manifest for the current document.
+
+        Returns:
+            Command[GetAppManifestResponse]: Command object with manifest information.
+        """
+        params = GetAppManifestParams()
+        if manifest_id:
+            params['manifestId'] = manifest_id
+        return Command(method='Page.getAppManifest', params=params)
+
+    @staticmethod
+    def get_frame_tree() -> Command[GetFrameTreeResponse]:
+        """
+        Creates a command to get the frame tree for the current page.
+
+        Returns:
+            Command[GetFrameTreeResponse]: Command object with frame tree information.
+        """
+        return Command(method='Page.getFrameTree')
+
+    @staticmethod
+    def get_layout_metrics() -> Command[GetLayoutMetricsResponse]:
+        """
+        Creates a command to get layout metrics for the page.
+
+        Returns:
+            Command[GetLayoutMetricsResponse]: Command object with layout metrics.
+        """
+        return Command(method='Page.getLayoutMetrics')
+
+    @staticmethod
+    def get_navigation_history() -> Command[GetNavigationHistoryResponse]:
+        """
+        Creates a command to get the navigation history for the current page.
+
+        Returns:
+            Command[GetNavigationHistoryResponse]: Command object with navigation history.
+        """
+        return Command(method='Page.getNavigationHistory')
+
+    @staticmethod
+    def handle_javascript_dialog(
+        accept: bool, prompt_text: Optional[str] = None
+    ) -> Command[Response]:
+        """
+        Creates a command to handle a JavaScript dialog.
+
+        Args:
+            accept (bool): Whether to accept or dismiss the dialog.
+            prompt_text (Optional[str]): Text to enter in prompt dialogs.
+
+        Returns:
+            Command[Response]: Command object to handle a JavaScript dialog.
+        """
+        params = HandleJavaScriptDialogParams(accept=accept)
+        if prompt_text:
+            params['promptText'] = prompt_text
+
+        return Command(method='Page.handleJavaScriptDialog', params=params)
+
+    @staticmethod
+    def navigate(
+        url: str,
+        referrer: Optional[str] = None,
+        transition_type: Optional[TransitionType] = None,
+        frame_id: Optional[str] = None,
+        referrer_policy: Optional[ReferrerPolicy] = None,
+    ) -> Command[NavigateResponse]:
+        """
+        Creates a command to navigate to a specific URL.
+
+        Args:
+            url (str): URL to navigate to.
+            referrer (Optional[str]): Referrer URL.
+            transition_type (Optional[str]): Intended transition type.
+            frame_id (Optional[str]): Frame ID to navigate.
+            referrer_policy (Optional[str]): Referrer policy.
+
+        Returns:
+            Command[NavigateResponse]: Command object to navigate to a URL.
+        """
+        params = NavigateParams(url=url)
+        if referrer:
+            params['referrer'] = referrer
+        if transition_type:
+            params['transitionType'] = transition_type
+        if frame_id:
+            params['frameId'] = frame_id
+        if referrer_policy:
+            params['referrerPolicy'] = referrer_policy
+
+        return Command(method='Page.navigate', params=params)
+
+    @staticmethod
+    def navigate_to_history_entry(entry_id: int) -> Command[Response]:
+        """
+        Creates a command to navigate to a specific history entry.
+
+        Args:
+            entry_id (int): ID of the history entry to navigate to.
+
+        Returns:
+            Command[Response]: Command object to navigate to a history entry.
+        """
+        params = NavigateToHistoryEntryParams(entryId=entry_id)
+        return Command(method='Page.navigateToHistoryEntry', params=params)
+
+    @staticmethod
     def print_to_pdf(
-        cls, scale: int = 1, paper_width: float = 8.5, paper_height: float = 11
-    ) -> dict:
+        landscape: Optional[bool] = None,
+        display_header_footer: Optional[bool] = None,
+        print_background: Optional[bool] = None,
+        scale: Optional[float] = None,
+        paper_width: Optional[float] = None,
+        paper_height: Optional[float] = None,
+        margin_top: Optional[float] = None,
+        margin_bottom: Optional[float] = None,
+        margin_left: Optional[float] = None,
+        margin_right: Optional[float] = None,
+        page_ranges: Optional[str] = None,
+        header_template: Optional[str] = None,
+        footer_template: Optional[str] = None,
+        prefer_css_page_size: Optional[bool] = None,
+        transfer_mode: Optional[TransferMode] = None,
+        generate_tagged_pdf: Optional[bool] = None,
+        generate_document_outline: Optional[bool] = None,
+    ) -> Command[PrintToPDFResponse]:
         """
-        Generates the command to print the current page to a PDF.
+        Creates a command to print the current page to PDF.
 
         Args:
-            scale (int): The scale of the page to print. Default is 1 (100%).
-            paper_width (float): The width of the paper to print on, in inches.
-                Default is 8.5 inches.
-            paper_height (float): The height of the paper to print on,
-                in inches. Default is 11 inches.
+            landscape (Optional[bool]): Paper orientation.
+            display_header_footer (Optional[bool]): Display header and footer.
+            print_background (Optional[bool]): Print background graphics.
+            scale (Optional[float]): Scale of the webpage rendering.
+            paper_width (Optional[float]): Paper width in inches.
+            paper_height (Optional[float]): Paper height in inches.
+            margin_top (Optional[float]): Top margin in inches.
+            margin_bottom (Optional[float]): Bottom margin in inches.
+            margin_left (Optional[float]): Left margin in inches.
+            margin_right (Optional[float]): Right margin in inches.
+            page_ranges (Optional[str]): Paper ranges to print, e.g., '1-5, 8, 11-13'.
+            header_template (Optional[str]): HTML template for the print header.
+            footer_template (Optional[str]): HTML template for the print footer.
+            prefer_css_page_size (Optional[bool]): Whether to prefer page size as defined by CSS.
+            transfer_mode (Optional[str]): Transfer mode.
 
         Returns:
-            dict: The command to be sent to the browser,
-                  containing the method and parameters for printing to PDF.
+            Command[PrintToPDFResponse]: Command object to print the page to PDF.
         """
-        command = cls.PRINT_TO_PDF_TEMPLATE.copy()
-        command['params']['scale'] = scale
-        command['params']['paperWidth'] = paper_width
-        command['params']['paperHeight'] = paper_height
-        return command
+        params = PrintToPDFParams()
+        if landscape:
+            params['landscape'] = landscape
+        if display_header_footer:
+            params['displayHeaderFooter'] = display_header_footer
+        if print_background:
+            params['printBackground'] = print_background
+        if scale:
+            params['scale'] = scale
+        if paper_width:
+            params['paperWidth'] = paper_width
+        if paper_height:
+            params['paperHeight'] = paper_height
+        if margin_top:
+            params['marginTop'] = margin_top
+        if margin_bottom:
+            params['marginBottom'] = margin_bottom
+        if margin_left:
+            params['marginLeft'] = margin_left
+        if margin_right:
+            params['marginRight'] = margin_right
+        if page_ranges:
+            params['pageRanges'] = page_ranges
+        if header_template:
+            params['headerTemplate'] = header_template
+        if footer_template:
+            params['footerTemplate'] = footer_template
+        if prefer_css_page_size:
+            params['preferCSSPageSize'] = prefer_css_page_size
+        if transfer_mode:
+            params['transferMode'] = transfer_mode
+        if generate_tagged_pdf:
+            params['generateTaggedPDF'] = generate_tagged_pdf
+        if generate_document_outline:
+            params['generateDocumentOutline'] = generate_document_outline
 
-    @classmethod
-    def enable_page(cls) -> dict:
-        """
-        Generates the command to enable the Page domain.
+        return Command(method='Page.printToPDF', params=params)
 
-        Returns:
-            dict: The command to be sent to the browser,
-                  containing the method to enable the Page domain.
+    @staticmethod
+    def reload(
+        ignore_cache: Optional[bool] = None,
+        script_to_evaluate_on_load: Optional[str] = None,
+        loader_id: Optional[str] = None,
+    ) -> Command[Response]:
         """
-        return cls.ENABLE_PAGE
-
-    @classmethod
-    def disable_page(cls) -> dict:
-        """
-        Generates the command to disable the Page domain.
-
-        Returns:
-            dict: The command to be sent to the browser,
-                  containing the method to disable the Page domain.
-        """
-        return cls.DISABLE_PAGE
-
-    @classmethod
-    def close(cls) -> dict:
-        """
-        Generates the command to close the current page.
-
-        Returns:
-            dict: The command to be sent to the browser,
-                  containing the method to close the current page.
-        """
-        return cls.CLOSE
-
-    @classmethod
-    def set_intercept_file_chooser_dialog(cls, enabled: bool) -> dict:
-        """
-        Generates the command to set whether to intercept file chooser dialogs.
+        Creates a command to reload the current page.
 
         Args:
-            enabled: A boolean value indicating whether to enable or disable
-                the interception of file chooser dialogs.
+            ignore_cache (Optional[bool]): If true, browser cache is ignored.
+            script_to_evaluate_on_load (Optional[str]): Script to be injected into the page on load.
 
         Returns:
-
+            Command[Response]: Command object to reload the page.
         """
-        command = copy.deepcopy(cls.SET_INTERCEPT_FILE_CHOOSER_DIALOG)
-        command['params']['enabled'] = enabled
-        return command
+        params = ReloadParams()
+        if ignore_cache:
+            params['ignoreCache'] = ignore_cache
+        if script_to_evaluate_on_load:
+            params['scriptToEvaluateOnLoad'] = script_to_evaluate_on_load
+        if loader_id:
+            params['loaderId'] = loader_id
+
+        return Command(method='Page.reload', params=params)
+
+    @staticmethod
+    def reset_navigation_history() -> Command[Response]:
+        """
+        Creates a command to reset the navigation history.
+        """
+        return Command(method='Page.resetNavigationHistory')
+
+    @staticmethod
+    def remove_script_to_evaluate_on_new_document(
+        identifier: str,
+    ) -> Command[Response]:
+        """
+        Creates a command to remove a script that was added to be evaluated on new documents.
+
+        Args:
+            identifier (str): Identifier of the script to remove.
+
+        Returns:
+            Command[Response]: Command object to remove a script.
+        """
+        params = RemoveScriptToEvaluateOnNewDocumentParams(
+            identifier=identifier
+        )
+        return Command(
+            method='Page.removeScriptToEvaluateOnNewDocument', params=params
+        )
+
+    @staticmethod
+    def set_bypass_csp(enabled: bool) -> Command[Response]:
+        """
+        Creates a command to toggle bypassing page CSP.
+
+        Args:
+            enabled (bool): Whether to bypass page CSP.
+
+        Returns:
+            Command[Response]: Command object to toggle bypassing page CSP.
+        """
+        params = SetBypassCSPParams(enabled=enabled)
+        return Command(method='Page.setBypassCSP', params=params)
+
+    @staticmethod
+    def set_document_content(frame_id: str, html: str) -> Command[Response]:
+        """
+        Creates a command to set the document content of a frame.
+
+        Args:
+            frame_id (str): Frame ID to set the document content for.
+            html (str): HTML content to set.
+
+        Returns:
+            Command[Response]: Command object to set the document content.
+        """
+        params = SetDocumentContentParams(frameId=frame_id, html=html)
+        return Command(method='Page.setDocumentContent', params=params)
+
+    @staticmethod
+    def set_intercept_file_chooser_dialog(enabled: bool) -> Command[Response]:
+        """
+        Creates a command to set whether to intercept file chooser dialogs.
+
+        Args:
+            enabled (bool): Whether to intercept file chooser dialogs.
+
+        Returns:
+            Command[Response]: Command object to set file chooser dialog interception.
+        """
+        params = SetInterceptFileChooserDialogParams(enabled=enabled)
+        return Command(
+            method='Page.setInterceptFileChooserDialog', params=params
+        )
+
+    @staticmethod
+    def set_lifecycle_events_enabled(enabled: bool) -> Command[Response]:
+        """
+        Creates a command to enable/disable lifecycle events.
+
+        Args:
+            enabled (bool): Whether to enable lifecycle events.
+
+        Returns:
+            Command[Response]: Command object to enable/disable lifecycle events.
+        """
+        params = SetLifecycleEventsEnabledParams(enabled=enabled)
+        return Command(method='Page.setLifecycleEventsEnabled', params=params)
+
+    @staticmethod
+    def stop_loading() -> Command[Response]:
+        """
+        Creates a command to stop loading the page.
+
+        Returns:
+            Command[Response]: Command object to stop loading the page.
+        """
+        return Command(method='Page.stopLoading')
+
+    @staticmethod
+    def add_compilation_cache(url: str, data: str) -> Command[Response]:
+        """
+        Creates a command to add a compilation cache entry.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            url (str): URL for which to add the compilation cache entry.
+            data (str): Base64-encoded data.
+
+        Returns:
+            Command[Response]: Command object to add a compilation cache entry.
+        """
+        params = AddCompilationCacheParams(url=url, data=data)
+        return Command(method='Page.addCompilationCache', params=params)
+
+    @staticmethod
+    def capture_snapshot(
+        format: Literal['mhtml'] = 'mhtml',
+    ) -> Command[CaptureSnapshotResponse]:
+        """
+        Creates a command to capture a snapshot of the page.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            format (Literal['mhtml']): Format of the snapshot (only 'mhtml' is supported).
+
+        Returns:
+            Command[CaptureSnapshotResponse]: Command object to capture a snapshot.
+        """
+        params = CaptureSnapshotParams(format=format)
+        return Command(method='Page.captureSnapshot', params=params)
+
+    @staticmethod
+    def clear_compilation_cache() -> Command[Response]:
+        """
+        Creates a command to clear the compilation cache.
+        """
+        return Command(method='Page.clearCompilationCache')
+
+    @staticmethod
+    def crash() -> Command[Response]:
+        """
+        Creates a command to crash the page.
+        """
+        return Command(method='Page.crash')
+
+    @staticmethod
+    def generate_test_report(
+        message: str, group: Optional[str] = None
+    ) -> Command[Response]:
+        """
+        Creates a command to generate a test report.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            message (str): Message to be displayed in the report.
+            group (Optional[str]): Group label for the report.
+
+        Returns:
+            Command[Response]: Command object to generate a test report.
+        """
+        params = GenerateTestReportParams(message=message)
+        if group is not None:
+            params['group'] = group
+        return Command(method='Page.generateTestReport', params=params)
+
+    @staticmethod
+    def get_ad_script_ancestry_ids(
+        frame_id: str,
+    ) -> Command[GetAdScriptAncestryIdsResponse]:
+        """
+        Creates a command to get the ad script ancestry IDs for a given frame.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            frame_id (str): ID of the frame to get ad script ancestry IDs for.
+
+        Returns:
+            Command[GetAdScriptAncestryIdsResponse]: Command object to get ad script ancestry IDs.
+        """
+        params = GetAdScriptAncestryIdsParams(frameId=frame_id)
+        return Command(method='Page.getAdScriptAncestryIds', params=params)
+
+    @staticmethod
+    def get_app_id(
+        app_id: Optional[str] = None, recommended_id: Optional[str] = None
+    ) -> Command[GetAppIdResponse]:
+        """
+        Creates a command to get the app ID.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            app_id (Optional[str]): App ID for verification.
+            recommended_id (Optional[str]): Recommended app ID.
+
+        Returns:
+            Command[GetAppIdResponse]: Command object to get the app ID.
+        """
+        params = GetAppIdParams()
+        if app_id is not None:
+            params['appId'] = app_id
+        if recommended_id is not None:
+            params['recommendedId'] = recommended_id
+        return Command(method='Page.getAppId', params=params)
+
+    @staticmethod
+    def get_installability_errors() -> Command[
+        GetInstallabilityErrorsResponse
+    ]:
+        """
+        Creates a command to get the installability errors.
+        """
+        return Command(method='Page.getInstallabilityErrors')
+
+    @staticmethod
+    def get_origin_trials(frame_id: str) -> Command[GetOriginTrialsResponse]:
+        """
+        Creates a command to get origin trials for a given origin.
+
+        Experimental: This method is experimental and may be subject to change.
+
+        Args:
+            frame_id (Optional[str]): Frame ID to get trials for.
+
+        Returns:
+            Command[GetOriginTrialsResponse]: Command object to get origin trials.
+        """
+        params = GetOriginTrialsParams(frameId=frame_id)
+        return Command(method='Page.getOriginTrials', params=params)
+
+    @staticmethod
+    def get_permissions_policy_state(
+        frame_id: str,
+    ) -> Command[GetPermissionsPolicyStateResponse]:
+        """
+        Creates a command to get the permissions policy state.
+        """
+        params = GetPermissionsPolicyStateParams(frameId=frame_id)
+        return Command(method='Page.getPermissionsPolicyState', params=params)
+
+    @staticmethod
+    def get_resource_content(
+        frame_id: str,
+        url: str,
+    ) -> Command[GetResourceContentResponse]:
+        """
+        Creates a command to get the resource content.
+        """
+        params = GetResourceContentParams(frameId=frame_id, url=url)
+        return Command(method='Page.getResourceContent', params=params)
+
+    @staticmethod
+    def get_resource_tree() -> Command[GetResourceTreeResponse]:
+        """
+        Creates a command to get the resource tree.
+        """
+        return Command(method='Page.getResourceTree')
+
+    @staticmethod
+    def produce_compilation_cache(
+        scripts: List[CompilationCacheParams],
+    ) -> Command[Response]:
+        """
+        Creates a command to produce a compilation cache entry.
+        """
+        params = ProduceCompilationCacheParams(scripts=scripts)
+        return Command(method='Page.produceCompilationCache', params=params)
+
+    @staticmethod
+    def screencast_frame_ack(
+        session_id: str,
+    ) -> Command[Response]:
+        """
+        Creates a command to acknowledge a screencast frame.
+        """
+        params = ScreencastFrameAckParams(sessionId=session_id)
+        return Command(method='Page.screencastFrameAck', params=params)
+
+    @staticmethod
+    def search_in_resource(
+        frame_id: str,
+        url: str,
+        query: str,
+        case_sensitive: Optional[bool] = None,
+        is_regex: Optional[bool] = None,
+    ) -> Command[SearchInResourceResponse]:
+        """
+        Creates a command to search for a string in a resource.
+        """
+        params = SearchInResourceParams(frameId=frame_id, url=url, query=query)
+        if case_sensitive is not None:
+            params['caseSensitive'] = case_sensitive
+        if is_regex is not None:
+            params['isRegex'] = is_regex
+        return Command(method='Page.searchInResource', params=params)
+
+    @staticmethod
+    def set_ad_blocking_enabled(
+        enabled: bool,
+    ) -> Command[Response]:
+        """
+        Creates a command to set ad blocking enabled.
+        """
+        params = SetAdBlockingEnabledParams(enabled=enabled)
+        return Command(method='Page.setAdBlockingEnabled', params=params)
+
+    @staticmethod
+    def set_font_families(
+        font_families: FontFamilies,
+        for_scripts: List[ScriptFontFamilies],
+    ) -> Command[Response]:
+        """
+        Creates a command to set font families.
+        """
+        params = SetFontFamiliesParams(
+            fontFamilies=font_families, forScripts=for_scripts
+        )
+        return Command(method='Page.setFontFamilies', params=params)
+
+    @staticmethod
+    def set_font_sizes(
+        font_sizes: FontSizes,
+    ) -> Command[Response]:
+        """
+        Creates a command to set font sizes.
+        """
+        params = SetFontSizesParams(fontSizes=font_sizes)
+        return Command(method='Page.setFontSizes', params=params)
+
+    @staticmethod
+    def set_prerendering_allowed(
+        allowed: bool,
+    ) -> Command[Response]:
+        """
+        Creates a command to set prerendering allowed.
+        """
+        params = SetPrerenderingAllowedParams(allowed=allowed)
+        return Command(method='Page.setPrerenderingAllowed', params=params)
+
+    @staticmethod
+    def set_rph_registration_mode(
+        mode: AutoResponseMode,
+    ) -> Command[Response]:
+        """
+        Creates a command to set the RPH registration mode.
+        """
+        params = SetRPHRegistrationModeParams(mode=mode)
+        return Command(method='Page.setRPHRegistrationMode', params=params)
+
+    @staticmethod
+    def set_spc_transaction_mode(
+        mode: AutoResponseMode,
+    ) -> Command[Response]:
+        """
+        Creates a command to set the SPC transaction mode.
+        """
+        params = SetSPCTransactionModeParams(mode=mode)
+        return Command(method='Page.setSPCTransactionMode', params=params)
+
+    @staticmethod
+    def set_web_lifecycle_state(
+        state: WebLifecycleState,
+    ) -> Command[Response]:
+        """
+        Creates a command to set the web lifecycle state.
+        """
+        params = SetWebLifecycleStateParams(state=state)
+        return Command(method='Page.setWebLifecycleState', params=params)
+
+    @staticmethod
+    def start_screencast(
+        format: ScreencastFormat,
+        quality: Optional[int] = None,
+        max_width: Optional[int] = None,
+        max_height: Optional[int] = None,
+        every_nth_frame: Optional[int] = None,
+    ) -> Command[Response]:
+        """
+        Creates a command to start a screencast.
+        """
+        params = StartScreencastParams(format=format)
+        if quality:
+            params['quality'] = quality
+        if max_width:
+            params['maxWidth'] = max_width
+        if max_height:
+            params['maxHeight'] = max_height
+        if every_nth_frame:
+            params['everyNthFrame'] = every_nth_frame
+        return Command(method='Page.startScreencast', params=params)
+
+    @staticmethod
+    def stop_screencast() -> Command[Response]:
+        """
+        Creates a command to stop a screencast.
+        """
+        return Command(method='Page.stopScreencast')
+
+    @staticmethod
+    def wait_for_debugger() -> Command[Response]:
+        """
+        Creates a command to wait for a debugger.
+        """
+        return Command(method='Page.waitForDebugger')
