@@ -302,3 +302,50 @@ class NetworkErrorReason(str, Enum):
     ADDRESS_UNREACHABLE = 'AddressUnreachable'
     BLOCKED_BY_CLIENT = 'BlockedByClient'
     BLOCKED_BY_RESPONSE = 'BlockedByResponse'
+
+
+class CookiePriority(str, Enum):
+    """Cookie priority levels."""
+
+    LOW = 'Low'
+    MEDIUM = 'Medium'
+    HIGH = 'High'
+
+
+class CookieSourceScheme(str, Enum):
+    """Cookie source schemes."""
+
+    UNSET = 'Unset'
+    NON_SECURE = 'NonSecure'
+    SECURE = 'Secure'
+
+
+class CookieSameSite(str, Enum):
+    """Cookie same site values."""
+
+    STRICT = 'Strict'
+    LAX = 'Lax'
+    NONE = 'None'
+
+
+class ConnectionType(str, Enum):
+    """Network connection types."""
+
+    NONE = 'none'
+    CELLULAR2G = 'cellular2g'
+    CELLULAR3G = 'cellular3g'
+    CELLULAR4G = 'cellular4g'
+    WIFI = 'wifi'
+    ETHERNET = 'ethernet'
+    BLUETOOTH = 'bluetooth'
+    WIMAX = 'wimax'
+    OTHER = 'other'
+
+
+class ContentEncoding(str, Enum):
+    """Content encoding types."""
+
+    GZIP = 'gzip'
+    DEFLATE = 'deflate'
+    BR = 'br'
+    ZSTD = 'zstd'
