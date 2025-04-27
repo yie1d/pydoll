@@ -13,8 +13,8 @@ from pydoll.protocol.types.commands import (
     ContinueRequestParams,
     ContinueResponseParams,
     ContinueWithAuthParams,
-    FetchEnableParams,
     FailRequestParams,
+    FetchEnableParams,
     FulfillRequestParams,
     GetResponseBodyParams,
     HeaderEntry,
@@ -50,7 +50,7 @@ class FetchCommands:
         request_id: str,
         url: Optional[str] = None,
         method: Optional[RequestMethod] = None,
-        post_data: Optional[dict] = None,
+        post_data: Optional[str] = None,
         headers: Optional[List[HeaderEntry]] = None,
         intercept_response: Optional[bool] = None,
     ) -> Command[Response]:
