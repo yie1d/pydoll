@@ -3,19 +3,25 @@ from typing import List, Optional
 from pydoll.constants import (
     ConnectionType,
     ContentEncoding,
+    CookiePriority,
     CookieSameSite,
+    CookieSourceScheme,
 )
 from pydoll.protocol.types.commands import (
     Command,
     DeleteCookiesParams,
     EmulateNetworkConditionsParams,
-    NetworkEnableParams,
+    EnableReportingApiParams,
     GetCertificateParams,
     GetCookiesParams,
     GetRequestPostDataParams,
     GetResponseBodyForInterceptionParams,
     GetResponseBodyParams,
+    GetSecurityIsolationStatusParams,
     HeaderEntry,
+    LoadNetworkResourceParams,
+    NetworkEnableParams,
+    ReplayXHRParams,
     RequestPattern,
     SearchInResponseBodyParams,
     SetAcceptedEncodingsParams,
@@ -31,6 +37,7 @@ from pydoll.protocol.types.commands import (
     SetUserAgentOverrideParams,
     StreamResourceContentParams,
     TakeResponseBodyForInterceptionAsStreamParams,
+    UserAgentMetadata,
 )
 from pydoll.protocol.types.commands.network_commands_types import (
     CookiePartitionKey,
@@ -44,6 +51,9 @@ from pydoll.protocol.types.responses import (
     GetRequestPostDataResponse,
     GetResponseBodyForInterceptionResponse,
     GetResponseBodyResponse,
+    GetSecurityIsolationStatusResponse,
+    LoadNetworkResourceOptions,
+    LoadNetworkResourceResponse,
     Response,
     SearchInResponseBodyResponse,
     SetCookieResponse,
@@ -123,6 +133,7 @@ class NetworkCommands:
             name will be deleted regardless of URL.
             domain (str, optional): The domain of the cookie to delete.
             path (str, optional): The path of the cookie to delete.
+            partition_key (CookiePartitionKey, optional): The partition key of the cookie to delete.
 
         Returns:
             Command[Response]: A command to delete the specified cookie.
@@ -257,7 +268,7 @@ class NetworkCommands:
         return Command(method='Network.setCacheDisabled', params=params)
 
     @staticmethod
-    def set_cookie(
+    def set_cookie(  # noqa: PLR0913, PLR0917
         name: str,
         value: str,
         url: Optional[str] = None,
@@ -267,6 +278,11 @@ class NetworkCommands:
         http_only: Optional[bool] = None,
         same_site: Optional[CookieSameSite] = None,
         expires: Optional[float] = None,
+        priority: Optional[CookiePriority] = None,
+        same_party: Optional[bool] = None,
+        source_scheme: Optional[CookieSourceScheme] = None,
+        source_port: Optional[int] = None,
+        partition_key: Optional[CookiePartitionKey] = None,
     ) -> Command[SetCookieResponse]:
         """
         Creates a command to set a specific cookie.
@@ -282,25 +298,42 @@ class NetworkCommands:
             http_only (bool, optional): Whether the cookie should be marked as HTTP only.
             same_site (CookieSameSite, optional): The SameSite attribute of the cookie.
             expires (float, optional): The expiration date of the cookie as a Unix timestamp.
+            priority (CookiePriority, optional): The priority of the cookie.
+            same_party (bool, optional): Whether the cookie is a same-party cookie.
+            source_scheme (CookieSourceScheme, optional): The source scheme of the cookie.
+            source_port (int, optional): The source port of the cookie.
+            partition_key (CookiePartitionKey, optional): The partition key of the cookie.
 
         Returns:
             Command[SetCookieResponse]: A command to set the specified cookie in the browser.
         """
         params = SetCookieParams(name=name, value=value)
-        if url:
+
+        if url is not None:
             params['url'] = url
-        if domain:
+        if domain is not None:
             params['domain'] = domain
-        if path:
+        if path is not None:
             params['path'] = path
         if secure is not None:
             params['secure'] = secure
         if http_only is not None:
             params['httpOnly'] = http_only
-        if same_site:
+        if same_site is not None:
             params['sameSite'] = same_site
-        if expires:
+        if expires is not None:
             params['expires'] = expires
+        if priority is not None:
+            params['priority'] = priority
+        if same_party is not None:
+            params['sameParty'] = same_party
+        if source_scheme is not None:
+            params['sourceScheme'] = source_scheme
+        if source_port is not None:
+            params['sourcePort'] = source_port
+        if partition_key is not None:
+            params['partitionKey'] = partition_key
+
         return Command(method='Network.setCookie', params=params)
 
     @staticmethod
@@ -342,6 +375,7 @@ class NetworkCommands:
         user_agent: str,
         accept_language: Optional[str] = None,
         platform: Optional[str] = None,
+        user_agent_metadata: Optional[UserAgentMetadata] = None,
     ) -> Command[Response]:
         """
         Creates a command to override the user agent string used in network
@@ -364,10 +398,25 @@ class NetworkCommands:
             params['acceptLanguage'] = accept_language
         if platform:
             params['platform'] = platform
+        if user_agent_metadata:
+            params['userAgentMetadata'] = user_agent_metadata
         return Command(method='Network.setUserAgentOverride', params=params)
 
     @staticmethod
-    def search_in_response(
+    def clear_accepted_encodings_override() -> Command[Response]:
+        """Clears accepted encodings set by setAcceptedEncodings."""
+        return Command(method='Network.clearAcceptedEncodingsOverride')
+
+    @staticmethod
+    def enable_reporting_api(
+        enabled: bool,
+    ) -> Command[Response]:
+        """Enables Reporting API."""
+        params = EnableReportingApiParams(enabled=enabled)
+        return Command(method='Network.enableReportingApi', params=params)
+
+    @staticmethod
+    def search_in_response_body(
         request_id: str,
         query: str,
         case_sensitive: bool = False,
@@ -551,3 +600,38 @@ class NetworkCommands:
         return Command(
             method='Network.emulateNetworkConditions', params=params
         )
+
+    @staticmethod
+    def get_security_isolation_status(
+        frame_id: Optional[str] = None,
+    ) -> Command[GetSecurityIsolationStatusResponse]:
+        """Returns the security isolation status."""
+        params = GetSecurityIsolationStatusParams()
+        if frame_id:
+            params['frameId'] = frame_id
+        return Command(
+            method='Network.getSecurityIsolationStatus', params=params
+        )
+
+    @staticmethod
+    def load_network_resource(
+        url: str,
+        options: LoadNetworkResourceOptions,
+        frame_id: Optional[str] = None,
+    ) -> Command[LoadNetworkResourceResponse]:
+        """
+        Loads a network resource and returns the response.
+        """
+        params = LoadNetworkResourceParams(url=url, options=options)
+        if frame_id:
+            params['frameId'] = frame_id
+        return Command(method='Network.loadNetworkResource', params=params)
+
+    @staticmethod
+    def replay_xhr(
+        request_id: str,
+    ) -> Command[Response]:
+        """
+        Replays network resource request."""
+        params = ReplayXHRParams(requestId=request_id)
+        return Command(method='Network.replayXHR', params=params)
