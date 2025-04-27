@@ -12,6 +12,7 @@ from pydoll.protocol.types.commands import (
     HeaderEntry,
     RequestPattern,
 )
+from pydoll.protocol.types.responses import LoadNetworkResourceOptions
 
 
 class CookiePartitionKey(TypedDict):
@@ -208,3 +209,27 @@ class AuthChallengeResponseParams(CommandParams):
     response: str
     username: NotRequired[str]
     password: NotRequired[str]
+
+
+class EnableReportingApiParams(CommandParams):
+    """Parameters for enabling Reporting API."""
+
+    enabled: bool
+
+
+class GetSecurityIsolationStatusParams(CommandParams):
+    frameId: NotRequired[str]
+
+
+class LoadNetworkResourceParams(CommandParams):
+    """Parameters for loading a network resource."""
+
+    url: str
+    options: LoadNetworkResourceOptions
+    frameId: NotRequired[str]
+
+
+class ReplayXHRParams(CommandParams):
+    """Parameters for replaying an XMLHttpRequest."""
+
+    requestId: str
