@@ -72,9 +72,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             str: String representation of the WebElement.
         """
         attrs = ', '.join(f'{k}={v!r}' for k, v in self._attributes.items())
-        return (
-            f'{self.__class__.__name__}({attrs})(object_id={self._object_id})'
-        )
+        return f'{self.__class__.__name__}({attrs})(object_id={self._object_id})'
 
     @property
     async def text(self) -> str:
@@ -184,14 +182,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Returns:
             list: The bounding box of the element.
         """
-        response = await self._execute_script(
-            Scripts.BOUNDS, return_by_value=True
-        )
+        response = await self._execute_script(Scripts.BOUNDS, return_by_value=True)
         return json.loads(response['result']['result']['value'])
 
-    async def _execute_script(
-        self, script: str, return_by_value: bool = False
-    ):
+    async def _execute_script(self, script: str, return_by_value: bool = False):
         """
         Executes a JavaScript script in the context of this element.
 
@@ -208,9 +202,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 results.
         """
         return await self._execute_command(
-            RuntimeCommands.call_function_on(
-                self._object_id, script, return_by_value
-            )
+            RuntimeCommands.call_function_on(self._object_id, script, return_by_value)
         )
 
     async def _is_element_visible(self):
@@ -222,9 +214,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Returns:
             bool: True if the element is visible, False otherwise.
         """
-        result = await self._execute_script(
-            Scripts.ELEMENT_VISIBLE, return_by_value=True
-        )
+        result = await self._execute_script(Scripts.ELEMENT_VISIBLE, return_by_value=True)
         return result['result']['result']['value']
 
     async def _is_element_on_top(self):
@@ -236,9 +226,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Returns:
             bool: True if the element is on top of the page, False otherwise.
         """
-        result = await self._execute_script(
-            Scripts.ELEMENT_ON_TOP, return_by_value=True
-        )
+        result = await self._execute_script(Scripts.ELEMENT_ON_TOP, return_by_value=True)
         return result['result']['result']['value']
 
     async def get_screenshot(self, path: str):
@@ -328,18 +316,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         await self.scroll_into_view()
 
         if not await self._is_element_visible():
-            raise exceptions.ElementNotVisible(
-                'Element is not visible on the page.'
-            )
+            raise exceptions.ElementNotVisible('Element is not visible on the page.')
 
-        result = await self._execute_script(
-            Scripts.CLICK, return_by_value=True
-        )
+        result = await self._execute_script(Scripts.CLICK, return_by_value=True)
         clicked = result['result']['result']['value']
         if not clicked:
-            raise exceptions.ElementNotInteractable(
-                'Element is not interactable.'
-            )
+            raise exceptions.ElementNotInteractable('Element is not interactable.')
 
     async def click(
         self,
@@ -372,9 +354,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             return await self.click_option_tag()
 
         if not await self._is_element_visible():
-            raise exceptions.ElementNotVisible(
-                'Element is not visible on the page.'
-            )
+            raise exceptions.ElementNotVisible('Element is not visible on the page.')
 
         await self.scroll_into_view()
 
@@ -421,9 +401,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         await self._execute_command(InputCommands.insert_text(text))
 
-    async def set_input_files(
-        self, files: Union[str, Path, List[Union[str, Path]]]
-    ):
+    async def set_input_files(self, files: Union[str, Path, List[Union[str, Path]]]):
         """
         Sets the value of the file input to these file paths.
 
@@ -434,9 +412,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             self._attributes.get('tag_name', '').lower() != 'input'
             or self._attributes.get('type', '').lower() != 'file'
         ):
-            raise exceptions.ElementNotInteractable(
-                'The element is not a file input.'
-            )
+            raise exceptions.ElementNotInteractable('The element is not a file input.')
         await self._execute_command(
             DomCommands.upload_files(files=files, object_id=self._object_id)
         )

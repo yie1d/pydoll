@@ -12,14 +12,10 @@ class BrowserProcessManager:
             process_creator (callable, optional): A function that creates a
                 browser process. If None, the default process creator is used.
         """
-        self._process_creator = (
-            process_creator or self._default_process_creator
-        )
+        self._process_creator = process_creator or self._default_process_creator
         self._process = None
 
-    def start_browser_process(
-        self, binary_location: str, port: int, arguments: list
-    ) -> None:
+    def start_browser_process(self, binary_location: str, port: int, arguments: list) -> None:
         """
         Starts the browser process with the given parameters.
 
@@ -56,9 +52,7 @@ class BrowserProcessManager:
         Returns:
             subprocess.Popen: The created process instance.
         """
-        return subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def stop_process(self):
         """

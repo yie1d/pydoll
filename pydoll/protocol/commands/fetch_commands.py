@@ -116,9 +116,7 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch request with
                 authentication.
         """
-        auth_challenge_response_dict = AuthChallengeResponseDict(
-            response=auth_challenge_response
-        )
+        auth_challenge_response_dict = AuthChallengeResponseDict(response=auth_challenge_response)
         if proxy_username:
             auth_challenge_response_dict['username'] = proxy_username
         if proxy_password:
@@ -180,9 +178,7 @@ class FetchCommands:
         return Command(method='Fetch.enable', params=params)
 
     @staticmethod
-    def fail_request(
-        request_id: str, error_reason: NetworkErrorReason
-    ) -> Command[Response]:
+    def fail_request(request_id: str, error_reason: NetworkErrorReason) -> Command[Response]:
         """
         Creates a command to simulate a failure in a fetch request.
 
@@ -196,9 +192,7 @@ class FetchCommands:
         Returns:
             Command[Response]: A command for failing the fetch request.
         """
-        params = FailRequestParams(
-            requestId=request_id, errorReason=error_reason
-        )
+        params = FailRequestParams(requestId=request_id, errorReason=error_reason)
         return Command(method='Fetch.failRequest', params=params)
 
     @staticmethod

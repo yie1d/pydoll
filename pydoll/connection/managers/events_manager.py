@@ -65,9 +65,7 @@ class EventsManager:
             'callback': callback,
             'temporary': temporary,
         }
-        logger.info(
-            f"Registered callback '{event_name}' with ID {self._callback_id}"
-        )
+        logger.info(f"Registered callback '{event_name}' with ID {self._callback_id}")
         return self._callback_id
 
     def remove_callback(self, callback_id: int) -> bool:

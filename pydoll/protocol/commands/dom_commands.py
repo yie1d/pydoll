@@ -20,9 +20,7 @@ class DomCommands:
             in the DOM.
     """
 
-    SelectorType = Literal[
-        By.CSS_SELECTOR, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME
-    ]
+    SelectorType = Literal[By.CSS_SELECTOR, By.XPATH, By.CLASS_NAME, By.ID, By.TAG_NAME]
 
     ENABLE = {'method': 'DOM.enable'}
     DISABLE = {'method': 'DOM.disable'}
@@ -192,9 +190,7 @@ class DomCommands:
             case _:
                 selector = escaped_value
         if object_id and not by == By.XPATH:
-            script = Scripts.RELATIVE_QUERY_SELECTOR.replace(
-                '{selector}', selector
-            )
+            script = Scripts.RELATIVE_QUERY_SELECTOR.replace('{selector}', selector)
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
@@ -239,9 +235,7 @@ class DomCommands:
             case _:
                 selector = escaped_value
         if object_id and not by == By.XPATH:
-            script = Scripts.RELATIVE_QUERY_SELECTOR_ALL.replace(
-                '{selector}', escaped_value
-            )
+            script = Scripts.RELATIVE_QUERY_SELECTOR_ALL.replace('{selector}', escaped_value)
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
@@ -271,18 +265,14 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
-            script = Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace(
-                '{escaped_value}', escaped_value
-            )
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
                 return_by_value=False,
             )
         else:
-            script = Scripts.FIND_XPATH_ELEMENT.replace(
-                '{escaped_value}', escaped_value
-            )
+            script = Scripts.FIND_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
             command = RuntimeCommands.evaluate_script(script)
         return command
 
@@ -302,18 +292,14 @@ class DomCommands:
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = cls._ensure_relative_xpath(escaped_value)
-            script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace(
-                '{escaped_value}', escaped_value
-            )
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
             command = RuntimeCommands.call_function_on(
                 object_id,
                 script,
                 return_by_value=False,
             )
         else:
-            script = Scripts.FIND_XPATH_ELEMENTS.replace(
-                '{escaped_value}', escaped_value
-            )
+            script = Scripts.FIND_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
             command = RuntimeCommands.evaluate_script(script)
         return command
 
@@ -385,9 +371,7 @@ class DomCommands:
         """
         command = copy.deepcopy(cls.SET_FILE_INPUT_FILES_TEMPLATE)
         if object_id is None and backend_node_id is None:
-            raise ValueError(
-                'Either object_id or backend_node_id is required.'
-            )
+            raise ValueError('Either object_id or backend_node_id is required.')
         if object_id is not None:
             command['params']['objectId'] = object_id
         if backend_node_id is not None:

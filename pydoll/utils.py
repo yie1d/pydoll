@@ -34,9 +34,7 @@ async def get_browser_ws_address(port: int) -> str:
     """
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f'http://localhost:{port}/json/version'
-            ) as response:
+            async with session.get(f'http://localhost:{port}/json/version') as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data['webSocketDebuggerUrl']
@@ -45,6 +43,4 @@ async def get_browser_ws_address(port: int) -> str:
         raise exceptions.NetworkError(f'Failed to get browser ws address: {e}')
 
     except KeyError as e:
-        raise exceptions.InvalidResponse(
-            f'Failed to get browser ws address: {e}'
-        )
+        raise exceptions.InvalidResponse(f'Failed to get browser ws address: {e}')

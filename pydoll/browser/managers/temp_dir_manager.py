@@ -20,9 +20,7 @@ class TempDirectoryManager:
         """
         sig = inspect.signature(temp_dir_factory)
         if 'prefix' in sig.parameters:
-            temp_dir_factory = partial(
-                temp_dir_factory, prefix='pydoll_chromium_profile-'
-            )
+            temp_dir_factory = partial(temp_dir_factory, prefix='pydoll_chromium_profile-')
         self._temp_dir_factory = temp_dir_factory
         self._temp_dirs = []
 

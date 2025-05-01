@@ -32,9 +32,7 @@ class ProxyManager:
 
         if proxy_arg is not None:
             index, proxy_value = proxy_arg
-            has_credentials, username, password, clean_proxy = (
-                self._parse_proxy(proxy_value)
-            )
+            has_credentials, username, password, clean_proxy = self._parse_proxy(proxy_value)
 
             if has_credentials:
                 self._update_proxy_argument(index, clean_proxy)

@@ -63,10 +63,7 @@ class Edge(Browser):
                 '/usr/bin/microsoft-edge',
             ],
             'Darwin': [
-                (
-                    '/Applications/Microsoft Edge.app/Contents/MacOS'
-                    '/Microsoft Edge'
-                ),
+                ('/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'),
             ],
         }
 

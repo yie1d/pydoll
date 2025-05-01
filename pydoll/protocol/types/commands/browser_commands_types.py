@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import List, NotRequired, TypedDict
 
 from pydoll.constants import DownloadBehavior, PermissionType, WindowState
 from pydoll.protocol.types.commands.base_commands_types import CommandParams

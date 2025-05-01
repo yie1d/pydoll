@@ -67,9 +67,7 @@ class BrowserCommands:
         return Command(method='Browser.resetPermissions', params=params)
 
     @staticmethod
-    def cancel_download(
-        guid: str, browser_context_id: Optional[str] = None
-    ) -> Command[Response]:
+    def cancel_download(guid: str, browser_context_id: Optional[str] = None) -> Command[Response]:
         """
         Generates a command to cancel a download.
 
@@ -120,9 +118,7 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response
                 after setting the download path.
         """
-        params = SetDownloadBehaviorParams(
-            behavior=DownloadBehavior.ALLOW, downloadPath=path
-        )
+        params = SetDownloadBehaviorParams(behavior=DownloadBehavior.ALLOW, downloadPath=path)
         return Command(method='Browser.setDownloadBehavior', params=params)
 
     @staticmethod
@@ -154,9 +150,7 @@ class BrowserCommands:
         return Command(method='Browser.getWindowForTarget', params=params)
 
     @staticmethod
-    def set_window_bounds(
-        window_id: int, bounds: WindowBoundsDict
-    ) -> Command[Response]:
+    def set_window_bounds(window_id: int, bounds: WindowBoundsDict) -> Command[Response]:
         """
         Generates a command to set the bounds of a window.
 

@@ -118,9 +118,7 @@ class PageCommands:
         if run_immediately:
             params['runImmediately'] = run_immediately
 
-        return Command(
-            method='Page.addScriptToEvaluateOnNewDocument', params=params
-        )
+        return Command(method='Page.addScriptToEvaluateOnNewDocument', params=params)
 
     @staticmethod
     def bring_to_front() -> Command[Response]:
@@ -130,7 +128,7 @@ class PageCommands:
         return Command(method='Page.bringToFront')
 
     @staticmethod
-    def capture_screenshot(
+    def capture_screenshot(  # noqa: PLR0913
         format: Optional[ScreenshotFormat] = None,
         quality: Optional[int] = None,
         clip: Optional[Viewport] = None,
@@ -228,9 +226,7 @@ class PageCommands:
         """
         params = PageEnableParams()
         if enable_file_chooser_opened_event:
-            params['enableFileChooserOpenedEvent'] = (
-                enable_file_chooser_opened_event
-            )
+            params['enableFileChooserOpenedEvent'] = enable_file_chooser_opened_event
 
         return Command(method='Page.enable', params=params)
 
@@ -347,7 +343,7 @@ class PageCommands:
         return Command(method='Page.navigateToHistoryEntry', params=params)
 
     @staticmethod
-    def print_to_pdf(
+    def print_to_pdf(  # noqa: PLR0912, PLR0917, PLR0913
         landscape: Optional[bool] = None,
         display_header_footer: Optional[bool] = None,
         print_background: Optional[bool] = None,
@@ -473,12 +469,8 @@ class PageCommands:
         Returns:
             Command[Response]: Command object to remove a script.
         """
-        params = RemoveScriptToEvaluateOnNewDocumentParams(
-            identifier=identifier
-        )
-        return Command(
-            method='Page.removeScriptToEvaluateOnNewDocument', params=params
-        )
+        params = RemoveScriptToEvaluateOnNewDocumentParams(identifier=identifier)
+        return Command(method='Page.removeScriptToEvaluateOnNewDocument', params=params)
 
     @staticmethod
     def set_bypass_csp(enabled: bool) -> Command[Response]:
@@ -521,9 +513,7 @@ class PageCommands:
             Command[Response]: Command object to set file chooser dialog interception.
         """
         params = SetInterceptFileChooserDialogParams(enabled=enabled)
-        return Command(
-            method='Page.setInterceptFileChooserDialog', params=params
-        )
+        return Command(method='Page.setInterceptFileChooserDialog', params=params)
 
     @staticmethod
     def set_lifecycle_events_enabled(enabled: bool) -> Command[Response]:
@@ -599,9 +589,7 @@ class PageCommands:
         return Command(method='Page.crash')
 
     @staticmethod
-    def generate_test_report(
-        message: str, group: Optional[str] = None
-    ) -> Command[Response]:
+    def generate_test_report(message: str, group: Optional[str] = None) -> Command[Response]:
         """
         Creates a command to generate a test report.
 
@@ -661,9 +649,7 @@ class PageCommands:
         return Command(method='Page.getAppId', params=params)
 
     @staticmethod
-    def get_installability_errors() -> Command[
-        GetInstallabilityErrorsResponse
-    ]:
+    def get_installability_errors() -> Command[GetInstallabilityErrorsResponse]:
         """
         Creates a command to get the installability errors.
         """
@@ -769,9 +755,7 @@ class PageCommands:
         """
         Creates a command to set font families.
         """
-        params = SetFontFamiliesParams(
-            fontFamilies=font_families, forScripts=for_scripts
-        )
+        params = SetFontFamiliesParams(fontFamilies=font_families, forScripts=for_scripts)
         return Command(method='Page.setFontFamilies', params=params)
 
     @staticmethod

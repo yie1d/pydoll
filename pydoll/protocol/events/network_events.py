@@ -123,9 +123,7 @@ class NetworkEvents:
     released and that the application can react to disconnections.
     """
 
-    WEB_TRANSPORT_CONNECTION_ESTABLISHED = (
-        'Network.webTransportConnectionEstablished'
-    )
+    WEB_TRANSPORT_CONNECTION_ESTABLISHED = 'Network.webTransportConnectionEstablished'
     """
     Event fired when a web transport connection is successfully established.
 

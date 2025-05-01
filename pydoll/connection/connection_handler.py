@@ -131,9 +131,7 @@ class ConnectionHandler:
             await self._handle_connection_loss()
             raise exc
 
-    async def register_callback(
-        self, event_name: str, callback: Callable, temporary: bool = False
-    ):
+    async def register_callback(self, event_name: str, callback: Callable, temporary: bool = False):
         """
         Registers a callback function for a specific event.
 
@@ -147,9 +145,7 @@ class ConnectionHandler:
             int: The ID of the registered callback, which can be used to
                 remove the listener later.
         """
-        return self._events_handler.register_callback(
-            event_name, callback, temporary
-        )
+        return self._events_handler.register_callback(event_name, callback, temporary)
 
     async def remove_callback(self, callback_id: int):
         """
@@ -234,10 +230,7 @@ class ConnectionHandler:
         """
         if 'browser' in self._page_id:
             return await self._ws_address_resolver(self._connection_port)
-        return (
-            f'ws://localhost:{self._connection_port}/devtools/page/'
-            f'{self._page_id}'
-        )
+        return f'ws://localhost:{self._connection_port}/devtools/page/{self._page_id}'
 
     async def _handle_connection_loss(self):
         """
@@ -356,9 +349,7 @@ class ConnectionHandler:
             None
         """
         logger.debug(f'Processing command response: {message.get("id")}')
-        self._command_manager.resolve_command(
-            message['id'], json.dumps(message)
-        )
+        self._command_manager.resolve_command(message['id'], json.dumps(message))
 
     async def _handle_event_message(self, message: dict):
         """

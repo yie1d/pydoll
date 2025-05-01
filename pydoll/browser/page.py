@@ -118,9 +118,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
 
         """
         response = await self._execute_command(
-            RuntimeCommands.evaluate_script(
-                'document.documentElement.outerHTML'
-            )
+            RuntimeCommands.evaluate_script('document.documentElement.outerHTML')
         )
         return response['result']['result']['value']
 
@@ -143,9 +141,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             list[dict]: A list of dictionaries containing cookie data from
                 the current page.
         """
-        response = await self._execute_command(
-            NetworkCommands.get_all_cookies()
-        )
+        response = await self._execute_command(NetworkCommands.get_all_cookies())
         return response['result']['cookies']
 
     async def set_cookies(self, cookies: list[dict]):
@@ -263,9 +259,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if fmt not in {'jpeg', 'jpg', 'png'}:
             raise InvalidFileExtension(f'{fmt} extension is not supported.')
 
-        response = await self._execute_command(
-            PageCommands.screenshot(fmt=fmt)
-        )
+        response = await self._execute_command(PageCommands.screenshot(fmt=fmt))
         screenshot_b64 = response['result']['data'].encode('utf-8')
         screenshot_bytes = decode_image_to_bytes(screenshot_b64)
         async with aiofiles.open(path, 'wb') as file:
@@ -381,9 +375,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
                 - str: The response body content
                 - bool: Flag indicating if the body is base64 encoded
         """
-        response = await self._execute_command(
-            NetworkCommands.get_response_body(request_id)
-        )
+        response = await self._execute_command(NetworkCommands.get_response_body(request_id))
         return (
             response['result']['body'],
             response['result']['base64Encoded'],
@@ -416,9 +408,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         await self._execute_command(NetworkCommands.enable_network_events())
         self._network_events_enabled = True
 
-    async def enable_fetch_events(
-        self, handle_auth: bool = False, resource_type: str = 'Document'
-    ):
+    async def enable_fetch_events(self, handle_auth: bool = False, resource_type: str = 'Document'):
         """
         Enables fetch events for the page.
 
@@ -433,9 +423,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             None
         """
-        await self._execute_command(
-            FetchCommands.enable_fetch_events(handle_auth, resource_type)
-        )
+        await self._execute_command(FetchCommands.enable_fetch_events(handle_auth, resource_type))
         self._fetch_events_enabled = True
 
     async def enable_dom_events(self):
@@ -463,9 +451,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             None
         """
-        await self._execute_command(
-            PageCommands.set_intercept_file_chooser_dialog(True)
-        )
+        await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(True))
         self._intercept_file_chooser_dialog_enabled = True
 
     async def disable_fetch_events(self):
@@ -504,14 +490,10 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             None
         """
-        await self._execute_command(
-            PageCommands.set_intercept_file_chooser_dialog(False)
-        )
+        await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(False))
         self._intercept_file_chooser_dialog_enabled = False
 
-    async def on(
-        self, event_name: str, callback: callable, temporary: bool = False
-    ):
+    async def on(self, event_name: str, callback: callable, temporary: bool = False):
         """
         Registers an event listener for the page.
 
@@ -565,9 +547,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             script = script.replace('argument', 'this')
             script = f'function(){{ {script} }}'
             object_id = element._object_id
-            command = RuntimeCommands.call_function_on(
-                object_id, script, return_by_value=True
-            )
+            command = RuntimeCommands.call_function_on(object_id, script, return_by_value=True)
         else:
             command = RuntimeCommands.evaluate_script(script)
         return await self._execute_command(command)
@@ -609,9 +589,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             await asyncio.sleep(0.5)
 
     @asynccontextmanager
-    async def expect_file_chooser(
-        self, files: Union[str, Path, List[Union[str, Path]]]
-    ):
+    async def expect_file_chooser(self, files: Union[str, Path, List[Union[str, Path]]]):
         """
         Provide a context manager that expects a file chooser dialog to be
         opened and handles the file upload. When a file selection signal
@@ -642,9 +620,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         if self.intercept_file_chooser_dialog_enabled is False:
             await self.enable_intercept_file_chooser_dialog()
 
-        await self.on(
-            PageEvents.FILE_CHOOSER_OPENED, event_handler, temporary=True
-        )
+        await self.on(PageEvents.FILE_CHOOSER_OPENED, event_handler, temporary=True)
 
         yield
 
@@ -680,9 +656,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
                 *selector, timeout=time_to_wait_captcha, raise_exc=False
             ):
                 # adjust the div size to shadow root size
-                await self.execute_script(
-                    'argument.style="width: 300px"', element
-                )
+                await self.execute_script('argument.style="width: 300px"', element)
                 await asyncio.sleep(time_before_click)
                 await element.click()
         except Exception as exc:
@@ -781,9 +755,7 @@ class Page(FindElementsMixin):  # noqa: PLR0904
             time_to_wait_captcha=time_to_wait_captcha,
         )
 
-        self._cloudflare_captcha_callback_id = await self.on(
-            PageEvents.PAGE_LOADED, callback
-        )
+        self._cloudflare_captcha_callback_id = await self.on(PageEvents.PAGE_LOADED, callback)
 
     async def disable_auto_solve_cloudflare_captcha(self):
         """
@@ -792,7 +764,5 @@ class Page(FindElementsMixin):  # noqa: PLR0904
         Returns:
             None
         """
-        await self._connection_handler.remove_callback(
-            self._cloudflare_captcha_callback_id
-        )
+        await self._connection_handler.remove_callback(self._cloudflare_captcha_callback_id)
         self._cloudflare_captcha_callback_id = None

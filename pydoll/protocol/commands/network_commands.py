@@ -473,9 +473,7 @@ class NetworkCommands:
         return Command(method='Network.canClearBrowserCookies')
 
     @staticmethod
-    def can_emulate_network_conditions() -> Command[
-        CanEmulateNetworkConditionsResponse
-    ]:
+    def can_emulate_network_conditions() -> Command[CanEmulateNetworkConditionsResponse]:
         """Tells whether emulation of network conditions is supported."""
         return Command(method='Network.canEmulateNetworkConditions')
 
@@ -496,12 +494,8 @@ class NetworkCommands:
         interception_id: str,
     ) -> Command[GetResponseBodyForInterceptionResponse]:
         """Returns content served for the given currently intercepted request."""
-        params = GetResponseBodyForInterceptionParams(
-            interceptionId=interception_id
-        )
-        return Command(
-            method='Network.getResponseBodyForInterception', params=params
-        )
+        params = GetResponseBodyForInterceptionParams(interceptionId=interception_id)
+        return Command(method='Network.getResponseBodyForInterception', params=params)
 
     @staticmethod
     def set_accepted_encodings(
@@ -528,13 +522,9 @@ class NetworkCommands:
             enableThirdPartyCookieRestriction=enable_third_party_cookie_restriction
         )
         if disable_third_party_cookie_metadata is not None:
-            params['disableThirdPartyCookieMetadata'] = (
-                disable_third_party_cookie_metadata
-            )
+            params['disableThirdPartyCookieMetadata'] = disable_third_party_cookie_metadata
         if disable_third_party_cookie_heuristics is not None:
-            params['disableThirdPartyCookieHeuristics'] = (
-                disable_third_party_cookie_heuristics
-            )
+            params['disableThirdPartyCookieHeuristics'] = disable_third_party_cookie_heuristics
         return Command(method='Network.setCookieControls', params=params)
 
     @staticmethod
@@ -550,9 +540,7 @@ class NetworkCommands:
         interception_id: str,
     ) -> Command[TakeResponseBodyForInterceptionAsStreamResponse]:
         """Returns a handle to the stream representing the response body."""
-        params = TakeResponseBodyForInterceptionAsStreamParams(
-            interceptionId=interception_id
-        )
+        params = TakeResponseBodyForInterceptionAsStreamParams(interceptionId=interception_id)
         return Command(
             method='Network.takeResponseBodyForInterceptionAsStream',
             params=params,
@@ -592,9 +580,7 @@ class NetworkCommands:
             params['packetQueueLength'] = packet_queue_length
         if packet_reordering is not None:
             params['packetReordering'] = packet_reordering
-        return Command(
-            method='Network.emulateNetworkConditions', params=params
-        )
+        return Command(method='Network.emulateNetworkConditions', params=params)
 
     @staticmethod
     def get_security_isolation_status(
@@ -604,9 +590,7 @@ class NetworkCommands:
         params = GetSecurityIsolationStatusParams()
         if frame_id:
             params['frameId'] = frame_id
-        return Command(
-            method='Network.getSecurityIsolationStatus', params=params
-        )
+        return Command(method='Network.getSecurityIsolationStatus', params=params)
 
     @staticmethod
     def load_network_resource(

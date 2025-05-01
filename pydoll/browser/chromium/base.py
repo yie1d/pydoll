@@ -51,13 +51,9 @@ class Browser(ABC):  # noqa: PLR0904
         Raises:
             TypeError: If any of the arguments are not callable.
         """
-        self.options = BrowserOptionsManager.initialize_options(
-            options, browser_type
-        )
+        self.options = BrowserOptionsManager.initialize_options(options, browser_type)
         self._proxy_manager = ProxyManager(self.options)
-        self._connection_port = (
-            connection_port if connection_port else randint(9223, 9322)
-        )
+        self._connection_port = connection_port if connection_port else randint(9223, 9322)
         self._browser_process_manager = BrowserProcessManager()
         self._temp_directory_manager = TempDirectoryManager()
         self._connection_handler = ConnectionHandler(self._connection_port)
@@ -98,9 +94,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        binary_location = (
-            self.options.binary_location or self._get_default_binary_location()
-        )
+        binary_location = self.options.binary_location or self._get_default_binary_location()
 
         if headless:
             headless_arg = '--headless'
@@ -159,9 +153,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             Page: A Page instance connected to an existing or new browser page.
         """
-        page_id = (
-            await self.new_page() if not self._pages else self._pages.pop()
-        )
+        page_id = await self.new_page() if not self._pages else self._pages.pop()
 
         return Page(self._connection_port, page_id)
 
@@ -193,9 +185,7 @@ class Browser(ABC):  # noqa: PLR0904
         response = await self._execute_command(StorageCommands.get_cookies())
         return response['result']['cookies']
 
-    async def on(
-        self, event_name: str, callback: callable, temporary: bool = False
-    ) -> int:
+    async def on(self, event_name: str, callback: callable, temporary: bool = False) -> int:
         """
         Registers an event callback for a specific event. This method has
         a global scope and can be used to listen for events across all pages
@@ -238,9 +228,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             str: The ID of the new page.
         """
-        response = await self._execute_command(
-            TargetCommands.create_target(url)
-        )
+        response = await self._execute_command(TargetCommands.create_target(url))
         page_id = response['result']['targetId']
         return page_id
 
@@ -302,27 +290,21 @@ class Browser(ABC):  # noqa: PLR0904
             bounds (dict): The bounds to set for the window.
         """
         window_id = await self.get_window_id()
-        await self._execute_command(
-            BrowserCommands.set_window_bounds(window_id, bounds)
-        )
+        await self._execute_command(BrowserCommands.set_window_bounds(window_id, bounds))
 
     async def set_window_maximized(self):
         """
         Maximizes the specified window.
         """
         window_id = await self.get_window_id()
-        await self._execute_command(
-            BrowserCommands.set_window_maximized(window_id)
-        )
+        await self._execute_command(BrowserCommands.set_window_maximized(window_id))
 
     async def set_window_minimized(self):
         """
         Minimizes the specified window.
         """
         window_id = await self.get_window_id()
-        await self._execute_command(
-            BrowserCommands.set_window_minimized(window_id)
-        )
+        await self._execute_command(BrowserCommands.set_window_minimized(window_id))
 
     async def enable_fetch_events(
         self, handle_auth_requests: bool = False, resource_type: str = ''
@@ -353,9 +335,7 @@ class Browser(ABC):  # noqa: PLR0904
             None
         """
         await self._connection_handler.execute_command(
-            FetchCommands.enable_fetch_events(
-                handle_auth_requests, resource_type
-            )
+            FetchCommands.enable_fetch_events(handle_auth_requests, resource_type)
         )
 
     async def disable_fetch_events(self):
@@ -374,9 +354,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             None
         """
-        await self._connection_handler.execute_command(
-            FetchCommands.disable_fetch_events()
-        )
+        await self._connection_handler.execute_command(FetchCommands.disable_fetch_events())
 
     async def _continue_request(self, event: dict):
         """
@@ -426,9 +404,7 @@ class Browser(ABC):  # noqa: PLR0904
         """
         request_id = event['params']['requestId']
         await self._execute_command(
-            FetchCommands.continue_request_with_auth(
-                request_id, proxy_username, proxy_password
-            )
+            FetchCommands.continue_request_with_auth(request_id, proxy_username, proxy_password)
         )
         await self.disable_fetch_events()
 
@@ -495,9 +471,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             bool: True if the page is a valid new tab, False otherwise.
         """
-        return page.get(
-            'type'
-        ) == 'page' and 'chrome-extension://' not in page.get('url', '')
+        return page.get('type') == 'page' and 'chrome-extension://' not in page.get('url', '')
 
     async def _get_valid_page(self, pages: list) -> str:
         """
@@ -509,9 +483,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             str: The target ID of an existing or new page.
         """
-        valid_page = next(
-            (page for page in pages if self._is_valid_page(page)), {}
-        )
+        valid_page = next((page for page in pages if self._is_valid_page(page)), {})
 
         if valid_page.get('targetId', None):
             return valid_page['targetId']
@@ -529,11 +501,7 @@ class Browser(ABC):  # noqa: PLR0904
         """
 
         valid_page = next(
-            (
-                page
-                for page in pages
-                if page.get('type') == 'page' and page.get('attached')
-            ),
+            (page for page in pages if page.get('type') == 'page' and page.get('attached')),
             None,
         )
 
@@ -571,15 +539,11 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             The response from executing the command.
         """
-        return await self._connection_handler.execute_command(
-            command, timeout=60
-        )
+        return await self._connection_handler.execute_command(command, timeout=60)
 
     def _setup_user_dir(self):
         """Prepares the user data directory if necessary."""
-        if '--user-data-dir' not in [
-            arg.split('=')[0] for arg in self.options.arguments
-        ]:
+        if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
             # For all browsers, use a temporary directory
             temp_dir = self._temp_directory_manager.create_temp_dir()
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')

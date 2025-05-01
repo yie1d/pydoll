@@ -84,9 +84,7 @@ class FindElementsMixin:
 
             await asyncio.sleep(0.5)
 
-    async def find_element(
-        self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True
-    ):
+    async def find_element(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
         """
         Finds an element on the current page using the specified selector.
 
@@ -128,13 +126,9 @@ class FindElementsMixin:
         tag_name = node_description.get('nodeName', '').lower()
         attributes.extend(['tag_name', tag_name])
 
-        return create_web_element(
-            object_id, self._connection_handler, by, value, attributes
-        )
+        return create_web_element(object_id, self._connection_handler, by, value, attributes)
 
-    async def find_elements(
-        self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True
-    ):
+    async def find_elements(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
         """
         Finds all elements on the current page using the specified selector.
 
@@ -183,9 +177,7 @@ class FindElementsMixin:
         elements = []
         for object_id in response:
             try:
-                node_description = await self._describe_node(
-                    object_id=object_id
-                )
+                node_description = await self._describe_node(object_id=object_id)
             except KeyError:
                 continue
 
@@ -194,9 +186,7 @@ class FindElementsMixin:
             attributes.extend(['tag_name', tag_name])
 
             elements.append(
-                create_web_element(
-                    object_id, self._connection_handler, by, value, attributes
-                )
+                create_web_element(object_id, self._connection_handler, by, value, attributes)
             )
         return elements
 
@@ -218,9 +208,7 @@ class FindElementsMixin:
                 including its attributes, properties, and other
                 characteristics.
         """
-        response = await self._execute_command(
-            DomCommands.describe_node(object_id=object_id)
-        )
+        response = await self._execute_command(DomCommands.describe_node(object_id=object_id))
         return response['result']['node']
 
     async def _execute_command(self, command: dict) -> dict:
@@ -239,6 +227,4 @@ class FindElementsMixin:
             dict: The result of the command execution as returned by
                 the browser.
         """
-        return await self._connection_handler.execute_command(
-            command, timeout=60
-        )
+        return await self._connection_handler.execute_command(command, timeout=60)
