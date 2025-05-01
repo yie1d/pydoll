@@ -577,3 +577,143 @@ class CrossOriginEmbedderPolicyStatus(str, Enum):
 class ContentSecurityPolicySource(str, Enum):
     HTTP = 'HTTP'
     META = 'Meta'
+
+
+class UnserializableEnum(str, Enum):
+    NEGATIVE_ZERO = '-0'
+    NAN = 'NaN'
+    INFINITY = 'Infinity'
+    NEGATIVE_INFINITY = '-Infinity'
+
+
+class SerializationValue(str, Enum):
+    DEEP = 'deep'
+    JSON = 'json'
+    ID_ONLY = 'idOnly'
+
+
+class RemoteObjectType(str, Enum):
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    BIGINT = 'bigint'
+
+
+class RemoteObjectSubtype(str, Enum):
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAK_MAP = 'weakmap'
+    WEAK_SET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPED_ARRAY = 'typedarray'
+    ARRAY_BUFFER = 'arraybuffer'
+    DATA_VIEW = 'dataview'
+    WEB_ASSEMBLY_MEMORY = 'webassemblymemory'
+    WASM_VALUE = 'wasmvalue'
+
+
+class DeepSerializedValueType(str, Enum):
+    UNDEFINED = 'undefined'
+    NULL = 'null'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    BIGINT = 'bigint'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    SYMBOL = 'symbol'
+    ARRAY = 'array'
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    MAP = 'map'
+    SET = 'set'
+    WEAK_MAP = 'weakmap'
+    WEAK_SET = 'weakset'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPED_ARRAY = 'typedarray'
+    ARRAY_BUFFER = 'arraybuffer'
+    NODE = 'node'
+    WINDOW = 'window'
+    GENERATOR = 'generator'
+
+
+class ObjectPreviewType(str, Enum):
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    BIGINT = 'bigint'
+
+
+class ObjectPreviewSubtype(str, Enum):
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    DATAVIEW = 'dataview'
+    WEB_ASSEMBLY_MEMORY = 'webassemblymemory'
+    WASM_VALUE = 'wasmvalue'
+
+
+class PropertyPreviewType(str, Enum):
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    ACCESSOR = 'accessor'
+    BIGINT = 'bigint'
+
+
+class PropertyPreviewSubtype(str, Enum):
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    DATAVIEW = 'dataview'
+    WEB_ASSEMBLY_MEMORY = 'webassemblymemory'
+    WASM_VALUE = 'wasmvalue'
