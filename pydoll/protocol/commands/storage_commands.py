@@ -7,6 +7,7 @@ from pydoll.protocol.types.commands.storage_commands_types import (
     ClearDataForStorageKeyParams,
     ClearSharedStorageEntriesParams,
     ClearTrustTokensParams,
+    CookieParam,
     DeleteSharedStorageEntryParams,
     DeleteStorageBucketParams,
     GetAffectedUrlsForThirdPartyCookieMetadataParams,
@@ -42,7 +43,6 @@ from pydoll.protocol.types.commands.storage_commands_types import (
 from pydoll.protocol.types.responses.base_responses_types import Response
 from pydoll.protocol.types.responses.storage_responses_types import (
     ClearTrustTokensResponse,
-    Cookie,
     GetAffectedUrlsForThirdPartyCookieMetadataResponse,
     GetCookiesResponse,
     GetInterestGroupDetailsResponse,
@@ -185,7 +185,7 @@ class StorageCommands:
 
     @staticmethod
     def set_cookies(
-        cookies: List[Cookie], browser_context_id: Optional[str] = None
+        cookies: List[CookieParam], browser_context_id: Optional[str] = None
     ) -> Command[Response]:
         """
         Generates a command to set browser cookies.
@@ -433,7 +433,7 @@ class StorageCommands:
 
     @staticmethod
     def get_affected_urls_for_third_party_cookie_metadata(
-        first_party_url: str, third_party_urls: Optional[List[str]] = None
+        first_party_url: str, third_party_urls: List[str]
     ) -> Command[GetAffectedUrlsForThirdPartyCookieMetadataResponse]:
         """
         Generates a command to get the list of URLs from a page and its embedded resources
@@ -449,9 +449,9 @@ class StorageCommands:
         Returns:
             Command: The CDP command to get URLs affected by third-party cookie metadata.
         """
-        params = GetAffectedUrlsForThirdPartyCookieMetadataParams(firstPartyUrl=first_party_url)
-        if third_party_urls:
-            params['thirdPartyUrls'] = third_party_urls
+        params = GetAffectedUrlsForThirdPartyCookieMetadataParams(
+            firstPartyUrl=first_party_url, thirdPartyUrls=third_party_urls
+        )
         return Command(method='Storage.getAffectedUrlsForThirdPartyCookieMetadata', params=params)
 
     @staticmethod
