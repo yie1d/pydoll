@@ -738,3 +738,63 @@ class StorageType(str, Enum):
     STORAGE_BUCKETS = 'storage_buckets'
     ALL = 'all'
     OTHER = 'other'
+
+
+class KeyEventType(str, Enum):
+    KEY_DOWN = 'keyDown'
+    KEY_UP = 'keyUp'
+    CHAR = 'char'
+    RAW_KEY_DOWN = 'rawKeyDown'
+
+
+class KeyModifier(int, Enum):
+    ALT = 1
+    CTRL = 2
+    META = 4
+    SHIFT = 8
+
+
+class KeyLocation(int, Enum):
+    LEFT = 1
+    RIGHT = 2
+
+
+class MouseEventType(str, Enum):
+    MOUSE_PRESSED = 'mousePressed'
+    MOUSE_RELEASED = 'mouseReleased'
+    MOUSE_MOVED = 'mouseMoved'
+    MOUSE_WHEEL = 'mouseWheel'
+
+
+class MouseButton(str, Enum):
+    NONE = 'none'
+    LEFT = 'left'
+    MIDDLE = 'middle'
+    RIGHT = 'right'
+    BACK = 'back'
+    FORWARD = 'forward'
+
+
+class PointerType(str, Enum):
+    MOUSE = 'mouse'
+    PEN = 'pen'
+
+
+class TouchEventType(str, Enum):
+    TOUCH_START = 'touchStart'
+    TOUCH_MOVE = 'touchMove'
+    TOUCH_END = 'touchEnd'
+    TOUCH_CANCEL = 'touchCancel'
+
+
+class DragEventType(str, Enum):
+    DRAG_ENTER = 'dragEnter'
+    DRAG_OVER = 'dragOver'
+    DROP = 'drop'
+    DRAG_CANCEL = 'dragCancel'
+
+
+class GestureSourceType(str, Enum):
+    TOUCH = 'touch'
+    MOUSE = 'mouse'
+    DEFAULT = 'default'
