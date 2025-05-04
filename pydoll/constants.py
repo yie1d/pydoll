@@ -798,3 +798,76 @@ class GestureSourceType(str, Enum):
     TOUCH = 'touch'
     MOUSE = 'mouse'
     DEFAULT = 'default'
+
+
+class IncludeWhitespace(str, Enum):
+    NONE = 'none'
+    ALL = 'all'
+
+
+class PhysicalAxes(str, Enum):
+    HORIZONTAL = 'Horizontal'
+    VERTICAL = 'Vertical'
+    BOTH = 'Both'
+
+
+class LogicalAxes(str, Enum):
+    INLINE = 'Inline'
+    BLOCK = 'Block'
+    BOTH = 'Both'
+
+
+class PseudoType(str, Enum):
+    FIRST_LINE = 'first-line'
+    FIRST_LETTER = 'first-letter'
+    CHECKMARK = 'checkmark'
+    BEFORE = 'before'
+    AFTER = 'after'
+    PICKER_ICON = 'picker-icon'
+    MARKER = 'marker'
+    BACKDROP = 'backdrop'
+    COLUMN = 'column'
+    SELECTION = 'selection'
+    SEARCH_TEXT = 'search-text'
+    TARGET_TEXT = 'target-text'
+    SPELLING_ERROR = 'spelling-error'
+    GRAMMAR_ERROR = 'grammar-error'
+    HIGHLIGHT = 'highlight'
+    FIRST_LINE_INHERITED = 'first-line-inherited'
+    SCROLL_MARKER = 'scroll-marker'
+    SCROLL_MARKER_GROUP = 'scroll-marker-group'
+    SCROLL_BUTTON = 'scroll-button'
+    SCROLLBAR = 'scrollbar'
+    SCROLLBAR_THUMB = 'scrollbar-thumb'
+    SCROLLBAR_BUTTON = 'scrollbar-button'
+    SCROLLBAR_TRACK = 'scrollbar-track'
+    SCROLLBAR_TRACK_PIECE = 'scrollbar-track-piece'
+    SCROLLBAR_CORNER = 'scrollbar-corner'
+    RESIZER = 'resizer'
+    INPUT_LIST_BUTTON = 'input-list-button'
+    VIEW_TRANSITION = 'view-transition'
+    VIEW_TRANSITION_GROUP = 'view-transition-group'
+    VIEW_TRANSITION_IMAGE_PAIR = 'view-transition-image-pair'
+    VIEW_TRANSITION_OLD = 'view-transition-old'
+    VIEW_TRANSITION_NEW = 'view-transition-new'
+    PLACEHOLDER = 'placeholder'
+    FILE_SELECTOR_BUTTON = 'file-selector-button'
+    DETAILS_CONTENT = 'details-content'
+    PICKER = 'picker'
+
+
+class ShadowRootType(str, Enum):
+    OPEN = 'open'
+    CLOSED = 'closed'
+    USER_AGENT = 'user-agent'
+
+
+class CompatibilityMode(str, Enum):
+    QUIRKS_MODE = 'QuirksMode'
+    LIMITED_QUIRKS_MODE = 'LimitedQuirksMode'
+    NO_QUIRKS_MODE = 'NoQuirksMode'
+
+
+class ElementRelation(str, Enum):
+    POPOVER_TARGET = 'PopoverTarget'
+    INTEREST_TARGET = 'InterestTarget'
