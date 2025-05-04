@@ -9,6 +9,7 @@ from pydoll.constants import (
     ResourceType,
     TransitionType,
 )
+from pydoll.protocol.types.commands.dom_commands_types import Rect
 from pydoll.protocol.types.commands.page_commands_types import (
     InstallabilityError,
 )
@@ -17,15 +18,6 @@ from pydoll.protocol.types.responses.base_responses_types import (
     ResponseResult,
 )
 from pydoll.protocol.types.responses.network_responses_types import SearchMatch
-
-
-class Rect(TypedDict):
-    """Rectangle for capturing screenshot or clip rectangle."""
-
-    x: float
-    y: float
-    width: float
-    height: float
 
 
 class AppManifestError(TypedDict):
