@@ -20,6 +20,23 @@ class CookiePartitionKey(TypedDict):
     hasCrossSiteAncestor: bool
 
 
+class CookieParam(TypedDict):
+    name: str
+    value: str
+    url: NotRequired[str]
+    domain: NotRequired[str]
+    path: NotRequired[str]
+    secure: NotRequired[bool]
+    httpOnly: NotRequired[bool]
+    sameSite: NotRequired[CookieSameSite]
+    expires: NotRequired[float]
+    priority: NotRequired[CookiePriority]
+    sameParty: NotRequired[bool]
+    sourceScheme: NotRequired[CookieSourceScheme]
+    sourcePort: NotRequired[int]
+    partitionKey: NotRequired[CookiePartitionKey]
+
+
 class UserAgentBrand(TypedDict):
     brand: str
     version: str
