@@ -41,7 +41,7 @@ class InputCommands:
     - Touch events (taps, multi-touch gestures)
     - Drag and drop events
     - Synthetic gestures (pinch, scroll, tap)
-    
+
     These methods allow for programmatic control of input events without requiring
     actual user interaction, making it useful for testing and automation.
     """
