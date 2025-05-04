@@ -717,3 +717,24 @@ class PropertyPreviewSubtype(str, Enum):
     DATAVIEW = 'dataview'
     WEB_ASSEMBLY_MEMORY = 'webassemblymemory'
     WASM_VALUE = 'wasmvalue'
+
+
+class StorageBucketDurability(str, Enum):
+    RELAXED = 'relaxed'
+    STRICT = 'strict'
+
+
+class StorageType(str, Enum):
+    COOKIES = 'cookies'
+    FILE_SYSTEMS = 'file_systems'
+    INDEXEDDB = 'indexeddb'
+    LOCAL_STORAGE = 'local_storage'
+    SHADER_CACHE = 'shader_cache'
+    WEBSQL = 'websql'
+    SERVICE_WORKERS = 'service_workers'
+    CACHE_STORAGE = 'cache_storage'
+    INTEREST_GROUPS = 'interest_groups'
+    SHARED_STORAGE = 'shared_storage'
+    STORAGE_BUCKETS = 'storage_buckets'
+    ALL = 'all'
+    OTHER = 'other'
