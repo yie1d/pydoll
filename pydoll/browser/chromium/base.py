@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
+from typing import Any, Awaitable, Callable, List, Optional, TypeVar
 
 from pydoll import exceptions
 from pydoll.browser.managers import (
@@ -11,45 +12,83 @@ from pydoll.browser.managers import (
     TempDirectoryManager,
 )
 from pydoll.browser.options import Options
-from pydoll.browser.page import Page
-from pydoll.connection import ConnectionHandler
-from pydoll.constants import BrowserType
-from pydoll.protocol.commands import (
+from pydoll.browser.page import Tab
+from pydoll.commands import (
     BrowserCommands,
     FetchCommands,
-    NetworkCommands,
     StorageCommands,
     TargetCommands,
 )
-from pydoll.protocol.events import FetchEvents, PageEvents
+from pydoll.connection import ConnectionHandler
+from pydoll.constants import (
+    AuthChallengeResponseValues,
+    BrowserType,
+    DownloadBehavior,
+    PermissionType,
+)
+from pydoll.protocol.base import Command
+from pydoll.protocol.browser.responses import (
+    GetVersionResponse,
+    GetVersionResultDict,
+    GetWindowForTargetResponse,
+)
+from pydoll.protocol.browser.types import WindowBoundsDict
+from pydoll.protocol.network.types import Cookie, CookieParam
+from pydoll.protocol.storage.responses import GetCookiesResponse
+from pydoll.protocol.target.responses import (
+    CreateBrowserContextResponse,
+    CreateTargetResponse,
+    GetBrowserContextsResponse,
+    GetTargetsResponse,
+)
+from pydoll.protocol.target.types import TargetInfo
+
+T = TypeVar('T')
 
 
 class Browser(ABC):  # noqa: PLR0904
     """
-    A class to manage a browser instance for automated interactions.
+    Abstract base class for browser automation using Chrome DevTools Protocol.
 
-    This class allows users to start and stop a browser, take screenshots,
-    and register event callbacks.
+    This class provides a comprehensive interface to control browser instances,
+    manage browser contexts, handle network traffic, manipulate cookies, and
+    execute CDP commands. It serves as the foundation for browser-specific
+    implementations by abstracting common CDP operations.
+
+    Key capabilities:
+    - Browser lifecycle management (start/stop)
+    - Browser context/incognito profile handling
+    - Tab/target management
+    - Network traffic interception and modification
+    - Cookie management
+    - Window manipulation
+    - Permission controls
+    - Event handling
+
+    The implementation uses Chrome DevTools Protocol to enable driver-less
+    browser automation with full access to browser internals.
     """
 
     def __init__(
         self,
-        options: Options | None = None,
-        connection_port: int = None,
-        browser_type: BrowserType = None,
+        options: Optional[Options] = None,
+        connection_port: Optional[int] = None,
+        browser_type: Optional[BrowserType] = None,
     ):
         """
-        Initializes the Browser instance.
+        Initializes a new Browser instance with specified configuration.
 
         Args:
-            options (Options | None): An instance of the Options class to
-            configure the browser. If None, default options will be used.
-            connection_port (int): The port to connect to the browser.
-            browser_type (BrowserType): The type of browser to use.
-                If None, it will be inferred from the options.
+            options: Configuration options for the browser. If None, 
+                default options will be used based on browser type.
+            connection_port: Port to use for CDP WebSocket connection.
+                If None, a random port between 9223-9322 will be assigned.
+            browser_type: Type of browser to use. If None, will be inferred
+                from options.
 
-        Raises:
-            TypeError: If any of the arguments are not callable.
+        Note:
+            This only configures the instance. To actually start the browser,
+            call the `start()` method.
         """
         self.options = BrowserOptionsManager.initialize_options(options, browser_type)
         self._proxy_manager = ProxyManager(self.options)
@@ -59,9 +98,7 @@ class Browser(ABC):  # noqa: PLR0904
         self._connection_handler = ConnectionHandler(self._connection_port)
         BrowserOptionsManager.add_default_arguments(self.options)
 
-        self._pages = []
-
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Browser':
         """
         Async context manager entry point.
 
@@ -84,15 +121,24 @@ class Browser(ABC):  # noqa: PLR0904
 
         await self._connection_handler.close()
 
-    async def start(self, headless: bool = False) -> None:
+    async def start(self, headless: bool = False):
         """
-        Main method to start the browser.
+        Starts the browser process and establishes CDP connection.
 
-        This method initializes the browser process and configures
-        all necessary settings to create a working browser instance.
+        This method launches the browser executable, waits for it to initialize,
+        establishes a WebSocket connection via CDP, and configures proxy settings
+        if needed. The browser runs with a clean user profile by default.
 
-        Returns:
-            None
+        Args:
+            headless: Whether to run the browser in headless mode (without UI).
+                If True, adds the --headless flag if not already present.
+
+        Raises:
+            BrowserNotRunning: If the browser fails to start or connect.
+
+        Note:
+            This is an async method and must be awaited. For typical usage,
+            consider using the context manager pattern with async with.
         """
         binary_location = self.options.binary_location or self._get_default_binary_location()
 
@@ -111,101 +157,461 @@ class Browser(ABC):  # noqa: PLR0904
         )
         await self._verify_browser_running()
         await self._configure_proxy(proxy_config[0], proxy_config[1])
-        await self._init_first_page()
 
-    async def connect(self) -> Page:
+    async def stop(self):
         """
-        If the specified port is already in use, just return the page
-        instance to the user.
+        Stops the browser process and cleans up resources.
 
-        Returns:
-            Page: The page instance.
-        """
-        await self._verify_browser_running()
-        await self._init_first_page()
-        return Page(self._connection_port, self._pages.pop())
+        This method:
+        1. Sends the Browser.close command via CDP
+        2. Terminates the browser process
+        3. Removes temporary directories
+        4. Closes WebSocket connections
 
-    async def set_download_path(self, path: str):
-        """
-        Sets the download path for the browser.
-        Args:
-            path (str): The path to the download directory.
-        """
-        await self._execute_command(BrowserCommands.set_download_path(path))
+        Raises:
+            BrowserNotRunning: If the browser is not currently running.
 
-    async def get_page_by_id(self, page_id: str) -> Page:
+        Note:
+            This method is automatically called when exiting the context manager.
         """
-        Retrieves a Page instance by its ID.
+        if not await self._is_browser_running():
+            raise exceptions.BrowserNotRunning('Browser is not running')
+        
+        await self._execute_command(BrowserCommands.CLOSE)
+        self._browser_process_manager.stop_process()
+        self._temp_directory_manager.cleanup()
+        await self._connection_handler.close()
 
-        Args:
-            page_id (str): The ID of the page to retrieve.
-
-        Returns:
-            Page: The Page instance corresponding to the specified ID.
+    async def create_browser_context(
+        self, proxy_server: Optional[str] = None, proxy_bypass_list: Optional[str] = None
+    ) -> str:
         """
-        return Page(self._connection_port, page_id)
+        Creates a new browser context (similar to an incognito profile).
 
-    async def get_page(self) -> Page:
-        """
-        Retrieves a Page instance for an existing page in the browser.
-        If no pages are open, a new page will be created.
-
-        Returns:
-            Page: A Page instance connected to an existing or new browser page.
-        """
-        page_id = await self.new_page() if not self._pages else self._pages.pop()
-
-        return Page(self._connection_port, page_id)
-
-    async def delete_all_cookies(self):
-        """
-        Deletes all cookies from the browser.
-        """
-        await self._execute_command(StorageCommands.clear_cookies())
-        await self._execute_command(NetworkCommands.clear_browser_cookies())
-
-    async def set_cookies(self, cookies: list[dict]):
-        """
-        Sets cookies in the browser.
+        Browser contexts provide isolated storage for cookies, cache, and local
+        storage. Multiple contexts can exist simultaneously, unlike regular
+        incognito mode. Each context has its own set of tabs and doesn't share
+        session data with other contexts.
 
         Args:
-            cookies (list[dict]): A list of dictionaries containing
-               the cookie data.
-        """
-        await self._execute_command(StorageCommands.set_cookies(cookies))
-        await self._execute_command(NetworkCommands.set_cookies(cookies))
-
-    async def get_cookies(self):
-        """
-        Retrieves all cookies from the browser.
+            proxy_server: Optional proxy server to use for this context only.
+                Format: "scheme://host:port"
+            proxy_bypass_list: Optional comma-separated list of hosts that
+                bypass the proxy. Only applies if proxy_server is specified.
 
         Returns:
-            list[dict]: A list of dictionaries containing the cookie data.
+            str: Browser context ID string that can be used with other methods
+                that accept a browser_context_id parameter.
+
         """
-        response = await self._execute_command(StorageCommands.get_cookies())
+        response: CreateBrowserContextResponse = await self._execute_command(
+            TargetCommands.create_browser_context(
+                proxy_server=proxy_server,
+                proxy_bypass_list=proxy_bypass_list,
+            )
+        )
+        return response['result']['browserContextId']
+
+    async def delete_browser_context(self, browser_context_id: str):
+        """
+        Deletes a browser context and all associated tabs/resources.
+
+        This removes all storage (cookies, localStorage, etc.) associated with
+        the specified context and closes all tabs created within it. The default
+        browser context cannot be deleted.
+
+        Args:
+            browser_context_id: ID of the browser context to delete, as
+                returned by create_browser_context().
+
+        Returns:
+            The command response object.
+
+        Note:
+            Deleting a browser context closes all associated tabs immediately.
+        """
+        return await self._execute_command(
+            TargetCommands.dispose_browser_context(browser_context_id)
+        )
+
+    async def get_browser_contexts(self) -> List[str]:
+        """
+        Retrieves IDs of all available browser contexts.
+
+        Returns:
+            List[str]: List of browser context IDs, including the default context.
+
+        Note:
+            The default browser context is always available, even if no custom
+            contexts have been created.
+        """
+        response: GetBrowserContextsResponse = await self._execute_command(
+            TargetCommands.get_browser_contexts()
+        )
+        return response['result']['browserContextIds']
+
+    async def new_tab(self, url: str = '', browser_context_id: Optional[str] = None) -> Tab:
+        """
+        Creates a new tab and returns a Tab instance for interacting with it.
+
+        This is the primary method for opening new pages. The returned Tab object
+        provides methods for page navigation, element selection, and other interactions.
+
+        Args:
+            url: Initial URL to navigate to. If empty, opens about:blank.
+            browser_context_id: Optional browser context ID. If provided,
+                the tab will be created in that context. If None, uses the
+                default browser context.
+
+        Returns:
+            Tab: A Tab instance representing the newly created page.
+
+        Note:
+            This method uses the Target.createTarget CDP command to create a new page
+            target, then provides a Tab interface to interact with it.
+        """
+        response: CreateTargetResponse = await self._execute_command(
+            TargetCommands.create_target(
+                url=url,
+                browser_context_id=browser_context_id,
+            )
+        )
+        target_id = response['result']['targetId']
+        return Tab(self._connection_port, target_id)
+
+    async def get_targets(self) -> List[TargetInfo]:
+        """
+        Retrieves information about all active targets/pages in the browser.
+
+        Targets represent various debuggable entities in Chrome:
+        - Page (regular tabs)
+        - ServiceWorker
+        - SharedWorker
+        - Browser (the main browser process)
+        - Other types
+
+        Returns:
+            List[TargetInfo]: List of target information dictionaries containing:
+                - targetId: Unique identifier
+                - type: Target type (page, service_worker, etc.)
+                - title: Page title
+                - url: Target URL
+                - attached: Whether DevTools is attached
+                - browserContextId: Context ID the target belongs to
+
+        Note:
+            This is a useful method for debugging and managing multiple tabs.
+        """
+        response: GetTargetsResponse = await self._execute_command(TargetCommands.get_targets())
+        return response['result']['targetInfos']
+
+    async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
+        """
+        Sets the download path for browser downloads.
+
+        This is a convenience method that calls set_download_behavior with
+        DownloadBehavior.ALLOW and the specified path.
+
+        Args:
+            path: Directory path where downloads should be saved.
+            browser_context_id: Optional browser context ID to apply settings to.
+                If None, applies to the default browser context.
+
+        Returns:
+            The command response object.
+
+        """
+        return await self._execute_command(
+            BrowserCommands.set_download_behavior(DownloadBehavior.ALLOW, path, browser_context_id)
+        )
+
+    async def set_download_behavior(
+        self,
+        behavior: DownloadBehavior,
+        download_path: Optional[str] = None,
+        browser_context_id: Optional[str] = None,
+        events_enabled: bool = False,
+    ):
+        """
+        Configures how the browser handles downloads.
+
+        Args:
+            behavior: Download behavior mode (ALLOW, DENY, DEFAULT).
+                - ALLOW: Save downloads to the specified path.
+                - DENY: Cancel all downloads.
+                - DEFAULT: Use browser's default download handling.
+            download_path: Directory path where downloads should be saved.
+                Required if behavior is ALLOW, ignored otherwise.
+            browser_context_id: Optional browser context ID to apply settings to.
+                If None, applies to the default browser context.
+            events_enabled: Whether to generate download events that can be
+                captured with the on() method. Useful for tracking download progress.
+
+        Returns:
+            The command response object.
+
+        """
+        return await self._execute_command(
+            BrowserCommands.set_download_behavior(
+                behavior, download_path, browser_context_id, events_enabled
+            )
+        )
+
+    async def delete_all_cookies(self, browser_context_id: Optional[str] = None):
+        """
+        Deletes all cookies from the browser or specific context.
+
+        Removes all cookies including session cookies, persistent cookies,
+        and third-party cookies within the specified browser context.
+
+        Args:
+            browser_context_id: Optional browser context ID to delete cookies from.
+                If None, deletes cookies from the default browser context.
+
+        Returns:
+            The command response object.
+
+        """
+        return await self._execute_command(StorageCommands.clear_cookies(browser_context_id))
+
+    async def set_cookies(
+        self, cookies: List[CookieParam], browser_context_id: Optional[str] = None
+    ):
+        """
+        Sets multiple cookies in the browser.
+
+        Args:
+            cookies: List of cookie objects to set. Each cookie must include
+                name and value, and may include other attributes like domain,
+                path, secure, httpOnly, etc.
+            browser_context_id: Optional browser context ID to set cookies in.
+                If None, sets cookies in the default browser context.
+
+        Returns:
+            The command response object.
+
+        """
+        return await self._execute_command(StorageCommands.set_cookies(cookies, browser_context_id))
+
+    async def get_cookies(self, browser_context_id: Optional[str] = None) -> List[Cookie]:
+        """
+        Retrieves all cookies from the browser or specific context.
+
+        Args:
+            browser_context_id: Optional browser context ID to get cookies from.
+                If None, gets cookies from the default browser context.
+
+        Returns:
+            List[Cookie]: List of cookie objects containing name, value, domain,
+                path, expiration time, and other attributes.
+
+        Note:
+            This returns all cookies accessible by the browser, including
+            session cookies, persistent cookies, and third-party cookies.
+        """
+        response: GetCookiesResponse = await self._execute_command(
+            StorageCommands.get_cookies(browser_context_id)
+        )
         return response['result']['cookies']
 
-    async def on(self, event_name: str, callback: callable, temporary: bool = False) -> int:
+    async def get_version(self) -> GetVersionResultDict:
         """
-        Registers an event callback for a specific event. This method has
-        a global scope and can be used to listen for events across all pages
-        in the browser. Each `Page` instance also has an `on` method that
-        allows for listening to events on a specific page.
-
-        Args:
-            event_name (str): Name of the event to listen for.
-            callback (callable): Function to be called when the event occurs.
-            temporary (bool): If True, the callback will be removed after it's
-                triggered once. Defaults to False.
+        Retrieves browser version and CDP protocol version information.
 
         Returns:
-            int: The ID of the registered callback.
+            GetVersionResultDict: Dictionary containing:
+                - protocolVersion: CDP version
+                - product: Browser name and version (e.g., "Chrome/91.0.4472.124")
+                - revision: Browser revision
+                - userAgent: Full user agent string
+                - jsVersion: JavaScript engine version
         """
-        if event_name in PageEvents.ALL_EVENTS:
-            raise exceptions.EventNotSupported(
-                'Page events are not supported in the browser domain.'
-            )
+        response: GetVersionResponse = await self._execute_command(BrowserCommands.get_version())
+        return response['result']
 
+    async def get_window_id_for_target(self, target_id: str) -> int:
+        """
+        Gets the window ID associated with a target.
+
+        Window IDs are used for manipulating browser windows (resize, move, etc.)
+        via the Browser domain of CDP.
+
+        Args:
+            target_id: Target ID to get the window ID for.
+
+        Returns:
+            int: Window ID for the specified target.
+
+        Note:
+            A single window may contain multiple targets (tabs), but each
+            target belongs to exactly one window.
+        """
+        response: GetWindowForTargetResponse = await self._execute_command(
+            BrowserCommands.get_window_for_target(target_id)
+        )
+        return response['result']['windowId']
+
+    async def get_window_id_for_tab(self, tab: Tab) -> int:
+        """
+        Gets the window ID for a Tab instance.
+
+        Convenience method that extracts the target ID from the tab
+        and calls get_window_id_for_target.
+
+        Args:
+            tab: Tab instance to get the window ID for.
+
+        Returns:
+            int: Window ID containing the specified tab.
+        """
+        return await self.get_window_id_for_target(tab._target_id)
+
+    async def get_window_id(self) -> int:
+        """
+        Gets the window ID for any valid attached tab.
+
+        This is a convenience method that finds a suitable tab
+        and returns its window ID.
+
+        Returns:
+            int: Window ID for an attached tab.
+
+        Raises:
+            RuntimeError: If no valid attached tab can be found.
+        """
+        targets = await self.get_targets()
+        valid_tab_id = await self._get_valid_tab_id(targets)
+        return await self.get_window_id_for_target(valid_tab_id)
+
+    async def set_window_maximized(self):
+        """
+        Maximizes the browser window.
+
+        Resizes the window to use the full available screen space
+        without entering fullscreen mode.
+
+        Returns:
+            The command response object.
+
+        Note:
+            This affects all tabs in the window, not just the active one.
+        """
+        window_id = await self.get_window_id()
+        return await self._execute_command(BrowserCommands.set_window_maximized(window_id))
+
+    async def set_window_minimized(self):
+        """
+        Minimizes the browser window.
+
+        Collapses the window to the taskbar/dock while keeping the
+        browser process running.
+
+        Returns:
+            The command response object.
+
+        """
+        window_id = await self.get_window_id()
+        return await self._execute_command(BrowserCommands.set_window_minimized(window_id))
+
+    async def set_window_bounds(self, bounds: WindowBoundsDict):
+        """
+        Sets the position and/or size of the browser window.
+
+        Args:
+            bounds: Dictionary specifying window properties to modify,
+                which may include:
+                - left: X coordinate
+                - top: Y coordinate
+                - width: Window width
+                - height: Window height
+                - windowState: Window state (normal, minimized, maximized, fullscreen)
+
+        Returns:
+            The command response object.
+
+        Note:
+            Only specified properties will be changed; omitted properties
+            retain their current values.
+        """
+        window_id = await self.get_window_id()
+        return await self._execute_command(BrowserCommands.set_window_bounds(window_id, bounds))
+
+    async def grant_permissions(
+        self,
+        permissions: List[PermissionType],
+        origin: Optional[str] = None,
+        browser_context_id: Optional[str] = None,
+    ):
+        """
+        Grants specified permissions to the browser.
+
+        Controls access to browser features that normally require user permission:
+        - Geolocation
+        - Notifications
+        - Camera/Microphone
+        - Midi devices
+        - Clipboard
+        - And others
+
+        Args:
+            permissions: List of permissions to grant from PermissionType enum.
+            origin: Optional origin to grant permissions to (e.g., "https://example.com").
+                If None, grants permissions to all origins.
+            browser_context_id: Optional browser context ID to apply permissions to.
+                If None, applies to the default browser context.
+
+        Returns:
+            The command response object.
+
+        Note:
+            This bypasses normal permission prompts, allowing automated testing
+            of permission-dependent features.
+        """
+        return await self._execute_command(
+            BrowserCommands.grant_permissions(permissions, origin, browser_context_id)
+        )
+
+    async def reset_permissions(self, browser_context_id: Optional[str] = None):
+        """
+        Resets all permission grants to browser defaults.
+
+        Removes any permissions previously granted via grant_permissions
+        and restores the default permission prompting behavior.
+
+        Args:
+            browser_context_id: Optional browser context ID to reset permissions for.
+                If None, resets permissions in the default browser context.
+
+        Returns:
+            The command response object.
+        """
+        return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
+
+    async def on(
+        self, event_name: str, callback: Callable[[Any], Awaitable[None]], temporary: bool = False
+    ) -> int:
+        """
+        Registers an event listener for CDP events.
+
+        This method allows subscribing to CDP events at the browser level,
+        affecting all pages/targets. Events include network activity,
+        console messages, dialog prompts, and many others.
+
+        Args:
+            event_name: CDP event name (e.g., "Network.responseReceived", 
+                "Page.loadEventFired", "Runtime.consoleAPICalled").
+            callback: Async function to call when the event occurs.
+                Should accept a single parameter containing the event data.
+            temporary: If True, the callback will be removed after first invocation.
+                If False, it will remain until explicitly removed.
+
+        Returns:
+            int: Callback ID that can be used to remove the listener later.
+
+        Note:
+            For page-specific events, consider using the Tab.on() method
+            which scopes events to a specific page.
+        """
         async def callback_wrapper(event):
             asyncio.create_task(callback(event))
 
@@ -217,122 +623,29 @@ class Browser(ABC):  # noqa: PLR0904
             event_name, function_to_register, temporary
         )
 
-    async def new_page(self, url: str = ''):
-        """
-        Opens a new page in the browser.
-
-        Args:
-            url (str): Optional initial URL to navigate to.
-                Defaults to empty string.
-
-        Returns:
-            str: The ID of the new page.
-        """
-        response = await self._execute_command(TargetCommands.create_target(url))
-        page_id = response['result']['targetId']
-        return page_id
-
-    async def get_targets(self):
-        """
-        Retrieves the list of open pages in the browser.
-
-        Returns:
-            list: The list of open pages in the browser.
-        """
-        response = await self._execute_command(TargetCommands.get_targets())
-        return response['result']['targetInfos']
-
-    async def stop(self):
-        """
-        Stops the running browser process.
-
-        Raises:
-            BrowserNotRunning: If the browser is not currently running.
-        """
-        if await self._is_browser_running():
-            await self._execute_command(BrowserCommands.CLOSE)
-            self._browser_process_manager.stop_process()
-            self._temp_directory_manager.cleanup()
-            await self._connection_handler.close()
-        else:
-            raise exceptions.BrowserNotRunning('Browser is not running')
-
-    async def get_window_id(self):
-        """
-        Retrieves the ID of the current browser window.
-
-        Returns:
-            int: The ID of the current browser window.
-
-        Raises:
-            RuntimeError: If unable to retrieve the window ID.
-        """
-        command = BrowserCommands.get_window_id()
-        response = await self._execute_command(command)
-
-        if response.get('error'):
-            pages = await self.get_targets()
-            target_id = await self._get_valid_target_id(pages)
-            response = await self._execute_command(
-                BrowserCommands.get_window_id_by_target(target_id)
-            )
-
-        if window_id := response.get('result', {}).get('windowId'):
-            return window_id
-
-        raise RuntimeError(response.get('error', {}))
-
-    async def set_window_bounds(self, bounds: dict):
-        """
-        Sets the bounds of the specified window.
-
-        Args:
-            bounds (dict): The bounds to set for the window.
-        """
-        window_id = await self.get_window_id()
-        await self._execute_command(BrowserCommands.set_window_bounds(window_id, bounds))
-
-    async def set_window_maximized(self):
-        """
-        Maximizes the specified window.
-        """
-        window_id = await self.get_window_id()
-        await self._execute_command(BrowserCommands.set_window_maximized(window_id))
-
-    async def set_window_minimized(self):
-        """
-        Minimizes the specified window.
-        """
-        window_id = await self.get_window_id()
-        await self._execute_command(BrowserCommands.set_window_minimized(window_id))
-
     async def enable_fetch_events(
         self, handle_auth_requests: bool = False, resource_type: str = ''
     ):
         """
-        Enables the Fetch domain for intercepting network requests before they
-        are sent. This method allows you to modify, pause, or continue requests
-        as needed. If handle_auth_requests is set to True, the connection will
-        emit an event when an authentication is required during a request.
-        The resource_type parameter specifies which type of requests to
-        intercept; if omitted, all requests will be intercepted. Use the
-        _continue_request method to resume any paused requests. This is
-        especially useful for monitoring and controlling network interactions.
+        Enables interception of network requests via the Fetch domain.
 
-        This method has a global scope and can be used to intercept request
-        across all pages in the browser. Each Page instance also has an
-        `enable_fetch_events` method that allows for intercepting requests
-        on a specific page.
+        This allows monitoring, modifying, or blocking any network request
+        before it's sent. When enabled, all matching requests will be paused
+        and emit Fetch.requestPaused events until explicitly continued.
 
         Args:
-            handle_auth_requests (bool): Whether to handle authentication
-            requests that require user credentials.
-            resource_type (str): The type of resource to intercept (e.g.,
-            'XHR', 'Script'). If not specified, all requests will
-            be intercepted.
+            handle_auth_requests: Whether to intercept authentication challenges.
+                If True, emits Fetch.authRequired events for auth requests.
+            resource_type: Optional resource type filter (e.g., "XHR", "Fetch", "Document").
+                If specified, only intercepts requests of that type.
+                If empty, intercepts all requests.
 
-        Returns:
-            None
+        Note:
+            - Paused requests must be explicitly continued using Fetch.continueRequest
+              or similar methods, or they will time out.
+            - This is a powerful feature for request modification, mocking responses,
+              and implementing custom network behavior.
+            - For page-specific interception, use Tab.enable_fetch_events() instead.
         """
         await self._connection_handler.execute_command(
             FetchCommands.enable_fetch_events(handle_auth_requests, resource_type)
@@ -340,91 +653,62 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def disable_fetch_events(self):
         """
-        Deactivates the Fetch domain, stopping the interception of network
-        requests for the websocket connection. Once this method is called,
-        the connection will no longer monitor or pause any network requests,
-        allowing normal network operations to resume. This can be useful when
-        you want to halt the monitoring of network activity.
+        Disables request interception and releases any paused requests.
 
-        This method has a global scope and can be used to disable fetch events
-        across all pages in the browser. Each Page instance also has a
-        `disable_fetch_events` method that allows for disabling fetch events
-        on a specific page.
+        Turns off the Fetch domain, allowing network requests to proceed
+        normally without interception. Any currently paused requests will
+        be released and continue as if they were never intercepted.
 
-        Returns:
-            None
+        Note:
+            - Call this method when you're done intercepting requests to
+              restore normal network behavior.
+            - This affects all requests across all pages.
+            - For page-specific control, use Tab.disable_fetch_events() instead.
         """
         await self._connection_handler.execute_command(FetchCommands.disable_fetch_events())
 
     async def _continue_request(self, event: dict):
         """
-        Resumes a network request that was previously paused in the browser.
-        When the Fetch domain is active, certain requests can be paused based
-        on the specified resource type. This method takes the event data that
-        contains the request ID and uses it to continue the paused request,
-        allowing the browser to proceed with the network operation. This is
-        particularly useful for handling requests that require conditional
-        logic before they are sent to the server.
+        Continues a paused network request without modifications.
+
+        Used internally as an event handler for Fetch.requestPaused events
+        when you want to monitor requests without modifying them.
 
         Args:
-            event (dict): A dictionary containing the event data, including
-            the request ID, which identifies the paused request to be resumed.
-
-        Returns:
-            None
+            event: Event data dictionary containing request information.
+                Must include params.requestId to identify the request.
         """
         request_id = event['params']['requestId']
         await self._execute_command(FetchCommands.continue_request(request_id))
 
-    async def _continue_request_auth_required(
+    async def _continue_request_with_auth(
         self, event: dict, proxy_username: str, proxy_password: str
     ):
         """
-        Resumes a network request that was previously paused in the browser
-        and requires proxy authentication. This method is triggered when an
-        authentication challenge is encountered during the request handling.
-        It uses the provided proxy credentials to continue the request,
-        enabling successful communication through the proxy server. After
-        handling the request, it disables fetch event monitoring.
+        Continues a paused authentication request with proxy credentials.
+
+        Used internally to handle proxy authentication challenges by
+        providing the configured username and password.
 
         Args:
-            event (dict): A dictionary containing the event data, which
-            includes the request ID for the paused request that needs
-            to be resumed.
-            proxy_username (str): The username for the proxy server
-            authentication.
-            proxy_password (str): The password for the proxy server
-            authentication.
-
-        Raises:
-            IndexError: If the event data does not contain a valid request ID.
-
-        Returns:
-            None
+            event: Event data dictionary from Fetch.authRequired event.
+            proxy_username: Username for proxy authentication.
+            proxy_password: Password for proxy authentication.
         """
         request_id = event['params']['requestId']
         await self._execute_command(
-            FetchCommands.continue_request_with_auth(request_id, proxy_username, proxy_password)
+            FetchCommands.continue_request_with_auth(
+                request_id,
+                auth_challenge_response=AuthChallengeResponseValues.PROVIDE_CREDENTIALS,
+                proxy_username=proxy_username,
+                proxy_password=proxy_password,
+            )
         )
         await self.disable_fetch_events()
 
-    async def _init_first_page(self):
-        """
-        Initializes the first page in the browser.
-
-        This method obtains the first valid page from available targets
-        and stores its ID for later use.
-
-        Returns:
-            None
-        """
-        pages = await self.get_targets()
-        valid_page = await self._get_valid_page(pages)
-        self._pages.append(valid_page)
-
     async def _verify_browser_running(self):
         """
-        Verifies if the browser is running.
+        Verifies that the browser process has started successfully.
 
         Raises:
             BrowserNotRunning: If the browser failed to start.
@@ -434,26 +718,27 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def _configure_proxy(self, private_proxy, proxy_credentials):
         """
-        Configures proxy settings if needed.
+        Sets up proxy authentication handling if needed.
+
+        If a private proxy requiring authentication is configured, this method
+        enables Fetch domain interception and registers handlers for proxy
+        authentication challenges.
 
         Args:
-            private_proxy: Boolean indicating if a private proxy is enabled.
-            proxy_credentials: Tuple containing proxy username and password.
-
-        Returns:
-            None
+            private_proxy: Boolean indicating if authentication is required.
+            proxy_credentials: Tuple of (username, password) for proxy auth.
         """
         if private_proxy:
             await self.enable_fetch_events(handle_auth_requests=True)
             await self.on(
-                FetchEvents.REQUEST_PAUSED,
+                'Fetch.requestPaused',
                 self._continue_request,
                 temporary=True,
             )
             await self.on(
-                FetchEvents.AUTH_REQUIRED,
+                'Fetch.authRequired',
                 partial(
-                    self._continue_request_auth_required,
+                    self._continue_request_with_auth,
                     proxy_username=proxy_credentials[0],
                     proxy_password=proxy_credentials[1],
                 ),
@@ -461,63 +746,54 @@ class Browser(ABC):  # noqa: PLR0904
             )
 
     @staticmethod
-    def _is_valid_page(page: dict) -> bool:
+    def _is_valid_tab(target: TargetInfo) -> bool:
         """
-        Verifies if a page is a valid new tab.
+        Determines if a target represents a valid browser tab.
+
+        Filters out chrome extensions and other non-page targets.
 
         Args:
-            page (dict): Dictionary containing page information.
+            target: Target information dictionary.
 
         Returns:
-            bool: True if the page is a valid new tab, False otherwise.
+            bool: True if the target is a valid browser tab, False otherwise.
         """
-        return page.get('type') == 'page' and 'chrome-extension://' not in page.get('url', '')
-
-    async def _get_valid_page(self, pages: list) -> str:
-        """
-        Gets the ID of a valid page or creates a new one.
-
-        Args:
-            pages (list): List of page dictionaries to check for validity.
-
-        Returns:
-            str: The target ID of an existing or new page.
-        """
-        valid_page = next((page for page in pages if self._is_valid_page(page)), {})
-
-        if valid_page.get('targetId', None):
-            return valid_page['targetId']
-
-        return await self.new_page()
+        return target.get('type') == 'page' and 'chrome-extension://' not in target.get('url', '')
 
     @staticmethod
-    async def _get_valid_target_id(pages: list) -> str:
+    async def _get_valid_tab_id(targets: List[TargetInfo]) -> str:
         """
-        Retrieves the target ID of a valid attached browser page.
+        Finds a valid attached tab ID from the list of targets.
+
+        Args:
+            targets: List of target information dictionaries.
 
         Returns:
-            str: The target ID of a valid page.
+            str: Target ID of a valid attached tab.
 
+        Raises:
+            RuntimeError: If no valid attached tab is found.
         """
-
-        valid_page = next(
-            (page for page in pages if page.get('type') == 'page' and page.get('attached')),
+        valid_tab = next(
+            (tab for tab in targets if tab.get('type') == 'page' and tab.get('attached')),
             None,
         )
 
-        if not valid_page:
-            raise RuntimeError('No valid attached browser page found.')
+        if not valid_tab:
+            raise RuntimeError('No valid attached tab found.')
 
-        target_id = valid_page.get('targetId')
-        if not target_id:
-            raise RuntimeError("Valid page found but missing 'targetId'.")
+        tab_id = valid_tab.get('targetId')
+        if not tab_id:
+            raise RuntimeError("Valid tab found but missing 'targetId'.")
 
-        return target_id
+        return tab_id
 
     async def _is_browser_running(self, timeout: int = 10) -> bool:
         """
-        Checks if the browser process is currently running.
-        Attempts to connect to the browser to verify its status.
+        Checks if the browser process is running and CDP endpoint is responsive.
+
+        Args:
+            timeout: Maximum number of seconds to wait for a response.
 
         Returns:
             bool: True if the browser is running, False otherwise.
@@ -529,20 +805,33 @@ class Browser(ABC):  # noqa: PLR0904
 
         return False
 
-    async def _execute_command(self, command: dict):
+    async def _execute_command(self, command: Command[T]) -> T:
         """
-        Executes a command through the connection handler.
+        Executes a CDP command and returns the result.
+
+        This is the core method for sending commands to the browser via CDP.
+        It handles serialization, transport, and response parsing.
 
         Args:
-            command (str): The command to be executed.
+            command: Command object containing method and parameters.
 
         Returns:
-            The response from executing the command.
+            The parsed response data, typed according to the command's
+            generic type parameter.
+
+        Note:
+            This method has a 60-second timeout to prevent hanging on
+            commands that might not complete.
         """
         return await self._connection_handler.execute_command(command, timeout=60)
 
     def _setup_user_dir(self):
-        """Prepares the user data directory if necessary."""
+        """
+        Sets up a user data directory for the browser.
+
+        If no user-data-dir argument is provided in the options, creates
+        a temporary directory and adds it to the launch arguments.
+        """
         if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
             # For all browsers, use a temporary directory
             temp_dir = self._temp_directory_manager.create_temp_dir()
@@ -551,8 +840,12 @@ class Browser(ABC):  # noqa: PLR0904
     @abstractmethod
     def _get_default_binary_location(self) -> str:
         """
-        Retrieves the default location of the browser binary.
+        Returns the default path to the browser executable.
 
-        This method must be implemented by subclasses.
+        This abstract method must be implemented by browser-specific subclasses
+        to locate the browser binary on the current system.
+
+        Returns:
+            str: Path to the browser executable.
         """
         pass
