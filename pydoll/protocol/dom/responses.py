@@ -1,6 +1,5 @@
-from typing import List, NotRequired
+from typing import List, NotRequired, TypedDict
 
-from pydoll.protocol.base import Response, ResponseResult
 from pydoll.protocol.dom.types import (
     BoxModel,
     DetachedElementInfo,
@@ -10,245 +9,245 @@ from pydoll.protocol.dom.types import (
 from pydoll.protocol.runtime.types import RemoteObject, StackTrace
 
 
-class DescribeNodeResultDict(ResponseResult):
+class DescribeNodeResultDict(TypedDict):
     node: Node
 
 
-class GetAttributesResultDict(ResponseResult):
+class GetAttributesResultDict(TypedDict):
     attributes: List[str]
 
 
-class GetBoxModelResultDict(ResponseResult):
+class GetBoxModelResultDict(TypedDict):
     model: BoxModel
 
 
-class GetDocumentResultDict(ResponseResult):
+class GetDocumentResultDict(TypedDict):
     root: Node
 
 
-class GetNodeForLocationResultDict(ResponseResult):
+class GetNodeForLocationResultDict(TypedDict):
     backendNodeId: int
     frameId: str
     nodeId: NotRequired[int]
 
 
-class GetOuterHTMLResultDict(ResponseResult):
+class GetOuterHTMLResultDict(TypedDict):
     outerHTML: str
 
 
-class MoveToResultDict(ResponseResult):
+class MoveToResultDict(TypedDict):
     nodeId: int
 
 
-class QuerySelectorResultDict(ResponseResult):
+class QuerySelectorResultDict(TypedDict):
     nodeId: int
 
 
-class QuerySelectorAllResultDict(ResponseResult):
+class QuerySelectorAllResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class RequestNodeResultDict(ResponseResult):
+class RequestNodeResultDict(TypedDict):
     nodeId: int
 
 
-class ResolveNodeResultDict(ResponseResult):
+class ResolveNodeResultDict(TypedDict):
     object: RemoteObject
 
 
-class SetNodeNameResultDict(ResponseResult):
+class SetNodeNameResultDict(TypedDict):
     nodeId: int
 
 
-class CollectClassNamesFromSubtreeResultDict(ResponseResult):
+class CollectClassNamesFromSubtreeResultDict(TypedDict):
     classNames: List[str]
 
 
-class CopyToResultDict(ResponseResult):
+class CopyToResultDict(TypedDict):
     nodeId: int
 
 
-class GetAnchorElementResultDict(ResponseResult):
+class GetAnchorElementResultDict(TypedDict):
     nodeId: int
 
 
-class GetContainerForNodeResultDict(ResponseResult):
+class GetContainerForNodeResultDict(TypedDict):
     nodeId: int
 
 
-class GetContentQuadsResultDict(ResponseResult):
+class GetContentQuadsResultDict(TypedDict):
     quads: List[Quad]
 
 
-class GetDetachedDomNodesResultDict(ResponseResult):
+class GetDetachedDomNodesResultDict(TypedDict):
     detachedNodes: List[DetachedElementInfo]
 
 
-class GetElementByRelationResultDict(ResponseResult):
+class GetElementByRelationResultDict(TypedDict):
     nodeId: int
 
 
-class GetFileInfoResultDict(ResponseResult):
+class GetFileInfoResultDict(TypedDict):
     path: str
 
 
-class GetFrameOwnerResultDict(ResponseResult):
+class GetFrameOwnerResultDict(TypedDict):
     backendNodeId: int
     nodeId: NotRequired[int]
 
 
-class GetNodesForSubtreeByStyleResultDict(ResponseResult):
+class GetNodesForSubtreeByStyleResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class GetNodeStackTracesResultDict(ResponseResult):
+class GetNodeStackTracesResultDict(TypedDict):
     creation: StackTrace
 
 
-class GetQueryingDescendantForContainerResultDict(ResponseResult):
+class GetQueryingDescendantForContainerResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class GetRelayoutBoundaryResultDict(ResponseResult):
+class GetRelayoutBoundaryResultDict(TypedDict):
     nodeId: int
 
 
-class GetSearchResultsResultDict(ResponseResult):
+class GetSearchResultsResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class GetTopLayerElementsResultDict(ResponseResult):
+class GetTopLayerElementsResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class PerformSearchResultDict(ResponseResult):
+class PerformSearchResultDict(TypedDict):
     searchId: str
     resultCount: int
 
 
-class PushNodeByPathToFrontendResultDict(ResponseResult):
+class PushNodeByPathToFrontendResultDict(TypedDict):
     nodeId: int
 
 
-class PushNodesByBackendIdsToFrontendResultDict(ResponseResult):
+class PushNodesByBackendIdsToFrontendResultDict(TypedDict):
     nodeIds: List[int]
 
 
-class DescribeNodeResponse(Response):
+class DescribeNodeResponse(TypedDict):
     result: DescribeNodeResultDict
 
 
-class GetAttributesResponse(Response):
+class GetAttributesResponse(TypedDict):
     result: GetAttributesResultDict
 
 
-class GetBoxModelResponse(Response):
+class GetBoxModelResponse(TypedDict):
     result: GetBoxModelResultDict
 
 
-class GetDocumentResponse(Response):
+class GetDocumentResponse(TypedDict):
     result: GetDocumentResultDict
 
 
-class GetNodeForLocationResponse(Response):
+class GetNodeForLocationResponse(TypedDict):
     result: GetNodeForLocationResultDict
 
 
-class GetOuterHTMLResponse(Response):
+class GetOuterHTMLResponse(TypedDict):
     result: GetOuterHTMLResultDict
 
 
-class MoveToResponse(Response):
+class MoveToResponse(TypedDict):
     result: MoveToResultDict
 
 
-class QuerySelectorResponse(Response):
+class QuerySelectorResponse(TypedDict):
     result: QuerySelectorResultDict
 
 
-class QuerySelectorAllResponse(Response):
+class QuerySelectorAllResponse(TypedDict):
     result: QuerySelectorAllResultDict
 
 
-class RequestNodeResponse(Response):
+class RequestNodeResponse(TypedDict):
     result: RequestNodeResultDict
 
 
-class ResolveNodeResponse(Response):
+class ResolveNodeResponse(TypedDict):
     result: ResolveNodeResultDict
 
 
-class SetNodeNameResponse(Response):
+class SetNodeNameResponse(TypedDict):
     result: SetNodeNameResultDict
 
 
-class CollectClassNamesFromSubtreeResponse(Response):
+class CollectClassNamesFromSubtreeResponse(TypedDict):
     result: CollectClassNamesFromSubtreeResultDict
 
 
-class CopyToResponse(Response):
+class CopyToResponse(TypedDict):
     result: CopyToResultDict
 
 
-class GetAnchorElementResponse(Response):
+class GetAnchorElementResponse(TypedDict):
     result: GetAnchorElementResultDict
 
 
-class GetContainerForNodeResponse(Response):
+class GetContainerForNodeResponse(TypedDict):
     result: GetContainerForNodeResultDict
 
 
-class GetContentQuadsResponse(Response):
+class GetContentQuadsResponse(TypedDict):
     result: GetContentQuadsResultDict
 
 
-class GetDetachedDomNodesResponse(Response):
+class GetDetachedDomNodesResponse(TypedDict):
     result: GetDetachedDomNodesResultDict
 
 
-class GetElementByRelationResponse(Response):
+class GetElementByRelationResponse(TypedDict):
     result: GetElementByRelationResultDict
 
 
-class GetFileInfoResponse(Response):
+class GetFileInfoResponse(TypedDict):
     result: GetFileInfoResultDict
 
 
-class GetFrameOwnerResponse(Response):
+class GetFrameOwnerResponse(TypedDict):
     result: GetFrameOwnerResultDict
 
 
-class GetNodesForSubtreeByStyleResponse(Response):
+class GetNodesForSubtreeByStyleResponse(TypedDict):
     result: GetNodesForSubtreeByStyleResultDict
 
 
-class GetNodeStackTracesResponse(Response):
+class GetNodeStackTracesResponse(TypedDict):
     result: GetNodeStackTracesResultDict
 
 
-class GetQueryingDescendantForContainerResponse(Response):
+class GetQueryingDescendantForContainerResponse(TypedDict):
     result: GetQueryingDescendantForContainerResultDict
 
 
-class GetRelayoutBoundaryResponse(Response):
+class GetRelayoutBoundaryResponse(TypedDict):
     result: GetRelayoutBoundaryResultDict
 
 
-class GetSearchResultsResponse(Response):
+class GetSearchResultsResponse(TypedDict):
     result: GetSearchResultsResultDict
 
 
-class GetTopLayerElementsResponse(Response):
+class GetTopLayerElementsResponse(TypedDict):
     result: GetTopLayerElementsResultDict
 
 
-class PerformSearchResponse(Response):
+class PerformSearchResponse(TypedDict):
     result: PerformSearchResultDict
 
 
-class PushNodeByPathToFrontendResponse(Response):
+class PushNodeByPathToFrontendResponse(TypedDict):
     result: PushNodeByPathToFrontendResultDict
 
 
-class PushNodesByBackendIdsToFrontendResponse(Response):
+class PushNodesByBackendIdsToFrontendResponse(TypedDict):
     result: PushNodesByBackendIdsToFrontendResultDict

@@ -15,7 +15,7 @@ class SetDownloadBehaviorParams(CommandParams):
     """Parameters for setting download behavior."""
 
     behavior: DownloadBehavior
-    downloadPath: str
+    downloadPath: NotRequired[str]
     browserContextId: NotRequired[str]
     eventsEnabled: NotRequired[bool]
 

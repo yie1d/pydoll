@@ -1,110 +1,109 @@
-from typing import List
+from typing import List, TypedDict
 
-from pydoll.constants import UsageForType
-from pydoll.protocol.base import Response, ResponseResult
 from pydoll.protocol.network.types import Cookie
 from pydoll.protocol.storage.types import (
     RelatedWebsiteSet,
     SharedStorageEntry,
     SharedStorageMetadata,
     TrustToken,
+    UsageForType,
 )
 
 
-class GetCookiesResultDict(ResponseResult):
+class GetCookiesResultDict(TypedDict):
     cookies: List[Cookie]
 
 
-class GetStorageKeyForFrameResultDict(ResponseResult):
+class GetStorageKeyForFrameResultDict(TypedDict):
     storageKey: str
 
 
-class GetUsageAndQuotaResultDict(ResponseResult):
+class GetUsageAndQuotaResultDict(TypedDict):
     usage: float
     quota: float
     overrideActive: bool
     usageBreakdown: List[UsageForType]
 
 
-class ClearTrustTokensResultDict(ResponseResult):
+class ClearTrustTokensResultDict(TypedDict):
     didDeleteTokens: bool
 
 
-class GetAffectedUrlsForThirdPartyCookieMetadataResultDict(ResponseResult):
+class GetAffectedUrlsForThirdPartyCookieMetadataResultDict(TypedDict):
     matchedUrls: List[str]
 
 
-class GetInterestGroupDetailsResultDict(ResponseResult):
+class GetInterestGroupDetailsResultDict(TypedDict):
     details: dict
 
 
-class GetRelatedWebsiteSetsResultDict(ResponseResult):
+class GetRelatedWebsiteSetsResultDict(TypedDict):
     sets: List[RelatedWebsiteSet]
 
 
-class GetSharedStorageEntriesResultDict(ResponseResult):
+class GetSharedStorageEntriesResultDict(TypedDict):
     entries: List[SharedStorageEntry]
 
 
-class GetSharedStorageMetadataResultDict(ResponseResult):
+class GetSharedStorageMetadataResultDict(TypedDict):
     metadata: SharedStorageMetadata
 
 
-class GetTrustTokensResultDict(ResponseResult):
+class GetTrustTokensResultDict(TypedDict):
     tokens: List[TrustToken]
 
 
-class RunBounceTrackingMitigationsResultDict(ResponseResult):
+class RunBounceTrackingMitigationsResultDict(TypedDict):
     deletedSites: List[str]
 
 
-class SendPendingAttributionReportsResultDict(ResponseResult):
+class SendPendingAttributionReportsResultDict(TypedDict):
     numSent: int
 
 
-class GetCookiesResponse(Response):
+class GetCookiesResponse(TypedDict):
     result: GetCookiesResultDict
 
 
-class GetStorageKeyForFrameResponse(Response):
+class GetStorageKeyForFrameResponse(TypedDict):
     result: GetStorageKeyForFrameResultDict
 
 
-class GetUsageAndQuotaResponse(Response):
+class GetUsageAndQuotaResponse(TypedDict):
     result: GetUsageAndQuotaResultDict
 
 
-class ClearTrustTokensResponse(Response):
+class ClearTrustTokensResponse(TypedDict):
     result: ClearTrustTokensResultDict
 
 
-class GetAffectedUrlsForThirdPartyCookieMetadataResponse(Response):
+class GetAffectedUrlsForThirdPartyCookieMetadataResponse(TypedDict):
     result: GetAffectedUrlsForThirdPartyCookieMetadataResultDict
 
 
-class GetInterestGroupDetailsResponse(Response):
+class GetInterestGroupDetailsResponse(TypedDict):
     result: GetInterestGroupDetailsResultDict
 
 
-class GetRelatedWebsiteSetsResponse(Response):
+class GetRelatedWebsiteSetsResponse(TypedDict):
     result: GetRelatedWebsiteSetsResultDict
 
 
-class GetSharedStorageEntriesResponse(Response):
+class GetSharedStorageEntriesResponse(TypedDict):
     result: GetSharedStorageEntriesResultDict
 
 
-class GetSharedStorageMetadataResponse(Response):
+class GetSharedStorageMetadataResponse(TypedDict):
     result: GetSharedStorageMetadataResultDict
 
 
-class GetTrustTokensResponse(Response):
+class GetTrustTokensResponse(TypedDict):
     result: GetTrustTokensResultDict
 
 
-class RunBounceTrackingMitigationsResponse(Response):
+class RunBounceTrackingMitigationsResponse(TypedDict):
     result: RunBounceTrackingMitigationsResultDict
 
 
-class SendPendingAttributionReportsResponse(Response):
+class SendPendingAttributionReportsResponse(TypedDict):
     result: SendPendingAttributionReportsResultDict

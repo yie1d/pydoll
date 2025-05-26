@@ -1,6 +1,5 @@
 from typing import List, NotRequired, TypedDict
 
-from pydoll.protocol.base import Response
 from pydoll.protocol.dom.types import Rect
 from pydoll.protocol.network.types import SearchMatch
 from pydoll.protocol.page.types import (
@@ -138,109 +137,109 @@ class SearchInResourceResultDict(TypedDict):
 
 
 # Response classes that inherit from Response
-class AddScriptToEvaluateOnNewDocumentResponse(Response):
+class AddScriptToEvaluateOnNewDocumentResponse(TypedDict):
     """Response for addScriptToEvaluateOnNewDocument command."""
 
     result: AddScriptToEvaluateOnNewDocumentResultDict
 
 
-class CaptureScreenshotResponse(Response):
+class CaptureScreenshotResponse(TypedDict):
     """Response for captureScreenshot command."""
 
     result: CaptureScreenshotResultDict
 
 
-class CreateIsolatedWorldResponse(Response):
+class CreateIsolatedWorldResponse(TypedDict):
     """Response for createIsolatedWorld command."""
 
     result: CreateIsolatedWorldResultDict
 
 
-class GetAppManifestResponse(Response):
+class GetAppManifestResponse(TypedDict):
     """Response for getAppManifest command."""
 
     result: GetAppManifestResultDict
 
 
-class GetFrameTreeResponse(Response):
+class GetFrameTreeResponse(TypedDict):
     """Response for getFrameTree command."""
 
     result: GetFrameTreeResultDict
 
 
-class GetLayoutMetricsResponse(Response):
+class GetLayoutMetricsResponse(TypedDict):
     """Response for getLayoutMetrics command."""
 
     result: GetLayoutMetricsResultDict
 
 
-class GetNavigationHistoryResponse(Response):
+class GetNavigationHistoryResponse(TypedDict):
     """Response for getNavigationHistory command."""
 
     result: GetNavigationHistoryResultDict
 
 
-class NavigateResponse(Response):
+class NavigateResponse(TypedDict):
     """Response for navigate command."""
 
     result: NavigateResultDict
 
 
-class PrintToPDFResponse(Response):
+class PrintToPDFResponse(TypedDict):
     """Response for printToPDF command."""
 
     result: PrintToPDFResultDict
 
 
-class CaptureSnapshotResponse(Response):
+class CaptureSnapshotResponse(TypedDict):
     """Response for captureSnapshot command."""
 
     result: CaptureSnapshotResultDict
 
 
-class GetAdScriptAncestryIdsResponse(Response):
+class GetAdScriptAncestryIdsResponse(TypedDict):
     """Response for getAdScriptAncestryIds command."""
 
     result: GetAdScriptAncestryIdsResultDict
 
 
-class GetAppIdResponse(Response):
+class GetAppIdResponse(TypedDict):
     """Response for getAppId command."""
 
     result: GetAppIdResultDict
 
 
-class GetInstallabilityErrorsResponse(Response):
+class GetInstallabilityErrorsResponse(TypedDict):
     """Response for getInstallabilityErrors command."""
 
     result: GetInstallabilityErrorsResultDict
 
 
-class GetOriginTrialsResponse(Response):
+class GetOriginTrialsResponse(TypedDict):
     """Response for getOriginTrials command."""
 
     result: GetOriginTrialsResultDict
 
 
-class GetPermissionsPolicyStateResponse(Response):
+class GetPermissionsPolicyStateResponse(TypedDict):
     """Response for getPermissionsPolicyState command."""
 
     result: GetPermissionsPolicyStateResultDict
 
 
-class GetResourceContentResponse(Response):
+class GetResourceContentResponse(TypedDict):
     """Response for getResourceContent command."""
 
     result: GetResourceContentResultDict
 
 
-class GetResourceTreeResponse(Response):
+class GetResourceTreeResponse(TypedDict):
     """Response for getResourceTree command."""
 
     result: GetResourceTreeResultDict
 
 
-class SearchInResourceResponse(Response):
+class SearchInResourceResponse(TypedDict):
     """Response for searchInResource command."""
 
     result: SearchInResourceResultDict

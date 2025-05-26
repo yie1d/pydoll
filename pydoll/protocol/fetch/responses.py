@@ -1,18 +1,18 @@
-from pydoll.protocol.base import Response, ResponseResult
+from typing import TypedDict
 
 
-class GetResponseBodyResultDict(ResponseResult):
+class GetResponseBodyResultDict(TypedDict):
     body: str
     base64encoded: bool
 
 
-class TakeResponseBodyAsStreamResultDict(ResponseResult):
+class TakeResponseBodyAsStreamResultDict(TypedDict):
     stream: str
 
 
-class GetResponseBodyResponse(Response):
+class GetResponseBodyResponse(TypedDict):
     result: GetResponseBodyResultDict
 
 
-class TakeResponseBodyAsStreamResponse(Response):
+class TakeResponseBodyAsStreamResponse(TypedDict):
     result: TakeResponseBodyAsStreamResultDict

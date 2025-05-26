@@ -1,60 +1,59 @@
-from typing import List
+from typing import List, TypedDict
 
-from pydoll.protocol.base import Response, ResponseResult
 from pydoll.protocol.target.types import TargetInfo
 
 
-class AttachToTargetResultDict(ResponseResult):
+class AttachToTargetResultDict(TypedDict):
     sessionId: str
 
 
-class CreateBrowserContextResultDict(ResponseResult):
+class CreateBrowserContextResultDict(TypedDict):
     browserContextId: str
 
 
-class CreateTargetResultDict(ResponseResult):
+class CreateTargetResultDict(TypedDict):
     targetId: str
 
 
-class GetBrowserContextsResultDict(ResponseResult):
+class GetBrowserContextsResultDict(TypedDict):
     browserContextIds: List[str]
 
 
-class GetTargetsResultDict(ResponseResult):
+class GetTargetsResultDict(TypedDict):
     targetInfos: List[TargetInfo]
 
 
-class AttachToBrowserTargetResultDict(ResponseResult):
+class AttachToBrowserTargetResultDict(TypedDict):
     sessionId: str
 
 
-class GetTargetInfoResultDict(ResponseResult):
+class GetTargetInfoResultDict(TypedDict):
     targetInfo: TargetInfo
 
 
-class AttachToTargetResponse(Response):
+class AttachToTargetResponse(TypedDict):
     result: AttachToTargetResultDict
 
 
-class CreateBrowserContextResponse(Response):
+class CreateBrowserContextResponse(TypedDict):
     result: CreateBrowserContextResultDict
 
 
-class CreateTargetResponse(Response):
+class CreateTargetResponse(TypedDict):
     result: CreateTargetResultDict
 
 
-class GetBrowserContextsResponse(Response):
+class GetBrowserContextsResponse(TypedDict):
     result: GetBrowserContextsResultDict
 
 
-class GetTargetsResponse(Response):
+class GetTargetsResponse(TypedDict):
     result: GetTargetsResultDict
 
 
-class AttachToBrowserTargetResponse(Response):
+class AttachToBrowserTargetResponse(TypedDict):
     result: AttachToBrowserTargetResultDict
 
 
-class GetTargetInfoResponse(Response):
+class GetTargetInfoResponse(TypedDict):
     result: GetTargetInfoResultDict

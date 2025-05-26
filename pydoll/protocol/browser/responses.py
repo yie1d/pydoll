@@ -1,15 +1,16 @@
-from pydoll.protocol.base import Response, ResponseResult
+from typing import TypedDict
+
 from pydoll.protocol.browser.types import WindowBoundsDict
 
 
-class GetWindowForTargetResultDict(ResponseResult):
+class GetWindowForTargetResultDict(TypedDict):
     """Result structure for GetWindowForTarget command."""
 
     windowId: int
     bounds: WindowBoundsDict
 
 
-class GetVersionResultDict(ResponseResult):
+class GetVersionResultDict(TypedDict):
     """Result structure for GetVersion command."""
 
     protocolVersion: str
@@ -19,13 +20,13 @@ class GetVersionResultDict(ResponseResult):
     jsVersion: str
 
 
-class GetWindowForTargetResponse(Response):
+class GetWindowForTargetResponse(TypedDict):
     """Response structure for GetWindowForTarget command."""
 
     result: GetWindowForTargetResultDict
 
 
-class GetVersionResponse(Response):
+class GetVersionResponse(TypedDict):
     """Response structure for GetVersion command."""
 
     result: GetVersionResultDict

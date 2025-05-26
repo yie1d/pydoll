@@ -1,6 +1,5 @@
-from typing import List, NotRequired
+from typing import List, NotRequired, TypedDict
 
-from pydoll.protocol.base import Response, ResponseResult
 from pydoll.protocol.runtime.types import (
     ExceptionDetails,
     InternalPropertyDescriptor,
@@ -10,104 +9,96 @@ from pydoll.protocol.runtime.types import (
 )
 
 
-class AwaitPromiseResultDict(ResponseResult):
+class AwaitPromiseResultDict(TypedDict):
     result: RemoteObject
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class CallFunctionOnResultDict(ResponseResult):
+class CallFunctionOnResultDict(TypedDict):
     result: RemoteObject
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class CompileScriptResultDict(ResponseResult):
+class CompileScriptResultDict(TypedDict):
     scriptId: NotRequired[str]
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class EvaluateResultDict(ResponseResult):
+class EvaluateResultDict(TypedDict):
     result: RemoteObject
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class GetPropertiesResultDict(ResponseResult):
+class GetPropertiesResultDict(TypedDict):
     result: List[PropertyDescriptor]
     internalProperties: NotRequired[List[InternalPropertyDescriptor]]
     privateProperties: NotRequired[List[PrivatePropertyDescriptor]]
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class GlobalLexicalScopeNamesResultDict(ResponseResult):
+class GlobalLexicalScopeNamesResultDict(TypedDict):
     names: List[str]
 
 
-class QueryObjectsResultDict(ResponseResult):
+class QueryObjectsResultDict(TypedDict):
     objects: List[RemoteObject]
 
 
-class RunScriptResultDict(ResponseResult):
+class RunScriptResultDict(TypedDict):
     result: RemoteObject
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
-class GetExceptionDetailsResultDict(ResponseResult):
+class GetExceptionDetailsResultDict(TypedDict):
     exceptionDetails: ExceptionDetails
 
 
-class GetHeapUsageResultDict(ResponseResult):
+class GetHeapUsageResultDict(TypedDict):
     usedSize: float
     totalSize: float
     embedderHeapUsedSize: float
     backingStorageSize: float
 
 
-class GetIsolateIdResultDict(ResponseResult):
+class GetIsolateIdResultDict(TypedDict):
     id: str
 
 
-class AwaitPromiseResponse(Response):
+class AwaitPromiseResponse(TypedDict):
     result: AwaitPromiseResultDict
 
 
-class CallFunctionOnResponse(Response):
+class CallFunctionOnResponse(TypedDict):
     result: CallFunctionOnResultDict
 
 
-class CompileScriptResponse(Response):
+class CompileScriptResponse(TypedDict):
     result: CompileScriptResultDict
 
 
-class EvaluateResponse(Response):
+class EvaluateResponse(TypedDict):
     result: EvaluateResultDict
 
 
-class GetPropertiesResponse(Response):
+class GetPropertiesResponse(TypedDict):
     result: GetPropertiesResultDict
 
 
-class GlobalLexicalScopeNamesResponse(Response):
+class GlobalLexicalScopeNamesResponse(TypedDict):
     result: GlobalLexicalScopeNamesResultDict
 
 
-class QueryObjectsResponse(Response):
+class QueryObjectsResponse(TypedDict):
     result: QueryObjectsResultDict
 
 
-class RunScriptResponse(Response):
+class RunScriptResponse(TypedDict):
     result: RunScriptResultDict
 
 
-class GetHeapUsageResponse(Response):
+class GetHeapUsageResponse(TypedDict):
     result: GetHeapUsageResultDict
 
 
-class GetIsolateIdResponse(Response):
-    result: GetIsolateIdResultDict
-
-
-class GetHeapUsageResponse(Response):
-    result: GetHeapUsageResultDict
-
-
-class GetIsolateIdResponse(Response):
+class GetIsolateIdResponse(TypedDict):
     result: GetIsolateIdResultDict
