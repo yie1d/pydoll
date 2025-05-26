@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
-from typing import AsyncGenerator, Awaitable, Callable, List, Optional, Tuple, Union
+from typing import AsyncGenerator, Callable, List, Optional, Tuple, Union, Any
 
 import aiofiles
 
@@ -26,6 +26,7 @@ from pydoll.protocol.page.responses import CaptureScreenshotResponse, PrintToPDF
 from pydoll.protocol.runtime.responses import EvaluateResponse
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.utils import decode_base64_to_bytes
+from pydoll.protocol.page.events import PageEvent
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         self._network_events_enabled = False
         self._fetch_events_enabled = False
         self._dom_events_enabled = False
+        self._runtime_events_enabled = False
         self._intercept_file_chooser_dialog_enabled = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._browser_context_id = browser_context_id
@@ -143,6 +145,19 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             and must be enabled with enable_dom_events().
         """
         return self._dom_events_enabled
+
+    @property
+    def runtime_events_enabled(self) -> bool:
+        """
+        Whether CDP Runtime domain events are currently enabled.
+
+        Returns:
+            bool: True if runtime events are being monitored, False otherwise.
+
+        Note:
+            Runtime events must be enabled with enable_runtime_events().
+        """
+        return self._runtime_events_enabled
 
     @property
     def intercept_file_chooser_dialog_enabled(self) -> bool:
@@ -317,6 +332,14 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         self._dom_events_enabled = True
         return response
 
+    async def enable_runtime_events(self):
+        """
+        Enables runtime events.
+        """
+        response = await self._execute_command(RuntimeCommands.enable())
+        self._runtime_events_enabled = True
+        return response
+
     async def enable_intercept_file_chooser_dialog(self):
         """
         Enables interception of file selection dialogs.
@@ -376,7 +399,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             time_to_wait_captcha=time_to_wait_captcha,
         )
 
-        self._cloudflare_captcha_callback_id = await self.on('Page.loadEventFired', callback)
+        self._cloudflare_captcha_callback_id = await self.on(PageEvent.LOAD_EVENT_FIRED, callback)
 
     async def disable_fetch_events(self):
         """
@@ -436,6 +459,14 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         """
         response = await self._execute_command(DomCommands.disable())
         self._dom_events_enabled = False
+        return response
+
+    async def disable_runtime_events(self):
+        """
+        Disables runtime events.
+        """
+        response = await self._execute_command(RuntimeCommands.disable())
+        self._runtime_events_enabled = False
         return response
 
     async def disable_intercept_file_chooser_dialog(self):
@@ -838,7 +869,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         if self.intercept_file_chooser_dialog_enabled is False:
             await self.enable_intercept_file_chooser_dialog()
 
-        await self.on('Page.fileChooserOpened', event_handler, temporary=True)
+        await self.on(PageEvent.FILE_CHOOSER_OPENED, event_handler, temporary=True)
 
         yield
 
@@ -895,7 +926,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         if not _before_page_events_enabled:
             await self.enable_page_events()
 
-        callback_id = await self.on('Page.loadEventFired', bypass_cloudflare)
+        callback_id = await self.on(PageEvent.LOAD_EVENT_FIRED, bypass_cloudflare)
 
         try:
             yield
@@ -906,7 +937,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                 await self.disable_page_events()
 
     async def on(
-        self, event_name: str, callback: Callable[[dict], Awaitable[None]], temporary: bool = False
+        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
     ):
         """
         Registers an event listener for CDP events.
@@ -915,12 +946,18 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         executes the provided callback function whenever the event occurs.
         This allows reacting to browser events like page loads, network
         activity, DOM changes, and more.
+        
+        The callback is automatically wrapped to run in a separate task,
+        preventing it from blocking the main event loop. This means your
+        callback can perform longer operations without affecting the tab's
+        responsiveness.
 
         Args:
             event_name: CDP event name to listen for (e.g., 'Page.loadEventFired',
                 'Network.responseReceived', 'DOM.documentUpdated').
-            callback: Async function to call when the event occurs.
-                Should accept a single parameter containing the event data.
+            callback: Function to call when the event occurs. Can be synchronous
+                or asynchronous. Should accept a single parameter containing the
+                event data. Runs in the background and won't block other operations.
             temporary: If True, removes the listener after first invocation.
                 Default is False (persistent listener).
 
@@ -931,7 +968,6 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             The corresponding domain must be enabled before events will fire.
             For example, Page.loadEventFired requires enable_page_events()
             to be called first.
-            ```
         """
 
         async def callback_wrapper(event):
