@@ -5,6 +5,7 @@ from pydoll.browser.chromium.base import Browser
 from pydoll.browser.managers import BrowserOptionsManager
 from pydoll.browser.options import Options
 from pydoll.constants import BrowserType
+from pydoll.exceptions import UnsupportedOS
 
 
 class Edge(Browser):
@@ -70,6 +71,6 @@ class Edge(Browser):
         browser_path = browser_paths.get(os_name)
 
         if not browser_path:
-            raise ValueError('Unsupported OS')
+            raise UnsupportedOS()
 
         return BrowserOptionsManager.validate_browser_paths(browser_path)
