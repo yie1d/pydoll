@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
-from typing import Any, Awaitable, Callable, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar
 
 from pydoll.browser.managers import (
     BrowserOptionsManager,
@@ -15,6 +15,7 @@ from pydoll.browser.tab import Tab
 from pydoll.commands import (
     BrowserCommands,
     FetchCommands,
+    RuntimeCommands,
     StorageCommands,
     TargetCommands,
 )
@@ -33,7 +34,7 @@ from pydoll.protocol.browser.responses import (
     GetWindowForTargetResponse,
 )
 from pydoll.protocol.browser.types import WindowBoundsDict
-from pydoll.protocol.network.types import Cookie, CookieParam
+from pydoll.protocol.network.types import Cookie, CookieParam, RequestPausedEvent
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.protocol.target.responses import (
     CreateBrowserContextResponse,
@@ -591,7 +592,7 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
     async def on(
-        self, event_name: str, callback: Callable[[Any], Awaitable[None]], temporary: bool = False
+        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
     ) -> int:
         """
         Registers an event listener for CDP events.
@@ -600,11 +601,17 @@ class Browser(ABC):  # noqa: PLR0904
         affecting all pages/targets. Events include network activity,
         console messages, dialog prompts, and many others.
 
+        The callback is automatically wrapped to run in a separate task,
+        preventing it from blocking the main event loop. This means your
+        callback can perform longer operations without affecting the browser's
+        responsiveness.
+
         Args:
             event_name: CDP event name (e.g., "Network.responseReceived",
                 "Page.loadEventFired", "Runtime.consoleAPICalled").
-            callback: Async function to call when the event occurs.
-                Should accept a single parameter containing the event data.
+            callback: Function to call when the event occurs. Can be synchronous
+                or asynchronous. Should accept a single parameter containing the
+                event data. Runs in the background and won't block other operations.
             temporary: If True, the callback will be removed after first invocation.
                 If False, it will remain until explicitly removed.
 
@@ -671,7 +678,35 @@ class Browser(ABC):  # noqa: PLR0904
         """
         await self._connection_handler.execute_command(FetchCommands.disable())
 
-    async def _continue_request(self, event: dict):
+    async def enable_runtime_events(self):
+        """
+        Enables runtime events.
+        """
+        await self._connection_handler.execute_command(RuntimeCommands.enable())
+
+    async def disable_runtime_events(self):
+        """
+        Disables runtime events.
+        """
+        await self._connection_handler.execute_command(RuntimeCommands.disable())
+
+    async def continue_request(self, request_id: str):
+        """
+        Continues a paused network request without modifications.
+
+        Args:
+            request_id: The ID of the request to continue.
+
+        Returns:
+            The command response object.
+
+        Note:
+            This method is used internally to handle request continuations.
+            It is not intended for direct use by the developer.
+        """
+        return await self._execute_command(FetchCommands.continue_request(request_id))
+
+    async def _continue_request_callback(self, event: RequestPausedEvent):
         """
         Continues a paused network request without modifications.
 
@@ -683,10 +718,10 @@ class Browser(ABC):  # noqa: PLR0904
                 Must include params.requestId to identify the request.
         """
         request_id = event['params']['requestId']
-        await self._execute_command(FetchCommands.continue_request(request_id))
+        return await self.continue_request(request_id)
 
-    async def _continue_request_with_auth(
-        self, event: dict, proxy_username: str, proxy_password: str
+    async def _continue_request_with_auth_callback(
+        self, event: RequestPausedEvent, proxy_username: str, proxy_password: str
     ):
         """
         Continues a paused authentication request with proxy credentials.
@@ -700,7 +735,8 @@ class Browser(ABC):  # noqa: PLR0904
             proxy_password: Password for proxy authentication.
         """
         request_id = event['params']['requestId']
-        await self._execute_command(
+        await self.disable_fetch_events()
+        return await self._execute_command(
             FetchCommands.continue_request_with_auth(
                 request_id,
                 auth_challenge_response=AuthChallengeResponseValues.PROVIDE_CREDENTIALS,
@@ -708,7 +744,6 @@ class Browser(ABC):  # noqa: PLR0904
                 proxy_password=proxy_password,
             )
         )
-        await self.disable_fetch_events()
 
     async def _verify_browser_running(self):
         """
@@ -736,13 +771,13 @@ class Browser(ABC):  # noqa: PLR0904
             await self.enable_fetch_events(handle_auth_requests=True)
             await self.on(
                 'Fetch.requestPaused',
-                self._continue_request,
+                self._continue_request_callback,
                 temporary=True,
             )
             await self.on(
                 'Fetch.authRequired',
                 partial(
-                    self._continue_request_with_auth,
+                    self._continue_request_with_auth_callback,
                     proxy_username=proxy_credentials[0],
                     proxy_password=proxy_credentials[1],
                 ),
