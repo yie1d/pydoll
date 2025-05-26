@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import cast
 
 
 class By(str, Enum):
@@ -125,7 +126,7 @@ class Scripts:
     """
 
 
-class Keys:
+class Key(tuple[str, int], Enum):
     BACKSPACE = ('Backspace', 8)
     TAB = ('Tab', 9)
     ENTER = ('Enter', 13)
@@ -357,6 +358,14 @@ class ScreenshotFormat(str, Enum):
     JPEG = 'jpeg'
     PNG = 'png'
     WEBP = 'webp'
+
+    @classmethod
+    def has_value(cls, value: str) -> bool:
+        return value in cls._value2member_map_
+
+    @classmethod
+    def get_value(cls, value: str) -> 'ScreenshotFormat':
+        return cast(ScreenshotFormat, cls._value2member_map_[value])
 
 
 class TransitionType(str, Enum):
@@ -871,3 +880,35 @@ class CompatibilityMode(str, Enum):
 class ElementRelation(str, Enum):
     POPOVER_TARGET = 'PopoverTarget'
     INTEREST_TARGET = 'InterestTarget'
+
+
+class MixedContentType(str, Enum):
+    BLOCKABLE = 'blockable'
+    OPTIONALLY_BLOCKABLE = 'optionally-blockable'
+    NONE = 'none'
+
+
+class ResourcePriority(str, Enum):
+    VERY_LOW = 'VeryLow'
+    LOW = 'Low'
+    MEDIUM = 'Medium'
+    HIGH = 'High'
+    VERY_HIGH = 'VeryHigh'
+
+
+class TrustTokenOperationType(str, Enum):
+    ISSUANCE = 'Issuance'
+    REDEMPTION = 'Redemption'
+    SIGNING = 'Signing'
+
+
+class RefreshPolicy(str, Enum):
+    USE_CACHED = 'UseCached'
+    REFRESH = 'Refresh'
+
+
+class DialogType(str, Enum):
+    ALERT = 'alert'
+    CONFIRM = 'confirm'
+    PROMPT = 'prompt'
+    BEFORE_UNLOAD = 'beforeunload'
