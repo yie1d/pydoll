@@ -2,12 +2,16 @@ import asyncio
 import json
 import logging
 from contextlib import suppress
-from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar, cast
+from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Optional, TypeVar, cast
 
 import websockets
 from websockets.legacy.client import Connect, WebSocketClientProtocol
 
 from pydoll.connection.managers import CommandsManager, EventsManager
+from pydoll.exceptions import (
+    CommandExecutionTimeout,
+    WebSocketConnectionClosed,
+)
 from pydoll.protocol.base import Command
 from pydoll.utils import get_browser_ws_address
 
@@ -136,8 +140,8 @@ class ConnectionHandler:
                 the command's expected return type.
 
         Raises:
-            TimeoutError: If the browser doesn't respond within the timeout period.
-            websockets.ConnectionClosed: If the connection closes during command execution.
+            CommandExecutionTimeout: If the browser doesn't respond within the timeout period.
+            WebSocketConnectionClosed: If the connection closes during command execution.
         """
         await self._ensure_active_connection()
         future = self._command_manager.create_command_future(command)
@@ -148,12 +152,12 @@ class ConnectionHandler:
             await ws.send(command_str)
             response: str = await asyncio.wait_for(future, timeout)
             return json.loads(response)
-        except asyncio.TimeoutError as exc:
+        except asyncio.TimeoutError:
             self._command_manager.remove_pending_command(command['id'])
-            raise exc
-        except websockets.ConnectionClosed as exc:
+            raise CommandExecutionTimeout()
+        except websockets.ConnectionClosed:
             await self._handle_connection_loss()
-            raise exc
+            raise WebSocketConnectionClosed()
 
     async def register_callback(
         self,
@@ -305,7 +309,7 @@ class ConnectionHandler:
             logger.error(f'Unexpected error in event loop: {e}')
             raise
 
-    async def _incoming_messages(self):
+    async def _incoming_messages(self) -> AsyncGenerator[str, None]:
         """
         Generator that yields raw messages from the WebSocket connection.
 
