@@ -19,7 +19,7 @@ from pydoll.connection import ConnectionHandler
 from pydoll.constants import By, RequestStage, ResourceType, ScreenshotFormat
 from pydoll.elements.mixins import FindElementsMixin
 from pydoll.elements.web_element import WebElement
-from pydoll.exceptions import InvalidFileExtension
+from pydoll.exceptions import InvalidFileExtension, NoDialogPresent, PageLoadTimeout
 from pydoll.protocol.base import Response
 from pydoll.protocol.network.types import Cookie, CookieParam
 from pydoll.protocol.page.responses import CaptureScreenshotResponse, PrintToPDFResponse
@@ -551,7 +551,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                 Default is 300 seconds (5 minutes).
 
         Raises:
-            TimeoutError: If the page doesn't finish loading within the
+            PageLoadTimeout: If the page doesn't finish loading within the
                 specified timeout period.
         """
         if await self._refresh_if_url_not_changed(url):
@@ -562,7 +562,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         try:
             await self._wait_page_load(timeout=timeout)
         except asyncio.TimeoutError:
-            raise TimeoutError('Page load timed out')
+            raise PageLoadTimeout()
 
     async def refresh(
         self,
@@ -583,7 +583,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                 the page has finished loading. Useful for page initialization.
 
         Raises:
-            TimeoutError: If the page doesn't finish reloading within
+            PageLoadTimeout: If the page doesn't finish reloading within
                 the default timeout period (300 seconds).
         """
         await self._execute_command(
@@ -594,7 +594,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         try:
             await self._wait_page_load()
         except asyncio.TimeoutError:
-            raise TimeoutError('Page load timed out')
+            raise PageLoadTimeout()
 
     async def take_screenshot(
         self,
@@ -735,10 +735,10 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             str: The text message from the dialog.
 
         Raises:
-            LookupError: If no dialog is currently displayed.
+            NoDialogPresent: If no dialog is currently displayed.
         """
         if not await self.has_dialog():
-            raise LookupError('No dialog present on the page')
+            raise NoDialogPresent()
         return self._connection_handler.dialog['params']['message']
 
     async def handle_dialog(self, accept: bool, prompt_text: Optional[str] = None):
@@ -756,7 +756,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                 Ignored for alert and confirm dialogs.
 
         Raises:
-            LookupError: If no dialog is currently displayed.
+            NoDialogPresent: If no dialog is currently displayed.
 
         Note:
             This method must be called after a dialog appears to allow
@@ -764,7 +764,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             handle dialogs.
         """
         if not await self.has_dialog():
-            raise LookupError('No dialog present on the page')
+            raise NoDialogPresent()
         return await self._execute_command(
             PageCommands.handle_javascript_dialog(accept=accept, prompt_text=prompt_text)
         )
