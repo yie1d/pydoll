@@ -8,6 +8,7 @@ from pydoll.constants import (
     PermissionsPolicyFeature,
     ResourceType,
     TransitionType,
+    DialogType,
 )
 
 
@@ -246,3 +247,17 @@ class PermissionsPolicyFeatureState(TypedDict):
     feature: PermissionsPolicyFeature
     allowed: bool
     locator: NotRequired[PermissionsPolicyBlockLocator]
+
+
+class JavascriptDialogOpeningEventParams(TypedDict):
+    url: str
+    frameId: str
+    message: str
+    type: DialogType
+    hasBrowserHandler: bool
+    defaultPrompt: NotRequired[str]
+
+
+class JavascriptDialogOpeningEvent(TypedDict):
+    method: str
+    params: NotRequired[JavascriptDialogOpeningEventParams]
