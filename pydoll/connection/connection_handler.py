@@ -117,8 +117,7 @@ class ConnectionHandler:
         """
         with suppress(Exception):
             await self._ensure_active_connection()
-            ws = cast(WebSocketClientProtocol, self._ws_connection)
-            await ws.ping()
+            await cast(WebSocketClientProtocol, self._ws_connection).ping()
             return True
         return False
 
