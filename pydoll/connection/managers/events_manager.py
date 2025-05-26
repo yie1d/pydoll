@@ -1,6 +1,9 @@
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable, Optional, Union, cast
+
+from pydoll.protocol.base import Event
+from pydoll.protocol.page.types import JavascriptDialogOpeningEvent, JavascriptDialogOpeningEventParams
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +30,12 @@ class EventsManager:
         """
         self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
-        self.network_logs: list[dict] = []
-        self.dialog: dict[str, Any] = {}
+        self.network_logs: list[Event] = []
+        self.dialog = JavascriptDialogOpeningEvent(method='')
         logger.info('EventsManager initialized')
 
     def register_callback(
-        self, event_name: str, callback: Callable[[dict], Awaitable[None]], temporary: bool = False
+        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
     ) -> int:
         """
         Registers a callback for a specific event type.
@@ -91,7 +94,7 @@ class EventsManager:
         self._event_callbacks.clear()
         logger.info('All callbacks cleared')
 
-    async def process_event(self, event_data: dict[str, str]):
+    async def process_event(self, event_data: Event):
         """
         Processes a received event and triggers corresponding callbacks.
 
@@ -109,14 +112,14 @@ class EventsManager:
             self._update_network_logs(event_data)
 
         if 'Page.javascriptDialogOpening' in event_name:
-            self.dialog = event_data
+            self.dialog = JavascriptDialogOpeningEvent(method=event_data['method'], params=cast(JavascriptDialogOpeningEventParams, event_data['params']))
 
         if 'Page.javascriptDialogClosed' in event_name:
-            self.dialog = {}
+            self.dialog = JavascriptDialogOpeningEvent(method='')
 
         await self._trigger_callbacks(event_name, event_data)
 
-    def _update_network_logs(self, event_data: dict[str, str]):
+    def _update_network_logs(self, event_data: Event):
         """
         Maintains the network logs collection.
 
@@ -129,7 +132,7 @@ class EventsManager:
         self.network_logs.append(event_data)
         self.network_logs = self.network_logs[-10000:]  # keep only last 10000 logs
 
-    async def _trigger_callbacks(self, event_name: str, event_data: dict[str, str]):
+    async def _trigger_callbacks(self, event_name: str, event_data: Event):
         """
         Triggers all registered callbacks for an event.
 
