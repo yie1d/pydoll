@@ -3,9 +3,9 @@ from typing import List, NotRequired
 from pydoll.protocol.base import Response, ResponseResult
 from pydoll.protocol.dom.types import (
     BoxModel,
+    DetachedElementInfo,
     Node,
     Quad,
-    DetachedElementInfo,
 )
 from pydoll.protocol.runtime.types import RemoteObject, StackTrace
 

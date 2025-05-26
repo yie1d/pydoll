@@ -1,12 +1,8 @@
 from typing import List, NotRequired
 
-from pydoll.protocol.base import CommandParams
-from pydoll.protocol.input.types import (
-    DragData,
-    TouchPoint,
-)
 from pydoll.constants import (
     DragEventType,
+    GestureSourceType,
     KeyEventType,
     KeyLocation,
     KeyModifier,
@@ -14,7 +10,11 @@ from pydoll.constants import (
     MouseEventType,
     PointerType,
     TouchEventType,
-    GestureSourceType,
+)
+from pydoll.protocol.base import CommandParams
+from pydoll.protocol.input.types import (
+    DragData,
+    TouchPoint,
 )
 
 

@@ -1,9 +1,19 @@
 from typing import List, NotRequired
 
+from pydoll.constants import (
+    ConnectionType,
+    ContentEncoding,
+    CookiePriority,
+    CookieSameSite,
+    CookieSourceScheme,
+)
 from pydoll.protocol.base import CommandParams
-from pydoll.protocol.network.types import CookiePartitionKey, UserAgentMetadata, LoadNetworkResourceOptions
-from pydoll.constants import ConnectionType, ContentEncoding, CookiePriority, CookieSameSite, CookieSourceScheme
 from pydoll.protocol.fetch.types import HeaderEntry, RequestPattern
+from pydoll.protocol.network.types import (
+    CookiePartitionKey,
+    LoadNetworkResourceOptions,
+    UserAgentMetadata,
+)
 
 
 class DeleteCookiesParams(CommandParams):

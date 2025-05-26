@@ -9,14 +9,15 @@ from pydoll.constants import (
     TransitionType,
     WebLifecycleState,
 )
-from pydoll.protocol.page.types import (
-    Viewport,
-    InstallabilityError,
-    FontFamilies,
-    ScriptFontFamilies,
-    FontSizes,
-)
 from pydoll.protocol.base import CommandParams
+from pydoll.protocol.page.types import (
+    FontFamilies,
+    FontSizes,
+    InstallabilityError,
+    ScriptFontFamilies,
+    Viewport,
+)
+
 
 class AddScriptToEvaluateOnNewDocumentParams(CommandParams):
     """Parameters for adding script to evaluate on new document."""

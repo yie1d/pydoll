@@ -1,4 +1,4 @@
-from typing import TypedDict, NotRequired, List
+from typing import List, NotRequired, TypedDict
 
 
 class TouchPoint(TypedDict):

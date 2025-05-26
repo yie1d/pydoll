@@ -13,6 +13,7 @@ class RelatedWebsiteSet(TypedDict):
     associatedSites: List[str]
     serviceSites: List[str]
 
+
 class UsageForType(TypedDict):
     storageType: StorageType
     usage: float

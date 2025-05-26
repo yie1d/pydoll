@@ -1,8 +1,8 @@
 from typing import List, NotRequired
 
 from pydoll.protocol.base import Response, ResponseResult
-from pydoll.protocol.network.types import Cookie,SecurityIsolationStatus, SearchMatch
 from pydoll.protocol.fetch.types import HeaderEntry
+from pydoll.protocol.network.types import Cookie, SearchMatch, SecurityIsolationStatus
 
 
 class GetCookiesResultDict(ResponseResult):

@@ -1,12 +1,12 @@
 from typing import List, NotRequired
 
+from pydoll.constants import NetworkErrorReason, RequestMethod
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.fetch.types import (
     AuthChallengeResponseDict,
     HeaderEntry,
     RequestPattern,
 )
-from pydoll.constants import NetworkErrorReason, RequestMethod
 
 
 class ContinueRequestParams(CommandParams):

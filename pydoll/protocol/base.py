@@ -1,4 +1,4 @@
-from typing import Generic, NotRequired, TypedDict, TypeVar, Any
+from typing import Generic, NotRequired, TypedDict, TypeVar
 
 T_CommandResponse = TypeVar('T_CommandResponse')
 
@@ -17,6 +17,7 @@ class Command(TypedDict, Generic[T_CommandResponse]):
         params: Optional dictionary of parameters for the command
     """
 
+    id: NotRequired[int]
     method: str
     params: NotRequired[CommandParams]
 

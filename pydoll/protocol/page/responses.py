@@ -1,21 +1,21 @@
-from typing import TypedDict, NotRequired, List
+from typing import List, NotRequired, TypedDict
 
 from pydoll.protocol.base import Response
-from pydoll.protocol.page.types import (
-    AppManifestError,
-    AdScriptId,
-    FrameResourceTree,
-    FrameTree,
-    LayoutViewport,
-    VisualViewport,
-    WebAppManifest,
-    NavigationEntry,
-    InstallabilityError,
-    OriginTrial,
-    PermissionsPolicyFeatureState,
-)
 from pydoll.protocol.dom.types import Rect
 from pydoll.protocol.network.types import SearchMatch
+from pydoll.protocol.page.types import (
+    AdScriptId,
+    AppManifestError,
+    FrameResourceTree,
+    FrameTree,
+    InstallabilityError,
+    LayoutViewport,
+    NavigationEntry,
+    OriginTrial,
+    PermissionsPolicyFeatureState,
+    VisualViewport,
+    WebAppManifest,
+)
 
 
 class AddScriptToEvaluateOnNewDocumentResultDict(TypedDict):

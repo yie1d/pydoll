@@ -1,8 +1,8 @@
 from typing import List, NotRequired
 
+from pydoll.constants import WindowState
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.target.types import RemoteLocation
-from pydoll.constants import WindowState
 
 
 class ActivateTargetParams(CommandParams):

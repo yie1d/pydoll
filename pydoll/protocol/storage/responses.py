@@ -1,14 +1,14 @@
 from typing import List
 
+from pydoll.constants import UsageForType
 from pydoll.protocol.base import Response, ResponseResult
+from pydoll.protocol.network.types import Cookie
 from pydoll.protocol.storage.types import (
     RelatedWebsiteSet,
     SharedStorageEntry,
     SharedStorageMetadata,
     TrustToken,
 )
-from pydoll.protocol.network.types import Cookie
-from pydoll.constants import UsageForType
 
 
 class GetCookiesResultDict(ResponseResult):

@@ -1,5 +1,6 @@
-from typing import TypedDict, NotRequired
-from pydoll.constants import ResourceType, RequestStage, AuthChallengeResponseValues
+from typing import NotRequired, TypedDict
+
+from pydoll.constants import AuthChallengeResponseValues, RequestStage, ResourceType
 
 
 class HeaderEntry(TypedDict):

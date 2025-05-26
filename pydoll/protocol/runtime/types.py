@@ -1,16 +1,17 @@
-from typing import TypedDict, NotRequired, List, Any, Union
+from typing import Any, List, NotRequired, TypedDict, Union
 
 from pydoll.constants import (
-    PropertyPreviewType,
-    PropertyPreviewSubtype,
-    ObjectPreviewType,
-    ObjectPreviewSubtype,
     DeepSerializedValueType,
-    UnserializableEnum,
-    RemoteObjectType,
+    ObjectPreviewSubtype,
+    ObjectPreviewType,
+    PropertyPreviewSubtype,
+    PropertyPreviewType,
     RemoteObjectSubtype,
+    RemoteObjectType,
     SerializationValue,
+    UnserializableEnum,
 )
+
 
 class PropertyPreview(TypedDict):
     name: str

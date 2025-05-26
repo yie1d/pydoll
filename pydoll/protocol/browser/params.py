@@ -1,8 +1,8 @@
 from typing import List, NotRequired
 
+from pydoll.constants import DownloadBehavior, PermissionType
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.browser.types import WindowBoundsDict
-from pydoll.constants import DownloadBehavior, PermissionType
 
 
 class GetWindowForTargetParams(CommandParams):

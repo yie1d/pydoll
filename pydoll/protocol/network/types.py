@@ -1,6 +1,12 @@
-from typing import TypedDict, NotRequired, List
+from typing import List, NotRequired, TypedDict
 
-from pydoll.constants import CookiePriority, CookieSameSite, CookieSourceScheme, ContentSecurityPolicySource
+from pydoll.constants import (
+    ContentSecurityPolicySource,
+    CookiePriority,
+    CookieSameSite,
+    CookieSourceScheme,
+)
+
 
 class SearchMatch(TypedDict):
     """Search match object."""
@@ -12,6 +18,7 @@ class SearchMatch(TypedDict):
 class CookiePartitionKey(TypedDict):
     topLevelSite: str
     hasCrossSiteAncestor: bool
+
 
 class Cookie(TypedDict):
     """Cookie object."""

@@ -1,11 +1,11 @@
 from typing import List, NotRequired
 
+from pydoll.constants import ElementRelation, IncludeWhitespace, LogicalAxes, PhysicalAxes
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.dom.types import (
-    Rect,
     CSSComputedStyleProperty,
+    Rect,
 )
-from pydoll.constants import IncludeWhitespace, PhysicalAxes, LogicalAxes, ElementRelation
 
 
 class DescribeNodeParams(CommandParams):

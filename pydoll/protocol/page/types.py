@@ -1,13 +1,13 @@
 from typing import List, NotRequired, TypedDict
 
 from pydoll.constants import (
-    ResourceType,
-    TransitionType,
-    OriginTrialUsageRestriction,
-    OriginTrialTokenStatus,
     OriginTrialStatus,
+    OriginTrialTokenStatus,
+    OriginTrialUsageRestriction,
     PermissionsPolicyBlockReason,
     PermissionsPolicyFeature,
+    ResourceType,
+    TransitionType,
 )
 
 

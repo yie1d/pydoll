@@ -1,7 +1,13 @@
 from typing import List, NotRequired
 
 from pydoll.protocol.base import Response, ResponseResult
-from pydoll.protocol.runtime.types import ExceptionDetails, RemoteObject, PropertyDescriptor, InternalPropertyDescriptor, PrivatePropertyDescriptor
+from pydoll.protocol.runtime.types import (
+    ExceptionDetails,
+    InternalPropertyDescriptor,
+    PrivatePropertyDescriptor,
+    PropertyDescriptor,
+    RemoteObject,
+)
 
 
 class AwaitPromiseResultDict(ResponseResult):

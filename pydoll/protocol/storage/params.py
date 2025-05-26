@@ -1,8 +1,8 @@
 from typing import List, NotRequired
 
 from pydoll.protocol.base import CommandParams
-from pydoll.protocol.storage.types import StorageBucket, RelatedWebsiteSet
 from pydoll.protocol.network.types import CookieParam
+from pydoll.protocol.storage.types import RelatedWebsiteSet, StorageBucket
 
 
 class ClearCookiesParams(CommandParams):

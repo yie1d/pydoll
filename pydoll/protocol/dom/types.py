@@ -1,9 +1,9 @@
-from typing import TypedDict, NotRequired, Annotated, List, Any
+from typing import Annotated, Any, List, NotRequired, TypedDict
 
-from pydoll.constants import PseudoType, ShadowRootType, CompatibilityMode
-
+from pydoll.constants import CompatibilityMode, PseudoType, ShadowRootType
 
 Quad = Annotated[List[float], 'Format: [x1, y1, x2, y2, x3, y3, x4, y4]']
+
 
 class Rect(TypedDict):
     """Rectangle for capturing screenshot or clip rectangle."""
