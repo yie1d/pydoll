@@ -20,19 +20,19 @@ T = TypeVar('T')
 class ConnectionHandler:
     """
     Manages WebSocket connections to Chrome DevTools Protocol endpoints.
-    
+
     This class establishes and maintains WebSocket connections to either browser-level
     or page-level CDP endpoints, providing a reliable communication channel for sending
     commands and receiving events and responses. It handles connection lifecycle,
     message routing, and event subscription.
-    
+
     Key responsibilities:
     1. Establishing and maintaining WebSocket connections
     2. Sending CDP commands and handling responses
     3. Managing event subscriptions and callbacks
     4. Processing incoming messages (both command responses and events)
     5. Handling connection interruptions and reconnection
-    
+
     This is a core component of the automation framework, acting as the communication
     layer between Python code and the browser's DevTools Protocol.
     """
@@ -46,11 +46,11 @@ class ConnectionHandler:
     ):
         """
         Initializes a new ConnectionHandler instance.
-        
+
         Creates a handler that will establish and manage a WebSocket connection
         to either a browser-level CDP endpoint or a specific page's CDP endpoint.
         The connection is not established until needed (lazy initialization).
-        
+
         Args:
             connection_port: Port number the browser's debugging server is listening on.
                 This is typically the Chrome --remote-debugging-port value.
@@ -75,10 +75,10 @@ class ConnectionHandler:
     def network_logs(self):
         """
         Access all captured network request and response logs.
-        
+
         Provides access to network activity logs that have been captured during
         the browser session through Network domain events.
-        
+
         Returns:
             list: Collection of network request/response log entries.
                 Each entry contains details about a network request.
@@ -89,10 +89,10 @@ class ConnectionHandler:
     def dialog(self):
         """
         Access information about the currently active JavaScript dialog.
-        
+
         Provides details about any active JavaScript dialog (alert, confirm, prompt)
         that is currently being displayed in the page.
-        
+
         Returns:
             dict or None: Dialog information if a dialog is present, containing
                 type (alert, confirm, prompt), message text, and other details.
@@ -103,10 +103,10 @@ class ConnectionHandler:
     async def ping(self) -> bool:
         """
         Tests if the WebSocket connection is active and responsive.
-        
+
         Sends a WebSocket protocol-level ping to check if the connection
         is still alive and functioning correctly.
-        
+
         Returns:
             bool: True if the connection is active and responded to the ping,
                 False if the connection is closed or unresponsive.
@@ -121,20 +121,20 @@ class ConnectionHandler:
     async def execute_command(self, command: Command[T], timeout: int = 10) -> T:
         """
         Sends a CDP command to the browser and awaits its response.
-        
+
         This is the primary method for interacting with the browser via CDP.
         It serializes the command, sends it over the WebSocket, and waits
         for the corresponding response with matching ID.
-        
+
         Args:
             command: CDP command object to send
             timeout: Maximum seconds to wait for the command response.
                 Default is 10 seconds.
-        
+
         Returns:
             T: The parsed response object from the browser, with type matching
                 the command's expected return type.
-        
+
         Raises:
             TimeoutError: If the browser doesn't respond within the timeout period.
             websockets.ConnectionClosed: If the connection closes during command execution.
@@ -163,11 +163,11 @@ class ConnectionHandler:
     ) -> int:
         """
         Registers an event listener for a specific CDP event.
-        
+
         Sets up a callback function to be called whenever a specified CDP event
         occurs. This allows reacting to browser events like page loads, network
         activity, dialog appearance, etc.
-        
+
         Args:
             event_name: CDP event name to listen for (e.g., 'Page.loadEventFired',
                 'Network.responseReceived'). Should include both domain and event.
@@ -175,11 +175,11 @@ class ConnectionHandler:
                 Must accept a single dict parameter containing the event data.
             temporary: If True, the callback will be automatically removed
                 after being triggered once. Default is False (persistent).
-        
+
         Returns:
             int: Callback ID that can be used to remove the listener later
                 with remove_callback().
-        
+
         Note:
             The corresponding CDP domain must be enabled before events will fire.
             For example, enable Page.enable() before listening for Page events.
@@ -189,14 +189,14 @@ class ConnectionHandler:
     async def remove_callback(self, callback_id: int) -> bool:
         """
         Removes a previously registered event callback.
-        
+
         Unsubscribes from an event by removing the callback with the specified ID.
         Once removed, the callback will no longer be triggered by events.
-        
+
         Args:
             callback_id: ID of the callback to remove, as returned by
                 register_callback().
-        
+
         Returns:
             bool: True if the callback was successfully removed,
                 False if the callback ID was not found.
@@ -206,7 +206,7 @@ class ConnectionHandler:
     async def clear_callbacks(self):
         """
         Removes all registered event callbacks.
-        
+
         Unsubscribes from all events by removing all registered callbacks.
         This is useful for cleanup when the connection is no longer needed
         or when resetting the event handling state.
@@ -216,7 +216,7 @@ class ConnectionHandler:
     async def close(self):
         """
         Closes the WebSocket connection and releases resources.
-        
+
         Performs a clean shutdown of the connection by removing all
         event callbacks and closing the WebSocket connection. After
         calling this, the ConnectionHandler should not be used until
@@ -233,7 +233,7 @@ class ConnectionHandler:
     async def _ensure_active_connection(self):
         """
         Guarantees that an active connection exists before proceeding.
-        
+
         This method checks if the WebSocket connection is established
         and active. If not, it establishes a new connection.
         """
@@ -243,7 +243,7 @@ class ConnectionHandler:
     async def _establish_new_connection(self):
         """
         Creates a fresh WebSocket connection and starts listening for events.
-        
+
         Resolves the appropriate WebSocket address, establishes a new
         connection, and initiates an asynchronous task to receive events.
         """
@@ -259,10 +259,10 @@ class ConnectionHandler:
     async def _resolve_ws_address(self):
         """
         Determines the correct WebSocket address based on the page ID.
-        
+
         For browser-level connections, queries the browser's debugging API.
         For page-level connections, constructs the URL based on the page ID.
-        
+
         Returns:
             str: Complete WebSocket URL to connect to.
         """
@@ -273,7 +273,7 @@ class ConnectionHandler:
     async def _handle_connection_loss(self):
         """
         Cleans up resources after a WebSocket connection loss.
-        
+
         Closes the connection if it's still open, nullifies the
         connection reference, and cancels any ongoing receive tasks.
         This prepares the handler for establishing a new connection
@@ -291,7 +291,7 @@ class ConnectionHandler:
     async def _receive_events(self):
         """
         Main loop for receiving and processing incoming WebSocket messages.
-        
+
         This long-running task continuously reads messages from the WebSocket
         and delegates processing to specialized handlers based on message type.
         It handles both command responses and event notifications.
@@ -308,10 +308,10 @@ class ConnectionHandler:
     async def _incoming_messages(self):
         """
         Generator that yields raw messages from the WebSocket connection.
-        
+
         This asynchronous generator continuously receives messages from the
         WebSocket connection as long as it remains open.
-        
+
         Yields:
             str: Raw message string received from the WebSocket.
         """
@@ -321,11 +321,11 @@ class ConnectionHandler:
     async def _process_single_message(self, raw_message: str):
         """
         Processes a single raw WebSocket message.
-        
+
         Parses the raw message string into a JSON object and routes it
         to the appropriate handler based on whether it's a command
         response or an event notification.
-        
+
         Args:
             raw_message: Raw message string to process.
         """
@@ -342,12 +342,12 @@ class ConnectionHandler:
     def _parse_message(raw_message: str) -> Optional[dict]:
         """
         Attempts to parse a raw message string into a JSON object.
-        
+
         Safely parses the message and handles any JSON parsing errors.
-        
+
         Args:
             raw_message: Raw message string to parse.
-        
+
         Returns:
             dict or None: Parsed JSON object if successful, None if parsing fails.
         """
@@ -361,10 +361,10 @@ class ConnectionHandler:
     def _is_command_response(message: dict) -> bool:
         """
         Determines if a message is a response to a previously sent command.
-        
+
         Command responses have an integer 'id' field matching the original command ID.
         Event notifications have a 'method' field but no 'id' field.
-        
+
         Args:
             message (dict): The message to check.
 
@@ -376,10 +376,10 @@ class ConnectionHandler:
     async def _handle_command_message(self, message: dict):
         """
         Processes command response messages.
-        
+
         Resolves the future associated with the command ID, allowing the
         calling code to continue execution with the response data.
-        
+
         Args:
             message: Command response message to process.
         """
@@ -389,10 +389,10 @@ class ConnectionHandler:
     async def _handle_event_message(self, message: dict):
         """
         Processes event notification messages.
-        
+
         Delegates event processing to the events handler, which will invoke
         any registered callbacks for the event type.
-        
+
         Args:
             message: Event message to process, containing method and params.
         """
@@ -403,7 +403,7 @@ class ConnectionHandler:
     def __repr__(self):
         """
         Returns a string representation for debugging.
-        
+
         Returns:
             str: String representation with connection details.
         """
@@ -412,7 +412,7 @@ class ConnectionHandler:
     def __str__(self):
         """
         Returns a user-friendly string representation.
-        
+
         Returns:
             str: String representation with connection details.
         """
@@ -421,9 +421,9 @@ class ConnectionHandler:
     async def __aenter__(self):
         """
         Async context manager entry point.
-        
+
         Allows using the ConnectionHandler in an async with statement.
-        
+
         Returns:
             ConnectionHandler: This instance.
         """
@@ -432,9 +432,9 @@ class ConnectionHandler:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """
         Async context manager exit point.
-        
+
         Ensures proper cleanup when exiting an async with block.
-        
+
         Args:
             exc_type: Exception type if an exception was raised.
             exc_val: Exception value if an exception was raised.
