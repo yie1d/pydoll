@@ -12,7 +12,7 @@ from pydoll.browser.managers import (
     TempDirectoryManager,
 )
 from pydoll.browser.options import Options
-from pydoll.browser.page import Tab
+from pydoll.browser.tab import Tab
 from pydoll.commands import (
     BrowserCommands,
     FetchCommands,
@@ -79,7 +79,7 @@ class Browser(ABC):  # noqa: PLR0904
         Initializes a new Browser instance with specified configuration.
 
         Args:
-            options: Configuration options for the browser. If None, 
+            options: Configuration options for the browser. If None,
                 default options will be used based on browser type.
             connection_port: Port to use for CDP WebSocket connection.
                 If None, a random port between 9223-9322 will be assigned.
@@ -176,7 +176,7 @@ class Browser(ABC):  # noqa: PLR0904
         """
         if not await self._is_browser_running():
             raise exceptions.BrowserNotRunning('Browser is not running')
-        
+
         await self._execute_command(BrowserCommands.CLOSE)
         self._browser_process_manager.stop_process()
         self._temp_directory_manager.cleanup()
@@ -277,7 +277,7 @@ class Browser(ABC):  # noqa: PLR0904
             )
         )
         target_id = response['result']['targetId']
-        return Tab(self._connection_port, target_id)
+        return Tab(self._connection_port, target_id, browser_context_id)
 
     async def get_targets(self) -> List[TargetInfo]:
         """
@@ -598,7 +598,7 @@ class Browser(ABC):  # noqa: PLR0904
         console messages, dialog prompts, and many others.
 
         Args:
-            event_name: CDP event name (e.g., "Network.responseReceived", 
+            event_name: CDP event name (e.g., "Network.responseReceived",
                 "Page.loadEventFired", "Runtime.consoleAPICalled").
             callback: Async function to call when the event occurs.
                 Should accept a single parameter containing the event data.
@@ -612,6 +612,7 @@ class Browser(ABC):  # noqa: PLR0904
             For page-specific events, consider using the Tab.on() method
             which scopes events to a specific page.
         """
+
         async def callback_wrapper(event):
             asyncio.create_task(callback(event))
 
@@ -648,7 +649,7 @@ class Browser(ABC):  # noqa: PLR0904
             - For page-specific interception, use Tab.enable_fetch_events() instead.
         """
         await self._connection_handler.execute_command(
-            FetchCommands.enable_fetch_events(handle_auth_requests, resource_type)
+            FetchCommands.enable(handle_auth_requests, resource_type)
         )
 
     async def disable_fetch_events(self):
@@ -665,7 +666,7 @@ class Browser(ABC):  # noqa: PLR0904
             - This affects all requests across all pages.
             - For page-specific control, use Tab.disable_fetch_events() instead.
         """
-        await self._connection_handler.execute_command(FetchCommands.disable_fetch_events())
+        await self._connection_handler.execute_command(FetchCommands.disable())
 
     async def _continue_request(self, event: dict):
         """
