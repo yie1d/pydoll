@@ -4,7 +4,6 @@ from functools import partial
 from random import randint
 from typing import Any, Awaitable, Callable, List, Optional, TypeVar
 
-from pydoll import exceptions
 from pydoll.browser.managers import (
     BrowserOptionsManager,
     BrowserProcessManager,
@@ -26,6 +25,7 @@ from pydoll.constants import (
     DownloadBehavior,
     PermissionType,
 )
+from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
 from pydoll.protocol.base import Command
 from pydoll.protocol.browser.responses import (
     GetVersionResponse,
@@ -121,7 +121,7 @@ class Browser(ABC):  # noqa: PLR0904
 
         await self._connection_handler.close()
 
-    async def start(self, headless: bool = False):
+    async def start(self, headless: bool = False) -> Tab:
         """
         Starts the browser process and establishes CDP connection.
 
@@ -158,6 +158,9 @@ class Browser(ABC):  # noqa: PLR0904
         await self._verify_browser_running()
         await self._configure_proxy(proxy_config[0], proxy_config[1])
 
+        valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
+        return Tab(self._connection_port, valid_tab_id)
+
     async def stop(self):
         """
         Stops the browser process and cleans up resources.
@@ -175,7 +178,7 @@ class Browser(ABC):  # noqa: PLR0904
             This method is automatically called when exiting the context manager.
         """
         if not await self._is_browser_running():
-            raise exceptions.BrowserNotRunning('Browser is not running')
+            raise BrowserNotRunning()
 
         await self._execute_command(BrowserCommands.CLOSE)
         self._browser_process_manager.stop_process()
@@ -477,7 +480,7 @@ class Browser(ABC):  # noqa: PLR0904
             int: Window ID for an attached tab.
 
         Raises:
-            RuntimeError: If no valid attached tab can be found.
+            NoValidTabFound: If no valid attached tab can be found.
         """
         targets = await self.get_targets()
         valid_tab_id = await self._get_valid_tab_id(targets)
@@ -712,10 +715,10 @@ class Browser(ABC):  # noqa: PLR0904
         Verifies that the browser process has started successfully.
 
         Raises:
-            BrowserNotRunning: If the browser failed to start.
+            FailedToStartBrowser: If the browser failed to start.
         """
         if not await self._is_browser_running():
-            raise exceptions.BrowserNotRunning('Failed to start browser')
+            raise FailedToStartBrowser()
 
     async def _configure_proxy(self, private_proxy, proxy_credentials):
         """
@@ -773,19 +776,23 @@ class Browser(ABC):  # noqa: PLR0904
             str: Target ID of a valid attached tab.
 
         Raises:
-            RuntimeError: If no valid attached tab is found.
+            NoValidTabFound: If no valid attached tab is found.
         """
         valid_tab = next(
-            (tab for tab in targets if tab.get('type') == 'page' and tab.get('attached')),
+            (
+                tab
+                for tab in targets
+                if tab.get('type') == 'page' and 'extension' not in tab.get('url', '')
+            ),
             None,
         )
 
         if not valid_tab:
-            raise RuntimeError('No valid attached tab found.')
+            raise NoValidTabFound()
 
         tab_id = valid_tab.get('targetId')
         if not tab_id:
-            raise RuntimeError("Valid tab found but missing 'targetId'.")
+            raise NoValidTabFound('Tab missing targetId')
 
         return tab_id
 
