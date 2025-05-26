@@ -187,6 +187,26 @@ class RuntimeCommands:
         return Command(method=RuntimeMethod.COMPILE_SCRIPT, params=params)
 
     @staticmethod
+    def disable() -> Command[Response]:
+        """
+        Disables the runtime domain.
+
+        Returns:
+            Command[Response]: Command object to disable the runtime domain.
+        """
+        return Command(method=RuntimeMethod.DISABLE)
+
+    @staticmethod
+    def enable() -> Command[Response]:
+        """
+        Enables the runtime domain.
+
+        Returns:
+            Command[Response]: Command object to enable the runtime domain.
+        """
+        return Command(method=RuntimeMethod.ENABLE)
+
+    @staticmethod
     def evaluate(
         expression: str,
         object_group: Optional[str] = None,
