@@ -104,7 +104,7 @@ class TempDirectoryManager:
             except PermissionError:
                 time.sleep(0.1)
         else:
-            raise PermissionError
+            raise PermissionError()
 
     def handle_cleanup_error(self, func: Callable[[str], None], path: str, exc_info: tuple):
         """
