@@ -1,8 +1,6 @@
 import asyncio
 import logging
-from typing import Awaitable, Callable, Any
-
-from pydoll import exceptions
+from typing import Any, Awaitable, Callable
 
 logger = logging.getLogger(__name__)
 
