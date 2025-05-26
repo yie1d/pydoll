@@ -1,4 +1,4 @@
-from typing import Generic, NotRequired, TypedDict, TypeVar
+from typing import Any, Generic, NotRequired, TypedDict, TypeVar
 
 T_CommandResponse = TypeVar('T_CommandResponse')
 
@@ -38,3 +38,10 @@ class Response(TypedDict):
 
     id: int
     result: ResponseResult
+
+
+class Event(TypedDict):
+    """Base structure for all events."""
+
+    method: str
+    params: NotRequired[dict[str, str]]
