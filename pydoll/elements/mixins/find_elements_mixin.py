@@ -1,10 +1,15 @@
 import asyncio
+from typing import TypeVar
 
 from pydoll import exceptions
-from pydoll.protocol.commands import (
+from pydoll.commands import (
     DomCommands,
     RuntimeCommands,
 )
+from pydoll.constants import By, Scripts
+from pydoll.protocol.base import Command
+
+T = TypeVar('T')
 
 
 def create_web_element(*args, **kwargs):
@@ -39,7 +44,7 @@ class FindElementsMixin:
 
     async def wait_element(
         self,
-        by: DomCommands.SelectorType,
+        by: By,
         value: str,
         timeout: int = 10,
         raise_exc: bool = True,
@@ -84,7 +89,7 @@ class FindElementsMixin:
 
             await asyncio.sleep(0.5)
 
-    async def find_element(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
+    async def find_element(self, by: By, value: str, raise_exc: bool = True):
         """
         Finds an element on the current page using the specified selector.
 
@@ -108,9 +113,9 @@ class FindElementsMixin:
             ElementNotFound: If the element is not found and raise_exc is True.
         """
         if hasattr(self, '_object_id'):
-            command = DomCommands.find_element(by, value, self._object_id)
+            command = self._get_find_element_command(by, value, self._object_id)
         else:
-            command = DomCommands.find_element(by, value)
+            command = self._get_find_element_command(by, value)
 
         response = await self._execute_command(command)
 
@@ -126,9 +131,9 @@ class FindElementsMixin:
         tag_name = node_description.get('nodeName', '').lower()
         attributes.extend(['tag_name', tag_name])
 
-        return create_web_element(object_id, self._connection_handler, by, value, attributes)
+        return create_web_element(object_id, self._connection_handler, by, value, attributes)  # type: ignore
 
-    async def find_elements(self, by: DomCommands.SelectorType, value: str, raise_exc: bool = True):
+    async def find_elements(self, by: By, value: str, raise_exc: bool = True):
         """
         Finds all elements on the current page using the specified selector.
 
@@ -153,9 +158,9 @@ class FindElementsMixin:
             ElementNotFound: If no elements are found and raise_exc is True.
         """
         if hasattr(self, '_object_id'):
-            command = DomCommands.find_elements(by, value, self._object_id)
+            command = self._get_find_elements_command(by, value, self._object_id)
         else:
-            command = DomCommands.find_elements(by, value)
+            command = self._get_find_elements_command(by, value)
 
         response = await self._execute_command(command)
 
@@ -186,7 +191,7 @@ class FindElementsMixin:
             attributes.extend(['tag_name', tag_name])
 
             elements.append(
-                create_web_element(object_id, self._connection_handler, by, value, attributes)
+                create_web_element(object_id, self._connection_handler, by, value, attributes)  # type: ignore
             )
         return elements
 
@@ -211,7 +216,7 @@ class FindElementsMixin:
         response = await self._execute_command(DomCommands.describe_node(object_id=object_id))
         return response['result']['node']
 
-    async def _execute_command(self, command: dict) -> dict:
+    async def _execute_command(self, command: Command[T]) -> T:
         """
         Executes a DevTools Protocol command on the page.
 
@@ -227,4 +232,85 @@ class FindElementsMixin:
             dict: The result of the command execution as returned by
                 the browser.
         """
-        return await self._connection_handler.execute_command(command, timeout=60)
+        return await self._connection_handler.execute_command(command, timeout=60)  # type: ignore
+
+    def _get_find_element_command(self, by: By, value: str, object_id: str = '') -> Command:
+        escaped_value = value.replace('"', '\\"')
+        match by:
+            case By.CLASS_NAME:
+                selector = f'.{escaped_value}'
+            case By.ID:
+                selector = f'#{escaped_value}'
+            case _:
+                selector = escaped_value
+        if object_id and not by == By.XPATH:
+            script = Scripts.RELATIVE_QUERY_SELECTOR.replace('{selector}', selector)
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        elif by == By.XPATH:
+            command = self._get_find_element_by_xpath_command(value, object_id)
+        else:
+            command = RuntimeCommands.evaluate(
+                expression=Scripts.QUERY_SELECTOR.replace('{selector}', selector)
+            )
+        return command
+
+    def _get_find_elements_command(self, by: By, value: str, object_id: str = '') -> Command:
+        escaped_value = value.replace('"', '\\"')
+        match by:
+            case By.CLASS_NAME:
+                selector = f'.{escaped_value}'
+            case By.ID:
+                selector = f'#{escaped_value}'
+            case _:
+                selector = escaped_value
+        if object_id and not by == By.XPATH:
+            script = Scripts.RELATIVE_QUERY_SELECTOR_ALL.replace('{selector}', escaped_value)
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        elif by == By.XPATH:
+            command = self._get_find_elements_by_xpath_command(value, object_id)
+        else:
+            command = RuntimeCommands.evaluate(
+                expression=Scripts.QUERY_SELECTOR_ALL.replace('{selector}', selector)
+            )
+        return command
+
+    def _get_find_element_by_xpath_command(self, xpath: str, object_id: str) -> Command:
+        escaped_value = xpath.replace('"', '\\"')
+        if object_id:
+            escaped_value = self._ensure_relative_xpath(escaped_value)
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        else:
+            script = Scripts.FIND_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
+            command = RuntimeCommands.evaluate(expression=script)
+        return command
+
+    def _get_find_elements_by_xpath_command(self, xpath: str, object_id: str) -> Command:
+        escaped_value = xpath.replace('"', '\\"')
+        if object_id:
+            escaped_value = self._ensure_relative_xpath(escaped_value)
+            script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
+            command = RuntimeCommands.call_function_on(
+                object_id,
+                script,
+                return_by_value=False,
+            )
+        else:
+            script = Scripts.FIND_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
+            command = RuntimeCommands.evaluate(expression=script)
+        return command
+
+    def _ensure_relative_xpath(self, xpath: str) -> str:
+        return f'.{xpath}' if not xpath.startswith('.') else xpath
