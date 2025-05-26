@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+from pydoll.protocol.base import Command
+
 logger = logging.getLogger(__name__)
 
 
@@ -13,7 +15,7 @@ class CommandsManager:
     to their corresponding futures, allowing asynchronous command execution.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the CommandManager.
 
@@ -26,7 +28,7 @@ class CommandsManager:
         self._pending_commands: dict[int, asyncio.Future] = {}
         self._id = 1
 
-    def create_command_future(self, command: dict) -> asyncio.Future:
+    def create_command_future(self, command: Command) -> asyncio.Future:
         """
         Creates a future for a command and assigns it a unique ID.
 
@@ -35,14 +37,14 @@ class CommandsManager:
         commands dictionary.
 
         Args:
-            command (dict): The command to prepare for execution.
+            command (Command): The command to prepare for execution.
 
         Returns:
             asyncio.Future: A future that will be resolved when the command
                 completes.
         """
         command['id'] = self._id
-        future = asyncio.Future()
+        future = asyncio.Future()  # type: ignore
         self._pending_commands[self._id] = future
         self._id += 1
         return future

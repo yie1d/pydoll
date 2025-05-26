@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Dict
+from typing import Awaitable, Callable, Any
 
 from pydoll import exceptions
 
@@ -16,7 +16,7 @@ class EventsManager:
     network logs and dialog information.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the EventsManager.
 
@@ -27,14 +27,14 @@ class EventsManager:
         Returns:
             None
         """
-        self._event_callbacks: Dict[int, dict] = {}
+        self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
-        self.network_logs = []
-        self.dialog = {}
+        self.network_logs: list[dict] = []
+        self.dialog: dict[str, Any] = {}
         logger.info('EventsManager initialized')
 
     def register_callback(
-        self, event_name: str, callback: Callable, temporary: bool = False
+        self, event_name: str, callback: Callable[[dict], Awaitable[None]], temporary: bool = False
     ) -> int:
         """
         Registers a callback for a specific event type.
@@ -51,14 +51,7 @@ class EventsManager:
         Returns:
             int: The ID of the registered callback, which can be used to
                 remove it later.
-
-        Raises:
-            InvalidCallback: If the callback is not callable.
         """
-        if not callable(callback):
-            logger.error('Callback must be a callable function.')
-            raise exceptions.InvalidCallback('Callback must be callable')
-
         self._callback_id += 1
         self._event_callbacks[self._callback_id] = {
             'event': event_name,
@@ -96,14 +89,11 @@ class EventsManager:
 
         This method clears all event listeners that have been registered,
         effectively resetting the event handler to its initial state.
-
-        Returns:
-            None
         """
         self._event_callbacks.clear()
         logger.info('All callbacks cleared')
 
-    async def process_event(self, event_data: dict):
+    async def process_event(self, event_data: dict[str, str]):
         """
         Processes a received event and triggers corresponding callbacks.
 
@@ -113,11 +103,8 @@ class EventsManager:
 
         Args:
             event_data (dict): The event data in dictionary format.
-
-        Returns:
-            None
         """
-        event_name = event_data.get('method')
+        event_name = event_data['method']
         logger.debug(f'Processing event: {event_name}')
 
         if 'Network.requestWillBeSent' in event_name:
@@ -131,7 +118,7 @@ class EventsManager:
 
         await self._trigger_callbacks(event_name, event_data)
 
-    def _update_network_logs(self, event_data: dict):
+    def _update_network_logs(self, event_data: dict[str, str]):
         """
         Maintains the network logs collection.
 
@@ -140,14 +127,11 @@ class EventsManager:
 
         Args:
             event_data (dict): The network event data to add to the logs.
-
-        Returns:
-            None
         """
         self.network_logs.append(event_data)
-        self.network_logs = self.network_logs[-10000:]  # Mantém tamanho máximo
+        self.network_logs = self.network_logs[-10000:]  # keep only last 10000 logs
 
-    async def _trigger_callbacks(self, event_name: str, event_data: dict):
+    async def _trigger_callbacks(self, event_name: str, event_data: dict[str, str]):
         """
         Triggers all registered callbacks for an event.
 
@@ -159,9 +143,6 @@ class EventsManager:
         Args:
             event_name (str): The name of the event that occurred.
             event_data (dict): The data associated with the event.
-
-        Returns:
-            None
         """
         callbacks_to_remove = []
 
