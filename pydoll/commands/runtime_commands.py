@@ -29,7 +29,6 @@ from pydoll.protocol.runtime.responses import (
     GetPropertiesResponse,
     GlobalLexicalScopeNamesResponse,
     QueryObjectsResponse,
-    Response,
     RunScriptResponse,
 )
 
