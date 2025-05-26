@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydoll.browser.options import ChromeOptions, EdgeOptions, Options
 from pydoll.constants import BrowserType
+from pydoll.exceptions import InvalidBrowserPath, InvalidOptionsObject
 
 
 class BrowserOptionsManager:
@@ -45,8 +46,8 @@ class BrowserOptionsManager:
             Options: A properly initialized browser options instance.
 
         Raises:
-            ValueError: If provided options is not an instance
-            of Options class
+            InvalidOptionsObject: If provided options is not an instance
+                of Options class
         """
         if options is None:
             if browser_type == BrowserType.CHROME:
@@ -57,7 +58,7 @@ class BrowserOptionsManager:
                 return Options()
 
         if not isinstance(options, Options):
-            raise ValueError('Invalid options')
+            raise InvalidOptionsObject()
 
         return options
 
@@ -146,9 +147,9 @@ class BrowserOptionsManager:
             str: The first valid browser executable path found.
 
         Raises:
-            ValueError: If the browser executable is not found at the path.
+            InvalidBrowserPath: If the browser executable is not found at the path.
         """
         for path in paths:
             if os.path.exists(path) and os.access(path, os.X_OK):
                 return path
-        raise ValueError(f'No valid browser path found in: {paths}')
+        raise InvalidBrowserPath(f'No valid browser path found in: {paths}')
