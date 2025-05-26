@@ -5,6 +5,11 @@ from pydoll.constants import (
     CookiePriority,
     CookieSameSite,
     CookieSourceScheme,
+    MixedContentType,
+    ReferrerPolicy,
+    RefreshPolicy,
+    ResourcePriority,
+    TrustTokenOperationType,
 )
 
 
@@ -110,3 +115,38 @@ class UserAgentMetadata(TypedDict):
     mobile: bool
     bitness: NotRequired[str]
     wow64: NotRequired[bool]
+
+
+class PostDataEntry(TypedDict):
+    bytes: NotRequired[str]
+
+
+class TrustTokenParams(TypedDict):
+    operation: TrustTokenOperationType
+    refreshPolicy: RefreshPolicy
+    issuers: NotRequired[List[str]]
+
+
+class Request(TypedDict):
+    url: str
+    urlFragment: NotRequired[str]
+    method: str
+    headers: NotRequired[dict]
+    hasPostData: NotRequired[bool]
+    postDataEntries: NotRequired[List[PostDataEntry]]
+    mixedContentType: NotRequired[MixedContentType]
+    initialPriority: NotRequired[ResourcePriority]
+    referrerPolicy: NotRequired[ReferrerPolicy]
+    isLinkPreload: NotRequired[bool]
+    trustTokenParams: NotRequired[TrustTokenParams]
+    isSameSite: NotRequired[bool]
+
+
+class RequestPausedEventParams(TypedDict):
+    requestId: str
+    request: Request
+
+
+class RequestPausedEvent(TypedDict):
+    method: str
+    params: RequestPausedEventParams
