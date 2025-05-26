@@ -8,7 +8,7 @@ from pydoll.constants import (
     TransitionType,
     WebLifecycleState,
 )
-from pydoll.protocol.base import Command
+from pydoll.protocol.base import Command, Response
 from pydoll.protocol.page.methods import PageMethod
 from pydoll.protocol.page.params import (
     AddCompilationCacheParams,
@@ -70,7 +70,6 @@ from pydoll.protocol.page.responses import (
     GetResourceTreeResponse,
     NavigateResponse,
     PrintToPDFResponse,
-    Response,
     SearchInResourceResponse,
 )
 
