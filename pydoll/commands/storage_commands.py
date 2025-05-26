@@ -1,5 +1,8 @@
 from typing import List, Optional
 
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.network.types import CookieParam
+from pydoll.protocol.storage.methods import StorageMethod
 from pydoll.protocol.storage.params import (
     ClearCookiesParams,
     ClearDataForOriginParams,
@@ -38,7 +41,6 @@ from pydoll.protocol.storage.params import (
     UntrackIndexedDBForOriginParams,
     UntrackIndexedDBForStorageKeyParams,
 )
-from pydoll.protocol.network.types import CookieParam
 from pydoll.protocol.storage.responses import (
     ClearTrustTokensResponse,
     GetAffectedUrlsForThirdPartyCookieMetadataResponse,
@@ -53,8 +55,6 @@ from pydoll.protocol.storage.responses import (
     RunBounceTrackingMitigationsResponse,
     SendPendingAttributionReportsResponse,
 )
-from pydoll.protocol.base import Response, Command
-from pydoll.protocol.storage.methods import StorageMethod
 
 
 class StorageCommands:
@@ -452,7 +452,9 @@ class StorageCommands:
         params = GetAffectedUrlsForThirdPartyCookieMetadataParams(
             firstPartyUrl=first_party_url, thirdPartyUrls=third_party_urls
         )
-        return Command(method=StorageMethod.GET_AFFECTED_URLS_FOR_THIRD_PARTY_COOKIE_METADATA, params=params)
+        return Command(
+            method=StorageMethod.GET_AFFECTED_URLS_FOR_THIRD_PARTY_COOKIE_METADATA, params=params
+        )
 
     @staticmethod
     def get_interest_group_details(
@@ -617,7 +619,9 @@ class StorageCommands:
             Command: The CDP command to set Attribution Reporting local testing mode.
         """
         params = SetAttributionReportingLocalTestingModeParams(enable=enable)
-        return Command(method=StorageMethod.SET_ATTRIBUTION_REPORTING_LOCAL_TESTING_MODE, params=params)
+        return Command(
+            method=StorageMethod.SET_ATTRIBUTION_REPORTING_LOCAL_TESTING_MODE, params=params
+        )
 
     @staticmethod
     def set_attribution_reporting_tracking(enable: bool) -> Command[Response]:

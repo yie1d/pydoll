@@ -11,6 +11,8 @@ from pydoll.constants import (
     PointerType,
     TouchEventType,
 )
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.input.methods import InputMethod
 from pydoll.protocol.input.params import (
     DispatchDragEventParams,
     DispatchKeyEventParams,
@@ -27,8 +29,6 @@ from pydoll.protocol.input.params import (
     SynthesizeTapGestureParams,
     TouchPoint,
 )
-from pydoll.protocol.input.methods import InputMethod
-from pydoll.protocol.base import Command, Response
 
 
 class InputCommands:

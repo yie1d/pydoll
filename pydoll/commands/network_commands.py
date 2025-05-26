@@ -7,6 +7,8 @@ from pydoll.constants import (
     CookieSameSite,
     CookieSourceScheme,
 )
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.network.methods import NetworkMethod
 from pydoll.protocol.network.params import (
     DeleteCookiesParams,
     EmulateNetworkConditionsParams,
@@ -36,10 +38,6 @@ from pydoll.protocol.network.params import (
     TakeResponseBodyForInterceptionAsStreamParams,
     UserAgentMetadata,
 )
-from pydoll.protocol.network.types import (
-    CookiePartitionKey,
-    LoadNetworkResourceOptions,
-)
 from pydoll.protocol.network.responses import (
     GetCertificateResponse,
     GetCookiesResponse,
@@ -53,8 +51,10 @@ from pydoll.protocol.network.responses import (
     StreamResourceContentResponse,
     TakeResponseBodyForInterceptionAsStreamResponse,
 )
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.network.methods import NetworkMethod
+from pydoll.protocol.network.types import (
+    CookiePartitionKey,
+    LoadNetworkResourceOptions,
+)
 
 
 class NetworkCommands:
@@ -73,7 +73,6 @@ class NetworkCommands:
     The commands allow developers to analyze performance, debug network issues,
     and test application behavior under various network conditions.
     """
-
 
     @staticmethod
     def clear_browser_cache() -> Command[Response]:
@@ -151,7 +150,7 @@ class NetworkCommands:
         return Command(method=NetworkMethod.DELETE_COOKIES, params=params)
 
     @staticmethod
-    def disable_network_events() -> Command[Response]:
+    def disable() -> Command[Response]:
         """
         Stops network monitoring and event reporting.
 
@@ -171,7 +170,7 @@ class NetworkCommands:
         return Command(method=NetworkMethod.DISABLE)
 
     @staticmethod
-    def enable_network_events(
+    def enable(
         max_total_buffer_size: Optional[int] = None,
         max_resource_buffer_size: Optional[int] = None,
         max_post_data_size: Optional[int] = None,

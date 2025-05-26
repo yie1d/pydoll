@@ -7,6 +7,8 @@ from pydoll.constants import (
     RequestStage,
     ResourceType,
 )
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.fetch.methods import FetchMethod
 from pydoll.protocol.fetch.params import (
     AuthChallengeResponseDict,
     ContinueRequestParams,
@@ -24,8 +26,6 @@ from pydoll.protocol.fetch.responses import (
     GetResponseBodyResponse,
     TakeResponseBodyAsStreamResponse,
 )
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.fetch.methods import FetchMethod
 
 
 class FetchCommands:
@@ -129,7 +129,7 @@ class FetchCommands:
         return Command(method=FetchMethod.CONTINUE_WITH_AUTH, params=params)
 
     @staticmethod
-    def disable_fetch_events() -> Command[Response]:
+    def disable() -> Command[Response]:
         """
         Creates a command to disable fetch interception.
 
@@ -141,7 +141,7 @@ class FetchCommands:
         return Command(method=FetchMethod.DISABLE)
 
     @staticmethod
-    def enable_fetch_events(
+    def enable(
         handle_auth_requests: bool,
         url_pattern: str = '*',
         resource_type: Optional[ResourceType] = None,

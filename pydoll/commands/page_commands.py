@@ -9,6 +9,7 @@ from pydoll.constants import (
     WebLifecycleState,
 )
 from pydoll.protocol.base import Command
+from pydoll.protocol.page.methods import PageMethod
 from pydoll.protocol.page.params import (
     AddCompilationCacheParams,
     AddScriptToEvaluateOnNewDocumentParams,
@@ -72,7 +73,6 @@ from pydoll.protocol.page.responses import (
     Response,
     SearchInResourceResponse,
 )
-from pydoll.protocol.page.methods import PageMethod
 
 
 class PageCommands:

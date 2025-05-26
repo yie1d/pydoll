@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.runtime.methods import RuntimeMethod
 from pydoll.protocol.runtime.params import (
     AddBindingParams,
     AwaitPromiseParams,
@@ -30,8 +32,6 @@ from pydoll.protocol.runtime.responses import (
     Response,
     RunScriptResponse,
 )
-from pydoll.protocol.runtime.methods import RuntimeMethod
-from pydoll.protocol.base import Command, Response
 
 
 class RuntimeCommands:

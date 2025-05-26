@@ -5,6 +5,8 @@ from pydoll.constants import (
     PermissionType,
     WindowState,
 )
+from pydoll.protocol.base import Command, Response
+from pydoll.protocol.browser.methods import BrowserMethod
 from pydoll.protocol.browser.params import (
     CancelDownloadParams,
     GetWindowForTargetParams,
@@ -18,8 +20,6 @@ from pydoll.protocol.browser.responses import (
     GetVersionResponse,
     GetWindowForTargetResponse,
 )
-from pydoll.protocol.browser.methods import BrowserMethod
-from pydoll.protocol.base import Command, Response
 
 
 class BrowserCommands:
@@ -107,18 +107,30 @@ class BrowserCommands:
         return Command(method=BrowserMethod.CRASH_GPU_PROCESS)
 
     @staticmethod
-    def set_download_path(path: str) -> Command[Response]:
+    def set_download_behavior(
+        behavior: DownloadBehavior,
+        download_path: Optional[str] = None,
+        browser_context_id: Optional[str] = None,
+        events_enabled: bool = True,
+    ) -> Command[Response]:
         """
-        Generates a command to set the download path for the browser.
+        Generates a command to set the download behavior for the browser.
 
         Args:
-            path (str): The path to set for downloads.
+            behavior (DownloadBehavior): The behavior to set for downloads.
+            download_path (Optional[str]): The path to set for downloads.
 
         Returns:
             Command[Response]: The CDP command that returns a basic success response
                 after setting the download path.
         """
-        params = SetDownloadBehaviorParams(behavior=DownloadBehavior.ALLOW, downloadPath=path)
+        params = SetDownloadBehaviorParams(behavior=behavior)
+        if download_path:
+            params['downloadPath'] = download_path
+        if browser_context_id:
+            params['browserContextId'] = browser_context_id
+        if events_enabled:
+            params['eventsEnabled'] = events_enabled
         return Command(method=BrowserMethod.SET_DOWNLOAD_BEHAVIOR, params=params)
 
     @staticmethod
@@ -133,14 +145,14 @@ class BrowserCommands:
         return Command(method=BrowserMethod.CLOSE)
 
     @staticmethod
-    def get_window_id_by_target(
+    def get_window_for_target(
         target_id: str,
     ) -> Command[GetWindowForTargetResponse]:
         """
-        Generates a command to get the ID of the current window.
+        Generates a command to get the window for a given target ID.
 
         Args:
-            target_id (str): The target_id to set for the window.
+            target_id (str): The target_id to get the window for.
 
         Returns:
             Command[GetWindowForTargetResponse]: The CDP command that returns window
