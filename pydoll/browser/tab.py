@@ -3,7 +3,18 @@ import logging
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeAlias,
+    Union,
+)
 
 import aiofiles
 
@@ -19,7 +30,14 @@ from pydoll.connection import ConnectionHandler
 from pydoll.constants import By, RequestStage, ResourceType, ScreenshotFormat
 from pydoll.elements.mixins import FindElementsMixin
 from pydoll.elements.web_element import WebElement
-from pydoll.exceptions import InvalidFileExtension, NoDialogPresent, PageLoadTimeout
+from pydoll.exceptions import (
+    IFrameNotFound,
+    InvalidFileExtension,
+    InvalidIFrame,
+    NoDialogPresent,
+    NotAnIFrame,
+    PageLoadTimeout,
+)
 from pydoll.protocol.base import Response
 from pydoll.protocol.network.types import Cookie, CookieParam
 from pydoll.protocol.page.events import PageEvent
@@ -28,7 +46,12 @@ from pydoll.protocol.runtime.responses import EvaluateResponse
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.utils import decode_base64_to_bytes
 
+if TYPE_CHECKING:
+    from pydoll.browser.chromium.base import Browser
+
 logger = logging.getLogger(__name__)
+
+IFrame: TypeAlias = 'Tab'
 
 
 class Tab(FindElementsMixin):  # noqa: PLR0904
@@ -57,7 +80,11 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
     """
 
     def __init__(
-        self, connection_port: int, target_id: str, browser_context_id: Optional[str] = None
+        self,
+        browser: 'Browser',
+        connection_port: int,
+        target_id: str,
+        browser_context_id: Optional[str] = None,
     ):
         """
         Initializes a new browser tab instance.
@@ -67,6 +94,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         and all commands are sent through a dedicated connection handler.
 
         Args:
+            browser: Browser instance that created this tab.
             connection_port: Port number for CDP WebSocket connection.
                 This should match the browser's --remote-debugging-port.
             target_id: CDP target identifier for this specific tab.
@@ -75,6 +103,8 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                 that this tab belongs to. Used for context-specific operations.
 
         """
+        self._browser = browser
+        self._connection_port = connection_port
         self._target_id = target_id
         self._connection_handler = ConnectionHandler(connection_port, self._target_id)
         self._page_events_enabled = False
@@ -511,6 +541,42 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             The Tab instance becomes invalid after calling this method.
         """
         return await self._execute_command(PageCommands.close())
+
+    async def get_frame(self, frame: WebElement) -> IFrame:
+        """
+        Gets a Tab object for interacting with an iframe element.
+
+        Creates a new Tab instance that targets the content document of the
+        specified iframe element. This allows automation to interact with
+        content inside iframes as if they were separate pages.
+
+        Args:
+            frame: The WebElement representing the iframe to interact with.
+                Must be an actual iframe element (<iframe> tag).
+
+        Returns:
+            IFrame: A new Tab instance configured to interact with the iframe
+                content. This Tab shares the same browser instance but has
+                a different target ID.
+
+        Raises:
+            NotAnIFrame: If the provided element is not an iframe.
+            InvalidIFrame: If the iframe does not have a valid src attribute.
+            IFrameNotFound: If the iframe's target cannot be found in the browser.
+        """
+        if not frame.tag_name == 'iframe':
+            raise NotAnIFrame
+
+        frame_url = frame.get_attribute('src')
+        if not frame_url:
+            raise InvalidIFrame('The iframe does not have a valid src attribute')
+
+        targets = await self._browser.get_targets()
+        iframe_target = next((target for target in targets if target['url'] == frame_url), None)
+        if not iframe_target:
+            raise IFrameNotFound('The target for the iframe was not found')
+
+        return Tab(self._browser, self._connection_port, iframe_target['targetId'])
 
     async def get_cookies(self) -> List[Cookie]:
         """

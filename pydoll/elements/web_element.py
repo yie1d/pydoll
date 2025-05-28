@@ -137,6 +137,16 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         return self._attributes.get('id')
 
     @property
+    def tag_name(self) -> Optional[str]:
+        """
+        Gets the HTML tag name of the element.
+
+        Returns:
+            str or None: The element's tag name if present, otherwise None.
+        """
+        return self._attributes.get('tag_name')
+
+    @property
     def is_enabled(self) -> bool:
         """
         Determines if the element is enabled for interaction.

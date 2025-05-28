@@ -160,7 +160,7 @@ class Browser(ABC):  # noqa: PLR0904
         await self._configure_proxy(proxy_config[0], proxy_config[1])
 
         valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
-        return Tab(self._connection_port, valid_tab_id)
+        return Tab(self, self._connection_port, valid_tab_id)
 
     async def stop(self):
         """
@@ -281,7 +281,7 @@ class Browser(ABC):  # noqa: PLR0904
             )
         )
         target_id = response['result']['targetId']
-        return Tab(self._connection_port, target_id, browser_context_id)
+        return Tab(self, self._connection_port, target_id, browser_context_id)
 
     async def get_targets(self) -> List[TargetInfo]:
         """
