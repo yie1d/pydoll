@@ -1104,7 +1104,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         """
         try:
             selector = custom_selector or (By.CLASS_NAME, 'cf-turnstile')
-            if element := await self.wait_element(
+            if element := await self.find_or_wait_element(
                 *selector, timeout=time_to_wait_captcha, raise_exc=False
             ):
                 # adjust the external div size to shadow root width (usually 300px)
