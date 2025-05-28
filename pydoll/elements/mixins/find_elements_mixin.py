@@ -1,5 +1,6 @@
 import asyncio
-from typing import Dict, TypeVar
+import re
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, TypeVar, Union
 
 from pydoll.commands import (
     DomCommands,
@@ -8,6 +9,16 @@ from pydoll.commands import (
 from pydoll.constants import By, Scripts
 from pydoll.exceptions import ElementNotFound, WaitElementTimeout
 from pydoll.protocol.base import Command
+from pydoll.protocol.dom.responses import DescribeNodeResponse
+from pydoll.protocol.dom.types import Node
+from pydoll.protocol.runtime.responses import (
+    CallFunctionOnResponse,
+    EvaluateResponse,
+    GetPropertiesResponse,
+)
+
+if TYPE_CHECKING:
+    from pydoll.elements.web_element import WebElement
 
 T = TypeVar('T')
 
@@ -53,50 +64,157 @@ class FindElementsMixin:
     4. Support for relative searches within a parent element's context
     """
 
-    async def wait_element(
+    async def find(
+        self,
+        id: Optional[str] = None,
+        class_name: Optional[str] = None,
+        name: Optional[str] = None,
+        tag_name: Optional[str] = None,
+        text: Optional[str] = None,
+        raise_exc: bool = True,
+        find_all: bool = False,
+        timeout: int = 0,
+        **attributes,
+    ):
+        """
+        Finds element(s) using a combination of common HTML attributes.
+
+        Provides a flexible way to locate elements using standard attributes
+        like id, class, name, tag, or text content. Multiple attributes can be
+        combined to create more specific selectors. Under the hood, this builds
+        an XPath expression when multiple attributes are specified.
+
+        Args:
+            id: Element ID attribute value to match.
+            class_name: CSS class name to match.
+            name: Element name attribute value to match.
+            tag_name: HTML tag name to match (e.g., "div", "input").
+            text: Text content to match within the element.
+            raise_exc: Whether to raise an exception if no elements are found.
+                Default is True.
+            find_all: If True, returns all matching elements; if False, returns
+                only the first match. Default is False.
+            timeout: Maximum seconds to wait for matching elements to appear.
+                Default is 0 (no waiting).
+            **attributes: Additional HTML attributes to match (e.g., href="example.com").
+
+        Returns:
+            WebElement or List[WebElement] or None: Found element(s) or None if
+            no elements are found and raise_exc is False.
+
+        Raises:
+            ValueError: If no search criteria are provided.
+            ElementNotFound: If no elements are found and raise_exc is True.
+            WaitElementTimeout: If timeout is specified and no elements appear
+                within that time period.
+        """
+        if not any([id, class_name, name, tag_name, text, *attributes.keys()]):
+            raise ValueError(
+                'At least one of the following arguments must be provided: id, class_name, name, tag_name, text'
+            )
+
+        by_map = {
+            'id': By.ID,
+            'class_name': By.CLASS_NAME,
+            'name': By.NAME,
+            'tag_name': By.TAG_NAME,
+            'xpath': By.XPATH,
+        }
+        by, value = self._get_by_and_value(
+            by_map, id, class_name, name, tag_name, text, **attributes
+        )
+        return await self.find_or_wait_element(
+            by, value, timeout=timeout, find_all=find_all, raise_exc=raise_exc
+        )
+
+    async def query(
+        self, expression: str, timeout: int = 0, find_all: bool = False, raise_exc: bool = True
+    ):
+        """
+        Finds element(s) using a raw CSS selector or XPath expression.
+
+        Provides direct access to find elements using CSS or XPath syntax without
+        having to explicitly specify the selector type. The selector type is
+        automatically determined based on the expression pattern.
+
+        Args:
+            expression: The selector expression to use. Can be CSS (e.g., "div.content"),
+                XPath (e.g., "//div[@class='content']"), ID (e.g., "#myId"), or
+                class name (e.g., ".myClass").
+            find_all: If True, returns all matching elements; if False, returns
+                only the first match. Default is False.
+            timeout: Maximum seconds to wait for matching elements to appear.
+                Default is 0 (no waiting).
+            raise_exc: Whether to raise an exception if no elements are found.
+                Default is True.
+
+        Returns:
+            WebElement or List[WebElement] or None: Found element(s) or None if
+            no elements are found and raise_exc is False.
+
+        Raises:
+            ElementNotFound: If no elements are found and raise_exc is True.
+            WaitElementTimeout: If timeout is specified and no elements appear
+                within that time period.
+        """
+        by = self._get_expression_type(expression)
+        return await self.find_or_wait_element(
+            by=by, value=expression, timeout=timeout, find_all=find_all, raise_exc=raise_exc
+        )
+
+    async def find_or_wait_element(
         self,
         by: By,
         value: str,
-        timeout: int = 10,
+        timeout: int = 0,
+        find_all: bool = False,
         raise_exc: bool = True,
     ):
         """
-        Waits for an element to be present in the DOM within a specified timeout.
+        Finds element(s) and optionally waits for them to appear in the DOM.
 
-        Repeatedly attempts to find the element using the provided selector,
-        with a short delay between attempts, until either:
-        - The element is found (returns the element)
-        - The timeout is exceeded (raises an exception or returns None)
+        Searches for elements matching the provided selector with flexible waiting
+        capability. If timeout is specified, repeatedly attempts to find the element(s)
+        with short delays between attempts until success or timeout.
 
-        This method is essential for handling dynamic content that may not be
-        immediately available after a page load or user interaction.
+        This method forms the core of the element finding system and is used by the
+        higher-level find() and query() methods.
 
         Args:
             by: The selector strategy to use (CSS_SELECTOR, XPATH, ID, etc.).
                 Constants are available in the By enum.
-            value: The selector value to locate the element (e.g., "div.content").
-            timeout: Maximum time in seconds to wait for the element to appear.
-                Default is 10 seconds.
-            raise_exc: Whether to raise a TimeoutError if the element is not found
-                within the timeout period. If False, returns None instead.
+            value: The selector value to locate the element(s) (e.g., "div.content").
+            timeout: Maximum time in seconds to wait for the element(s) to appear.
+                Default is 0 (no waiting, immediate result).
+            find_all: If True, returns all matching elements as a list;
+                if False, returns only the first matching element.
+                Default is False.
+            raise_exc: Whether to raise an exception if no elements are found.
+                If False, returns None (or empty list if find_all=True) instead.
                 Default is True.
 
         Returns:
-            WebElement or None: The found element as a WebElement instance,
-                or None if the element is not found and raise_exc is False.
+            Union[WebElement, List[WebElement], None]:
+                - When find_all=False: A WebElement instance or None if not found
+                  and raise_exc=False
+                - When find_all=True: A list of WebElement instances (possibly empty)
+                  or None if not found and raise_exc=False
 
         Raises:
-            WaitElementTimeout: If the element is not found within the timeout
-                period and raise_exc is True.
+            ElementNotFound: If no elements are found with timeout=0 and raise_exc=True
+            WaitElementTimeout: If elements aren't found within the specified timeout
+                and raise_exc=True
         """
+        find_method = self._find_element if not find_all else self._find_elements
         start_time = asyncio.get_event_loop().time()
+
+        if not timeout:
+            return await find_method(by, value, raise_exc=raise_exc)
+
         while True:
-            try:
-                element = await self.find_element(by, value, raise_exc=False)
-                if element:
-                    return element
-            except ElementNotFound:
-                pass
+            element = await find_method(by, value, raise_exc=False)
+            if element:
+                return element
 
             if asyncio.get_event_loop().time() - start_time > timeout:
                 if raise_exc:
@@ -105,9 +223,15 @@ class FindElementsMixin:
 
             await asyncio.sleep(0.5)
 
-    async def find_element(self, by: By, value: str, raise_exc: bool = True):
+    async def _find_element(
+        self, by: By, value: str, raise_exc: bool = True
+    ) -> Optional['WebElement']:
         """
         Finds the first element matching the specified selector.
+
+        Internal method that performs the actual element search operation.
+        Although primarily intended for internal use, this method can be called
+        directly when fine-grained control over the element search process is needed.
 
         Locates a single element in the DOM using the provided selector strategy
         and value. The search is performed either in the context of the entire
@@ -133,14 +257,16 @@ class FindElementsMixin:
         else:
             command = self._get_find_element_command(by, value)
 
-        response = await self._execute_command(command)
+        response_for_command: Union[
+            EvaluateResponse, CallFunctionOnResponse
+        ] = await self._execute_command(command)
 
-        if not response.get('result', {}).get('result', {}).get('objectId'):
+        if not response_for_command.get('result', {}).get('result', {}).get('objectId'):
             if raise_exc:
                 raise ElementNotFound()
             return None
 
-        object_id = response['result']['result']['objectId']
+        object_id = response_for_command['result']['result']['objectId']
         node_description = await self._describe_node(object_id=object_id)
         attributes = node_description.get('attributes', [])
 
@@ -149,9 +275,15 @@ class FindElementsMixin:
 
         return create_web_element(object_id, self._connection_handler, by, value, attributes)  # type: ignore
 
-    async def find_elements(self, by: By, value: str, raise_exc: bool = True):
+    async def _find_elements(
+        self, by: By, value: str, raise_exc: bool = True
+    ) -> List['WebElement']:
         """
         Finds all elements matching the specified selector.
+
+        Internal method that performs the actual multi-element search operation.
+        Although primarily intended for internal use, this method can be called
+        directly when fine-grained control over the element search process is needed.
 
         Locates multiple elements in the DOM using the provided selector strategy
         and value. The search is performed either in the context of the entire
@@ -178,15 +310,17 @@ class FindElementsMixin:
         else:
             command = self._get_find_elements_command(by, value)
 
-        response = await self._execute_command(command)
+        response_for_command: Union[
+            EvaluateResponse, CallFunctionOnResponse
+        ] = await self._execute_command(command)
 
-        if not response.get('result', {}).get('result', {}).get('objectId'):
+        if not response_for_command.get('result', {}).get('result', {}).get('objectId'):
             if raise_exc:
                 raise ElementNotFound()
             return []
 
-        object_id = response['result']['result']['objectId']
-        query_response = await self._execute_command(
+        object_id = response_for_command['result']['result']['objectId']
+        query_response: GetPropertiesResponse = await self._execute_command(
             RuntimeCommands.get_properties(object_id=object_id)
         )
         response = []
@@ -211,7 +345,89 @@ class FindElementsMixin:
             )
         return elements
 
-    async def _describe_node(self, object_id: str = '') -> Dict:
+    def _get_by_and_value(
+        self,
+        by_map: Dict[str, By],
+        id: Optional[str] = None,
+        class_name: Optional[str] = None,
+        name: Optional[str] = None,
+        tag_name: Optional[str] = None,
+        text: Optional[str] = None,
+        **attributes,
+    ) -> Tuple[By, str]:
+        """
+        Determines the appropriate selector strategy and value based on the provided arguments.
+
+        This method checks the provided arguments against the by_map dictionary
+        to determine the correct selector strategy and value.
+
+        Args:
+            by_map: A dictionary mapping selector types to their corresponding By enum values.
+            *args: Variable-length argument list containing selector values.
+
+        Returns:
+            tuple[By, str]: A tuple containing the appropriate selector strategy (By enum)
+                and the selector value.
+
+        Raises:
+            ValueError: If no valid selector strategy is found in the by_map.
+        """
+        simple_selectors = {
+            'id': id,
+            'class_name': class_name,
+            'name': name,
+            'tag_name': tag_name,
+            **attributes,
+        }
+        provided_selectors = {key: value for key, value in simple_selectors.items() if value}
+
+        if len(provided_selectors) == 1 and not text:
+            key, value = next(iter(provided_selectors.items()))
+            by = by_map[key]
+            return by, value
+
+        xpath = self._build_xpath(id, class_name, name, tag_name, text, **attributes)
+        return By.XPATH, xpath
+
+    @staticmethod
+    def _build_xpath(
+        id: Optional[str] = None,
+        class_name: Optional[str] = None,
+        name: Optional[str] = None,
+        tag_name: Optional[str] = None,
+        text: Optional[str] = None,
+        **attributes,
+    ) -> str:
+        xpath_conditions = []
+        base_xpath = f'//{tag_name}' if tag_name else '//*'
+        if id:
+            xpath_conditions.append(f'@id="{id}"')
+        if class_name:
+            xpath_conditions.append(
+                f'contains(concat(" ", normalize-space(@class), " "), " {class_name} ")'
+            )
+        if name:
+            xpath_conditions.append(f'@name="{name}"')
+        if text:
+            xpath_conditions.append(f'contains(text(), "{text}")')
+        for attribute, value in attributes.items():
+            xpath_conditions.append(f'@{attribute}="{value}"')
+
+        return f'{base_xpath}[{" and ".join(xpath_conditions)}]'
+
+    @staticmethod
+    def _get_expression_type(expression: str) -> By:
+        xpath_pattern = r'^(//|\.//|\.\/|/)'
+        if re.match(xpath_pattern, expression):
+            return By.XPATH
+        if expression.startswith('#'):
+            return By.ID
+        if expression.startswith('.') and not expression.startswith('./'):
+            return By.CLASS_NAME
+
+        return By.CSS_SELECTOR
+
+    async def _describe_node(self, object_id: str = '') -> Node:
         """
         Retrieves detailed information about a DOM node.
 
@@ -228,7 +444,9 @@ class FindElementsMixin:
             dict: A dictionary containing the node's complete description,
                 including attributes, node type, tag name, and other properties.
         """
-        response = await self._execute_command(DomCommands.describe_node(object_id=object_id))
+        response: DescribeNodeResponse = await self._execute_command(
+            DomCommands.describe_node(object_id=object_id)
+        )
         return response['result']['node']
 
     async def _execute_command(self, command: Command[T]) -> T:
@@ -249,7 +467,7 @@ class FindElementsMixin:
         """
         return await self._connection_handler.execute_command(command, timeout=60)  # type: ignore
 
-    def _get_find_element_command(self, by: By, value: str, object_id: str = '') -> Command:
+    def _get_find_element_command(self, by: By, value: str, object_id: str = ''):
         """
         Creates the appropriate CDP command for finding a single element.
 
@@ -284,13 +502,17 @@ class FindElementsMixin:
             )
         elif by == By.XPATH:
             command = self._get_find_element_by_xpath_command(value, object_id)
+        elif by == By.NAME:
+            command = self._get_find_element_by_xpath_command(
+                f'//*[@name="{escaped_value}"]', object_id
+            )
         else:
             command = RuntimeCommands.evaluate(
                 expression=Scripts.QUERY_SELECTOR.replace('{selector}', selector)
             )
         return command
 
-    def _get_find_elements_command(self, by: By, value: str, object_id: str = '') -> Command:
+    def _get_find_elements_command(self, by: By, value: str, object_id: str = ''):
         """
         Creates the appropriate CDP command for finding multiple elements.
 
@@ -331,7 +553,7 @@ class FindElementsMixin:
             )
         return command
 
-    def _get_find_element_by_xpath_command(self, xpath: str, object_id: str) -> Command:
+    def _get_find_element_by_xpath_command(self, xpath: str, object_id: str):
         """
         Creates a CDP command specifically for finding an element by XPath.
 
@@ -361,7 +583,7 @@ class FindElementsMixin:
             command = RuntimeCommands.evaluate(expression=script)
         return command
 
-    def _get_find_elements_by_xpath_command(self, xpath: str, object_id: str) -> Command:
+    def _get_find_elements_by_xpath_command(self, xpath: str, object_id: str):
         """
         Creates a CDP command specifically for finding multiple elements by XPath.
 
