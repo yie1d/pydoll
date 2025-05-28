@@ -2,7 +2,17 @@ import asyncio
 import json
 import logging
 from contextlib import suppress
-from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Optional, TypeVar, cast
+from typing import (
+    Any,
+    AsyncGenerator,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Dict,
+    Optional,
+    TypeVar,
+    cast,
+)
 
 import websockets
 from websockets.legacy.client import Connect, WebSocketClientProtocol
@@ -161,7 +171,7 @@ class ConnectionHandler:
     async def register_callback(
         self,
         event_name: str,
-        callback: Callable[[dict], Awaitable[None]],
+        callback: Callable[[Dict], Awaitable[None]],
         temporary: bool = False,
     ) -> int:
         """
@@ -342,7 +352,7 @@ class ConnectionHandler:
             await self._handle_event_message(message)
 
     @staticmethod
-    def _parse_message(raw_message: str) -> Optional[dict]:
+    def _parse_message(raw_message: str) -> Optional[Dict]:
         """
         Attempts to parse a raw message string into a JSON object.
 
@@ -361,7 +371,7 @@ class ConnectionHandler:
             return None
 
     @staticmethod
-    def _is_command_response(message: dict) -> bool:
+    def _is_command_response(message: Dict) -> bool:
         """
         Determines if a message is a response to a previously sent command.
 
@@ -376,7 +386,7 @@ class ConnectionHandler:
         """
         return 'id' in message and isinstance(message['id'], int)
 
-    async def _handle_command_message(self, message: dict):
+    async def _handle_command_message(self, message: Dict):
         """
         Processes command response messages.
 
@@ -389,7 +399,7 @@ class ConnectionHandler:
         logger.debug(f'Processing command response: {message.get("id")}')
         self._command_manager.resolve_command(message['id'], json.dumps(message))
 
-    async def _handle_event_message(self, message: dict):
+    async def _handle_event_message(self, message: Dict):
         """
         Processes event notification messages.
 

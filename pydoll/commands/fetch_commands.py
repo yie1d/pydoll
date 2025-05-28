@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydoll.constants import (
     AuthChallengeResponseValues,
@@ -200,7 +200,7 @@ class FetchCommands:
         request_id: str,
         response_code: int,
         response_headers: Optional[List[HeaderEntry]] = None,
-        body: Optional[dict] = None,
+        body: Optional[Dict] = None,
         response_phrase: Optional[str] = None,
     ) -> Command[Response]:
         """
@@ -214,7 +214,7 @@ class FetchCommands:
             response_code (int): The HTTP status code to return.
             response_headers (Optional[List[HeaderEntry]]): A list of response headers.
                 Defaults to None.
-            body (Optional[dict]): The body content of the response. Defaults to None.
+            body (Optional[Dict]): The body content of the response. Defaults to None.
             response_phrase (Optional[str]): The response phrase (e.g., 'OK',
                 'Not Found'). Defaults to None.
 

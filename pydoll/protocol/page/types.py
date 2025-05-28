@@ -1,6 +1,7 @@
 from typing import List, NotRequired, TypedDict
 
 from pydoll.constants import (
+    DialogType,
     OriginTrialStatus,
     OriginTrialTokenStatus,
     OriginTrialUsageRestriction,
@@ -8,7 +9,6 @@ from pydoll.constants import (
     PermissionsPolicyFeature,
     ResourceType,
     TransitionType,
-    DialogType,
 )
 
 

@@ -8,7 +8,7 @@ from pydoll import exceptions
 logger = logging.getLogger(__name__)
 
 
-def decode_image_to_bytes(image: str) -> bytes:
+def decode_base64_to_bytes(image: str) -> bytes:
     """
     Decodes a base64 image string to bytes.
 
@@ -18,7 +18,7 @@ def decode_image_to_bytes(image: str) -> bytes:
     Returns:
         bytes: The decoded image as bytes.
     """
-    return base64.b64decode(image)
+    return base64.b64decode(image.encode('utf-8'))
 
 
 async def get_browser_ws_address(port: int) -> str:

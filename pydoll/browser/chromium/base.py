@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from pydoll.browser.managers import (
     BrowserOptionsManager,
@@ -592,7 +592,7 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
     async def on(
-        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
+        self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False
     ) -> int:
         """
         Registers an event listener for CDP events.

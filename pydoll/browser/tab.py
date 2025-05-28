@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
-from typing import AsyncGenerator, Callable, List, Optional, Tuple, Union, Any
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 
@@ -22,11 +22,11 @@ from pydoll.elements.web_element import WebElement
 from pydoll.exceptions import InvalidFileExtension, NoDialogPresent, PageLoadTimeout
 from pydoll.protocol.base import Response
 from pydoll.protocol.network.types import Cookie, CookieParam
+from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.responses import CaptureScreenshotResponse, PrintToPDFResponse
 from pydoll.protocol.runtime.responses import EvaluateResponse
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.utils import decode_base64_to_bytes
-from pydoll.protocol.page.events import PageEvent
 
 logger = logging.getLogger(__name__)
 
@@ -910,7 +910,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         """
         captcha_processed = asyncio.Event()
 
-        async def bypass_cloudflare(_: dict):
+        async def bypass_cloudflare(_: Dict):
             try:
                 await self._bypass_cloudflare(
                     _,
@@ -936,9 +936,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             if not _before_page_events_enabled:
                 await self.disable_page_events()
 
-    async def on(
-        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
-    ):
+    async def on(self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False):
         """
         Registers an event listener for CDP events.
 
@@ -946,7 +944,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         executes the provided callback function whenever the event occurs.
         This allows reacting to browser events like page loads, network
         activity, DOM changes, and more.
-        
+
         The callback is automatically wrapped to run in a separate task,
         preventing it from blocking the main event loop. This means your
         callback can perform longer operations without affecting the tab's
@@ -1043,7 +1041,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             if element := await self.wait_element(
                 *selector, timeout=time_to_wait_captcha, raise_exc=False
             ):
-                # adjust the div size to shadow root size
+                # adjust the external div size to shadow root width (usually 300px)
                 await self.execute_script('argument.style="width: 300px"', element)
                 await asyncio.sleep(time_before_click)
                 await element.click()

@@ -87,6 +87,8 @@ class BrowserOptionsManager:
             BrowserOptionsManager._add_edge_arguments(options)
         elif isinstance(options, ChromeOptions):
             BrowserOptionsManager._add_chrome_arguments(options)
+        else:
+            raise InvalidOptionsObject()
 
     @staticmethod
     def _add_edge_arguments(options: Options):

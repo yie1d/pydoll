@@ -1,5 +1,5 @@
 import asyncio
-from typing import TypeVar
+from typing import Dict, TypeVar
 
 from pydoll.commands import (
     DomCommands,
@@ -211,7 +211,7 @@ class FindElementsMixin:
             )
         return elements
 
-    async def _describe_node(self, object_id: str = '') -> dict:
+    async def _describe_node(self, object_id: str = '') -> Dict:
         """
         Retrieves detailed information about a DOM node.
 
