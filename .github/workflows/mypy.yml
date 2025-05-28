@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install mypy
-          python -m pip install -e .
+          python -m pip install -e -y .
           python -m mypy --install-types pydoll
 
       - name: mypy
