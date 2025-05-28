@@ -388,7 +388,7 @@ class ConnectionHandler:
         Returns:
             bool: True if the message is a command response, False if it's an event.
         """
-        return 'id' in message and isinstance(message['id'], int)
+        return 'id' in message and isinstance(message.get('id'), int)
 
     async def _handle_command_message(self, message: Response):
         """
