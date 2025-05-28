@@ -11,6 +11,7 @@ from typing import (
     Dict,
     Optional,
     TypeVar,
+    Union,
     cast,
 )
 
@@ -22,7 +23,7 @@ from pydoll.exceptions import (
     CommandExecutionTimeout,
     WebSocketConnectionClosed,
 )
-from pydoll.protocol.base import Command
+from pydoll.protocol.base import Command, Event, Response
 from pydoll.utils import get_browser_ws_address
 
 logger = logging.getLogger(__name__)
@@ -318,7 +319,7 @@ class ConnectionHandler:
             logger.error(f'Unexpected error in event loop: {e}')
             raise
 
-    async def _incoming_messages(self) -> AsyncGenerator[str, None]:
+    async def _incoming_messages(self) -> AsyncGenerator[Union[str, bytes], None]:
         """
         Generator that yields raw messages from the WebSocket connection.
 
@@ -328,8 +329,9 @@ class ConnectionHandler:
         Yields:
             str: Raw message string received from the WebSocket.
         """
-        while not self._ws_connection.closed:
-            yield await self._ws_connection.recv()
+        ws = cast(WebSocketClientProtocol, self._ws_connection)
+        while not ws.closed:
+            yield await ws.recv()
 
     async def _process_single_message(self, raw_message: str):
         """
@@ -347,12 +349,14 @@ class ConnectionHandler:
             return
 
         if self._is_command_response(message):
+            message = cast(Response, message)
             await self._handle_command_message(message)
         else:
+            message = cast(Event, message)
             await self._handle_event_message(message)
 
     @staticmethod
-    def _parse_message(raw_message: str) -> Optional[Dict]:
+    def _parse_message(raw_message: str) -> Union[Event, Response, None]:
         """
         Attempts to parse a raw message string into a JSON object.
 
@@ -371,7 +375,7 @@ class ConnectionHandler:
             return None
 
     @staticmethod
-    def _is_command_response(message: Dict) -> bool:
+    def _is_command_response(message: Union[Event, Response]) -> bool:
         """
         Determines if a message is a response to a previously sent command.
 
@@ -386,7 +390,7 @@ class ConnectionHandler:
         """
         return 'id' in message and isinstance(message['id'], int)
 
-    async def _handle_command_message(self, message: Dict):
+    async def _handle_command_message(self, message: Response):
         """
         Processes command response messages.
 
@@ -399,7 +403,7 @@ class ConnectionHandler:
         logger.debug(f'Processing command response: {message.get("id")}')
         self._command_manager.resolve_command(message['id'], json.dumps(message))
 
-    async def _handle_event_message(self, message: Dict):
+    async def _handle_event_message(self, message: Event):
         """
         Processes event notification messages.
 
