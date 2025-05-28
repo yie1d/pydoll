@@ -398,6 +398,25 @@ class FindElementsMixin:
         text: Optional[str] = None,
         **attributes,
     ) -> str:
+        """
+        Builds an XPath expression from multiple attribute criteria.
+        
+        Constructs a complex XPath selector that combines multiple attribute conditions
+        using 'and' operators. This is used when searching by multiple attributes
+        simultaneously.
+        
+        Args:
+            id: Element ID attribute to match.
+            class_name: CSS class name to match (handles space-separated class lists correctly).
+            name: Element name attribute to match.
+            tag_name: HTML tag name to match. If not provided, matches any element (*).
+            text: Text content to match (using contains() for partial matching).
+            **attributes: Additional HTML attributes to match with exact equality.
+            
+        Returns:
+            str: A complete XPath expression that matches elements satisfying all the 
+                specified conditions.
+        """
         xpath_conditions = []
         base_xpath = f'//{tag_name}' if tag_name else '//*'
         if id:
@@ -417,6 +436,19 @@ class FindElementsMixin:
 
     @staticmethod
     def _get_expression_type(expression: str) -> By:
+        """
+        Automatically determines the selector type based on the expression syntax.
+        
+        Analyzes the provided expression to detect whether it's an XPath, CSS selector,
+        ID selector, or class selector based on common syntax patterns.
+        
+        Args:
+            expression: The selector expression to analyze.
+            
+        Returns:
+            By: The appropriate selector strategy enum value (By.XPATH, By.CSS_SELECTOR, 
+                By.ID, or By.CLASS_NAME).
+        """
         xpath_pattern = r'^(//|\.//|\.\/|/)'
         if re.match(xpath_pattern, expression):
             return By.XPATH
