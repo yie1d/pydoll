@@ -68,7 +68,8 @@ class StorageEvent(str, Enum):
             appropriate, win and additionalBidWin.
         bid (number): For bid or somethingBid event, if done locally and not on a server.
         bidCurrency (str): Currency of the bid.
-        uniqueAuctionId (InterestGroupAuctionId): For non-global events --- links to interestGroupAuctionEvent.
+        uniqueAuctionId (InterestGroupAuctionId): For non-global events --- links
+            to interestGroupAuctionEvent.
     """
 
     INTEREST_GROUP_AUCTION_EVENT_OCCURRED = 'Storage.interestGroupAuctionEventOccurred'
@@ -107,7 +108,8 @@ class StorageEvent(str, Enum):
     Args:
         accessTime (Network.TimeSinceEpoch): Time of the access.
         scope (SharedStorageAccessScope): Enum value indicating the access scope.
-        method (SharedStorageAccessMethod): Enum value indicating the Shared Storage API method invoked.
+        method (SharedStorageAccessMethod): Enum value indicating the Shared Storage API
+            method invoked.
         mainFrameId (Page.FrameId): DevTools Frame Token for the primary frame tree's root.
         ownerOrigin (str): Serialization of the origin owning the Shared Storage data.
         ownerSite (str): Serialization of the site owning the Shared Storage data.
@@ -126,7 +128,8 @@ class StorageEvent(str, Enum):
         finishedTime (Network.TimeSinceEpoch): Time that the operation finished.
         executionTime (int): Time, in microseconds, from start of shared storage JS API
             call until end of operation execution in the worklet.
-        method (SharedStorageAccessMethod): Enum value indicating the Shared Storage API method invoked.
+        method (SharedStorageAccessMethod): Enum value indicating the Shared Storage API
+            method invoked.
         operationId (str): ID of the operation call.
         workletTargetId (Target.TargetID): Hex representation of the DevTools token used
             as the TargetID for the associated shared storage worklet.

@@ -745,7 +745,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
         return None
 
-    async def print_to_pdf(
+    async def print_to_pdf(  # noqa: PLR0913, PLR0917
         self,
         path: str,
         landscape: bool = False,

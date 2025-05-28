@@ -18,7 +18,8 @@ class NetworkEvent(str, Enum):
         requestId (RequestId): Request identifier.
         timestamp (MonotonicTime): Timestamp.
         dataLength (int): Data chunk length.
-        encodedDataLength (int): Actual bytes received (might be less than dataLength for compressed encodings).
+        encodedDataLength (int): Actual bytes received (might be less than dataLength
+            for compressed encodings).
         data (str): Data that was received. (Encoded as a base64 string when passed over JSON)
     """
 
@@ -78,13 +79,14 @@ class NetworkEvent(str, Enum):
         timestamp (MonotonicTime): Timestamp.
         wallTime (TimeSinceEpoch): Timestamp.
         initiator (Initiator): Request initiator.
-        redirectHasExtraInfo (bool): In the case that redirectResponse is populated, this flag indicates whether
-            requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be or were emitted
-            for the request which was just redirected.
+        redirectHasExtraInfo (bool): In the case that redirectResponse is populated, this flag
+            indicates whether requestWillBeSentExtraInfo and responseReceivedExtraInfo events
+            will be or were emitted for the request which was just redirected.
         redirectResponse (Response): Redirect response data.
         type (ResourceType): Type of this resource.
         frameId (Page.FrameId): Frame identifier.
-        hasUserGesture (bool): Whether the request is initiated by a user gesture. Defaults to false.
+        hasUserGesture (bool): Whether the request is initiated by a user gesture.
+            Defaults to false.
     """
 
     RESPONSE_RECEIVED = 'Network.responseReceived'
@@ -97,8 +99,8 @@ class NetworkEvent(str, Enum):
         timestamp (MonotonicTime): Timestamp.
         type (ResourceType): Resource type.
         response (Response): Response data.
-        hasExtraInfo (bool): Indicates whether requestWillBeSentExtraInfo and responseReceivedExtraInfo
-            events will be or were emitted for this request.
+        hasExtraInfo (bool): Indicates whether requestWillBeSentExtraInfo and
+            responseReceivedExtraInfo events will be or were emitted for this request.
         frameId (Page.FrameId): Frame identifier.
     """
 
@@ -337,7 +339,7 @@ class NetworkEvent(str, Enum):
     REPORTING_API_ENDPOINTS_CHANGED_FOR_ORIGIN = 'Network.reportingApiEndpointsChangedForOrigin'
     """
     Fired when Reporting API endpoints change for an origin.
-    
+
     Args:
         origin (str): Origin of the document(s) which configured the endpoints.
         endpoints (array[ReportingApiEndpoint]): The endpoints configured for the origin.
@@ -346,7 +348,7 @@ class NetworkEvent(str, Enum):
     REPORTING_API_REPORT_ADDED = 'Network.reportingApiReportAdded'
     """
     Is sent whenever a new report is added. And after 'enableReportingApi' for all existing reports.
-    
+
     Args:
         report (ReportingApiReport): The report that was added.
     """
@@ -361,27 +363,29 @@ class NetworkEvent(str, Enum):
 
     REQUEST_WILL_BE_SENT_EXTRA_INFO = 'Network.requestWillBeSentExtraInfo'
     """
-    Fired when additional information about a requestWillBeSent event is available from the network stack.
-    Not every requestWillBeSent event will have an additional requestWillBeSentExtraInfo fired for it,
-    and there is no guarantee whether requestWillBeSent or requestWillBeSentExtraInfo will be fired first
-    for the same request.
-    
+    Fired when additional information about a requestWillBeSent event is available from the network
+    stack.
+    Not every requestWillBeSent event will have an additional requestWillBeSentExtraInfo fired for
+    it, and there is no guarantee whether requestWillBeSent or requestWillBeSentExtraInfo will be
+    fired first for the same request.
+
     Args:
-        requestId (RequestId): Request identifier. Used to match this information to an existing requestWillBeSent event.
-        associatedCookies (array[AssociatedCookie]): A list of cookies potentially associated to the requested URL.
-            This includes both cookies sent with the request and the ones not sent; the latter are distinguished by
-            having blockedReasons field set.
+        requestId (RequestId): Request identifier. Used to match this information to an existing
+            requestWillBeSent event.
+        associatedCookies (array[AssociatedCookie]): A list of cookies potentially associated to
+            the requested URL. This includes both cookies sent with the request and the ones
+            not sent; the latter are distinguished by having blockedReasons field set.
         headers (Headers): Raw request headers as they will be sent over the wire.
         connectTiming (ConnectTiming): Connection timing information for the request.
         clientSecurityState (ClientSecurityState): The client security state set for the request.
-        siteHasCookieInOtherPartition (bool): Whether the site has partitioned cookies stored in a partition
-            different than the current one.
+        siteHasCookieInOtherPartition (bool): Whether the site has partitioned cookies stored
+            in a partition different than the current one.
     """
 
     RESOURCE_CHANGED_PRIORITY = 'Network.resourceChangedPriority'
     """
     Fired when resource loading priority is changed.
-    
+
     Args:
         requestId (RequestId): Request identifier.
         newPriority (ResourcePriority): New priority.
@@ -393,47 +397,57 @@ class NetworkEvent(str, Enum):
     Fired when 103 Early Hints headers is received in addition to the common response.
     Not every responseReceived event will have an responseReceivedEarlyHints fired.
     Only one responseReceivedEarlyHints may be fired for eached responseReceived event.
-    
+
     Args:
-        requestId (RequestId): Request identifier. Used to match this information to another responseReceived event.
-        headers (Headers): Raw response headers as they were received over the wire. Duplicate headers in the response
-            are represented as a single key with their values concatentated using \\n as the separator.
-            See also headersText that contains verbatim text for HTTP/1.*.
+        requestId (RequestId): Request identifier. Used to match this information to another
+            responseReceived event.
+        headers (Headers): Raw response headers as they were received over the wire. Duplicate
+            headers in the response are represented as a single key with their values
+            concatentated using \\n as the separator. See also headersText that contains
+            verbatim text for HTTP/1.*.
     """
 
     RESPONSE_RECEIVED_EXTRA_INFO = 'Network.responseReceivedExtraInfo'
     """
-    Fired when additional information about a responseReceived event is available from the network stack.
+    Fired when additional information about a responseReceived event is available from the
+    network stack.
     Not every responseReceived event will have an additional responseReceivedExtraInfo for it,
     and responseReceivedExtraInfo may be fired before or after responseReceived.
-    
+
     Args:
-        requestId (RequestId): Request identifier. Used to match this information to another responseReceived event.
-        blockedCookies (array[BlockedSetCookieWithReason]): A list of cookies which were not stored from the
-            response along with the corresponding reasons for blocking. The cookies here may not be valid
-            due to syntax errors, which are represented by the invalid cookie line string instead of a proper cookie.
-        headers (Headers): Raw response headers as they were received over the wire. Duplicate headers in the
-            response are represented as a single key with their values concatentated using \\n as the separator.
-            See also headersText that contains verbatim text for HTTP/1.*.
-        resourceIPAddressSpace (IPAddressSpace): The IP address space of the resource. The address space can only
-            be determined once the transport established the connection, so we can't send it in requestWillBeSentExtraInfo.
-        statusCode (int): The status code of the response. This is useful in cases the request failed and no
-            responseReceived event is triggered, which is the case for, e.g., CORS errors. This is also the
-            correct status code for cached requests, where the status in responseReceived is a 200 and this will be 304.
-        headersText (str): Raw response header text as it was received over the wire. The raw text may not always
-            be available, such as in the case of HTTP/2 or QUIC.
-        cookiePartitionKey (CookiePartitionKey): The cookie partition key that will be used to store partitioned
-            cookies set in this response. Only sent when partitioned cookies are enabled.
-        cookiePartitionKeyOpaque (bool): True if partitioned cookies are enabled, but the partition key is not
-            serializable to string.
-        exemptedCookies (array[ExemptedSetCookieWithReason]): A list of cookies which should have been blocked
-            by 3PCD but are exempted and stored from the response with the corresponding reason.
+        requestId (RequestId): Request identifier. Used to match this information to another
+            responseReceived event.
+        blockedCookies (array[BlockedSetCookieWithReason]): A list of cookies which were
+            not stored from the response along with the corresponding reasons for blocking.
+            The cookies here may not be valid due to syntax errors, which are represented by
+            the invalid cookie line string instead of a proper cookie.
+        headers (Headers): Raw response headers as they were received over the wire. Duplicate
+            headers in the response are represented as a single key with their values concatentated
+            using \\n as the separator. See also headersText that contains verbatim
+            text for HTTP/1.*.
+        resourceIPAddressSpace (IPAddressSpace): The IP address space of the resource. The address
+            space can only be determined once the transport established the connection, so we
+            can't send it in requestWillBeSentExtraInfo.
+        statusCode (int): The status code of the response. This is useful in cases the request
+            failed and no responseReceived event is triggered, which is the case for, e.g.,
+            CORS errors. This is also the correct status code for cached requests, where the
+            status in responseReceived is a 200 and this will be 304.
+        headersText (str): Raw response header text as it was received over the wire. The raw text
+            may not always be available, such as in the case of HTTP/2 or QUIC.
+        cookiePartitionKey (CookiePartitionKey): The cookie partition key that will be used to
+            store partitioned cookies set in this response. Only sent when partitioned
+            cookies are enabled.
+        cookiePartitionKeyOpaque (bool): True if partitioned cookies are enabled, but the
+            partition key is not serializable to string.
+        exemptedCookies (array[ExemptedSetCookieWithReason]): A list of cookies which should have
+            been blocked by 3PCD but are exempted and stored from the response with the
+            corresponding reason.
     """
 
     SIGNED_EXCHANGE_RECEIVED = 'Network.signedExchangeReceived'
     """
     Fired when a signed exchange was received over the network.
-    
+
     Args:
         requestId (RequestId): Request identifier.
         info (SignedExchangeInfo): Information about the signed exchange response.
@@ -442,7 +456,7 @@ class NetworkEvent(str, Enum):
     SUBRESOURCE_WEB_BUNDLE_INNER_RESPONSE_ERROR = 'Network.subresourceWebBundleInnerResponseError'
     """
     Fired when request for resources within a .wbn file failed.
-    
+
     Args:
         innerRequestId (RequestId): Request identifier of the subresource request.
         innerRequestURL (str): URL of the subresource resource.
@@ -456,7 +470,7 @@ class NetworkEvent(str, Enum):
     """
     Fired when handling requests for resources within a .wbn file.
     Note: this will only be fired for resources that are requested by the webpage.
-    
+
     Args:
         innerRequestId (RequestId): Request identifier of the subresource request.
         innerRequestURL (str): URL of the subresource resource.
@@ -499,5 +513,6 @@ class NetworkEvent(str, Enum):
         requestId (RequestId): Request identifier.
         topLevelOrigin (str): Top level origin. The context in which the operation was attempted.
         issuerOrigin (str): Origin of the issuer in case of a "Issuance" or "Redemption" operation.
-        issuedTokenCount (int): The number of obtained Trust Tokens on a successful "Issuance" operation.
+        issuedTokenCount (int): The number of obtained Trust Tokens on a successful
+            "Issuance" operation.
     """

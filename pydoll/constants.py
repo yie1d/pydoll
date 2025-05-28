@@ -8,6 +8,7 @@ class By(str, Enum):
     CLASS_NAME = 'class_name'
     ID = 'id'
     TAG_NAME = 'tag_name'
+    NAME = 'name'
 
 
 class Scripts:

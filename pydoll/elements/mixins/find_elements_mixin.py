@@ -64,7 +64,7 @@ class FindElementsMixin:
     4. Support for relative searches within a parent element's context
     """
 
-    async def find(
+    async def find(  # noqa: PLR0913, PLR0917
         self,
         id: Optional[str] = None,
         class_name: Optional[str] = None,
@@ -110,7 +110,8 @@ class FindElementsMixin:
         """
         if not any([id, class_name, name, tag_name, text, *attributes.keys()]):
             raise ValueError(
-                'At least one of the following arguments must be provided: id, class_name, name, tag_name, text'
+                'At least one of the following arguments must be provided: id, '
+                'class_name, name, tag_name, text'
             )
 
         by_map = {
@@ -345,7 +346,7 @@ class FindElementsMixin:
             )
         return elements
 
-    def _get_by_and_value(
+    def _get_by_and_value(  # noqa: PLR0913, PLR0917
         self,
         by_map: Dict[str, By],
         id: Optional[str] = None,
@@ -400,11 +401,11 @@ class FindElementsMixin:
     ) -> str:
         """
         Builds an XPath expression from multiple attribute criteria.
-        
+
         Constructs a complex XPath selector that combines multiple attribute conditions
         using 'and' operators. This is used when searching by multiple attributes
         simultaneously.
-        
+
         Args:
             id: Element ID attribute to match.
             class_name: CSS class name to match (handles space-separated class lists correctly).
@@ -412,9 +413,9 @@ class FindElementsMixin:
             tag_name: HTML tag name to match. If not provided, matches any element (*).
             text: Text content to match (using contains() for partial matching).
             **attributes: Additional HTML attributes to match with exact equality.
-            
+
         Returns:
-            str: A complete XPath expression that matches elements satisfying all the 
+            str: A complete XPath expression that matches elements satisfying all the
                 specified conditions.
         """
         xpath_conditions = []
@@ -438,15 +439,15 @@ class FindElementsMixin:
     def _get_expression_type(expression: str) -> By:
         """
         Automatically determines the selector type based on the expression syntax.
-        
+
         Analyzes the provided expression to detect whether it's an XPath, CSS selector,
         ID selector, or class selector based on common syntax patterns.
-        
+
         Args:
             expression: The selector expression to analyze.
-            
+
         Returns:
-            By: The appropriate selector strategy enum value (By.XPATH, By.CSS_SELECTOR, 
+            By: The appropriate selector strategy enum value (By.XPATH, By.CSS_SELECTOR,
                 By.ID, or By.CLASS_NAME).
         """
         xpath_pattern = r'^(//|\.//|\.\/|/)'
@@ -645,7 +646,8 @@ class FindElementsMixin:
             command = RuntimeCommands.evaluate(expression=script)
         return command
 
-    def _ensure_relative_xpath(self, xpath: str) -> str:
+    @staticmethod
+    def _ensure_relative_xpath(xpath: str) -> str:
         """
         Ensures an XPath expression is properly formatted for relative searches.
 

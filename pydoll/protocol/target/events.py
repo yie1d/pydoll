@@ -12,7 +12,8 @@ class TargetEvent(str, Enum):
 
     RECEIVED_MESSAGE_FROM_TARGET = 'Target.receivedMessageFromTarget'
     """
-    Notifies about a new protocol message received from the session (as reported in attachedToTarget event).
+    Notifies about a new protocol message received from the session
+    (as reported in attachedToTarget event).
 
     Args:
         sessionId (SessionID): Identifier of a session which sends a message.

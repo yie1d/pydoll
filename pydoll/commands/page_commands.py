@@ -74,7 +74,7 @@ from pydoll.protocol.page.responses import (
 )
 
 
-class PageCommands:
+class PageCommands:  # noqa: PLR0904
     """
     This class encapsulates the page commands of the Chrome DevTools Protocol (CDP).
 
@@ -105,10 +105,12 @@ class PageCommands:
             source (str): Script source to be evaluated when a new document is created.
             world_name (Optional[str]): If specified, creates an isolated world with the given name.
             include_command_line_api (Optional[bool]): Whether to include command line API.
-            run_immediately (Optional[bool]): Whether to run the script immediately on existing contexts.
+            run_immediately (Optional[bool]): Whether to run the script immediately on
+                existing contexts.
 
         Returns:
-            Command[AddScriptToEvaluateOnNewDocumentResponse]: Command object with the identifier of the added script.
+            Command[AddScriptToEvaluateOnNewDocumentResponse]: Command object with the identifier
+                of the added script.
         """
         params = AddScriptToEvaluateOnNewDocumentParams(source=source)
         if world_name:
@@ -128,7 +130,7 @@ class PageCommands:
         return Command(method=PageMethod.BRING_TO_FRONT)
 
     @staticmethod
-    def capture_screenshot(  # noqa: PLR0913
+    def capture_screenshot(  # noqa: PLR0913, PLR0917
         format: Optional[ScreenshotFormat] = None,
         quality: Optional[int] = None,
         clip: Optional[Viewport] = None,
@@ -219,7 +221,8 @@ class PageCommands:
         Creates a command to enable page domain notifications.
 
         Args:
-            enable_file_chooser_opened_event (Optional[bool]): Whether to emit Page.fileChooserOpened event.
+            enable_file_chooser_opened_event (Optional[bool]): Whether to emit
+                Page.fileChooserOpened event.
 
         Returns:
             Command[Response]: Command object to enable the Page domain.

@@ -78,7 +78,8 @@ class RuntimeCommands:
 
         Args:
             promise_object_id (str): ID of the promise to await.
-            return_by_value (Optional[bool]): Whether to return the result by value instead of reference.
+            return_by_value (Optional[bool]): Whether to return the result by value instead
+                of reference.
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
 
         Returns:
@@ -93,7 +94,7 @@ class RuntimeCommands:
         return Command(method=RuntimeMethod.AWAIT_PROMISE, params=params)
 
     @staticmethod
-    def call_function_on(
+    def call_function_on(  # noqa: PLR0913, PLR0917
         function_declaration: str,
         object_id: Optional[str] = None,
         arguments: Optional[List[CallArgument]] = None,
@@ -116,15 +117,19 @@ class RuntimeCommands:
             object_id (Optional[str]): ID of the object to call the function on.
             arguments (Optional[List[CallArgument]]): Arguments to pass to the function.
             silent (Optional[bool]): Whether to silence exceptions.
-            return_by_value (Optional[bool]): Whether to return the result by value instead of reference.
+            return_by_value (Optional[bool]): Whether to return the result by value instead
+                of reference.
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
             user_gesture (Optional[bool]): Whether to treat the call as initiated by user gesture.
             await_promise (Optional[bool]): Whether to await promise result.
-            execution_context_id (Optional[str]): ID of the execution context to call the function in.
+            execution_context_id (Optional[str]): ID of the execution context to call the
+                function in.
             object_group (Optional[str]): Symbolic group name for the result.
-            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be ruled out.
+            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
+                ruled out.
             unique_context_id (Optional[str]): Unique context ID for the function call.
-            serialization_options (Optional[SerializationOptions]): Serialization options for the result.
+            serialization_options (Optional[SerializationOptions]): Serialization options for
+                the result.
 
         Returns:
             Command[CallFunctionOnResponse]: Command object to call a function on an object.
@@ -171,7 +176,8 @@ class RuntimeCommands:
             expression (str): JavaScript expression to compile.
             source_url (Optional[str]): URL of the source file for the script.
             persist_script (Optional[bool]): Whether to persist the compiled script.
-            execution_context_id (Optional[str]): ID of the execution context to compile the script in.
+            execution_context_id (Optional[str]): ID of the execution context to compile
+                the script in.
 
         Returns:
             Command[CompileScriptResponse]: Command object to compile a script.
@@ -207,7 +213,7 @@ class RuntimeCommands:
         return Command(method=RuntimeMethod.ENABLE)
 
     @staticmethod
-    def evaluate(
+    def evaluate(  # noqa: PLR0913, PLR0917, PLR0912
         expression: str,
         object_group: Optional[str] = None,
         include_command_line_api: Optional[bool] = None,
@@ -234,17 +240,20 @@ class RuntimeCommands:
             include_command_line_api (Optional[bool]): Whether to include command line API.
             silent (Optional[bool]): Whether to silence exceptions.
             context_id (Optional[str]): ID of the execution context to evaluate in.
-            return_by_value (Optional[bool]): Whether to return the result by value instead of reference.
+            return_by_value (Optional[bool]): Whether to return the result by value instead
+                of reference.
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
             user_gesture (Optional[bool]): Whether to treat evaluation as initiated by user gesture.
             await_promise (Optional[bool]): Whether to await promise result.
-            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be ruled out.
+            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
+                ruled out.
             timeout (Optional[float]): Timeout in milliseconds.
             disable_breaks (Optional[bool]): Whether to disable breakpoints during evaluation.
             repl_mode (Optional[bool]): Whether to execute in REPL mode.
             allow_unsafe_eval_blocked_by_csp (Optional[bool]): Allow unsafe evaluation.
             unique_context_id (Optional[str]): Unique context ID for evaluation.
-            serialization_options (Optional[SerializationOptions]): Serialization options for the result.
+            serialization_options (Optional[SerializationOptions]): Serialization
+                for the result.
 
         Returns:
             Command[EvaluateResponse]: Command object to evaluate JavaScript.
@@ -299,7 +308,8 @@ class RuntimeCommands:
             own_properties (Optional[bool]): Whether to return only own properties.
             accessor_properties_only (Optional[bool]): Whether to return only accessor properties.
             generate_preview (Optional[bool]): Whether to generate previews for property values.
-            non_indexed_properties_only (Optional[bool]): Whether to return only non-indexed properties.
+            non_indexed_properties_only (Optional[bool]): Whether to return only non-indexed
+                properties.
 
         Returns:
             Command[GetPropertiesResponse]: Command object to get object properties.
@@ -324,10 +334,12 @@ class RuntimeCommands:
         Creates a command to retrieve names of variables from global lexical scope.
 
         Args:
-            execution_context_id (Optional[str]): ID of the execution context to get scope names from.
+            execution_context_id (Optional[str]): ID of the execution context to get scope
+                names from.
 
         Returns:
-            Command[GlobalLexicalScopeNamesResponse]: Command object to get global lexical scope names.
+            Command[GlobalLexicalScopeNamesResponse]: Command object to get global lexical
+                scope names.
         """
         params = GlobalLexicalScopeNamesParams()
         if execution_context_id:
@@ -406,7 +418,7 @@ class RuntimeCommands:
         return Command(method=RuntimeMethod.REMOVE_BINDING, params=params)
 
     @staticmethod
-    def run_script(
+    def run_script(  # noqa: PLR0913, PLR0917
         script_id: str,
         execution_context_id: Optional[str] = None,
         object_group: Optional[str] = None,
@@ -425,7 +437,8 @@ class RuntimeCommands:
             object_group (Optional[str]): Symbolic group name for the result.
             silent (Optional[bool]): Whether to silence exceptions.
             include_command_line_api (Optional[bool]): Whether to include command line API.
-            return_by_value (Optional[bool]): Whether to return the result by value instead of reference.
+            return_by_value (Optional[bool]): Whether to return the result by value instead
+                of reference.
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
             await_promise (Optional[bool]): Whether to await promise result.
 

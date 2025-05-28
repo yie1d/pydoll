@@ -72,7 +72,8 @@ class PageEvent(str, Enum):
 
     JAVASCRIPT_DIALOG_CLOSED = 'Page.javascriptDialogClosed'
     """
-    Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) has been closed.
+    Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload)
+    has been closed.
 
     Args:
         frameId (FrameId): Frame id.
@@ -82,7 +83,8 @@ class PageEvent(str, Enum):
 
     JAVASCRIPT_DIALOG_OPENING = 'Page.javascriptDialogOpening'
     """
-    Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
+    Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload)
+    is about to open.
 
     Args:
         url (str): Frame url.
@@ -98,11 +100,13 @@ class PageEvent(str, Enum):
 
     LIFECYCLE_EVENT = 'Page.lifecycleEvent'
     """
-    Fired for lifecycle events (navigation, load, paint, etc) in the current target (including local frames).
+    Fired for lifecycle events (navigation, load, paint, etc) in the current target
+    (including local frames).
 
     Args:
         frameId (FrameId): Id of the frame.
-        loaderId (Network.LoaderId): Loader identifier. Empty string if the request is fetched from worker.
+        loaderId (Network.LoaderId): Loader identifier. Empty string if the request is
+            fetched from worker.
         name (str): Lifecycle event name.
         timestamp (Network.MonotonicTime): Timestamp when the event occurred.
     """
@@ -117,7 +121,8 @@ class PageEvent(str, Enum):
 
     WINDOW_OPEN = 'Page.windowOpen'
     """
-    Fired when a new window is going to be opened, via window.open(), link click, form submission, etc.
+    Fired when a new window is going to be opened, via window.open(), link click,
+    form submission, etc.
 
     Args:
         url (str): The URL for the new window.
@@ -215,7 +220,8 @@ class PageEvent(str, Enum):
 
     FRAME_SUBTREE_WILL_BE_DETACHED = 'Page.frameSubtreeWillBeDetached'
     """
-    Fired before frame subtree is detached. Emitted before any frame of the subtree is actually detached.
+    Fired before frame subtree is detached. Emitted before any frame of the subtree
+    is actually detached.
 
     Args:
         frameId (FrameId): Id of the frame that is the root of the subtree that will be detached.

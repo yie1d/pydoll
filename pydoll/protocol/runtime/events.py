@@ -73,7 +73,8 @@ class RuntimeEvent(str, Enum):
 
     INSPECT_REQUESTED = 'Runtime.inspectRequested'
     """
-    Issued when object should be inspected (for example, as a result of inspect() command line API call).
+    Issued when object should be inspected
+    (for example, as a result of inspect() command line API call).
 
     Args:
         object (RemoteObject): Object to inspect.

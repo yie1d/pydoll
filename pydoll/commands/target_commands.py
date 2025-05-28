@@ -140,7 +140,7 @@ class TargetCommands:
         return Command(method=TargetMethod.CREATE_BROWSER_CONTEXT, params=params)
 
     @staticmethod
-    def create_target(
+    def create_target(  # noqa: PLR0913, PLR0917
         url: str,
         left: Optional[int] = None,
         top: Optional[int] = None,
@@ -185,7 +185,8 @@ class TargetCommands:
                    tab is limited to the life-time of the session.
 
         Returns:
-            Command: The CDP command to create a target, which will return the ID of the created target.
+            Command: The CDP command to create a target, which will return the ID
+                of the created target.
         """
         params = CreateTargetParams(url=url)
         if left:

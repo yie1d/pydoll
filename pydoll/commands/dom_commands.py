@@ -83,14 +83,14 @@ from pydoll.protocol.dom.responses import (
 )
 
 
-class DomCommands:
+class DomCommands:  # noqa
     """
     Implementation of Chrome DevTools Protocol for the DOM domain.
 
-    This class provides commands for interacting with the Document Object Model (DOM) in the browser,
-    enabling access and manipulation of the element structure in a web page.
-    The DOM domain in Chrome DevTools Protocol exposes operations for reading and writing to the DOM,
-    which is fundamental for browser automation, testing, and debugging.
+    This class provides commands for interacting with the Document Object Model (DOM) in the
+    browser, enabling access and manipulation of the element structure in a web page.
+    The DOM domain in Chrome DevTools Protocol exposes operations for reading and writing to the
+    DOM, which is fundamental for browser automation, testing, and debugging.
 
     Each DOM element is represented by a mirror object with a unique ID. This ID can be used
     to gather additional information about the node, resolve it into JavaScript object wrappers,

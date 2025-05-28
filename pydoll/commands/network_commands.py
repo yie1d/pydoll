@@ -57,7 +57,7 @@ from pydoll.protocol.network.types import (
 )
 
 
-class NetworkCommands:
+class NetworkCommands:  # noqa: PLR0904
     """
     Implementation of Chrome DevTools Protocol for the Network domain.
 
@@ -802,7 +802,7 @@ class NetworkCommands:
         )
 
     @staticmethod
-    def emulate_network_conditions(
+    def emulate_network_conditions(  # noqa: PLR0913, PLR0917
         offline: bool,
         latency: float,
         download_throughput: float,

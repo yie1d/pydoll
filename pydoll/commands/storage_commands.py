@@ -57,7 +57,7 @@ from pydoll.protocol.storage.responses import (
 )
 
 
-class StorageCommands:
+class StorageCommands:  # noqa: PLR0904
     """
     A class for interacting with browser storage using Chrome DevTools Protocol (CDP).
 
@@ -139,7 +139,8 @@ class StorageCommands:
                                with multiple contexts (e.g., multiple windows or tabs).
 
         Returns:
-            Command: The CDP command to get all cookies, which will return an array of Cookie objects.
+            Command: The CDP command to get all cookies, which will return an array of Cookie
+                objects.
         """
         params = GetCookiesParams()
         if browser_context_id:
@@ -318,7 +319,8 @@ class StorageCommands:
         Generates a command to unregister a storage key from receiving notifications
         about changes to its Cache Storage.
 
-        Use this method to stop monitoring Cache Storage after using track_cache_storage_for_storage_key.
+        Use this method to stop monitoring Cache Storage after using
+        track_cache_storage_for_storage_key.
 
         Args:
             storage_key: The storage key to stop monitoring.
@@ -423,7 +425,8 @@ class StorageCommands:
         greater granularity and expiration control.
 
         Args:
-            bucket: A StorageBucket object containing the storageKey and name of the bucket to delete.
+            bucket: A StorageBucket object containing the storageKey and name of the bucket
+                to delete.
 
         Returns:
             Command: The CDP command to delete the Storage Bucket.
