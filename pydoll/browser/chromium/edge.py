@@ -2,10 +2,10 @@ import platform
 from typing import Optional
 
 from pydoll.browser.chromium.base import Browser
-from pydoll.browser.managers import BrowserOptionsManager
+from pydoll.browser.managers import ChromiumOptionsManager
 from pydoll.browser.options import Options
-from pydoll.constants import BrowserType
 from pydoll.exceptions import UnsupportedOS
+from pydoll.utils import validate_browser_paths
 
 
 class Edge(Browser):
@@ -30,7 +30,8 @@ class Edge(Browser):
             connection_port (int): The port to connect to the browser.
                 Defaults to a random port between 9223 and 9322.
         """
-        super().__init__(options, connection_port, BrowserType.EDGE)
+        options_manager = ChromiumOptionsManager(options)
+        super().__init__(options_manager, connection_port)
 
     @staticmethod
     def _get_default_binary_location():
@@ -73,4 +74,4 @@ class Edge(Browser):
         if not browser_path:
             raise UnsupportedOS()
 
-        return BrowserOptionsManager.validate_browser_paths(browser_path)
+        return validate_browser_paths(browser_path)
