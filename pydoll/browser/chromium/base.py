@@ -2,15 +2,14 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar
 
+from pydoll.browser.interfaces import BrowserOptionsManager
 from pydoll.browser.managers import (
-    BrowserOptionsManager,
     BrowserProcessManager,
     ProxyManager,
     TempDirectoryManager,
 )
-from pydoll.browser.options import Options
 from pydoll.browser.tab import Tab
 from pydoll.commands import (
     BrowserCommands,
@@ -22,7 +21,6 @@ from pydoll.commands import (
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
     AuthChallengeResponseValues,
-    BrowserType,
     DownloadBehavior,
     PermissionType,
 )
@@ -34,6 +32,7 @@ from pydoll.protocol.browser.responses import (
     GetWindowForTargetResponse,
 )
 from pydoll.protocol.browser.types import WindowBoundsDict
+from pydoll.protocol.fetch.events import FetchEvent
 from pydoll.protocol.network.types import Cookie, CookieParam, RequestPausedEvent
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.protocol.target.responses import (
@@ -72,32 +71,29 @@ class Browser(ABC):  # noqa: PLR0904
 
     def __init__(
         self,
-        options: Optional[Options] = None,
+        options_manager: BrowserOptionsManager,
         connection_port: Optional[int] = None,
-        browser_type: Optional[BrowserType] = None,
     ):
         """
         Initializes a new Browser instance with specified configuration.
 
         Args:
+            options_manager: Manager for browser options.
             options: Configuration options for the browser. If None,
                 default options will be used based on browser type.
             connection_port: Port to use for CDP WebSocket connection.
                 If None, a random port between 9223-9322 will be assigned.
-            browser_type: Type of browser to use. If None, will be inferred
-                from options.
 
         Note:
             This only configures the instance. To actually start the browser,
             call the `start()` method.
         """
-        self.options = BrowserOptionsManager.initialize_options(options, browser_type)
+        self.options = options_manager.initialize_options()
         self._proxy_manager = ProxyManager(self.options)
         self._connection_port = connection_port if connection_port else randint(9223, 9322)
         self._browser_process_manager = BrowserProcessManager()
         self._temp_directory_manager = TempDirectoryManager()
         self._connection_handler = ConnectionHandler(self._connection_port)
-        BrowserOptionsManager.add_default_arguments(self.options)
 
     async def __aenter__(self) -> 'Browser':
         """
@@ -135,7 +131,7 @@ class Browser(ABC):  # noqa: PLR0904
                 If True, adds the --headless flag if not already present.
 
         Raises:
-            BrowserNotRunning: If the browser fails to start or connect.
+            FailedToStartBrowser: If the browser fails to start or connect.
 
         Note:
             This is an async method and must be awaited. For typical usage,
@@ -181,7 +177,7 @@ class Browser(ABC):  # noqa: PLR0904
         if not await self._is_browser_running():
             raise BrowserNotRunning()
 
-        await self._execute_command(BrowserCommands.CLOSE)
+        await self._execute_command(BrowserCommands.close())
         self._browser_process_manager.stop_process()
         self._temp_directory_manager.cleanup()
         await self._connection_handler.close()
@@ -592,7 +588,7 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
     async def on(
-        self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False
+        self, event_name: str, callback: Callable[[Any], Any], temporary: bool = False
     ) -> int:
         """
         Registers an event listener for CDP events.
@@ -658,7 +654,7 @@ class Browser(ABC):  # noqa: PLR0904
               and implementing custom network behavior.
             - For page-specific interception, use Tab.enable_fetch_events() instead.
         """
-        await self._connection_handler.execute_command(
+        return await self._connection_handler.execute_command(
             FetchCommands.enable(handle_auth_requests, resource_type)
         )
 
@@ -676,19 +672,19 @@ class Browser(ABC):  # noqa: PLR0904
             - This affects all requests across all pages.
             - For page-specific control, use Tab.disable_fetch_events() instead.
         """
-        await self._connection_handler.execute_command(FetchCommands.disable())
+        return await self._connection_handler.execute_command(FetchCommands.disable())
 
     async def enable_runtime_events(self):
         """
         Enables runtime events.
         """
-        await self._connection_handler.execute_command(RuntimeCommands.enable())
+        return await self._connection_handler.execute_command(RuntimeCommands.enable())
 
     async def disable_runtime_events(self):
         """
         Disables runtime events.
         """
-        await self._connection_handler.execute_command(RuntimeCommands.disable())
+        return await self._connection_handler.execute_command(RuntimeCommands.disable())
 
     async def continue_request(self, request_id: str):
         """
@@ -721,7 +717,10 @@ class Browser(ABC):  # noqa: PLR0904
         return await self.continue_request(request_id)
 
     async def _continue_request_with_auth_callback(
-        self, event: RequestPausedEvent, proxy_username: str, proxy_password: str
+        self,
+        event: RequestPausedEvent,
+        proxy_username: Optional[str],
+        proxy_password: Optional[str],
     ):
         """
         Continues a paused authentication request with proxy credentials.
@@ -755,7 +754,9 @@ class Browser(ABC):  # noqa: PLR0904
         if not await self._is_browser_running():
             raise FailedToStartBrowser()
 
-    async def _configure_proxy(self, private_proxy, proxy_credentials):
+    async def _configure_proxy(
+        self, private_proxy: bool, proxy_credentials: tuple[Optional[str], Optional[str]]
+    ):
         """
         Sets up proxy authentication handling if needed.
 
@@ -770,12 +771,12 @@ class Browser(ABC):  # noqa: PLR0904
         if private_proxy:
             await self.enable_fetch_events(handle_auth_requests=True)
             await self.on(
-                'Fetch.requestPaused',
+                FetchEvent.REQUEST_PAUSED,
                 self._continue_request_callback,
                 temporary=True,
             )
             await self.on(
-                'Fetch.authRequired',
+                FetchEvent.AUTH_REQUIRED,
                 partial(
                     self._continue_request_with_auth_callback,
                     proxy_username=proxy_credentials[0],
@@ -848,7 +849,7 @@ class Browser(ABC):  # noqa: PLR0904
 
         return False
 
-    async def _execute_command(self, command: Command[T]) -> T:
+    async def _execute_command(self, command: Command[T], timeout: int = 10) -> T:
         """
         Executes a CDP command and returns the result.
 
@@ -866,7 +867,7 @@ class Browser(ABC):  # noqa: PLR0904
             This method has a 60-second timeout to prevent hanging on
             commands that might not complete.
         """
-        return await self._connection_handler.execute_command(command, timeout=60)
+        return await self._connection_handler.execute_command(command, timeout=timeout)
 
     def _setup_user_dir(self):
         """
