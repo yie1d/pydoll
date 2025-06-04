@@ -2,10 +2,10 @@ import platform
 from typing import Optional
 
 from pydoll.browser.chromium.base import Browser
-from pydoll.browser.managers import BrowserOptionsManager
-from pydoll.browser.options import Options
-from pydoll.constants import BrowserType
+from pydoll.browser.managers import ChromiumOptionsManager
+from pydoll.browser.options import ChromiumOptions
 from pydoll.exceptions import UnsupportedOS
+from pydoll.utils import validate_browser_paths
 
 
 class Chrome(Browser):
@@ -18,19 +18,20 @@ class Chrome(Browser):
 
     def __init__(
         self,
-        options: Optional[Options] = None,
+        options: Optional[ChromiumOptions] = None,
         connection_port: Optional[int] = None,
     ):
         """
         Initializes the Chrome browser instance.
 
         Args:
-            options (Options | None): An instance of Options class to configure
+            options (ChromiumOptions | None): An instance of ChromiumOptions class to configure
                 the browser. If None, default options will be used.
             connection_port (int): The port to connect to the browser.
                 Defaults to 9222.
         """
-        super().__init__(options, connection_port, BrowserType.CHROME)
+        options_manager = ChromiumOptionsManager(options)
+        super().__init__(options_manager, connection_port)
 
     @staticmethod
     def _get_default_binary_location():
@@ -67,4 +68,4 @@ class Chrome(Browser):
         if not browser_path:
             raise UnsupportedOS()
 
-        return BrowserOptionsManager.validate_browser_paths(browser_path)
+        return validate_browser_paths(browser_path)
