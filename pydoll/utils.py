@@ -1,9 +1,11 @@
 import base64
 import logging
+import os
+from typing import List
 
 import aiohttp
 
-from pydoll import exceptions
+from pydoll.exceptions import InvalidBrowserPath, InvalidResponse, NetworkError
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,31 @@ async def get_browser_ws_address(port: int) -> str:
                 return data['webSocketDebuggerUrl']
 
     except aiohttp.ClientError as e:
-        raise exceptions.NetworkError(f'Failed to get browser ws address: {e}')
+        raise NetworkError(f'Failed to get browser ws address: {e}')
 
     except KeyError as e:
-        raise exceptions.InvalidResponse(f'Failed to get browser ws address: {e}')
+        raise InvalidResponse(f'Failed to get browser ws address: {e}')
+
+
+def validate_browser_paths(paths: List[str]) -> str:
+    """
+    Validates potential browser executable paths and returns the first valid one.
+
+    Checks a list of possible browser binary locations to find an existing,
+    executable browser. This is used by browser-specific subclasses to locate
+    the browser executable when no explicit binary path is provided.
+
+    Args:
+        paths: List of potential file paths to check for the browser executable.
+            These should be absolute paths appropriate for the current OS.
+
+    Returns:
+        str: The first valid browser executable path found.
+
+    Raises:
+        InvalidBrowserPath: If the browser executable is not found at the path.
+    """
+    for path in paths:
+        if os.path.exists(path) and os.access(path, os.X_OK):
+            return path
+    raise InvalidBrowserPath(f'No valid browser path found in: {paths}')
