@@ -13,24 +13,14 @@ logger = logging.getLogger(__name__)
 
 class EventsManager:
     """
-    Manages event callbacks, event processing, and network logs.
+    Manages event callbacks, processing, and network logs.
 
-    This class is responsible for registering event callbacks, triggering them
-    when events are received, and maintaining state related to events such as
-    network logs and dialog information.
+    Handles event callback registration, triggering, and maintains state
+    for network logs and dialog information.
     """
 
     def __init__(self) -> None:
-        """
-        Initializes the EventsManager.
-
-        Sets up internal state for tracking event callbacks, initializes
-        the callback ID counter, and creates empty collections for network
-        logs and dialog information.
-
-        Returns:
-            None
-        """
+        """Initialize events manager with empty state."""
         self._event_callbacks: Dict[int, Dict] = {}
         self._callback_id = 0
         self.network_logs: List[Event] = []
@@ -41,20 +31,15 @@ class EventsManager:
         self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False
     ) -> int:
         """
-        Registers a callback for a specific event type.
-
-        This method associates a callback function with an event name,
-        allowing the function to be called whenever that event occurs.
+        Register callback for specific event type.
 
         Args:
-            event_name (str): The name of the event to listen for.
-            callback (Callable): The function to call when the event occurs.
-            temporary (bool): If True, the callback will be removed after it's
-                triggered once. Defaults to False.
+            event_name: Event name to listen for.
+            callback: Function called when event occurs.
+            temporary: If True, callback removed after first trigger.
 
         Returns:
-            int: The ID of the registered callback, which can be used to
-                remove it later.
+            Callback ID for later removal.
         """
         self._callback_id += 1
         self._event_callbacks[self._callback_id] = {
@@ -66,19 +51,7 @@ class EventsManager:
         return self._callback_id
 
     def remove_callback(self, callback_id: int) -> bool:
-        """
-        Removes a callback by its ID.
-
-        This method removes a previously registered callback from the
-        event handler, preventing it from being triggered in the future.
-
-        Args:
-            callback_id (int): The ID of the callback to remove.
-
-        Returns:
-            bool: True if the callback was successfully removed, False if
-                the callback ID was not found.
-        """
+        """Remove callback by ID."""
         if callback_id not in self._event_callbacks:
             logger.warning(f'Callback ID {callback_id} not found')
             return False
@@ -88,25 +61,16 @@ class EventsManager:
         return True
 
     def clear_callbacks(self):
-        """
-        Removes all registered callbacks.
-
-        This method clears all event listeners that have been registered,
-        effectively resetting the event handler to its initial state.
-        """
+        """Remove all registered callbacks."""
         self._event_callbacks.clear()
         logger.info('All callbacks cleared')
 
     async def process_event(self, event_data: Event):
         """
-        Processes a received event and triggers corresponding callbacks.
+        Process received event and trigger callbacks.
 
-        This method handles special events like network requests and dialogs,
-        updating internal state accordingly, and then triggers any callbacks
-        registered for the event type.
-
-        Args:
-            event_data (dict): The event data in dictionary format.
+        Handles special events (network requests, dialogs) and updates
+        internal state before triggering registered callbacks.
         """
         event_name = event_data['method']
         logger.debug(f'Processing event: {event_name}')
@@ -126,31 +90,12 @@ class EventsManager:
         await self._trigger_callbacks(event_name, event_data)
 
     def _update_network_logs(self, event_data: Event):
-        """
-        Maintains the network logs collection.
-
-        This method adds a new network event to the logs and ensures
-        the collection doesn't grow too large by limiting its size.
-
-        Args:
-            event_data (dict): The network event data to add to the logs.
-        """
+        """Add network event to logs (keeps last 10000 entries)."""
         self.network_logs.append(event_data)
         self.network_logs = self.network_logs[-10000:]  # keep only last 10000 logs
 
     async def _trigger_callbacks(self, event_name: str, event_data: Event):
-        """
-        Triggers all registered callbacks for an event.
-
-        This method iterates through all registered callbacks for the
-        specified event name and invokes them with the event data.
-        It also handles temporary callbacks by removing them after they're
-        triggered.
-
-        Args:
-            event_name (str): The name of the event that occurred.
-            event_data (dict): The data associated with the event.
-        """
+        """Trigger all registered callbacks for event, removing temporary ones."""
         callbacks_to_remove = []
 
         for cb_id, cb_data in list(self._event_callbacks.items()):

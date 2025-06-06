@@ -9,12 +9,7 @@ from pydoll.utils import validate_browser_paths
 
 
 class Edge(Browser):
-    """
-    A class that implements the Edge browser functionality.
-
-    This class provides specific implementation for launching and
-    controlling Microsoft Edge browsers.
-    """
+    """Edge browser implementation for CDP automation."""
 
     def __init__(
         self,
@@ -22,13 +17,11 @@ class Edge(Browser):
         connection_port: Optional[int] = None,
     ):
         """
-        Initializes the Edge browser instance.
+        Initialize Edge browser instance.
 
         Args:
-            options (Options | None): An instance of Options class to configure
-                the browser. If None, default options will be used.
-            connection_port (int): The port to connect to the browser.
-                Defaults to a random port between 9223 and 9322.
+            options: Edge configuration options (default if None).
+            connection_port: CDP WebSocket port (random if None).
         """
         options_manager = ChromiumOptionsManager(options)
         super().__init__(options_manager, connection_port)
@@ -36,17 +29,14 @@ class Edge(Browser):
     @staticmethod
     def _get_default_binary_location():
         """
-        Gets the default location of the Edge browser executable.
-
-        This method determines the default Edge executable path based
-        on the operating system.
+        Get default Edge executable path based on OS.
 
         Returns:
-            str: The path to the Edge browser executable.
+            Path to Edge executable.
 
         Raises:
-            ValueError: If the operating system is not supported or
-                the browser executable is not found at the default location.
+            UnsupportedOS: If OS is not supported.
+            ValueError: If executable not found at default location.
         """
         os_name = platform.system()
 

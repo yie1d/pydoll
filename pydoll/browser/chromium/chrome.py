@@ -9,12 +9,7 @@ from pydoll.utils import validate_browser_paths
 
 
 class Chrome(Browser):
-    """
-    A class that implements the Chrome browser functionality.
-
-    This class provides specific implementation for launching and
-    controlling Google Chrome browsers.
-    """
+    """Chrome browser implementation for CDP automation."""
 
     def __init__(
         self,
@@ -22,13 +17,11 @@ class Chrome(Browser):
         connection_port: Optional[int] = None,
     ):
         """
-        Initializes the Chrome browser instance.
+        Initialize Chrome browser instance.
 
         Args:
-            options (ChromiumOptions | None): An instance of ChromiumOptions class to configure
-                the browser. If None, default options will be used.
-            connection_port (int): The port to connect to the browser.
-                Defaults to 9222.
+            options: Chrome configuration options (default if None).
+            connection_port: CDP WebSocket port (random if None).
         """
         options_manager = ChromiumOptionsManager(options)
         super().__init__(options_manager, connection_port)
@@ -36,17 +29,14 @@ class Chrome(Browser):
     @staticmethod
     def _get_default_binary_location():
         """
-        Gets the default location of the Chrome browser executable.
-
-        This method determines the default Chrome executable path based
-        on the operating system.
+        Get default Chrome executable path based on OS.
 
         Returns:
-            str: The path to the Chrome browser executable.
+            Path to Chrome executable.
 
         Raises:
-            ValueError: If the operating system is not supported or
-                the browser executable is not found at the default location.
+            UnsupportedOS: If OS is not supported.
+            ValueError: If executable not found at default location.
         """
         os_name = platform.system()
 
@@ -66,6 +56,6 @@ class Chrome(Browser):
         browser_path = browser_paths.get(os_name)
 
         if not browser_path:
-            raise UnsupportedOS()
+            raise UnsupportedOS(f'Unsupported OS: {os_name}')
 
         return validate_browser_paths(browser_path)
