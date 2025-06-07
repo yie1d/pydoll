@@ -15,7 +15,6 @@
 <p align="center">
   <a href="https://autoscrape-labs.github.io/pydoll/">Documentation</a> •
   <a href="#getting-started">Getting Started</a> •
-  <a href="#breaking-changes">Breaking Changes</a> •
   <a href="#advanced-features">Advanced Features</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#support-my-work">Support</a> •
