@@ -237,15 +237,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         press_command = InputCommands.dispatch_mouse_event(
             type=MouseEventType.MOUSE_PRESSED,
-            x=position_to_click[0],
-            y=position_to_click[1],
+            x=int(position_to_click[0]),
+            y=int(position_to_click[1]),
             button=MouseButton.LEFT,
             click_count=1,
         )
         release_command = InputCommands.dispatch_mouse_event(
             type=MouseEventType.MOUSE_RELEASED,
-            x=position_to_click[0],
-            y=position_to_click[1],
+            x=int(position_to_click[0]),
+            y=int(position_to_click[1]),
             button=MouseButton.LEFT,
             click_count=1,
         )

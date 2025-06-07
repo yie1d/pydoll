@@ -302,7 +302,6 @@ class FindElementsMixin:
             'class_name': class_name,
             'name': name,
             'tag_name': tag_name,
-            **attributes,
         }
         provided_selectors = {key: value for key, value in simple_selectors.items() if value}
 
@@ -345,7 +344,7 @@ class FindElementsMixin:
         for attribute, value in attributes.items():
             xpath_conditions.append(f'@{attribute}="{value}"')
 
-        return f'{base_xpath}[{" and ".join(xpath_conditions)}]'
+        return f'{base_xpath}[{" and ".join(xpath_conditions)}]' if xpath_conditions else base_xpath
 
     @staticmethod
     def _get_expression_type(expression: str) -> By:
