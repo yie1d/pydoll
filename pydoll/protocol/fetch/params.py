@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import NetworkErrorReason, RequestMethod
 from pydoll.protocol.base import CommandParams
@@ -16,7 +16,7 @@ class ContinueRequestParams(CommandParams):
     url: NotRequired[str]
     method: NotRequired[RequestMethod]
     postData: NotRequired[str]
-    headers: NotRequired[List[HeaderEntry]]
+    headers: NotRequired[list[HeaderEntry]]
     interceptResponse: NotRequired[bool]
 
 
@@ -26,7 +26,7 @@ class ContinueWithAuthParams(CommandParams):
 
 
 class FetchEnableParams(CommandParams):
-    patterns: NotRequired[List[RequestPattern]]
+    patterns: NotRequired[list[RequestPattern]]
     handleAuthRequests: NotRequired[bool]
 
 
@@ -38,7 +38,7 @@ class FailRequestParams(CommandParams):
 class FulfillRequestParams(CommandParams):
     requestId: str
     responseCode: int
-    responseHeaders: NotRequired[List[HeaderEntry]]
+    responseHeaders: NotRequired[list[HeaderEntry]]
     body: NotRequired[dict]
     responsePhrase: NotRequired[str]
 
@@ -55,4 +55,4 @@ class ContinueResponseParams(CommandParams):
     requestId: str
     responseCode: NotRequired[int]
     responsePhrase: NotRequired[str]
-    responseHeaders: NotRequired[List[HeaderEntry]]
+    responseHeaders: NotRequired[list[HeaderEntry]]

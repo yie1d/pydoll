@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.constants import ElementRelation, IncludeWhitespace, LogicalAxes, PhysicalAxes
 from pydoll.protocol.base import Command, Response
@@ -673,7 +673,7 @@ class DomCommands:  # noqa
 
     @staticmethod
     def set_file_input_files(
-        files: List[str],
+        files: list[str],
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
@@ -686,7 +686,7 @@ class DomCommands:  # noqa
         a file input, allowing automated tests to provide files programmatically.
 
         Args:
-            files: List of file paths to set.
+            files: list of file paths to set.
             node_id: Identifier of the node.
             backend_node_id: Identifier of the backend node.
             object_id: JavaScript object id of the node wrapper.
@@ -1005,7 +1005,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_nodes_for_subtree_by_style(
         node_id: int,
-        computed_styles: List[CSSComputedStyleProperty],
+        computed_styles: list[CSSComputedStyleProperty],
         pierce: Optional[bool] = None,
     ) -> Command[GetNodesForSubtreeByStyleResponse]:
         """
@@ -1017,7 +1017,7 @@ class DomCommands:  # noqa
 
         Args:
             node_id: Node to start the search from.
-            computed_styles: List of computed style properties to match against.
+            computed_styles: list of computed style properties to match against.
             pierce: Whether or not iframes and shadow roots should be traversed.
 
         Returns:
@@ -1186,7 +1186,7 @@ class DomCommands:  # noqa
 
     @staticmethod
     def push_nodes_by_backend_ids_to_frontend(
-        backend_node_ids: List[int],
+        backend_node_ids: list[int],
     ) -> Command[PushNodesByBackendIdsToFrontendResponse]:
         """
         Requests that a batch of nodes is sent to the caller given their backend node ids.

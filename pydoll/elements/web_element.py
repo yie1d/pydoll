@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Dict, List, Optional
+from typing import Optional
 
 import aiofiles
 from bs4 import BeautifulSoup
@@ -51,7 +51,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         connection_handler: ConnectionHandler,
         method: Optional[str] = None,
         selector: Optional[str] = None,
-        attributes_list: List[str] = [],
+        attributes_list: list[str] = [],
     ):
         """
         Initialize WebElement wrapper.
@@ -67,7 +67,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self._search_method = method
         self._selector = selector
         self._connection_handler = connection_handler
-        self._attributes: Dict[str, str] = {}
+        self._attributes: dict[str, str] = {}
         self._def_attributes(attributes_list)
 
     @property
@@ -120,7 +120,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         response: GetOuterHTMLResponse = await self._execute_command(command)
         return response['result']['outerHTML']
 
-    async def get_bounds_using_js(self) -> Dict[str, int]:
+    async def get_bounds_using_js(self) -> dict[str, int]:
         """
         Get element bounds using JavaScript getBoundingClientRect().
 
@@ -262,12 +262,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         await self._execute_command(InputCommands.insert_text(text))
 
-    async def set_input_files(self, files: List[str]):
+    async def set_input_files(self, files: list[str]):
         """
         Set file paths for file input element.
 
         Args:
-            files: List of absolute file paths to existing files.
+            files: list of absolute file paths to existing files.
 
         Raises:
             ElementNotAFileInput: If element is not a file input.
@@ -370,7 +370,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             )
         )
 
-    def _def_attributes(self, attributes_list: List[str]):
+    def _def_attributes(self, attributes_list: list[str]):
         """Process flat attribute list into dictionary (renames 'class' to 'class_name')."""
         for i in range(0, len(attributes_list), 2):
             key = attributes_list[i]

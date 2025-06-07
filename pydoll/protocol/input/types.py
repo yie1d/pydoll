@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 class TouchPoint(TypedDict):
@@ -23,6 +23,6 @@ class DragDataItem(TypedDict):
 
 
 class DragData(TypedDict):
-    items: List[DragDataItem]
-    files: NotRequired[List[str]]
+    items: list[DragDataItem]
+    files: NotRequired[list[str]]
     dragOperationMask: int

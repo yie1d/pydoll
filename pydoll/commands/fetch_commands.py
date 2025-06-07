@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydoll.constants import (
     AuthChallengeResponseValues,
@@ -51,7 +51,7 @@ class FetchCommands:
         url: Optional[str] = None,
         method: Optional[RequestMethod] = None,
         post_data: Optional[str] = None,
-        headers: Optional[List[HeaderEntry]] = None,
+        headers: Optional[list[HeaderEntry]] = None,
         intercept_response: Optional[bool] = None,
     ) -> Command[Response]:
         """
@@ -68,7 +68,7 @@ class FetchCommands:
                 'POST'). Defaults to None.
             post_data (Optional[dict]): The body data to send with the fetch
                 request. Defaults to None.
-            headers (Optional[List[HeaderEntry]]): A list of HTTP headers to include
+            headers (Optional[list[HeaderEntry]]): A list of HTTP headers to include
               in the fetch request. Defaults to None.
             intercept_response (Optional[bool]): Indicates if the response
               should be intercepted. Defaults to None.
@@ -199,8 +199,8 @@ class FetchCommands:
     def fulfill_request(  # noqa: PLR0913, PLR0917
         request_id: str,
         response_code: int,
-        response_headers: Optional[List[HeaderEntry]] = None,
-        body: Optional[Dict] = None,
+        response_headers: Optional[list[HeaderEntry]] = None,
+        body: Optional[dict] = None,
         response_phrase: Optional[str] = None,
     ) -> Command[Response]:
         """
@@ -212,9 +212,9 @@ class FetchCommands:
         Args:
             request_id (str): The ID of the fetch request to fulfill.
             response_code (int): The HTTP status code to return.
-            response_headers (Optional[List[HeaderEntry]]): A list of response headers.
+            response_headers (Optional[list[HeaderEntry]]): A list of response headers.
                 Defaults to None.
-            body (Optional[Dict]): The body content of the response. Defaults to None.
+            body (Optional[dict]): The body content of the response. Defaults to None.
             response_phrase (Optional[str]): The response phrase (e.g., 'OK',
                 'Not Found'). Defaults to None.
 
@@ -255,7 +255,7 @@ class FetchCommands:
     def continue_response(
         request_id: str,
         response_code: Optional[int] = None,
-        response_headers: Optional[List[HeaderEntry]] = None,
+        response_headers: Optional[list[HeaderEntry]] = None,
         response_phrase: Optional[str] = None,
     ) -> Command[Response]:
         """
@@ -271,7 +271,7 @@ class FetchCommands:
                 response for.
             response_code (Optional[int]): The HTTP status code to send.
                 Defaults to None.
-            response_headers (Optional[List[HeaderEntry]]): A list of response headers.
+            response_headers (Optional[list[HeaderEntry]]): A list of response headers.
                 Defaults to None.
             response_phrase (Optional[str]): The response phrase (e.g., 'OK').
                 Defaults to None.

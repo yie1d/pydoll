@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.protocol.dom.types import Rect
 from pydoll.protocol.network.types import SearchMatch
@@ -39,7 +39,7 @@ class GetAppManifestResultDict(TypedDict):
     """Response result for getAppManifest command."""
 
     url: str
-    errors: List[AppManifestError]
+    errors: list[AppManifestError]
     data: str  # Manifest content as string
     manifest: NotRequired[WebAppManifest]
 
@@ -62,7 +62,7 @@ class GetNavigationHistoryResultDict(TypedDict):
     """Response result for getNavigationHistory command."""
 
     currentIndex: int
-    entries: List[NavigationEntry]
+    entries: list[NavigationEntry]
 
 
 class NavigateResultDict(TypedDict):
@@ -89,7 +89,7 @@ class CaptureSnapshotResultDict(TypedDict):
 class GetAdScriptAncestryIdsResultDict(TypedDict):
     """Response result for getAdScriptAncestryIds command."""
 
-    adScriptAncestryIds: List[AdScriptId]
+    adScriptAncestryIds: list[AdScriptId]
 
 
 class GetAppIdResultDict(TypedDict):
@@ -102,19 +102,19 @@ class GetAppIdResultDict(TypedDict):
 class GetInstallabilityErrorsResultDict(TypedDict):
     """Response result for getInstallabilityErrors command."""
 
-    installabilityErrors: List[InstallabilityError]
+    installabilityErrors: list[InstallabilityError]
 
 
 class GetOriginTrialsResultDict(TypedDict):
     """Response result for getOriginTrials command."""
 
-    originTrials: List[OriginTrial]
+    originTrials: list[OriginTrial]
 
 
 class GetPermissionsPolicyStateResultDict(TypedDict):
     """Response result for getPermissionsPolicyState command."""
 
-    states: List[PermissionsPolicyFeatureState]
+    states: list[PermissionsPolicyFeatureState]
 
 
 class GetResourceContentResultDict(TypedDict):
@@ -133,7 +133,7 @@ class GetResourceTreeResultDict(TypedDict):
 class SearchInResourceResultDict(TypedDict):
     """Response result for searchInResource command."""
 
-    result: List[SearchMatch]
+    result: list[SearchMatch]
 
 
 # Response classes that inherit from Response

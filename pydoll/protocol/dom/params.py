@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import ElementRelation, IncludeWhitespace, LogicalAxes, PhysicalAxes
 from pydoll.protocol.base import CommandParams
@@ -116,7 +116,7 @@ class SetAttributeValueParams(CommandParams):
 
 
 class SetFileInputFilesParams(CommandParams):
-    files: List[str]
+    files: list[str]
     nodeId: NotRequired[int]
     backendNodeId: NotRequired[int]
     objectId: NotRequired[str]
@@ -185,7 +185,7 @@ class GetFrameOwnerParams(CommandParams):
 
 class GetNodesForSubtreeByStyleParams(CommandParams):
     nodeId: int
-    computedStyles: List[CSSComputedStyleProperty]
+    computedStyles: list[CSSComputedStyleProperty]
     pierce: NotRequired[bool]
 
 
@@ -217,7 +217,7 @@ class PushNodeByPathToFrontendParams(CommandParams):
 
 
 class PushNodesByBackendIdsToFrontendParams(CommandParams):
-    backendNodeIds: List[int]
+    backendNodeIds: list[int]
 
 
 class SetNodeStackTracesEnabledParams(CommandParams):

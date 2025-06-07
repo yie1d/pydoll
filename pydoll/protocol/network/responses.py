@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.protocol.fetch.types import HeaderEntry
 from pydoll.protocol.network.types import Cookie, SearchMatch, SecurityIsolationStatus
@@ -7,7 +7,7 @@ from pydoll.protocol.network.types import Cookie, SearchMatch, SecurityIsolation
 class GetCookiesResultDict(TypedDict):
     """Response result for getCookies command."""
 
-    cookies: List[Cookie]
+    cookies: list[Cookie]
 
 
 class GetRequestPostDataResultDict(TypedDict):
@@ -33,13 +33,13 @@ class GetResponseBodyForInterceptionResultDict(TypedDict):
 class GetCertificateResultDict(TypedDict):
     """Response result for getCertificate command."""
 
-    tableNames: List[str]
+    tableNames: list[str]
 
 
 class SearchInResponseBodyResultDict(TypedDict):
     """Response result for searchInResponseBody command."""
 
-    result: List[SearchMatch]
+    result: list[SearchMatch]
 
 
 class SetCookieResultDict(TypedDict):
@@ -92,7 +92,7 @@ class LoadNetworkResourceResultDict(TypedDict):
     netErrorName: NotRequired[str]
     httpStatusCode: NotRequired[float]
     stream: NotRequired[str]
-    headers: NotRequired[List[HeaderEntry]]
+    headers: NotRequired[list[HeaderEntry]]
 
 
 # Response classes that inherit from Response

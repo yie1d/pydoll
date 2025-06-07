@@ -8,10 +8,7 @@ from typing import (
     Any,
     AsyncGenerator,
     Callable,
-    Dict,
-    List,
     Optional,
-    Tuple,
     TypeAlias,
     Union,
     cast,
@@ -38,6 +35,7 @@ from pydoll.exceptions import (
     NoDialogPresent,
     NotAnIFrame,
     PageLoadTimeout,
+    WaitElementTimeout,
 )
 from pydoll.protocol.base import Response
 from pydoll.protocol.network.types import Cookie, CookieParam
@@ -203,7 +201,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
     async def enable_auto_solve_cloudflare_captcha(
         self,
-        custom_selector: Optional[Tuple[By, str]] = None,
+        custom_selector: Optional[tuple[By, str]] = None,
         time_before_click: int = 2,
         time_to_wait_captcha: int = 5,
     ):
@@ -312,14 +310,14 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
         return Tab(self._browser, self._connection_port, iframe_target['targetId'])
 
-    async def get_cookies(self) -> List[Cookie]:
+    async def get_cookies(self) -> list[Cookie]:
         """Get all cookies accessible from current page."""
         response: GetCookiesResponse = await self._execute_command(
             StorageCommands.get_cookies(self._browser_context_id)
         )
         return response['result']['cookies']
 
-    async def set_cookies(self, cookies: List[CookieParam]):
+    async def set_cookies(self, cookies: list[CookieParam]):
         """
         Set multiple cookies for current page.
 
@@ -357,7 +355,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
         try:
             await self._wait_page_load(timeout=timeout)
-        except asyncio.TimeoutError:
+        except WaitElementTimeout:
             raise PageLoadTimeout()
 
     async def refresh(
@@ -382,7 +380,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         )
         try:
             await self._wait_page_load()
-        except asyncio.TimeoutError:
+        except WaitElementTimeout:
             raise PageLoadTimeout()
 
     async def take_screenshot(
@@ -534,7 +532,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
     @asynccontextmanager
     async def expect_file_chooser(
-        self, files: Union[str, Path, List[Union[str, Path]]]
+        self, files: Union[str, Path, list[Union[str, Path]]]
     ) -> AsyncGenerator[None, None]:
         """
         Context manager for automatic file upload handling.
@@ -571,7 +569,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
     @asynccontextmanager
     async def expect_and_bypass_cloudflare_captcha(
         self,
-        custom_selector: Optional[Tuple[By, str]] = None,
+        custom_selector: Optional[tuple[By, str]] = None,
         time_before_click: int = 2,
         time_to_wait_captcha: int = 5,
     ) -> AsyncGenerator[None, None]:
@@ -585,7 +583,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         """
         captcha_processed = asyncio.Event()
 
-        async def bypass_cloudflare(_: Dict):
+        async def bypass_cloudflare(_: dict):
             try:
                 await self._bypass_cloudflare(
                     _,
@@ -611,7 +609,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             if not _before_page_events_enabled:
                 await self.disable_page_events()
 
-    async def on(self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False):
+    async def on(self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False):
         """
         Register CDP event listener.
 
@@ -664,13 +662,13 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             if response['result']['result']['value'] == 'complete':
                 break
             if asyncio.get_event_loop().time() - start_time > timeout:
-                raise asyncio.TimeoutError('Page load timed out')
+                raise WaitElementTimeout('Page load timed out')
             await asyncio.sleep(0.5)
 
     async def _bypass_cloudflare(
         self,
         event: dict,
-        custom_selector: Optional[Tuple[By, str]] = None,
+        custom_selector: Optional[tuple[By, str]] = None,
         time_before_click: int = 2,
         time_to_wait_captcha: int = 5,
     ):

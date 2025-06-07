@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import (
     DragEventType,
@@ -33,7 +33,7 @@ class DispatchKeyEventParams(CommandParams):
     isKeypad: NotRequired[bool]
     isSystemKey: NotRequired[bool]
     location: NotRequired[KeyLocation]
-    commands: NotRequired[List[str]]
+    commands: NotRequired[list[str]]
 
 
 class DispatchMouseEventParams(CommandParams):
@@ -56,7 +56,7 @@ class DispatchMouseEventParams(CommandParams):
 
 class DispatchTouchEventParams(CommandParams):
     type: TouchEventType
-    touchPoints: NotRequired[List[TouchPoint]]
+    touchPoints: NotRequired[list[TouchPoint]]
     modifiers: NotRequired[KeyModifier]
     timestamp: NotRequired[float]
 

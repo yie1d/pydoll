@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Dict, List, cast
+from typing import Any, Callable, cast
 
 from pydoll.protocol.base import Event
 from pydoll.protocol.page.types import (
@@ -21,14 +21,14 @@ class EventsManager:
 
     def __init__(self) -> None:
         """Initialize events manager with empty state."""
-        self._event_callbacks: Dict[int, Dict] = {}
+        self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
-        self.network_logs: List[Event] = []
+        self.network_logs: list[Event] = []
         self.dialog = JavascriptDialogOpeningEvent(method='')
         logger.info('EventsManager initialized')
 
     def register_callback(
-        self, event_name: str, callback: Callable[[Dict], Any], temporary: bool = False
+        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
     ) -> int:
         """
         Register callback for specific event type.

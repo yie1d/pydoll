@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import WindowState
 from pydoll.protocol.base import CommandParams
@@ -22,7 +22,7 @@ class CreateBrowserContextParams(CommandParams):
     disposeOnDetach: NotRequired[bool]
     proxyServer: NotRequired[str]
     proxyBypassList: NotRequired[str]
-    originsWithUniversalNetworkAccess: NotRequired[List[str]]
+    originsWithUniversalNetworkAccess: NotRequired[list[str]]
 
 
 class CreateTargetParams(CommandParams):
@@ -49,19 +49,19 @@ class DisposeBrowserContextParams(CommandParams):
 
 
 class GetTargetsParams(CommandParams):
-    filter: NotRequired[List]
+    filter: NotRequired[list]
 
 
 class SetAutoAttachParams(CommandParams):
     autoAttach: bool
     waitForDebuggerOnStart: NotRequired[bool]
     flatten: NotRequired[bool]
-    filter: NotRequired[List]
+    filter: NotRequired[list]
 
 
 class SetDiscoverTargetsParams(CommandParams):
     discover: bool
-    filter: NotRequired[List]
+    filter: NotRequired[list]
 
 
 class AttachToBrowserTargetParams(CommandParams):
@@ -71,7 +71,7 @@ class AttachToBrowserTargetParams(CommandParams):
 class AutoAttachRelatedParams(CommandParams):
     targetId: str
     waitForDebuggerOnStart: NotRequired[bool]
-    filter: NotRequired[List]
+    filter: NotRequired[list]
 
 
 class ExposeDevToolsProtocolParams(CommandParams):
@@ -85,4 +85,4 @@ class GetTargetInfoParams(CommandParams):
 
 
 class SetRemoteLocationsParams(CommandParams):
-    locations: List[RemoteLocation]
+    locations: list[RemoteLocation]

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.constants import (
     DragEventType,
@@ -75,7 +75,7 @@ class InputCommands:
         is_keypad: Optional[bool] = None,
         is_system_key: Optional[bool] = None,
         location: Optional[KeyLocation] = None,
-        commands: Optional[List[str]] = None,
+        commands: Optional[list[str]] = None,
     ) -> Command[Response]:
         """
         Generates a command to dispatch a key event to the page.
@@ -239,7 +239,7 @@ class InputCommands:
     @staticmethod
     def dispatch_touch_event(
         type: TouchEventType,
-        touch_points: Optional[List[TouchPoint]] = None,
+        touch_points: Optional[list[TouchPoint]] = None,
         modifiers: Optional[KeyModifier] = None,
         timestamp: Optional[float] = None,
     ) -> Command[Response]:
@@ -257,7 +257,7 @@ class InputCommands:
                  - touchCancel: Touch canceled - clears all touch points
                  Touch end and cancel events must not contain any touch points,
                  while touch start and move must contain at least one.
-            touch_points: List of active touch points. One event per any changed point
+            touch_points: list of active touch points. One event per any changed point
                         (compared to previous event) is generated, emulating
                         pressing/moving/releasing points one by one.
                         Each point includes coordinates and other properties.

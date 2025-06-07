@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydoll.constants import (
     ReferrerPolicy,
@@ -704,7 +704,7 @@ class PageCommands:  # noqa: PLR0904
 
     @staticmethod
     def produce_compilation_cache(
-        scripts: List[CompilationCacheParams],
+        scripts: list[CompilationCacheParams],
     ) -> Command[Response]:
         """
         Creates a command to produce a compilation cache entry.
@@ -753,7 +753,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def set_font_families(
         font_families: FontFamilies,
-        for_scripts: List[ScriptFontFamilies],
+        for_scripts: list[ScriptFontFamilies],
     ) -> Command[Response]:
         """
         Creates a command to set font families.

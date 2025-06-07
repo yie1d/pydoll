@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.runtime.types import CallArgument, SerializationOptions
@@ -18,7 +18,7 @@ class AwaitPromiseParams(CommandParams):
 class CallFunctionOnParams(CommandParams):
     functionDeclaration: str
     objectId: NotRequired[str]
-    arguments: NotRequired[List[CallArgument]]
+    arguments: NotRequired[list[CallArgument]]
     silent: NotRequired[bool]
     returnByValue: NotRequired[bool]
     generatePreview: NotRequired[bool]

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.constants import (
     DownloadBehavior,
@@ -210,7 +210,7 @@ class BrowserCommands:
 
     @staticmethod
     def grant_permissions(
-        permissions: List[PermissionType],
+        permissions: list[PermissionType],
         origin: Optional[str] = None,
         browser_context_id: Optional[str] = None,
     ) -> Command[Response]:
@@ -218,7 +218,7 @@ class BrowserCommands:
         Generates a command to grant specific permissions to the given origin.
 
         Args:
-            permissions (List[PermissionType]): List of permissions to grant.
+            permissions (list[PermissionType]): list of permissions to grant.
                 See PermissionType enum for available permissions.
             origin (Optional[str]): The origin to grant permissions to.
                 If not specified, grants for all origins.

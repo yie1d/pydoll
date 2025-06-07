@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.constants import (
     DialogType,
@@ -29,7 +29,7 @@ class InstallabilityErrorArgument(TypedDict):
 
 class InstallabilityError(TypedDict):
     errorId: str
-    errorArguments: List[InstallabilityErrorArgument]
+    errorArguments: list[InstallabilityErrorArgument]
 
 
 class FontFamilies(TypedDict):
@@ -69,14 +69,14 @@ class ImageResource(TypedDict):
 
 class FileFilter(TypedDict):
     name: NotRequired[str]
-    accepts: NotRequired[List[str]]
+    accepts: NotRequired[list[str]]
 
 
 class FileHandler(TypedDict):
     action: str
     name: str
-    icons: NotRequired[List[ImageResource]]
-    accepts: NotRequired[List[FileFilter]]
+    icons: NotRequired[list[ImageResource]]
+    accepts: NotRequired[list[FileFilter]]
     launchType: NotRequired[str]
 
 
@@ -112,7 +112,7 @@ class ShareTarget(TypedDict):
     title: NotRequired[str]
     text: NotRequired[str]
     url: NotRequired[str]
-    files: NotRequired[List[FileFilter]]
+    files: NotRequired[list[FileFilter]]
 
 
 class Shortcut(TypedDict):
@@ -125,23 +125,23 @@ class WebAppManifest(TypedDict):
     description: NotRequired[str]
     dir: NotRequired[str]
     display: NotRequired[str]
-    displayOverrides: NotRequired[List[str]]
-    fileHandlers: NotRequired[List[FileHandler]]
-    icons: NotRequired[List[ImageResource]]
+    displayOverrides: NotRequired[list[str]]
+    fileHandlers: NotRequired[list[FileHandler]]
+    icons: NotRequired[list[ImageResource]]
     id: NotRequired[str]
     lang: NotRequired[str]
     launchHandler: NotRequired[LaunchHandler]
     name: NotRequired[str]
     orientation: NotRequired[str]
     preferRelatedApplications: NotRequired[bool]
-    protocolHandlers: NotRequired[List[ProtocolHandler]]
-    relatedApplications: NotRequired[List[RelatedApplication]]
+    protocolHandlers: NotRequired[list[ProtocolHandler]]
+    relatedApplications: NotRequired[list[RelatedApplication]]
     scope: NotRequired[str]
-    scopeExtensions: NotRequired[List[ScopeExtension]]
-    screenshots: NotRequired[List[Screenshot]]
+    scopeExtensions: NotRequired[list[ScopeExtension]]
+    screenshots: NotRequired[list[Screenshot]]
     shareTarget: NotRequired[ShareTarget]
     shortName: NotRequired[str]
-    shortcuts: NotRequired[List[Shortcut]]
+    shortcuts: NotRequired[list[Shortcut]]
     startUrl: NotRequired[str]
     themeColor: NotRequired[str]
 
@@ -171,13 +171,13 @@ class FrameResourceTree(TypedDict):
     """Information about frame hierarchy."""
 
     frame: Frame
-    childFrames: NotRequired[List['FrameResourceTree']]
-    resources: NotRequired[List[FrameResource]]
+    childFrames: NotRequired[list['FrameResourceTree']]
+    resources: NotRequired[list[FrameResource]]
 
 
 class FrameTree(TypedDict):
     frame: Frame
-    childFrames: NotRequired[List['FrameTree']]
+    childFrames: NotRequired[list['FrameTree']]
 
 
 class LayoutViewport(TypedDict):
@@ -235,7 +235,7 @@ class OriginTrialTokenWithStatus(TypedDict):
 class OriginTrial(TypedDict):
     trialName: str
     status: OriginTrialStatus
-    tokenWithStatus: List[OriginTrialTokenWithStatus]
+    tokenWithStatus: list[OriginTrialTokenWithStatus]
 
 
 class PermissionsPolicyBlockLocator(TypedDict):

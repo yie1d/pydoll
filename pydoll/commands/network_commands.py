@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.constants import (
     ConnectionType,
@@ -202,13 +202,13 @@ class NetworkCommands:  # noqa: PLR0904
 
     @staticmethod
     def get_cookies(
-        urls: Optional[List[str]] = None,
+        urls: Optional[list[str]] = None,
     ) -> Command[GetCookiesResponse]:
         """
         Retrieves cookies matching specified URLs.
 
         Args:
-            urls: List of URLs to scope cookie retrieval
+            urls: list of URLs to scope cookie retrieval
 
         Returns:
             Command: CDP command returning cookie details including:
@@ -380,7 +380,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_COOKIE, params=params)
 
     @staticmethod
-    def set_cookies(cookies: List[SetCookieParams]) -> Command[Response]:
+    def set_cookies(cookies: list[SetCookieParams]) -> Command[Response]:
         """
         Sets multiple cookies in a single operation.
 
@@ -391,7 +391,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Cross-domain cookie setup
 
         Args:
-            cookies: List of cookie parameters including
+            cookies: list of cookie parameters including
                     name, value, and attributes
 
         Returns:
@@ -406,7 +406,7 @@ class NetworkCommands:  # noqa: PLR0904
 
     @staticmethod
     def set_extra_http_headers(
-        headers: List[HeaderEntry],
+        headers: list[HeaderEntry],
     ) -> Command[Response]:
         """
         Applies custom HTTP headers to all subsequent requests.
@@ -418,7 +418,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Security header validation
 
         Args:
-            headers: List of key-value header pairs
+            headers: list of key-value header pairs
 
         Security notes:
         - Headers are applied browser-wide
@@ -551,7 +551,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SEARCH_IN_RESPONSE_BODY, params=params)
 
     @staticmethod
-    def set_blocked_urls(urls: List[str]) -> Command[Response]:
+    def set_blocked_urls(urls: list[str]) -> Command[Response]:
         """
         Blocks specified URLs from loading.
 
@@ -562,7 +562,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Error simulation
 
         Args:
-            urls: List of URL patterns to block
+            urls: list of URL patterns to block
                  Supports wildcards and pattern matching
 
         Returns:
@@ -657,7 +657,7 @@ class NetworkCommands:  # noqa: PLR0904
 
     @staticmethod
     def set_accepted_encodings(
-        encodings: List[ContentEncoding],
+        encodings: list[ContentEncoding],
     ) -> Command[Response]:
         """
         Specifies accepted content encodings for requests.
@@ -668,7 +668,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Content optimization
 
         Args:
-            encodings: List of accepted encoding methods
+            encodings: list of accepted encoding methods
                      (gzip, deflate, br, etc.)
 
         Returns:

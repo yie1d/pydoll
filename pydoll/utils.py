@@ -1,7 +1,6 @@
 import base64
 import logging
 import os
-from typing import List
 
 import aiohttp
 
@@ -48,7 +47,7 @@ async def get_browser_ws_address(port: int) -> str:
         raise InvalidResponse(f'Failed to get browser ws address: {e}')
 
 
-def validate_browser_paths(paths: List[str]) -> str:
+def validate_browser_paths(paths: list[str]) -> str:
     """
     Validates potential browser executable paths and returns the first valid one.
 

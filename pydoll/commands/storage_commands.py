@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.protocol.base import Command, Response
 from pydoll.protocol.network.types import CookieParam
@@ -186,13 +186,13 @@ class StorageCommands:  # noqa: PLR0904
 
     @staticmethod
     def set_cookies(
-        cookies: List[CookieParam], browser_context_id: Optional[str] = None
+        cookies: list[CookieParam], browser_context_id: Optional[str] = None
     ) -> Command[Response]:
         """
         Generates a command to set browser cookies.
 
         Args:
-            cookies: List of Cookie objects to set.
+            cookies: list of Cookie objects to set.
             browser_context_id: Browser context ID (optional). Useful when working
                                with multiple contexts (e.g., multiple windows or tabs).
 
@@ -206,7 +206,7 @@ class StorageCommands:  # noqa: PLR0904
 
     @staticmethod
     def set_protected_audience_k_anonymity(
-        owner: str, name: str, hashes: List[str]
+        owner: str, name: str, hashes: list[str]
     ) -> Command[Response]:
         """
         Generates a command to set K-anonymity for protected audience.
@@ -217,7 +217,7 @@ class StorageCommands:  # noqa: PLR0904
         Args:
             owner: Owner of the K-anonymity configuration.
             name: Name of the K-anonymity configuration.
-            hashes: List of hashes for the configuration.
+            hashes: list of hashes for the configuration.
 
         Returns:
             Command: The CDP command to set protected audience K-anonymity.
@@ -436,7 +436,7 @@ class StorageCommands:  # noqa: PLR0904
 
     @staticmethod
     def get_affected_urls_for_third_party_cookie_metadata(
-        first_party_url: str, third_party_urls: List[str]
+        first_party_url: str, third_party_urls: list[str]
     ) -> Command[GetAffectedUrlsForThirdPartyCookieMetadataResponse]:
         """
         Generates a command to get the list of URLs from a page and its embedded resources
@@ -481,7 +481,7 @@ class StorageCommands:  # noqa: PLR0904
 
     @staticmethod
     def get_related_website_sets(
-        sets: List[RelatedWebsiteSet],
+        sets: list[RelatedWebsiteSet],
     ) -> Command[GetRelatedWebsiteSetsResponse]:
         """
         Generates a command to get related website sets.
@@ -490,7 +490,7 @@ class StorageCommands:  # noqa: PLR0904
         to share some data, despite third-party cookie restrictions.
 
         Args:
-            sets: List of RelatedWebsiteSet objects.
+            sets: list of RelatedWebsiteSet objects.
 
         Returns:
             Command: The CDP command to get related website sets.

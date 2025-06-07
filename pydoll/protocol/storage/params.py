@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.protocol.base import CommandParams
 from pydoll.protocol.network.types import CookieParam
@@ -32,14 +32,14 @@ class GetUsageAndQuotaParams(CommandParams):
 
 
 class SetCookiesParams(CommandParams):
-    cookies: List[CookieParam]
+    cookies: list[CookieParam]
     browserContextId: NotRequired[str]
 
 
 class SetProtectedAudienceKAnonymityParams(CommandParams):
     owner: str
     name: str
-    hashes: List[str]
+    hashes: list[str]
 
 
 class TrackCacheStorageForOriginParams(CommandParams):
@@ -93,7 +93,7 @@ class DeleteStorageBucketParams(CommandParams):
 
 class GetAffectedUrlsForThirdPartyCookieMetadataParams(CommandParams):
     firstPartyUrl: str
-    thirdPartyUrls: List[str]
+    thirdPartyUrls: list[str]
 
 
 class GetInterestGroupDetailsParams(CommandParams):
@@ -102,7 +102,7 @@ class GetInterestGroupDetailsParams(CommandParams):
 
 
 class GetRelatedWebsiteSetsParams(CommandParams):
-    sets: List[RelatedWebsiteSet]
+    sets: list[RelatedWebsiteSet]
 
 
 class GetSharedStorageEntriesParams(CommandParams):

@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.constants import StorageType
 
@@ -9,9 +9,9 @@ class StorageBucket(TypedDict):
 
 
 class RelatedWebsiteSet(TypedDict):
-    primarySites: List[str]
-    associatedSites: List[str]
-    serviceSites: List[str]
+    primarySites: list[str]
+    associatedSites: list[str]
+    serviceSites: list[str]
 
 
 class UsageForType(TypedDict):

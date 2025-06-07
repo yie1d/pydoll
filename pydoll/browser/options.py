@@ -1,5 +1,3 @@
-from typing import List
-
 from pydoll.browser.interfaces import Options
 from pydoll.exceptions import ArgumentAlreadyExistsInOptions
 
@@ -23,7 +21,7 @@ class ChromiumOptions(Options):
         self._binary_location = ''
 
     @property
-    def arguments(self) -> List[str]:
+    def arguments(self) -> list[str]:
         """
         Gets the list of command-line arguments.
 
@@ -33,7 +31,7 @@ class ChromiumOptions(Options):
         return self._arguments
 
     @arguments.setter
-    def arguments(self, args_list: List[str]):
+    def arguments(self, args_list: list[str]):
         """
         Sets the list of command-line arguments.
 

@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import TypedDict
 
 from pydoll.protocol.target.types import TargetInfo
 
@@ -16,11 +16,11 @@ class CreateTargetResultDict(TypedDict):
 
 
 class GetBrowserContextsResultDict(TypedDict):
-    browserContextIds: List[str]
+    browserContextIds: list[str]
 
 
 class GetTargetsResultDict(TypedDict):
-    targetInfos: List[TargetInfo]
+    targetInfos: list[TargetInfo]
 
 
 class AttachToBrowserTargetResultDict(TypedDict):

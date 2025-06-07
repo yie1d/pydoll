@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.constants import WindowState
 from pydoll.protocol.base import Command, Response
@@ -102,7 +102,7 @@ class TargetCommands:
         dispose_on_detach: Optional[bool] = None,
         proxy_server: Optional[str] = None,
         proxy_bypass_list: Optional[str] = None,
-        origins_with_universal_network_access: Optional[List[str]] = None,
+        origins_with_universal_network_access: Optional[list[str]] = None,
     ) -> Command[CreateBrowserContextResponse]:
         """
         Generates a command to create a new empty browser context.
@@ -264,7 +264,7 @@ class TargetCommands:
         return Command(method=TargetMethod.GET_BROWSER_CONTEXTS, params={})
 
     @staticmethod
-    def get_targets(filter: Optional[List] = None) -> Command[GetTargetsResponse]:
+    def get_targets(filter: Optional[list] = None) -> Command[GetTargetsResponse]:
         """
         Generates a command to retrieve a list of available targets.
 
@@ -291,7 +291,7 @@ class TargetCommands:
         auto_attach: bool,
         wait_for_debugger_on_start: Optional[bool] = None,
         flatten: Optional[bool] = None,
-        filter: Optional[List] = None,
+        filter: Optional[list] = None,
     ) -> Command[Response]:
         """
         Generates a command to control whether to automatically attach to new targets.
@@ -323,7 +323,7 @@ class TargetCommands:
         return Command(method=TargetMethod.SET_AUTO_ATTACH, params=params)
 
     @staticmethod
-    def set_discover_targets(discover: bool, filter: Optional[List] = None) -> Command[Response]:
+    def set_discover_targets(discover: bool, filter: Optional[list] = None) -> Command[Response]:
         """
         Generates a command to control target discovery.
 
@@ -382,7 +382,7 @@ class TargetCommands:
         return Command(method=TargetMethod.GET_TARGET_INFO, params=params)
 
     @staticmethod
-    def set_remote_locations(locations: List[RemoteLocation]) -> Command[Response]:
+    def set_remote_locations(locations: list[RemoteLocation]) -> Command[Response]:
         """
         Generates a command to enable target discovery for specified remote locations.
 
@@ -391,7 +391,7 @@ class TargetCommands:
         on remote devices or in different browser instances.
 
         Args:
-            locations: List of remote locations, each containing a host and port.
+            locations: list of remote locations, each containing a host and port.
 
         Returns:
             Command: The CDP command to set remote locations for target discovery.

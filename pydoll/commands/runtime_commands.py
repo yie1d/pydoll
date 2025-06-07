@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydoll.protocol.base import Command, Response
 from pydoll.protocol.runtime.methods import RuntimeMethod
@@ -97,7 +97,7 @@ class RuntimeCommands:
     def call_function_on(  # noqa: PLR0913, PLR0917
         function_declaration: str,
         object_id: Optional[str] = None,
-        arguments: Optional[List[CallArgument]] = None,
+        arguments: Optional[list[CallArgument]] = None,
         silent: Optional[bool] = None,
         return_by_value: Optional[bool] = None,
         generate_preview: Optional[bool] = None,
@@ -115,7 +115,7 @@ class RuntimeCommands:
         Args:
             function_declaration (str): Declaration of the function to call.
             object_id (Optional[str]): ID of the object to call the function on.
-            arguments (Optional[List[CallArgument]]): Arguments to pass to the function.
+            arguments (Optional[list[CallArgument]]): Arguments to pass to the function.
             silent (Optional[bool]): Whether to silence exceptions.
             return_by_value (Optional[bool]): Whether to return the result by value instead
                 of reference.

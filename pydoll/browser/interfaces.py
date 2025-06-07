@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class Options(ABC):
     @property
     @abstractmethod
-    def arguments(self) -> List[str]:
+    def arguments(self) -> list[str]:
         pass
 
     @property

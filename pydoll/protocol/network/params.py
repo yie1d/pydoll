@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import (
     ConnectionType,
@@ -50,7 +50,7 @@ class NetworkEnableParams(CommandParams):
 class GetCookiesParams(CommandParams):
     """Parameters for retrieving browser cookies."""
 
-    urls: NotRequired[List[str]]
+    urls: NotRequired[list[str]]
 
 
 class GetRequestPostDataParams(CommandParams):
@@ -120,13 +120,13 @@ class SetCookieParams(CommandParams):
 class SetCookiesParams(CommandParams):
     """Parameters for setting multiple cookies."""
 
-    cookies: List[SetCookieParams]
+    cookies: list[SetCookieParams]
 
 
 class SetExtraHTTPHeadersParams(CommandParams):
     """Parameters for setting extra HTTP headers."""
 
-    headers: List[HeaderEntry]
+    headers: list[HeaderEntry]
 
 
 class SetUserAgentOverrideParams(CommandParams):
@@ -141,13 +141,13 @@ class SetUserAgentOverrideParams(CommandParams):
 class SetBlockedURLsParams(CommandParams):
     """Parameters for blocking URLs from loading."""
 
-    urls: List[str]
+    urls: list[str]
 
 
 class SetAcceptedEncodingsParams(CommandParams):
     """Parameters for setting accepted content encodings."""
 
-    encodings: List[ContentEncoding]
+    encodings: list[ContentEncoding]
 
 
 class SetAttachDebugStackParams(CommandParams):
@@ -179,7 +179,7 @@ class TakeResponseBodyForInterceptionAsStreamParams(CommandParams):
 class SetRequestInterceptionParams(CommandParams):
     """Parameters for setting request interception patterns."""
 
-    patterns: List[RequestPattern]
+    patterns: list[RequestPattern]
 
 
 class AuthChallengeResponseParams(CommandParams):

@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.constants import (
     ContentSecurityPolicySource,
@@ -73,7 +73,7 @@ class SecurityIsolationStatus(TypedDict):
 
     coop: NotRequired[CrossOriginOpenerPolicyStatus]
     coep: NotRequired[CrossOriginEmbedderPolicyStatus]
-    csp: NotRequired[List[ContentSecurityPolicyStatus]]
+    csp: NotRequired[list[ContentSecurityPolicyStatus]]
 
 
 class LoadNetworkResourceOptions(TypedDict):
@@ -106,8 +106,8 @@ class UserAgentBrand(TypedDict):
 
 
 class UserAgentMetadata(TypedDict):
-    brands: NotRequired[List[UserAgentBrand]]
-    fullVersionList: NotRequired[List[UserAgentBrand]]
+    brands: NotRequired[list[UserAgentBrand]]
+    fullVersionList: NotRequired[list[UserAgentBrand]]
     platform: str
     platformVersion: str
     architecture: str
@@ -124,7 +124,7 @@ class PostDataEntry(TypedDict):
 class TrustTokenParams(TypedDict):
     operation: TrustTokenOperationType
     refreshPolicy: RefreshPolicy
-    issuers: NotRequired[List[str]]
+    issuers: NotRequired[list[str]]
 
 
 class Request(TypedDict):
@@ -133,7 +133,7 @@ class Request(TypedDict):
     method: str
     headers: NotRequired[dict]
     hasPostData: NotRequired[bool]
-    postDataEntries: NotRequired[List[PostDataEntry]]
+    postDataEntries: NotRequired[list[PostDataEntry]]
     mixedContentType: NotRequired[MixedContentType]
     initialPriority: NotRequired[ResourcePriority]
     referrerPolicy: NotRequired[ReferrerPolicy]

@@ -8,7 +8,6 @@ from typing import (
     Awaitable,
     Callable,
     Coroutine,
-    Dict,
     Optional,
     TypeVar,
     Union,
@@ -118,7 +117,7 @@ class ConnectionHandler:
     async def register_callback(
         self,
         event_name: str,
-        callback: Callable[[Dict], Awaitable[None]],
+        callback: Callable[[dict], Awaitable[None]],
         temporary: bool = False,
     ) -> int:
         """

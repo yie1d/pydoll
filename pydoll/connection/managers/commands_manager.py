@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Dict
 
 from pydoll.protocol.base import Command
 
@@ -17,7 +16,7 @@ class CommandsManager:
 
     def __init__(self) -> None:
         """Initialize command manager with empty state."""
-        self._pending_commands: Dict[int, asyncio.Future] = {}
+        self._pending_commands: dict[int, asyncio.Future] = {}
         self._id = 1
 
     def create_command_future(self, command: Command) -> asyncio.Future:

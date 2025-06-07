@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union
 
 from pydoll.commands import (
     DomCommands,
@@ -56,7 +56,7 @@ class FindElementsMixin:
         find_all: bool = False,
         raise_exc: bool = True,
         **attributes,
-    ) -> Union['WebElement', List['WebElement'], None]:
+    ) -> Union['WebElement', list['WebElement'], None]:
         """
         Find element(s) using combination of common HTML attributes.
 
@@ -75,7 +75,7 @@ class FindElementsMixin:
             **attributes: Additional HTML attributes to match.
 
         Returns:
-            WebElement, List[WebElement], or None based on find_all and raise_exc.
+            WebElement, list[WebElement], or None based on find_all and raise_exc.
 
         Raises:
             ValueError: If no search criteria provided.
@@ -104,7 +104,7 @@ class FindElementsMixin:
 
     async def query(
         self, expression: str, timeout: int = 0, find_all: bool = False, raise_exc: bool = True
-    ) -> Union['WebElement', List['WebElement'], None]:
+    ) -> Union['WebElement', list['WebElement'], None]:
         """
         Find element(s) using raw CSS selector or XPath expression.
 
@@ -118,7 +118,7 @@ class FindElementsMixin:
             raise_exc: Whether to raise exception if no elements found.
 
         Returns:
-            WebElement, List[WebElement], or None based on find_all and raise_exc.
+            WebElement, list[WebElement], or None based on find_all and raise_exc.
 
         Raises:
             ElementNotFound: If no elements found and raise_exc=True.
@@ -136,7 +136,7 @@ class FindElementsMixin:
         timeout: int = 0,
         find_all: bool = False,
         raise_exc: bool = True,
-    ) -> Union['WebElement', List['WebElement'], None]:
+    ) -> Union['WebElement', list['WebElement'], None]:
         """
         Core element finding method with optional waiting capability.
 
@@ -152,7 +152,7 @@ class FindElementsMixin:
             raise_exc: Whether to raise exception if no elements found.
 
         Returns:
-            WebElement, List[WebElement], or None based on find_all and raise_exc.
+            WebElement, list[WebElement], or None based on find_all and raise_exc.
 
         Raises:
             ElementNotFound: If no elements found with timeout=0 and raise_exc=True.
@@ -222,7 +222,7 @@ class FindElementsMixin:
 
     async def _find_elements(
         self, by: By, value: str, raise_exc: bool = True
-    ) -> List['WebElement']:
+    ) -> list['WebElement']:
         """
         Find all elements matching selector.
 
@@ -236,7 +236,7 @@ class FindElementsMixin:
             raise_exc: Whether to raise ElementNotFound if none found.
 
         Returns:
-            List of WebElement instances (empty if none found and raise_exc=False).
+            list of WebElement instances (empty if none found and raise_exc=False).
 
         Raises:
             ElementNotFound: If no elements found and raise_exc=True.
@@ -283,14 +283,14 @@ class FindElementsMixin:
 
     def _get_by_and_value(  # noqa: PLR0913, PLR0917
         self,
-        by_map: Dict[str, By],
+        by_map: dict[str, By],
         id: Optional[str] = None,
         class_name: Optional[str] = None,
         name: Optional[str] = None,
         tag_name: Optional[str] = None,
         text: Optional[str] = None,
         **attributes,
-    ) -> Tuple[By, str]:
+    ) -> tuple[By, str]:
         """
         Determine appropriate selector strategy and value from provided arguments.
 

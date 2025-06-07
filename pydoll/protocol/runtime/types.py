@@ -1,4 +1,4 @@
-from typing import Any, List, NotRequired, TypedDict, Union
+from typing import Any, NotRequired, TypedDict, Union
 
 from pydoll.constants import (
     DeepSerializedValueType,
@@ -38,8 +38,8 @@ class ObjectPreview(TypedDict):
     subtype: NotRequired[ObjectPreviewSubtype]
     description: NotRequired[str]
     overflow: bool
-    properties: List[PropertyPreview]
-    entries: NotRequired[List[EntryPreview]]
+    properties: list[PropertyPreview]
+    entries: NotRequired[list[EntryPreview]]
 
 
 class CustomPreview(TypedDict):
@@ -75,7 +75,7 @@ class StackTraceId(TypedDict):
 
 class StackTrace(TypedDict):
     description: NotRequired[str]
-    callFrames: List[CallFrame]
+    callFrames: list[CallFrame]
     parent: NotRequired['StackTrace']
     parentId: NotRequired[StackTraceId]
 

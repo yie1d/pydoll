@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.protocol.dom.types import (
     BoxModel,
@@ -14,7 +14,7 @@ class DescribeNodeResultDict(TypedDict):
 
 
 class GetAttributesResultDict(TypedDict):
-    attributes: List[str]
+    attributes: list[str]
 
 
 class GetBoxModelResultDict(TypedDict):
@@ -44,7 +44,7 @@ class QuerySelectorResultDict(TypedDict):
 
 
 class QuerySelectorAllResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class RequestNodeResultDict(TypedDict):
@@ -60,7 +60,7 @@ class SetNodeNameResultDict(TypedDict):
 
 
 class CollectClassNamesFromSubtreeResultDict(TypedDict):
-    classNames: List[str]
+    classNames: list[str]
 
 
 class CopyToResultDict(TypedDict):
@@ -76,11 +76,11 @@ class GetContainerForNodeResultDict(TypedDict):
 
 
 class GetContentQuadsResultDict(TypedDict):
-    quads: List[Quad]
+    quads: list[Quad]
 
 
 class GetDetachedDomNodesResultDict(TypedDict):
-    detachedNodes: List[DetachedElementInfo]
+    detachedNodes: list[DetachedElementInfo]
 
 
 class GetElementByRelationResultDict(TypedDict):
@@ -97,7 +97,7 @@ class GetFrameOwnerResultDict(TypedDict):
 
 
 class GetNodesForSubtreeByStyleResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class GetNodeStackTracesResultDict(TypedDict):
@@ -105,7 +105,7 @@ class GetNodeStackTracesResultDict(TypedDict):
 
 
 class GetQueryingDescendantForContainerResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class GetRelayoutBoundaryResultDict(TypedDict):
@@ -113,11 +113,11 @@ class GetRelayoutBoundaryResultDict(TypedDict):
 
 
 class GetSearchResultsResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class GetTopLayerElementsResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class PerformSearchResultDict(TypedDict):
@@ -130,7 +130,7 @@ class PushNodeByPathToFrontendResultDict(TypedDict):
 
 
 class PushNodesByBackendIdsToFrontendResultDict(TypedDict):
-    nodeIds: List[int]
+    nodeIds: list[int]
 
 
 class DescribeNodeResponse(TypedDict):

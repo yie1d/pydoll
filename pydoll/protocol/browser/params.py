@@ -1,4 +1,4 @@
-from typing import List, NotRequired
+from typing import NotRequired
 
 from pydoll.constants import DownloadBehavior, PermissionType
 from pydoll.protocol.base import CommandParams
@@ -43,6 +43,6 @@ class CancelDownloadParams(CommandParams):
 class GrantPermissionsParams(CommandParams):
     """Parameters for granting permissions."""
 
-    permissions: List[PermissionType]
+    permissions: list[PermissionType]
     origin: NotRequired[str]
     browserContextId: NotRequired[str]

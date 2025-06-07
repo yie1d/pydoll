@@ -1,4 +1,4 @@
-from typing import List, Literal, NotRequired
+from typing import Literal, NotRequired
 
 from pydoll.constants import (
     AutoResponseMode,
@@ -168,7 +168,7 @@ class GetAppIdParams(CommandParams):
 
 
 class GetInstallabilityErrorsParams(CommandParams):
-    installabilityErrors: NotRequired[List[InstallabilityError]]
+    installabilityErrors: NotRequired[list[InstallabilityError]]
 
 
 class GetOriginTrialsParams(CommandParams):
@@ -202,7 +202,7 @@ class SetAdBlockingEnabledParams(CommandParams):
 
 class SetFontFamiliesParams(CommandParams):
     fontFamilies: FontFamilies
-    forScripts: List[ScriptFontFamilies]
+    forScripts: list[ScriptFontFamilies]
 
 
 class SetFontSizesParams(CommandParams):
@@ -239,4 +239,4 @@ class CompilationCacheParams(CommandParams):
 
 
 class ProduceCompilationCacheParams(CommandParams):
-    scripts: List[CompilationCacheParams]
+    scripts: list[CompilationCacheParams]

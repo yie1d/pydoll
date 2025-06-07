@@ -1,8 +1,8 @@
-from typing import Annotated, Any, List, NotRequired, TypedDict
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from pydoll.constants import CompatibilityMode, PseudoType, ShadowRootType
 
-Quad = Annotated[List[float], 'Format: [x1, y1, x2, y2, x3, y3, x4, y4]']
+Quad = Annotated[list[float], 'Format: [x1, y1, x2, y2, x3, y3, x4, y4]']
 
 
 class Rect(TypedDict):
@@ -34,8 +34,8 @@ class Node(TypedDict):
     localName: str
     nodeValue: str
     childNodeCount: NotRequired[int]
-    children: NotRequired[List['Node']]
-    attributes: NotRequired[List[str]]
+    children: NotRequired[list['Node']]
+    attributes: NotRequired[list[str]]
     documentURL: NotRequired[str]
     baseURL: NotRequired[str]
     publicId: NotRequired[str]
@@ -49,11 +49,11 @@ class Node(TypedDict):
     shadowRootType: NotRequired[ShadowRootType]
     frameId: NotRequired[str]
     contentDocument: NotRequired['Node']
-    shadowRoots: NotRequired[List['Node']]
+    shadowRoots: NotRequired[list['Node']]
     templateContent: NotRequired['Node']
-    pseudoElements: NotRequired[List['Node']]
+    pseudoElements: NotRequired[list['Node']]
     importedDocument: NotRequired['Node']
-    distributedNodes: NotRequired[List[BackendNode]]
+    distributedNodes: NotRequired[list[BackendNode]]
     isSVG: NotRequired[bool]
     compatibilityMode: NotRequired[CompatibilityMode]
     assignedSlot: NotRequired[BackendNode]
@@ -62,13 +62,13 @@ class Node(TypedDict):
 
 class DetachedElementInfo(TypedDict):
     treeNode: Node
-    retainedNodeIds: List[int]
+    retainedNodeIds: list[int]
 
 
 class ShapeOutsideInfo(TypedDict):
     bounds: Quad
-    shape: List[Any]
-    marginShape: List[Any]
+    shape: list[Any]
+    marginShape: list[Any]
 
 
 class BoxModel(TypedDict):

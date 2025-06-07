@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import TypedDict
 
 from pydoll.protocol.network.types import Cookie
 from pydoll.protocol.storage.types import (
@@ -11,7 +11,7 @@ from pydoll.protocol.storage.types import (
 
 
 class GetCookiesResultDict(TypedDict):
-    cookies: List[Cookie]
+    cookies: list[Cookie]
 
 
 class GetStorageKeyForFrameResultDict(TypedDict):
@@ -22,7 +22,7 @@ class GetUsageAndQuotaResultDict(TypedDict):
     usage: float
     quota: float
     overrideActive: bool
-    usageBreakdown: List[UsageForType]
+    usageBreakdown: list[UsageForType]
 
 
 class ClearTrustTokensResultDict(TypedDict):
@@ -30,7 +30,7 @@ class ClearTrustTokensResultDict(TypedDict):
 
 
 class GetAffectedUrlsForThirdPartyCookieMetadataResultDict(TypedDict):
-    matchedUrls: List[str]
+    matchedUrls: list[str]
 
 
 class GetInterestGroupDetailsResultDict(TypedDict):
@@ -38,11 +38,11 @@ class GetInterestGroupDetailsResultDict(TypedDict):
 
 
 class GetRelatedWebsiteSetsResultDict(TypedDict):
-    sets: List[RelatedWebsiteSet]
+    sets: list[RelatedWebsiteSet]
 
 
 class GetSharedStorageEntriesResultDict(TypedDict):
-    entries: List[SharedStorageEntry]
+    entries: list[SharedStorageEntry]
 
 
 class GetSharedStorageMetadataResultDict(TypedDict):
@@ -50,11 +50,11 @@ class GetSharedStorageMetadataResultDict(TypedDict):
 
 
 class GetTrustTokensResultDict(TypedDict):
-    tokens: List[TrustToken]
+    tokens: list[TrustToken]
 
 
 class RunBounceTrackingMitigationsResultDict(TypedDict):
-    deletedSites: List[str]
+    deletedSites: list[str]
 
 
 class SendPendingAttributionReportsResultDict(TypedDict):

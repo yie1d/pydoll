@@ -1,4 +1,4 @@
-from typing import List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydoll.protocol.runtime.types import (
     ExceptionDetails,
@@ -30,18 +30,18 @@ class EvaluateResultDict(TypedDict):
 
 
 class GetPropertiesResultDict(TypedDict):
-    result: List[PropertyDescriptor]
-    internalProperties: NotRequired[List[InternalPropertyDescriptor]]
-    privateProperties: NotRequired[List[PrivatePropertyDescriptor]]
+    result: list[PropertyDescriptor]
+    internalProperties: NotRequired[list[InternalPropertyDescriptor]]
+    privateProperties: NotRequired[list[PrivatePropertyDescriptor]]
     exceptionDetails: NotRequired[ExceptionDetails]
 
 
 class GlobalLexicalScopeNamesResultDict(TypedDict):
-    names: List[str]
+    names: list[str]
 
 
 class QueryObjectsResultDict(TypedDict):
-    objects: List[RemoteObject]
+    objects: list[RemoteObject]
 
 
 class RunScriptResultDict(TypedDict):

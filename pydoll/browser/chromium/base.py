@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 from pydoll.browser.interfaces import BrowserOptionsManager
 from pydoll.browser.managers import (
@@ -22,6 +22,7 @@ from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
     AuthChallengeResponseValues,
     DownloadBehavior,
+    NetworkErrorReason,
     PermissionType,
 )
 from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
@@ -33,6 +34,7 @@ from pydoll.protocol.browser.responses import (
 )
 from pydoll.protocol.browser.types import WindowBoundsDict
 from pydoll.protocol.fetch.events import FetchEvent
+from pydoll.protocol.fetch.types import HeaderEntry
 from pydoll.protocol.network.types import Cookie, CookieParam, RequestPausedEvent
 from pydoll.protocol.storage.responses import GetCookiesResponse
 from pydoll.protocol.target.responses import (
@@ -70,6 +72,7 @@ class Browser(ABC):  # noqa: PLR0904
         Note:
             Call start() to actually launch the browser.
         """
+        self._validate_connection_port(connection_port)
         self.options = options_manager.initialize_options()
         self._proxy_manager = ProxyManager(self.options)
         self._connection_port = connection_port if connection_port else randint(9223, 9322)
@@ -178,7 +181,7 @@ class Browser(ABC):  # noqa: PLR0904
             TargetCommands.dispose_browser_context(browser_context_id)
         )
 
-    async def get_browser_contexts(self) -> List[str]:
+    async def get_browser_contexts(self) -> list[str]:
         """Get all browser context IDs including the default context."""
         response: GetBrowserContextsResponse = await self._execute_command(
             TargetCommands.get_browser_contexts()
@@ -205,7 +208,7 @@ class Browser(ABC):  # noqa: PLR0904
         target_id = response['result']['targetId']
         return Tab(self, self._connection_port, target_id, browser_context_id)
 
-    async def get_targets(self) -> List[TargetInfo]:
+    async def get_targets(self) -> list[TargetInfo]:
         """
         Get all active targets/pages in browser.
 
@@ -248,12 +251,12 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._execute_command(StorageCommands.clear_cookies(browser_context_id))
 
     async def set_cookies(
-        self, cookies: List[CookieParam], browser_context_id: Optional[str] = None
+        self, cookies: list[CookieParam], browser_context_id: Optional[str] = None
     ):
         """Set multiple cookies in browser or context."""
         return await self._execute_command(StorageCommands.set_cookies(cookies, browser_context_id))
 
-    async def get_cookies(self, browser_context_id: Optional[str] = None) -> List[Cookie]:
+    async def get_cookies(self, browser_context_id: Optional[str] = None) -> list[Cookie]:
         """Get all cookies from browser or context."""
         response: GetCookiesResponse = await self._execute_command(
             StorageCommands.get_cookies(browser_context_id)
@@ -310,7 +313,7 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def grant_permissions(
         self,
-        permissions: List[PermissionType],
+        permissions: list[PermissionType],
         origin: Optional[str] = None,
         browser_context_id: Optional[str] = None,
     ):
@@ -401,6 +404,33 @@ class Browser(ABC):  # noqa: PLR0904
         """
         return await self._execute_command(FetchCommands.continue_request(request_id))
 
+    async def fail_request(self, request_id: str, error_reason: NetworkErrorReason):
+        """Fail request with error code."""
+        return await self._execute_command(FetchCommands.fail_request(request_id, error_reason))
+
+    async def fulfill_request(
+        self,
+        request_id: str,
+        response_code: int,
+        response_headers: list[HeaderEntry],
+        response_body: dict[Any, Any],
+    ):
+        """Fulfill request with response data."""
+        return await self._execute_command(
+            FetchCommands.fulfill_request(
+                request_id,
+                response_code,
+                response_headers,
+                response_body,
+            )
+        )
+
+    @staticmethod
+    def _validate_connection_port(connection_port: Optional[int]):
+        """Validate connection port."""
+        if connection_port and connection_port < 0:
+            raise ValueError('Connection port must be a positive integer')
+
     async def _continue_request_callback(self, event: RequestPausedEvent):
         """Internal callback to continue paused requests."""
         request_id = event['params']['requestId']
@@ -461,7 +491,7 @@ class Browser(ABC):  # noqa: PLR0904
         return target.get('type') == 'page' and 'chrome-extension://' not in target.get('url', '')
 
     @staticmethod
-    async def _get_valid_tab_id(targets: List[TargetInfo]) -> str:
+    async def _get_valid_tab_id(targets: list[TargetInfo]) -> str:
         """
         Find valid attached tab ID.
 
