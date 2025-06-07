@@ -1,7 +1,8 @@
 import pytest
 
-from pydoll.browser.options import Options
+from pydoll.browser.options import ChromiumOptions as Options
 
+from pydoll.exceptions import ArgumentAlreadyExistsInOptions
 
 def test_initial_arguments():
     options = Options()
@@ -29,7 +30,7 @@ def test_add_duplicate_argument():
     options = Options()
     options.add_argument('--headless')
     with pytest.raises(
-        ValueError, match='Argument already exists: --headless'
+        ArgumentAlreadyExistsInOptions, match='Argument already exists: --headless'
     ):
         options.add_argument('--headless')
 

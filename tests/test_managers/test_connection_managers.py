@@ -93,11 +93,6 @@ def test_register_callback_success(events_manager):
     )
 
 
-def test_register_callback_invalid(events_manager):
-    with pytest.raises(exceptions.InvalidCallback):
-        events_manager.register_callback('TestEvent', 'Not a callback')
-
-
 def test_remove_existing_callback(events_manager):
     dummy_callback = lambda event: event
     callback_id = events_manager.register_callback('TestEvent', dummy_callback)

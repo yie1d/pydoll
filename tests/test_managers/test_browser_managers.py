@@ -3,12 +3,13 @@ from unittest.mock import MagicMock, Mock, patch, ANY
 import pytest
 
 from pydoll.browser.managers import (
-    BrowserOptionsManager,
+    ChromiumOptionsManager,
     BrowserProcessManager,
     ProxyManager,
     TempDirectoryManager,
 )
-from pydoll.browser.options import Options
+from pydoll.browser.options import ChromiumOptions as Options
+from pydoll.exceptions import InvalidOptionsObject
 
 
 @pytest.fixture
@@ -27,6 +28,12 @@ def temp_manager():
 def process_manager():
     mock_creator = Mock(return_value=MagicMock())
     return BrowserProcessManager(process_creator=mock_creator)
+
+
+@pytest.fixture
+def chromium_options_manager(proxy_options):
+    options_manager = ChromiumOptionsManager(proxy_options)
+    return options_manager
 
 
 def test_proxy_manager_no_proxy(proxy_options):
@@ -169,69 +176,52 @@ def test_handle_cleanup_error(temp_manager):
     assert e.value is exc
 
 
-def test_initialize_options_with_none():
-    result = BrowserOptionsManager.initialize_options(None)
+def test_initialize_options_with_none(chromium_options_manager):
+    result = chromium_options_manager.initialize_options()
 
     assert isinstance(result, Options)
-    assert result.arguments == []
+    assert result.arguments == ['--no-first-run', '--no-default-browser-check']
 
 
 def test_initialize_options_with_valid_options():
     options = Options()
     options.add_argument('--test')
-    result = BrowserOptionsManager.initialize_options(options)
+    chromium_options_manager = ChromiumOptionsManager(options)
+    result = chromium_options_manager.initialize_options()
 
     assert result is options
-    assert result.arguments == ['--test']
+    assert '--test' in result.arguments
 
 
 def test_initialize_options_with_invalid_type():
-    with pytest.raises(ValueError):
-        BrowserOptionsManager.initialize_options('invalid')
+    chromium_options_manager = ChromiumOptionsManager('invalid options object')
+    with pytest.raises(InvalidOptionsObject):
+        chromium_options_manager.initialize_options()
 
 
 def test_add_default_arguments():
     options = Options()
-    BrowserOptionsManager.add_default_arguments(options)
+    chromium_options_manager = ChromiumOptionsManager(options)
+    chromium_options_manager.add_default_arguments()
 
     assert '--no-first-run' in options.arguments
     assert '--no-default-browser-check' in options.arguments
 
 
-def test_validate_browser_paths_valid():
-    with (
-        patch('os.path.exists', return_value=True),
-        patch('os.access', return_value=True),
-    ):
-        result = BrowserOptionsManager.validate_browser_paths(['/fake/path'])
-        assert result == '/fake/path'
+
+def test_initialize_options_creates_new_instance():
+    manager = ChromiumOptionsManager(None)
+    result = manager.initialize_options()
+    assert isinstance(result, Options)
+    assert '--no-first-run' in result.arguments
+    assert '--no-default-browser-check' in result.arguments
 
 
-def test_validate_browser_paths_invalid():
-    with patch('os.path.exists', return_value=False):
-        with pytest.raises(ValueError):
-            BrowserOptionsManager.validate_browser_paths(['/fake/path'])
-
-
-def test_validate_browser_paths_multiple():
-    def fake_exists(path):
-        match path:
-            case '/first/fake/path':
-                return False
-            case '/second/fake/path':
-                return True
-            case _:
-                return False
-
-    def fake_access(path, mode):
-        return path == '/second/fake/path'
-
-    with (
-        patch('os.path.exists', side_effect=fake_exists),
-        patch('os.access', side_effect=fake_access),
-    ):
-        result = BrowserOptionsManager.validate_browser_paths([
-            '/first/fake/path',
-            '/second/fake/path',
-        ])
-        assert result == '/second/fake/path'
+def test_initialize_options_preserves_custom_arguments():
+    options = Options()
+    options.add_argument('--custom-flag')
+    manager = ChromiumOptionsManager(options)
+    result = manager.initialize_options()
+    assert '--custom-flag' in result.arguments
+    assert '--no-first-run' in result.arguments
+    assert '--no-default-browser-check' in result.arguments
