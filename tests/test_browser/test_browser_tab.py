@@ -14,6 +14,7 @@ from pydoll.exceptions import (
     InvalidIFrame,
     NotAnIFrame,
     InvalidFileExtension,
+    WaitElementTimeout,
 )
 from pydoll.commands import (
     DomCommands,
@@ -867,7 +868,7 @@ class TestTabUtilityMethods:
             # First call returns 0, second call returns time > timeout
             mock_loop.return_value.time.side_effect = [0, 1]  # 1 > 0.5 timeout
             with patch('pydoll.browser.tab.asyncio.sleep', AsyncMock()):
-                with pytest.raises(asyncio.TimeoutError, match="Page load timed out"):
+                with pytest.raises(WaitElementTimeout, match="Page load timed out"):
                     await tab._wait_page_load(timeout=0.5)
 
     @pytest.mark.asyncio

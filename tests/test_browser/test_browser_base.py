@@ -12,12 +12,13 @@ from pydoll.browser.tab import Tab
 from pydoll.commands import (
     BrowserCommands,
     FetchCommands,
+    RuntimeCommands,
     StorageCommands,
     TargetCommands,
 )
 from pydoll.protocol.fetch.events import FetchEvent
 from pydoll.connection.connection_handler import ConnectionHandler
-from pydoll.constants import DownloadBehavior, PermissionType
+from pydoll.constants import DownloadBehavior, PermissionType, NetworkErrorReason
 
 
 class ConcreteBrowser(Browser):
@@ -95,7 +96,7 @@ async def test_start_browser_success(mock_browser):
     )
 
     assert '--user-data-dir=' in str(mock_browser.options.arguments), (
-        'Diretório temporário não configurado'
+        'Temporary directory not configured'
     )
 
 
@@ -134,7 +135,6 @@ async def test_new_tab(mock_browser):
         'result': {'targetId': 'new_page'}
     }
     tab = await mock_browser.new_tab()
-    print('TAB: ', tab)
     assert tab._target_id == 'new_page'
     assert isinstance(tab, Tab)
 
@@ -195,6 +195,33 @@ async def test_window_management(mock_browser):
         BrowserCommands.set_window_minimized('window1'), timeout=10
     )
 
+@pytest.mark.asyncio
+async def test_get_window_id_for_target(mock_browser):
+    mock_browser._connection_handler.ping.return_value = True
+    mock_browser._get_valid_tab_id = AsyncMock(return_value='page1')
+
+    tab = await mock_browser.start()
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'windowId': 'page1'}
+    }
+    window_id = await mock_browser.get_window_id_for_tab(tab)
+    assert window_id == 'page1'
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        BrowserCommands.get_window_for_target('page1'), timeout=10
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_window_id(mock_browser):
+    mock_browser.get_targets = AsyncMock(return_value=[{'targetId': 'target1', 'type': 'page'}])
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'windowId': 'window1'}
+    }
+    window_id = await mock_browser.get_window_id()
+    assert window_id == 'window1'
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        BrowserCommands.get_window_for_target('target1'), timeout=10
+    )
 
 @pytest.mark.asyncio
 async def test_stop_browser(mock_browser):
@@ -350,7 +377,7 @@ async def test_create_browser_context(mock_browser):
         TargetCommands.create_browser_context()
     )
     
-    # Testar com proxy
+    # Test with proxy
     mock_browser._execute_command.return_value = {
         'result': {'browserContextId': 'context2'}
     }
@@ -487,7 +514,7 @@ async def test_headless_mode(mock_browser):
 
 @pytest.mark.asyncio
 async def test_multiple_tab_handling(mock_browser):
-    # Simular a obtenção de múltiplas abas
+    # Simulate getting multiple tabs
     mock_browser._connection_handler.execute_command.side_effect = [
         {'result': {'targetId': 'tab1'}},
         {'result': {'targetId': 'tab2'}}
@@ -499,9 +526,162 @@ async def test_multiple_tab_handling(mock_browser):
     assert tab1._target_id == 'tab1'
     assert tab2._target_id == 'tab2'
     
-    # Verificar que as chamadas corretas foram feitas
+    # Verify that correct calls were made
     calls = mock_browser._connection_handler.execute_command.call_args_list
     assert calls[0][0][0] == TargetCommands.create_target('https://example1.com', None)
     assert calls[1][0][0] == TargetCommands.create_target('https://example2.com', None)
 
 
+# New tests for _get_valid_tab_id
+@pytest.mark.asyncio
+async def test_get_valid_tab_id_success():
+    """Test _get_valid_tab_id with a valid tab."""
+    targets = [
+        {'type': 'page', 'url': 'https://example.com', 'targetId': 'valid_tab_1'},
+        {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'},
+        {'type': 'page', 'url': 'chrome://newtab/', 'targetId': 'valid_tab_2'}
+    ]
+    
+    result = await Browser._get_valid_tab_id(targets)
+    assert result == 'valid_tab_1'
+
+
+@pytest.mark.asyncio
+async def test_get_valid_tab_id_no_valid_tabs():
+    """Test _get_valid_tab_id when there are no valid tabs."""
+    targets = [
+        {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'},
+        {'type': 'background_page', 'url': 'chrome://background', 'targetId': 'bg_1'}
+    ]
+    
+    with pytest.raises(exceptions.NoValidTabFound):
+        await Browser._get_valid_tab_id(targets)
+
+
+@pytest.mark.asyncio
+async def test_get_valid_tab_id_empty_targets():
+    """Test _get_valid_tab_id with empty targets list."""
+    targets = []
+    
+    with pytest.raises(exceptions.NoValidTabFound):
+        await Browser._get_valid_tab_id(targets)
+
+
+@pytest.mark.asyncio
+async def test_get_valid_tab_id_missing_target_id():
+    """Test _get_valid_tab_id when valid tab has no targetId."""
+    targets = [
+        {'type': 'page', 'url': 'https://example.com'},  # No targetId
+        {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'}
+    ]
+    
+    with pytest.raises(exceptions.NoValidTabFound, match='Tab missing targetId'):
+        await Browser._get_valid_tab_id(targets)
+
+
+@pytest.mark.asyncio
+async def test_get_valid_tab_id_filters_extensions():
+    """Test if _get_valid_tab_id correctly filters extensions."""
+    targets = [
+        {'type': 'page', 'url': 'chrome-extension://abc123/popup.html', 'targetId': 'ext_page'},
+        {'type': 'page', 'url': 'https://example.com', 'targetId': 'valid_tab'}
+    ]
+    
+    result = await Browser._get_valid_tab_id(targets)
+    assert result == 'valid_tab'
+
+
+# Tests for enable_runtime_events and disable_runtime_events
+@pytest.mark.asyncio
+async def test_enable_runtime_events(mock_browser):
+    """Test enable_runtime_events."""
+    await mock_browser.enable_runtime_events()
+    
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        RuntimeCommands.enable()
+    )
+
+
+@pytest.mark.asyncio
+async def test_disable_runtime_events(mock_browser):
+    """Test disable_runtime_events."""
+    await mock_browser.disable_runtime_events()
+    
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        RuntimeCommands.disable()
+    )
+
+
+# Tests for fail_request and fulfill_request
+@pytest.mark.asyncio
+async def test_fail_request(mock_browser):
+    """Test fail_request."""
+    request_id = 'test_request_123'
+    error_reason = NetworkErrorReason.FAILED
+    
+    await mock_browser.fail_request(request_id, error_reason)
+    
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        FetchCommands.fail_request(request_id, error_reason), timeout=10
+    )
+
+
+@pytest.mark.asyncio
+async def test_fulfill_request(mock_browser):
+    """Test fulfill_request."""
+    request_id = 'test_request_123'
+    response_code = 200
+    response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
+    response_body = {'status': 'success', 'data': 'test'}
+    
+    await mock_browser.fulfill_request(
+        request_id, response_code, response_headers, response_body
+    )
+    
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        FetchCommands.fulfill_request(
+            request_id, response_code, response_headers, response_body
+        ), timeout=10
+    )
+
+
+# Additional test for 'on' with async callback
+@pytest.mark.asyncio
+async def test_event_registration_with_async_callback(mock_browser):
+    """Test async callback registration."""
+    mock_browser._connection_handler.register_callback.return_value = 456
+    
+    async def async_test_callback(event):
+        """Test async callback."""
+        return f"Processed event: {event}"
+    
+    callback_id = await mock_browser.on('test_async_event', async_test_callback, temporary=False)
+    assert callback_id == 456
+    
+    mock_browser._connection_handler.register_callback.assert_called_with(
+        'test_async_event', ANY, False
+    )
+    
+    # Verify that callback was registered correctly
+    call_args = mock_browser._connection_handler.register_callback.call_args
+    registered_callback = call_args[0][1]  # Second argument (callback)
+    
+    # The registered callback should be a function
+    assert callable(registered_callback)
+
+
+@pytest.mark.asyncio
+async def test_event_registration_sync_callback(mock_browser):
+    """Test sync callback registration."""
+    mock_browser._connection_handler.register_callback.return_value = 789
+    
+    def sync_test_callback(event):
+        """Test sync callback."""
+        return f"Processed sync event: {event}"
+    
+    callback_id = await mock_browser.on('test_sync_event', sync_test_callback, temporary=True)
+    assert callback_id == 789
+    
+    mock_browser._connection_handler.register_callback.assert_called_with(
+        'test_sync_event', ANY, True
+    )
