@@ -125,15 +125,15 @@ class DomCommands:  # noqa
             Command: CDP command that returns detailed information about the requested node.
         """
         params = DescribeNodeParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
         if depth:
             params['depth'] = depth
-        if pierce:
+        if pierce is not None:
             params['pierce'] = pierce
         return Command(method=DomMethod.DESCRIBE_NODE, params=params)
 
@@ -248,11 +248,11 @@ class DomCommands:  # noqa
                     coordinates for content, padding, border, and margin boxes.
         """
         params = GetBoxModelParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
         return Command(method=DomMethod.GET_BOX_MODEL, params=params)
 
@@ -278,9 +278,9 @@ class DomCommands:  # noqa
             Command: CDP command that returns the root DOM node.
         """
         params = GetDocumentParams()
-        if depth:
+        if depth is not None:
             params['depth'] = depth
-        if pierce:
+        if pierce is not None:
             params['pierce'] = pierce
         return Command(method=DomMethod.GET_DOCUMENT, params=params)
 
@@ -311,9 +311,9 @@ class DomCommands:  # noqa
                    frame information when available.
         """
         params = GetNodeForLocationParams(x=x, y=y)
-        if include_user_agent_shadow_dom:
+        if include_user_agent_shadow_dom is not None:
             params['includeUserAgentShadowDOM'] = include_user_agent_shadow_dom
-        if ignore_pointer_events_none:
+        if ignore_pointer_events_none is not None:
             params['ignorePointerEventsNone'] = ignore_pointer_events_none
         return Command(method=DomMethod.GET_NODE_FOR_LOCATION, params=params)
 
@@ -340,11 +340,11 @@ class DomCommands:  # noqa
             Command: CDP command that returns the outer HTML markup of the node.
         """
         params = GetOuterHTMLParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
         return Command(method=DomMethod.GET_OUTER_HTML, params=params)
 
@@ -412,7 +412,7 @@ class DomCommands:  # noqa
             Command: CDP command to move a node, returning the new id of the moved node.
         """
         params = MoveToParams(nodeId=node_id, targetNodeId=target_node_id)
-        if insert_before_node_id:
+        if insert_before_node_id is not None:
             params['insertBeforeNodeId'] = insert_before_node_id
         return Command(method=DomMethod.MOVE_TO, params=params)
 
@@ -525,9 +525,9 @@ class DomCommands:  # noqa
             Command: CDP command to request child nodes.
         """
         params = RequestChildNodesParams(nodeId=node_id)
-        if depth:
+        if depth is not None:
             params['depth'] = depth
-        if pierce:
+        if pierce is not None:
             params['pierce'] = pierce
         return Command(method=DomMethod.REQUEST_CHILD_NODES, params=params)
 
@@ -575,13 +575,13 @@ class DomCommands:  # noqa
             Command: CDP command that returns a JavaScript object wrapper for the node.
         """
         params = ResolveNodeParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_group:
+        if object_group is not None:
             params['objectGroup'] = object_group
-        if execution_context_id:
+        if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
         return Command(method=DomMethod.RESOLVE_NODE, params=params)
 
@@ -610,13 +610,13 @@ class DomCommands:  # noqa
             Command: CDP command to scroll the element into view.
         """
         params = ScrollIntoViewIfNeededParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
-        if rect:
+        if rect is not None:
             params['rect'] = rect
         return Command(method=DomMethod.SCROLL_INTO_VIEW_IF_NEEDED, params=params)
 
@@ -643,7 +643,7 @@ class DomCommands:  # noqa
             Command: CDP command to set an attribute as text.
         """
         params = SetAttributeAsTextParams(nodeId=node_id, text=text)
-        if name:
+        if name is not None:
             params['name'] = name
         return Command(method=DomMethod.SET_ATTRIBUTES_AS_TEXT, params=params)
 
@@ -695,11 +695,11 @@ class DomCommands:  # noqa
             Command: CDP command to set files for a file input element.
         """
         params = SetFileInputFilesParams(files=files)
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
         return Command(method=DomMethod.SET_FILE_INPUT_FILES, params=params)
 
@@ -813,7 +813,7 @@ class DomCommands:  # noqa
             Command: CDP command that returns the id of the new copy.
         """
         params = CopyToParams(nodeId=node_id, targetNodeId=target_node_id)
-        if insert_before_node_id:
+        if insert_before_node_id is not None:
             params['insertBeforeNodeId'] = insert_before_node_id
         return Command(method=DomMethod.COPY_TO, params=params)
 
@@ -856,7 +856,7 @@ class DomCommands:  # noqa
             Command: CDP command that returns the anchor element node information.
         """
         params = GetAnchorElementParams(nodeId=node_id)
-        if anchor_specifier:
+        if anchor_specifier is not None:
             params['anchorSpecifier'] = anchor_specifier
         return Command(method=DomMethod.GET_ANCHOR_ELEMENT, params=params)
 
@@ -886,13 +886,13 @@ class DomCommands:  # noqa
             Command: CDP command that returns information about the containing element.
         """
         params = GetContainerForNodeParams(nodeId=node_id)
-        if container_name:
+        if container_name is not None:
             params['containerName'] = container_name
-        if physical_axes:
+        if physical_axes is not None:
             params['physicalAxes'] = physical_axes
-        if logical_axes:
+        if logical_axes is not None:
             params['logicalAxes'] = logical_axes
-        if queries_scroll_state:
+        if queries_scroll_state is not None:
             params['queriesScrollState'] = queries_scroll_state
         return Command(method=DomMethod.GET_CONTAINER_FOR_NODE, params=params)
 
@@ -918,11 +918,11 @@ class DomCommands:  # noqa
             Command: CDP command that returns the quads describing the node position.
         """
         params = GetContentQuadsParams()
-        if node_id:
+        if node_id is not None:
             params['nodeId'] = node_id
-        if backend_node_id:
+        if backend_node_id is not None:
             params['backendNodeId'] = backend_node_id
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
         return Command(method=DomMethod.GET_CONTENT_QUADS, params=params)
 
@@ -1024,7 +1024,7 @@ class DomCommands:  # noqa
             Command: CDP command that returns nodes matching the specified styles.
         """
         params = GetNodesForSubtreeByStyleParams(nodeId=node_id, computedStyles=computed_styles)
-        if pierce:
+        if pierce is not None:
             params['pierce'] = pierce
         return Command(method=DomMethod.GET_NODES_FOR_SUBTREE_BY_STYLE, params=params)
 
@@ -1160,7 +1160,7 @@ class DomCommands:  # noqa
             Command: CDP command that returns search results identifier and count.
         """
         params = PerformSearchParams(query=query)
-        if include_user_agent_shadow_dom:
+        if include_user_agent_shadow_dom is not None:
             params['includeUserAgentShadowDOM'] = include_user_agent_shadow_dom
         return Command(method=DomMethod.PERFORM_SEARCH, params=params)
 

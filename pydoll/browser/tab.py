@@ -297,6 +297,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             InvalidIFrame: If iframe lacks valid src attribute.
             IFrameNotFound: If iframe target not found in browser.
         """
+        print('frame.tag_name: ', frame.tag_name)
         if not frame.tag_name == 'iframe':
             raise NotAnIFrame
 
@@ -541,7 +542,6 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         Args:
             files: File path(s) for upload.
         """
-
         async def event_handler(event):
             await self._execute_command(
                 DomCommands.upload_files(
@@ -549,7 +549,6 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                     backend_node_id=event['params']['backendNodeId'],
                 )
             )
-
         if self.page_events_enabled is False:
             _before_page_events_enabled = False
             await self.enable_page_events()

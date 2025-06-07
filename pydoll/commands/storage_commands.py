@@ -89,7 +89,7 @@ class StorageCommands:  # noqa: PLR0904
             Command: The CDP command to clear all cookies.
         """
         params = ClearCookiesParams()
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
         return Command(method=StorageMethod.CLEAR_COOKIES, params=params)
 
@@ -143,7 +143,7 @@ class StorageCommands:  # noqa: PLR0904
                 objects.
         """
         params = GetCookiesParams()
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
         return Command(method=StorageMethod.GET_COOKIES, params=params)
 
@@ -200,7 +200,7 @@ class StorageCommands:  # noqa: PLR0904
             Command: The CDP command to set the specified cookies.
         """
         params = SetCookiesParams(cookies=cookies)
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
         return Command(method=StorageMethod.SET_COOKIES, params=params)
 
@@ -537,7 +537,7 @@ class StorageCommands:  # noqa: PLR0904
             Command: The CDP command to get Trust Tokens, which will return pairs
                     of issuer origin and count of available tokens.
         """
-        return Command(method=StorageMethod.GET_TRUST_TOKENS)
+        return Command(method=StorageMethod.GET_TRUST_TOKENS, params={})
 
     @staticmethod
     def override_quota_for_origin(
@@ -558,7 +558,7 @@ class StorageCommands:  # noqa: PLR0904
             Command: The CDP command to override the origin's quota.
         """
         params = OverrideQuotaForOriginParams(origin=origin)
-        if quota_size:
+        if quota_size is not None:
             params['quotaSize'] = quota_size
         return Command(method=StorageMethod.OVERRIDE_QUOTA_FOR_ORIGIN, params=params)
 
@@ -591,7 +591,7 @@ class StorageCommands:  # noqa: PLR0904
         Returns:
             Command: The CDP command to run bounce tracking mitigations.
         """
-        return Command(method=StorageMethod.RUN_BOUNCE_TRACKING_MITIGATIONS)
+        return Command(method=StorageMethod.RUN_BOUNCE_TRACKING_MITIGATIONS, params={})
 
     @staticmethod
     def send_pending_attribution_reports() -> Command[SendPendingAttributionReportsResponse]:
@@ -605,7 +605,7 @@ class StorageCommands:  # noqa: PLR0904
         Returns:
             Command: The CDP command to send pending attribution reports.
         """
-        return Command(method=StorageMethod.SEND_PENDING_ATTRIBUTION_REPORTS)
+        return Command(method=StorageMethod.SEND_PENDING_ATTRIBUTION_REPORTS, params={})
 
     @staticmethod
     def set_attribution_reporting_local_testing_mode(enable: bool) -> Command[Response]:
@@ -688,7 +688,7 @@ class StorageCommands:  # noqa: PLR0904
             Command: The CDP command to set a Shared Storage entry.
         """
         params = SetSharedStorageEntryParams(ownerOrigin=owner_origin, key=key, value=value)
-        if ignore_if_present:
+        if ignore_if_present is not None:
             params['ignoreIfPresent'] = ignore_if_present
         return Command(method=StorageMethod.SET_SHARED_STORAGE_ENTRY, params=params)
 

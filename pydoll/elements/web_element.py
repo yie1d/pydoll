@@ -344,7 +344,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def _click_option_tag(self):
         """Specialized method for clicking <option> elements in dropdowns."""
         script = Scripts.CLICK_OPTION_TAG.replace('{self.value}', self.value)
-        await self._execute_command(RuntimeCommands.evaluate_script(script))
+        await self._execute_command(RuntimeCommands.evaluate(script))
 
     async def _is_element_visible(self):
         """Check if element is visible using comprehensive JavaScript visibility test."""

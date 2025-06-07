@@ -62,7 +62,7 @@ class RuntimeCommands:
             Command[Response]: Command object to add a JavaScript binding.
         """
         params = AddBindingParams(name=name)
-        if execution_context_name:
+        if execution_context_name is not None:
             params['executionContextName'] = execution_context_name
 
         return Command(method=RuntimeMethod.ADD_BINDING, params=params)
@@ -86,9 +86,9 @@ class RuntimeCommands:
             Command[AwaitPromiseResponse]: Command object to await a promise.
         """
         params = AwaitPromiseParams(promiseObjectId=promise_object_id)
-        if return_by_value:
+        if return_by_value is not None:
             params['returnByValue'] = return_by_value
-        if generate_preview:
+        if generate_preview is not None:
             params['generatePreview'] = generate_preview
 
         return Command(method=RuntimeMethod.AWAIT_PROMISE, params=params)
@@ -135,29 +135,29 @@ class RuntimeCommands:
             Command[CallFunctionOnResponse]: Command object to call a function on an object.
         """
         params = CallFunctionOnParams(functionDeclaration=function_declaration)
-        if object_id:
+        if object_id is not None:
             params['objectId'] = object_id
-        if arguments:
+        if arguments is not None:
             params['arguments'] = arguments
-        if silent:
+        if silent is not None:
             params['silent'] = silent
-        if return_by_value:
+        if return_by_value is not None:
             params['returnByValue'] = return_by_value
-        if generate_preview:
+        if generate_preview is not None:
             params['generatePreview'] = generate_preview
-        if user_gesture:
+        if user_gesture is not None:
             params['userGesture'] = user_gesture
-        if await_promise:
+        if await_promise is not None:
             params['awaitPromise'] = await_promise
-        if execution_context_id:
+        if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
-        if object_group:
+        if object_group is not None:
             params['objectGroup'] = object_group
-        if throw_on_side_effect:
+        if throw_on_side_effect is not None:
             params['throwOnSideEffect'] = throw_on_side_effect
-        if unique_context_id:
+        if unique_context_id is not None:
             params['uniqueContextId'] = unique_context_id
-        if serialization_options:
+        if serialization_options is not None:
             params['serializationOptions'] = serialization_options
 
         return Command(method=RuntimeMethod.CALL_FUNCTION_ON, params=params)
@@ -183,11 +183,11 @@ class RuntimeCommands:
             Command[CompileScriptResponse]: Command object to compile a script.
         """
         params = CompileScriptParams(expression=expression)
-        if source_url:
+        if source_url is not None:
             params['sourceURL'] = source_url
-        if persist_script:
+        if persist_script is not None:
             params['persistScript'] = persist_script
-        if execution_context_id:
+        if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
 
         return Command(method=RuntimeMethod.COMPILE_SCRIPT, params=params)
@@ -259,35 +259,35 @@ class RuntimeCommands:
             Command[EvaluateResponse]: Command object to evaluate JavaScript.
         """
         params = EvaluateParams(expression=expression)
-        if object_group:
+        if object_group is not None:
             params['objectGroup'] = object_group
-        if include_command_line_api:
+        if include_command_line_api is not None:
             params['includeCommandLineAPI'] = include_command_line_api
-        if silent:
+        if silent is not None:
             params['silent'] = silent
-        if context_id:
+        if context_id is not None:
             params['contextId'] = context_id
-        if return_by_value:
+        if return_by_value is not None:
             params['returnByValue'] = return_by_value
-        if generate_preview:
+        if generate_preview is not None:
             params['generatePreview'] = generate_preview
-        if user_gesture:
+        if user_gesture is not None:
             params['userGesture'] = user_gesture
-        if await_promise:
+        if await_promise is not None:
             params['awaitPromise'] = await_promise
-        if throw_on_side_effect:
+        if throw_on_side_effect is not None:
             params['throwOnSideEffect'] = throw_on_side_effect
-        if timeout:
+        if timeout is not None:
             params['timeout'] = timeout
-        if disable_breaks:
+        if disable_breaks is not None:
             params['disableBreaks'] = disable_breaks
-        if repl_mode:
+        if repl_mode is not None:
             params['replMode'] = repl_mode
-        if allow_unsafe_eval_blocked_by_csp:
+        if allow_unsafe_eval_blocked_by_csp is not None:
             params['allowUnsafeEvalBlockedByCSP'] = allow_unsafe_eval_blocked_by_csp
-        if unique_context_id:
+        if unique_context_id is not None:
             params['uniqueContextId'] = unique_context_id
-        if serialization_options:
+        if serialization_options is not None:
             params['serializationOptions'] = serialization_options
 
         return Command(method=RuntimeMethod.EVALUATE, params=params)
@@ -315,13 +315,13 @@ class RuntimeCommands:
             Command[GetPropertiesResponse]: Command object to get object properties.
         """
         params = GetPropertiesParams(objectId=object_id)
-        if own_properties:
+        if own_properties is not None:
             params['ownProperties'] = own_properties
-        if accessor_properties_only:
+        if accessor_properties_only is not None:
             params['accessorPropertiesOnly'] = accessor_properties_only
-        if generate_preview:
+        if generate_preview is not None:
             params['generatePreview'] = generate_preview
-        if non_indexed_properties_only:
+        if non_indexed_properties_only is not None:
             params['nonIndexedPropertiesOnly'] = non_indexed_properties_only
 
         return Command(method=RuntimeMethod.GET_PROPERTIES, params=params)
@@ -342,7 +342,7 @@ class RuntimeCommands:
                 scope names.
         """
         params = GlobalLexicalScopeNamesParams()
-        if execution_context_id:
+        if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
 
         return Command(method=RuntimeMethod.GLOBAL_LEXICAL_SCOPE_NAMES, params=params)
@@ -363,7 +363,7 @@ class RuntimeCommands:
             Command[QueryObjectsResponse]: Command object to query objects.
         """
         params = QueryObjectsParams(prototypeObjectId=prototype_object_id)
-        if object_group:
+        if object_group is not None:
             params['objectGroup'] = object_group
 
         return Command(method=RuntimeMethod.QUERY_OBJECTS, params=params)
@@ -446,19 +446,19 @@ class RuntimeCommands:
             Command[RunScriptResponse]: Command object to run a script.
         """
         params = RunScriptParams(scriptId=script_id)
-        if execution_context_id:
+        if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
-        if object_group:
+        if object_group is not None:
             params['objectGroup'] = object_group
-        if silent:
+        if silent is not None:
             params['silent'] = silent
-        if include_command_line_api:
+        if include_command_line_api is not None:
             params['includeCommandLineAPI'] = include_command_line_api
-        if return_by_value:
+        if return_by_value is not None:
             params['returnByValue'] = return_by_value
-        if generate_preview:
+        if generate_preview is not None:
             params['generatePreview'] = generate_preview
-        if await_promise:
+        if await_promise is not None:
             params['awaitPromise'] = await_promise
 
         return Command(method=RuntimeMethod.RUN_SCRIPT, params=params)

@@ -62,7 +62,7 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response.
         """
         params = ResetPermissionsParams()
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
         return Command(method=BrowserMethod.RESET_PERMISSIONS, params=params)
 
@@ -80,7 +80,7 @@ class BrowserCommands:
             Command[Response]: The CDP command that returns a basic success response.
         """
         params = CancelDownloadParams(guid=guid)
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
         return Command(method=BrowserMethod.CANCEL_DOWNLOAD, params=params)
 
@@ -125,12 +125,11 @@ class BrowserCommands:
                 after setting the download path.
         """
         params = SetDownloadBehaviorParams(behavior=behavior)
-        if download_path:
+        if download_path is not None:
             params['downloadPath'] = download_path
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
-        if events_enabled:
-            params['eventsEnabled'] = events_enabled
+        params['eventsEnabled'] = events_enabled
         return Command(method=BrowserMethod.SET_DOWNLOAD_BEHAVIOR, params=params)
 
     @staticmethod
@@ -231,10 +230,10 @@ class BrowserCommands:
                 after granting the specified permissions.
         """
         params = GrantPermissionsParams(permissions=permissions)
-        if origin:
+        if origin is not None:
             params['origin'] = origin
 
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
 
         return Command(method=BrowserMethod.GRANT_PERMISSIONS, params=params)

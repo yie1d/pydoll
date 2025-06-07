@@ -118,33 +118,33 @@ class InputCommands:
             Command: The CDP command to dispatch the key event.
         """
         params = DispatchKeyEventParams(type=type)
-        if modifiers:
+        if modifiers is not None:
             params['modifiers'] = modifiers
-        if timestamp:
+        if timestamp is not None:
             params['timestamp'] = timestamp
-        if text:
+        if text is not None:
             params['text'] = text
-        if unmodified_text:
+        if unmodified_text is not None:
             params['unmodifiedText'] = unmodified_text
-        if key_identifier:
+        if key_identifier is not None:
             params['keyIdentifier'] = key_identifier
-        if code:
+        if code is not None:
             params['code'] = code
-        if key:
+        if key is not None:
             params['key'] = key
-        if windows_virtual_key_code:
+        if windows_virtual_key_code is not None:
             params['windowsVirtualKeyCode'] = windows_virtual_key_code
-        if native_virtual_key_code:
+        if native_virtual_key_code is not None:
             params['nativeVirtualKeyCode'] = native_virtual_key_code
-        if auto_repeat:
+        if auto_repeat is not None:
             params['autoRepeat'] = auto_repeat
-        if is_keypad:
+        if is_keypad is not None:
             params['isKeypad'] = is_keypad
-        if is_system_key:
+        if is_system_key is not None:
             params['isSystemKey'] = is_system_key
-        if location:
+        if location is not None:
             params['location'] = location
-        if commands:
+        if commands is not None:
             params['commands'] = commands
         return Command(method=InputMethod.DISPATCH_KEY_EVENT, params=params)
 
@@ -210,29 +210,29 @@ class InputCommands:
             Command: The CDP command to dispatch the mouse event.
         """
         params = DispatchMouseEventParams(type=type, x=x, y=y)
-        if modifiers:
+        if modifiers is not None:
             params['modifiers'] = modifiers
-        if timestamp:
+        if timestamp is not None:
             params['timestamp'] = timestamp
-        if button:
+        if button is not None:
             params['button'] = button
-        if click_count:
+        if click_count is not None:
             params['clickCount'] = click_count
-        if force:
+        if force is not None:
             params['force'] = force
-        if tangential_pressure:
+        if tangential_pressure is not None:
             params['tangentialPressure'] = tangential_pressure
-        if tilt_x:
+        if tilt_x is not None:
             params['tiltX'] = tilt_x
-        if tilt_y:
+        if tilt_y is not None:
             params['tiltY'] = tilt_y
-        if twist:
+        if twist is not None:
             params['twist'] = twist
-        if delta_x:
+        if delta_x is not None:
             params['deltaX'] = delta_x
-        if delta_y:
+        if delta_y is not None:
             params['deltaY'] = delta_y
-        if pointer_type:
+        if pointer_type is not None:
             params['pointerType'] = pointer_type
         return Command(method=InputMethod.DISPATCH_MOUSE_EVENT, params=params)
 
@@ -269,11 +269,11 @@ class InputCommands:
             Command: The CDP command to dispatch the touch event.
         """
         params = DispatchTouchEventParams(type=type)
-        if touch_points:
+        if touch_points is not None:
             params['touchPoints'] = touch_points
-        if modifiers:
+        if modifiers is not None:
             params['modifiers'] = modifiers
-        if timestamp:
+        if timestamp is not None:
             params['timestamp'] = timestamp
         return Command(method=InputMethod.DISPATCH_TOUCH_EVENT, params=params)
 
@@ -326,9 +326,9 @@ class InputCommands:
             Command: The CDP command to dispatch the drag event.
         """
         params = DispatchDragEventParams(type=type, x=x, y=y)
-        if data:
+        if data is not None:
             params['data'] = data
-        if modifiers:
+        if modifiers is not None:
             params['modifiers'] = modifiers
         return Command(method=InputMethod.DISPATCH_DRAG_EVENT, params=params)
 
@@ -372,15 +372,15 @@ class InputCommands:
             Command: The CDP command to emulate touch from mouse event.
         """
         params = EmulateTouchFromMouseEventParams(type=type, x=x, y=y, button=button)
-        if timestamp:
+        if timestamp is not None:
             params['timestamp'] = timestamp
-        if delta_x:
+        if delta_x is not None:
             params['deltaX'] = delta_x
-        if delta_y:
+        if delta_y is not None:
             params['deltaY'] = delta_y
-        if modifiers:
+        if modifiers is not None:
             params['modifiers'] = modifiers
-        if click_count:
+        if click_count is not None:
             params['clickCount'] = click_count
         return Command(method=InputMethod.EMULATE_TOUCH_FROM_MOUSE_EVENT, params=params)
 
@@ -419,9 +419,9 @@ class InputCommands:
             selectionStart=selection_start,
             selectionEnd=selection_end,
         )
-        if replacement_start:
+        if replacement_start is not None:
             params['replacementStart'] = replacement_start
-        if replacement_end:
+        if replacement_end is not None:
             params['replacementEnd'] = replacement_end
         return Command(method=InputMethod.IME_SET_COMPOSITION, params=params)
 
@@ -499,9 +499,9 @@ class InputCommands:
             Command: The CDP command to synthesize a pinch gesture.
         """
         params = SynthesizePinchGestureParams(x=x, y=y, scaleFactor=scale_factor)
-        if relative_speed:
+        if relative_speed is not None:
             params['relativeSpeed'] = relative_speed
-        if gesture_source_type:
+        if gesture_source_type is not None:
             params['gestureSourceType'] = gesture_source_type
         return Command(method=InputMethod.SYNTHESIZE_PINCH_GESTURE, params=params)
 
@@ -554,25 +554,25 @@ class InputCommands:
             Command: The CDP command to synthesize a scroll gesture.
         """
         params = SynthesizeScrollGestureParams(x=x, y=y)
-        if x_distance:
+        if x_distance is not None:
             params['xDistance'] = x_distance
-        if y_distance:
+        if y_distance is not None:
             params['yDistance'] = y_distance
-        if x_overscroll:
+        if x_overscroll is not None:
             params['xOverscroll'] = x_overscroll
-        if y_overscroll:
+        if y_overscroll is not None:
             params['yOverscroll'] = y_overscroll
-        if prevent_fling:
+        if prevent_fling is not None:
             params['preventFling'] = prevent_fling
-        if speed:
+        if speed is not None:
             params['speed'] = speed
-        if gesture_source_type:
+        if gesture_source_type is not None:
             params['gestureSourceType'] = gesture_source_type
-        if repeat_count:
+        if repeat_count is not None:
             params['repeatCount'] = repeat_count
-        if repeat_delay_ms:
+        if repeat_delay_ms is not None:
             params['repeatDelayMs'] = repeat_delay_ms
-        if interaction_marker_name:
+        if interaction_marker_name is not None:
             params['interactionMarkerName'] = interaction_marker_name
         return Command(method=InputMethod.SYNTHESIZE_SCROLL_GESTURE, params=params)
 
@@ -606,10 +606,10 @@ class InputCommands:
             Command: The CDP command to synthesize a tap gesture.
         """
         params = SynthesizeTapGestureParams(x=x, y=y)
-        if duration:
+        if duration is not None:
             params['duration'] = duration
-        if tap_count:
+        if tap_count is not None:
             params['tapCount'] = tap_count
-        if gesture_source_type:
+        if gesture_source_type is not None:
             params['gestureSourceType'] = gesture_source_type
         return Command(method=InputMethod.SYNTHESIZE_TAP_GESTURE, params=params)

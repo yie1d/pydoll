@@ -77,15 +77,15 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch request.
         """
         params = ContinueRequestParams(requestId=request_id)
-        if url:
+        if url is not None:
             params['url'] = url
-        if method:
+        if method is not None:
             params['method'] = method
-        if post_data:
+        if post_data is not None:
             params['postData'] = post_data
-        if headers:
+        if headers is not None:
             params['headers'] = headers
-        if intercept_response:
+        if intercept_response is not None:
             params['interceptResponse'] = intercept_response
         return Command(method=FetchMethod.CONTINUE_REQUEST, params=params)
 
@@ -117,9 +117,9 @@ class FetchCommands:
                 authentication.
         """
         auth_challenge_response_dict = AuthChallengeResponseDict(response=auth_challenge_response)
-        if proxy_username:
+        if proxy_username is not None:
             auth_challenge_response_dict['username'] = proxy_username
-        if proxy_password:
+        if proxy_password is not None:
             auth_challenge_response_dict['password'] = proxy_password
 
         params = ContinueWithAuthParams(
@@ -167,9 +167,9 @@ class FetchCommands:
             Command[Response]: A command for enabling fetch interception.
         """
         request_pattern = RequestPattern(urlPattern=url_pattern)
-        if resource_type:
+        if resource_type is not None:
             request_pattern['resourceType'] = resource_type
-        if request_stage:
+        if request_stage is not None:
             request_pattern['requestStage'] = request_stage
 
         params = FetchEnableParams(
@@ -225,11 +225,11 @@ class FetchCommands:
             requestId=request_id,
             responseCode=response_code,
         )
-        if response_headers:
+        if response_headers is not None:
             params['responseHeaders'] = response_headers
-        if body:
+        if body is not None:
             params['body'] = body
-        if response_phrase:
+        if response_phrase is not None:
             params['responsePhrase'] = response_phrase
         return Command(method=FetchMethod.FULFILL_REQUEST, params=params)
 
@@ -280,11 +280,11 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch response.
         """
         params = ContinueResponseParams(requestId=request_id)
-        if response_code:
+        if response_code is not None:
             params['responseCode'] = response_code
-        if response_headers:
+        if response_headers is not None:
             params['responseHeaders'] = response_headers
-        if response_phrase:
+        if response_phrase is not None:
             params['responsePhrase'] = response_phrase
         return Command(method=FetchMethod.CONTINUE_RESPONSE, params=params)
 

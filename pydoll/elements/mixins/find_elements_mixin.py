@@ -56,7 +56,7 @@ class FindElementsMixin:
         find_all: bool = False,
         raise_exc: bool = True,
         **attributes,
-    ) -> Union[WebElement, List[WebElement], None]:
+    ) -> Union['WebElement', List['WebElement'], None]:
         """
         Find element(s) using combination of common HTML attributes.
 
@@ -104,7 +104,7 @@ class FindElementsMixin:
 
     async def query(
         self, expression: str, timeout: int = 0, find_all: bool = False, raise_exc: bool = True
-    ) -> Union[WebElement, List[WebElement], None]:
+    ) -> Union['WebElement', List['WebElement'], None]:
         """
         Find element(s) using raw CSS selector or XPath expression.
 
@@ -136,7 +136,7 @@ class FindElementsMixin:
         timeout: int = 0,
         find_all: bool = False,
         raise_exc: bool = True,
-    ) -> Union[WebElement, List[WebElement], None]:
+    ) -> Union['WebElement', List['WebElement'], None]:
         """
         Core element finding method with optional waiting capability.
 

@@ -113,11 +113,11 @@ class PageCommands:  # noqa: PLR0904
                 of the added script.
         """
         params = AddScriptToEvaluateOnNewDocumentParams(source=source)
-        if world_name:
+        if world_name is not None:
             params['worldName'] = world_name
-        if include_command_line_api:
+        if include_command_line_api is not None:
             params['includeCommandLineAPI'] = include_command_line_api
-        if run_immediately:
+        if run_immediately is not None:
             params['runImmediately'] = run_immediately
 
         return Command(method=PageMethod.ADD_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT, params=params)
@@ -153,17 +153,17 @@ class PageCommands:  # noqa: PLR0904
             Command[CaptureScreenshotResponse]: Command object with base64-encoded image data.
         """
         params = CaptureScreenshotParams()
-        if format:
+        if format is not None:
             params['format'] = format
-        if quality:
+        if quality is not None:
             params['quality'] = quality
-        if clip:
+        if clip is not None:
             params['clip'] = clip
-        if from_surface:
+        if from_surface is not None:
             params['fromSurface'] = from_surface
-        if capture_beyond_viewport:
+        if capture_beyond_viewport is not None:
             params['captureBeyondViewport'] = capture_beyond_viewport
-        if optimize_for_speed:
+        if optimize_for_speed is not None:
             params['optimizeForSpeed'] = optimize_for_speed
 
         return Command(method=PageMethod.CAPTURE_SCREENSHOT, params=params)
@@ -196,9 +196,9 @@ class PageCommands:  # noqa: PLR0904
             Command[CreateIsolatedWorldResponse]: Command object with the execution context ID.
         """
         params = CreateIsolatedWorldParams(frameId=frame_id)
-        if world_name:
+        if world_name is not None:
             params['worldName'] = world_name
-        if grant_universal_access:
+        if grant_universal_access is not None:
             params['grantUniveralAccess'] = grant_universal_access
 
         return Command(method=PageMethod.CREATE_ISOLATED_WORLD, params=params)
@@ -228,7 +228,7 @@ class PageCommands:  # noqa: PLR0904
             Command[Response]: Command object to enable the Page domain.
         """
         params = PageEnableParams()
-        if enable_file_chooser_opened_event:
+        if enable_file_chooser_opened_event is not None:
             params['enableFileChooserOpenedEvent'] = enable_file_chooser_opened_event
 
         return Command(method=PageMethod.ENABLE, params=params)
@@ -244,7 +244,7 @@ class PageCommands:  # noqa: PLR0904
             Command[GetAppManifestResponse]: Command object with manifest information.
         """
         params = GetAppManifestParams()
-        if manifest_id:
+        if manifest_id is not None:
             params['manifestId'] = manifest_id
         return Command(method=PageMethod.GET_APP_MANIFEST, params=params)
 
@@ -293,7 +293,7 @@ class PageCommands:  # noqa: PLR0904
             Command[Response]: Command object to handle a JavaScript dialog.
         """
         params = HandleJavaScriptDialogParams(accept=accept)
-        if prompt_text:
+        if prompt_text is not None:
             params['promptText'] = prompt_text
 
         return Command(method=PageMethod.HANDLE_JAVASCRIPT_DIALOG, params=params)
@@ -320,13 +320,13 @@ class PageCommands:  # noqa: PLR0904
             Command[NavigateResponse]: Command object to navigate to a URL.
         """
         params = NavigateParams(url=url)
-        if referrer:
+        if referrer is not None:
             params['referrer'] = referrer
-        if transition_type:
+        if transition_type is not None:
             params['transitionType'] = transition_type
-        if frame_id:
+        if frame_id is not None:
             params['frameId'] = frame_id
-        if referrer_policy:
+        if referrer_policy is not None:
             params['referrerPolicy'] = referrer_policy
 
         return Command(method=PageMethod.NAVIGATE, params=params)
@@ -389,39 +389,39 @@ class PageCommands:  # noqa: PLR0904
             Command[PrintToPDFResponse]: Command object to print the page to PDF.
         """
         params = PrintToPDFParams()
-        if landscape:
+        if landscape is not None:
             params['landscape'] = landscape
-        if display_header_footer:
+        if display_header_footer is not None:
             params['displayHeaderFooter'] = display_header_footer
-        if print_background:
+        if print_background is not None:
             params['printBackground'] = print_background
-        if scale:
+        if scale is not None:
             params['scale'] = scale
-        if paper_width:
+        if paper_width is not None:
             params['paperWidth'] = paper_width
-        if paper_height:
+        if paper_height is not None:
             params['paperHeight'] = paper_height
-        if margin_top:
+        if margin_top is not None:
             params['marginTop'] = margin_top
-        if margin_bottom:
+        if margin_bottom is not None:
             params['marginBottom'] = margin_bottom
-        if margin_left:
+        if margin_left is not None:
             params['marginLeft'] = margin_left
-        if margin_right:
+        if margin_right is not None:
             params['marginRight'] = margin_right
-        if page_ranges:
+        if page_ranges is not None:
             params['pageRanges'] = page_ranges
-        if header_template:
+        if header_template is not None:
             params['headerTemplate'] = header_template
-        if footer_template:
+        if footer_template is not None:
             params['footerTemplate'] = footer_template
-        if prefer_css_page_size:
+        if prefer_css_page_size is not None:
             params['preferCSSPageSize'] = prefer_css_page_size
-        if transfer_mode:
+        if transfer_mode is not None:
             params['transferMode'] = transfer_mode
-        if generate_tagged_pdf:
+        if generate_tagged_pdf is not None:
             params['generateTaggedPDF'] = generate_tagged_pdf
-        if generate_document_outline:
+        if generate_document_outline is not None:
             params['generateDocumentOutline'] = generate_document_outline
 
         return Command(method=PageMethod.PRINT_TO_PDF, params=params)
@@ -443,11 +443,11 @@ class PageCommands:  # noqa: PLR0904
             Command[Response]: Command object to reload the page.
         """
         params = ReloadParams()
-        if ignore_cache:
+        if ignore_cache is not None:
             params['ignoreCache'] = ignore_cache
-        if script_to_evaluate_on_load:
+        if script_to_evaluate_on_load is not None:
             params['scriptToEvaluateOnLoad'] = script_to_evaluate_on_load
-        if loader_id:
+        if loader_id is not None:
             params['loaderId'] = loader_id
 
         return Command(method=PageMethod.RELOAD, params=params)
@@ -823,13 +823,13 @@ class PageCommands:  # noqa: PLR0904
         Creates a command to start a screencast.
         """
         params = StartScreencastParams(format=format)
-        if quality:
+        if quality is not None:
             params['quality'] = quality
-        if max_width:
+        if max_width is not None:
             params['maxWidth'] = max_width
-        if max_height:
+        if max_height is not None:
             params['maxHeight'] = max_height
-        if every_nth_frame:
+        if every_nth_frame is not None:
             params['everyNthFrame'] = every_nth_frame
         return Command(method=PageMethod.START_SCREENCAST, params=params)
 

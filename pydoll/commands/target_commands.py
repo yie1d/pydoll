@@ -76,7 +76,7 @@ class TargetCommands:
             Command: The CDP command to attach to the target, which will return a sessionId.
         """
         params = AttachToTargetParams(targetId=target_id)
-        if flatten:
+        if flatten is not None:
             params['flatten'] = flatten
         return Command(method=TargetMethod.ATTACH_TO_TARGET, params=params)
 
@@ -129,13 +129,13 @@ class TargetCommands:
                     the ID of the created context.
         """
         params = CreateBrowserContextParams()
-        if dispose_on_detach:
+        if dispose_on_detach is not None:
             params['disposeOnDetach'] = dispose_on_detach
-        if proxy_server:
+        if proxy_server is not None:
             params['proxyServer'] = proxy_server
-        if proxy_bypass_list:
+        if proxy_bypass_list is not None:
             params['proxyBypassList'] = proxy_bypass_list
-        if origins_with_universal_network_access:
+        if origins_with_universal_network_access is not None:
             params['originsWithUniversalNetworkAccess'] = origins_with_universal_network_access
         return Command(method=TargetMethod.CREATE_BROWSER_CONTEXT, params=params)
 
@@ -189,27 +189,27 @@ class TargetCommands:
                 of the created target.
         """
         params = CreateTargetParams(url=url)
-        if left:
+        if left is not None:
             params['left'] = left
-        if top:
+        if top is not None:
             params['top'] = top
-        if width:
+        if width is not None:
             params['width'] = width
-        if height:
+        if height is not None:
             params['height'] = height
-        if window_state:
+        if window_state is not None:
             params['windowState'] = window_state
-        if browser_context_id:
+        if browser_context_id is not None:
             params['browserContextId'] = browser_context_id
-        if enable_begin_frame_control:
+        if enable_begin_frame_control is not None:
             params['enableBeginFrameControl'] = enable_begin_frame_control
-        if new_window:
+        if new_window is not None:
             params['newWindow'] = new_window
-        if background:
+        if background is not None:
             params['background'] = background
-        if for_tab:
+        if for_tab is not None:
             params['forTab'] = for_tab
-        if hidden:
+        if hidden is not None:
             params['hidden'] = hidden
         return Command(method=TargetMethod.CREATE_TARGET, params=params)
 
@@ -228,7 +228,7 @@ class TargetCommands:
             Command: The CDP command to detach from the target.
         """
         params = DetachFromTargetParams()
-        if session_id:
+        if session_id is not None:
             params['sessionId'] = session_id
         return Command(method=TargetMethod.DETACH_FROM_TARGET, params=params)
 
@@ -261,7 +261,7 @@ class TargetCommands:
             Command: The CDP command to get all browser contexts, which will return
                     an array of browser context IDs.
         """
-        return Command(method=TargetMethod.GET_BROWSER_CONTEXTS)
+        return Command(method=TargetMethod.GET_BROWSER_CONTEXTS, params={})
 
     @staticmethod
     def get_targets(filter: Optional[List] = None) -> Command[GetTargetsResponse]:
@@ -282,7 +282,7 @@ class TargetCommands:
                     TargetInfo objects with details about each target.
         """
         params = GetTargetsParams()
-        if filter:
+        if filter is not None:
             params['filter'] = filter
         return Command(method=TargetMethod.GET_TARGETS, params=params)
 
@@ -314,11 +314,11 @@ class TargetCommands:
             Command: The CDP command to set auto-attach behavior.
         """
         params = SetAutoAttachParams(autoAttach=auto_attach)
-        if wait_for_debugger_on_start:
+        if wait_for_debugger_on_start is not None:
             params['waitForDebuggerOnStart'] = wait_for_debugger_on_start
-        if flatten:
+        if flatten is not None:
             params['flatten'] = flatten
-        if filter:
+        if filter is not None:
             params['filter'] = filter
         return Command(method=TargetMethod.SET_AUTO_ATTACH, params=params)
 
@@ -340,7 +340,7 @@ class TargetCommands:
             Command: The CDP command to set target discovery.
         """
         params = SetDiscoverTargetsParams(discover=discover)
-        if filter:
+        if filter is not None:
             params['filter'] = filter
         return Command(method=TargetMethod.SET_DISCOVER_TARGETS, params=params)
 

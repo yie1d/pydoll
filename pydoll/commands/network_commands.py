@@ -139,13 +139,13 @@ class NetworkCommands:  # noqa: PLR0904
             Command: CDP command to execute selective cookie deletion
         """
         params = DeleteCookiesParams(name=name)
-        if url:
+        if url is not None:
             params['url'] = url
-        if domain:
+        if domain is not None:
             params['domain'] = domain
-        if path:
+        if path is not None:
             params['path'] = path
-        if partition_key:
+        if partition_key is not None:
             params['partitionKey'] = partition_key
         return Command(method=NetworkMethod.DELETE_COOKIES, params=params)
 
@@ -222,7 +222,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Shows partitioned cookie status
         """
         params = GetCookiesParams()
-        if urls:
+        if urls is not None:
             params['urls'] = urls
         return Command(method=NetworkMethod.GET_COOKIES, params=params)
 
@@ -462,11 +462,11 @@ class NetworkCommands:  # noqa: PLR0904
         - Consider mobile/desktop differences
         """
         params = SetUserAgentOverrideParams(userAgent=user_agent)
-        if accept_language:
+        if accept_language is not None:
             params['acceptLanguage'] = accept_language
-        if platform:
+        if platform is not None:
             params['platform'] = platform
-        if user_agent_metadata:
+        if user_agent_metadata is not None:
             params['userAgentMetadata'] = user_agent_metadata
         return Command(method=NetworkMethod.SET_USER_AGENT_OVERRIDE, params=params)
 
@@ -544,9 +544,9 @@ class NetworkCommands:  # noqa: PLR0904
         - Consider regex complexity
         """
         params = SearchInResponseBodyParams(requestId=request_id, query=query)
-        if case_sensitive:
+        if case_sensitive is not None:
             params['caseSensitive'] = case_sensitive
-        if is_regex:
+        if is_regex is not None:
             params['isRegex'] = is_regex
         return Command(method=NetworkMethod.SEARCH_IN_RESPONSE_BODY, params=params)
 
@@ -845,7 +845,7 @@ class NetworkCommands:  # noqa: PLR0904
             downloadThroughput=download_throughput,
             uploadThroughput=upload_throughput,
         )
-        if connection_type:
+        if connection_type is not None:
             params['connectionType'] = connection_type
         if packet_loss is not None:
             params['packetLoss'] = packet_loss
@@ -881,7 +881,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Content protection
         """
         params = GetSecurityIsolationStatusParams()
-        if frame_id:
+        if frame_id is not None:
             params['frameId'] = frame_id
         return Command(method=NetworkMethod.GET_SECURITY_ISOLATION_STATUS, params=params)
 
@@ -915,7 +915,7 @@ class NetworkCommands:  # noqa: PLR0904
         - Supports streaming
         """
         params = LoadNetworkResourceParams(url=url, options=options)
-        if frame_id:
+        if frame_id is not None:
             params['frameId'] = frame_id
         return Command(method=NetworkMethod.LOAD_NETWORK_RESOURCE, params=params)
 
