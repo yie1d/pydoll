@@ -13,6 +13,7 @@ graph LR
         B --> F[Process Manager]
         B --> G[Options Manager]
         B --> H[Proxy Manager]
+        B --> I[Temp Directory Manager]
     end
 ```
 
@@ -23,7 +24,7 @@ At its core, the Browser domain is implemented as an abstract base class (`Brows
 ```python
 # Abstract base class (simplified)
 class Browser(ABC):
-    def __init__(self, options=None, connection_port=None, browser_type=None):
+    def __init__(self, options_manager: BrowserOptionsManager, connection_port: Optional[int] = None):
         # Initialize components
         # ...
     
@@ -32,10 +33,10 @@ class Browser(ABC):
         """Must be implemented by subclasses"""
         pass
 
-    async def start(self):
+    async def start(self, headless: bool = False) -> Tab:
         # Start browser process
         # Establish CDP connection
-        # Configure initial state
+        # Return initial tab for interaction
         # ...
 
 # Implementation for Chrome
@@ -49,24 +50,23 @@ The abstraction allows Pydoll to support multiple browsers through a unified int
 
 ## Core Usage Patterns
 
-The Browser domain follows a consistent pattern for initialization, page management, and cleanup:
+The Browser domain follows a consistent pattern for initialization, tab management, and cleanup. Note that `start()` now returns a `Tab` instance directly:
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
+from pydoll.browser.chromium import Chrome
 
 async def simple_browser_example():
     # Create and start a browser instance
     browser = Chrome()
-    await browser.start()
+    tab = await browser.start()  # Returns Tab directly
     
     try:
-        # Get a page and navigate to a URL
-        page = await browser.get_page()
-        await page.go_to("https://example.com")
+        # Navigate and interact with the tab
+        await tab.go_to("https://example.com")
         
-        # Perform operations with the page
-        title = await page.execute_script("return document.title")
+        # Perform operations with the tab
+        title = await tab.execute_script("return document.title")
         print(f"Page title: {title}")
         
     finally:
@@ -83,9 +83,8 @@ asyncio.run(simple_browser_example())
     ```python
     async def context_manager_example():
         async with Chrome() as browser:
-            await browser.start()
-            page = await browser.get_page()
-            await page.go_to("https://example.com")
+            tab = await browser.start()
+            await tab.go_to("https://example.com")
             # The browser is automatically closed when exiting the context
     
     asyncio.run(context_manager_example())
@@ -99,11 +98,11 @@ The Browser domain follows a clear inheritance hierarchy that promotes code reus
 classDiagram
     class Browser {
         <<Abstract>>
-        +__init__(options, connection_port, browser_type)
-        +start()
+        +__init__(options_manager, connection_port)
+        +start(headless) Tab
         +stop()
-        +get_page()
-        +connect()
+        +new_tab(url, browser_context_id) Tab
+        +create_browser_context() str
         #_get_default_binary_location()*
     }
     
@@ -123,55 +122,27 @@ This architecture allows Pydoll to support multiple browser types through a unif
 
 ## Initialization Parameters
 
-The Browser domain accepts three primary parameters during initialization, each controlling a different aspect of the browser's behavior:
+The Browser domain accepts two primary parameters during initialization, each controlling a different aspect of the browser's behavior:
 
-### Options Parameter
+### Options Manager Parameter
 
-The `options` parameter accepts an instance of the `Options` class that configures the browser's runtime environment:
+The `options_manager` parameter accepts an instance of `BrowserOptionsManager` that handles browser options initialization and configuration:
 
 ```python
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.options import Options
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.interfaces import BrowserOptionsManager
 
-options = Options()
-options.binary_location = '/usr/bin/google-chrome-stable'
-options.add_argument('--headless=new')
-options.add_argument('--disable-gpu')
-options.add_argument('--window-size=1920,1080')
-
-browser = Chrome(options=options)
+# The options manager is typically handled internally by browser implementations
+browser = Chrome()  # Uses default ChromiumOptionsManager internally
 ```
 
-#### Key Option Properties
+The options manager is responsible for:
+- Initializing browser options with appropriate defaults
+- Adding required CDP arguments
+- Managing browser-specific configuration
 
-| Property | Description | Example |
-|----------|-------------|---------|
-| `binary_location` | Path to browser executable | `/usr/bin/chrome` |
-| `arguments` | Command-line arguments | `['--headless=new', '--disable-gpu']` |
-| `extensions` | Browser extensions to load | `['/path/to/extension.crx']` |
-
-!!! info "Option Inheritance"
-    Each browser implementation inherits from a base `Options` class but may provide additional browser-specific options. For example, `ChromeOptions` extends the base class with Chrome-specific capabilities.
-
-```mermaid
-classDiagram
-    class Options {
-        +binary_location: str
-        +arguments: List[str]
-        +add_argument(arg: str)
-    }
-    
-    class ChromeOptions {
-        +chrome_specific_option()
-    }
-    
-    class EdgeOptions {
-        +edge_specific_option()
-    }
-    
-    Options <|-- ChromeOptions
-    Options <|-- EdgeOptions
-```
+!!! info "Internal Implementation"
+    Most users don't need to interact directly with the options manager, as browser implementations like `Chrome` provide their own specialized managers internally. However, advanced users can create custom options managers for specialized configurations.
 
 ### Connection Port Parameter
 
@@ -185,23 +156,10 @@ browser = Chrome(connection_port=9222)
 This parameter serves two distinct purposes:
 
 1. **For browser launching**: Specifies which port the browser should open for CDP communication
-2. **For connection to existing browser**: Defines which port to connect to when using `connect()` instead of `start()`
+2. **For connection to existing browser**: Defines which port to connect to when using external browser instances
 
 !!! warning "Port Availability"
     When not specified, Pydoll selects a random available port between 9223 and 9322. If your environment has firewall or network restrictions, you may need to explicitly set a port that's accessible.
-
-### Browser Type Parameter
-
-The `browser_type` parameter explicitly defines which browser type is being instantiated:
-
-```python
-from pydoll.browser.constants import BrowserType
-from pydoll.browser.chrome import Chrome
-
-browser = Chrome(browser_type=BrowserType.CHROME)
-```
-
-This parameter is primarily used internally and for specialized scenarios, as the browser type is typically inferred from the class being instantiated.
 
 ## Internal Components
 
@@ -232,24 +190,24 @@ class BrowserProcessManager:
 
 This separation of concerns ensures that browser process management is decoupled from protocol communication, making the code more maintainable and testable.
 
-### Options Manager
+### Temp Directory Manager
 
-The BrowserOptionsManager handles option validation and defaulting:
+The TempDirectoryManager handles temporary directory creation and cleanup for browser user data:
 
 ```python
-class BrowserOptionsManager:
-    @staticmethod
-    def initialize_options(options, browser_type):
-        # Create options instance if None
-        # Set appropriate defaults
+class TempDirectoryManager:
+    def create_temp_dir(self):
+        # Create temporary directory for browser user data
+        # Return directory handle
         # ...
         
-    @staticmethod
-    def add_default_arguments(options):
-        # Add required CDP arguments
-        # Configure automation settings
+    def cleanup(self):
+        # Remove temporary directories
+        # Clean up resources
         # ...
 ```
+
+This component ensures that temporary browser data is properly managed and cleaned up, preventing disk space issues during long-running automation sessions.
 
 ### Proxy Manager
 
@@ -276,115 +234,289 @@ The Browser domain implements Python's asynchronous context management protocol 
 ```python
 async def scrape_data():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://example.com')
-        # Work with page...
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+        # Work with tab...
         # Browser automatically closes when exiting the context
 ```
 
 This pattern ensures that browser processes are properly terminated even if exceptions occur during automation, preventing resource leaks.
 
-## Connection Modes
 
-The Browser domain supports two primary modes of operation:
-
-### 1. Start Mode
-
-The `start()` method launches a new browser instance:
+### Starting Browser and Getting Initial Tab
 
 ```python
 browser = Chrome()
-await browser.start()
-page = await browser.get_page()
+tab = await browser.start()  # Returns Tab instance
+await tab.go_to("https://example.com")
 ```
 
-### 2. Connect Mode
-
-The `connect()` method attaches to an existing browser instance:
+### Creating Additional Tabs
 
 ```python
-# Connect to Chrome running with --remote-debugging-port=9222
-browser = Chrome(connection_port=9222)
-page = await browser.connect()
+# Create additional tabs
+tab2 = await browser.new_tab("https://github.com")
+tab3 = await browser.new_tab()  # Empty tab
+
+# Work with multiple tabs
+await tab.go_to("https://example.com")
+await tab2.go_to("https://github.com")
 ```
 
-!!! info "Development Workflow Tip"
-    The connect mode is particularly valuable during development:
+!!! tip "Multi-Tab Automation"
+    You can work with multiple tabs simultaneously:
     
     ```python
-    # Fast development loop
-    browser = Chrome(connection_port=9222)
-    
-    while True:
-        try:
-            page = await browser.connect()
-            # Test your automation code
-            # No need to restart browser between runs
-            break
-        except Exception as e:
-            print(f"Error: {e}, retrying...")
-    ```
-
-## Page Management
-
-The Browser domain provides several methods for managing browser pages:
-
-### Creating and Getting Pages
-
-```python
-# Create a new empty page
-new_page_id = await browser.new_page()
-
-# Create a new page and navigate to a URL
-new_page_id = await browser.new_page("https://example.com")
-
-# Get a page object from an existing or new page
-page = await browser.get_page()
-
-# Get a page object for a specific page ID
-page = await browser.get_page_by_id(page_id)
-```
-
-!!! tip "Multi-Page Automation"
-    You can work with multiple pages simultaneously:
-    
-    ```python
-    async def multi_page_example():
+    async def multi_tab_example():
         browser = Chrome()
-        await browser.start()
+        tab1 = await browser.start()
         
-        # Create and work with multiple pages
-        page1 = await browser.get_page()
-        await page1.go_to("https://example.com")
+        # Create and work with multiple tabs
+        await tab1.go_to("https://example.com")
         
-        page2 = await browser.get_page()
-        await page2.go_to("https://github.com")
+        tab2 = await browser.new_tab("https://github.com")
         
-        # Get information from both pages
-        title1 = await page1.execute_script("return document.title")
-        title2 = await page2.execute_script("return document.title")
+        # Get information from both tabs
+        title1 = await tab1.execute_script("return document.title")
+        title2 = await tab2.execute_script("return document.title")
         
-        print(f"Page 1: {title1}")
-        print(f"Page 2: {title2}")
+        print(f"Tab 1: {title1}")
+        print(f"Tab 2: {title2}")
         
         await browser.stop()
     ```
 
-### Listing Open Pages
+## Browser Context Management
 
-To get information about all open pages in the browser:
+### Understanding Browser Contexts
+
+Browser contexts are one of Pydoll's most powerful features for creating isolated browsing environments. Think of a browser context as a completely separate browser session within the same browser process - similar to opening an incognito window, but with programmatic control.
+
+Each browser context maintains its own:
+
+- **Cookies and session storage**: Completely isolated from other contexts
+- **Local storage and IndexedDB**: Separate data stores per context
+- **Cache**: Independent caching for each context
+- **Permissions**: Context-specific permission grants
+- **Network settings**: Including proxy configurations
+- **Authentication state**: Login sessions are context-specific
+
+```mermaid
+graph TB
+    A[Browser Process] --> B[Default Context]
+    A --> C[Context 1]
+    A --> D[Context 2]
+    
+    B --> B1[Tab 1]
+    B --> B2[Tab 2]
+    
+    C --> C1[Tab 3]
+    
+    D --> D1[Tab 4]
+    
+
+```
+
+### Why Use Browser Contexts?
+
+Browser contexts are essential for several automation scenarios:
+
+1. **Multi-Account Testing**: Test different user accounts simultaneously without interference
+2. **A/B Testing**: Compare different user experiences in parallel
+3. **Geo-Location Testing**: Use different proxy settings per context
+4. **Session Isolation**: Prevent cross-contamination between test scenarios
+5. **Parallel Scraping**: Scrape multiple sites with different configurations
+
+### Creating and Managing Contexts
 
 ```python
-# Get all targets (pages, service workers, etc.)
+# Create isolated browser context
+context_id = await browser.create_browser_context()
+
+# Create tab in specific context
+tab = await browser.new_tab("https://example.com", browser_context_id=context_id)
+
+# Get all browser contexts
+contexts = await browser.get_browser_contexts()
+print(f"Active contexts: {contexts}")
+
+# Delete context (closes all associated tabs)
+await browser.delete_browser_context(context_id)
+```
+
+### Default vs Custom Contexts
+
+Every browser starts with a **default context** that contains the initial tab returned by `browser.start()`. You can create additional contexts as needed:
+
+```python
+browser = Chrome()
+default_tab = await browser.start()  # Uses default context
+
+# Create custom context
+custom_context_id = await browser.create_browser_context()
+custom_tab = await browser.new_tab("https://example.com", browser_context_id=custom_context_id)
+
+# Both tabs are completely isolated from each other
+await default_tab.go_to("https://site1.com")
+await custom_tab.go_to("https://site2.com")
+```
+
+### Practical Example: Multi-Account Testing
+
+Here's a real-world example of testing multiple user accounts simultaneously:
+
+```python
+async def test_multiple_accounts():
+    browser = Chrome()
+    await browser.start()
+    
+    # Test data for different accounts
+    accounts = [
+        {"username": "user1@example.com", "password": "pass1"},
+        {"username": "user2@example.com", "password": "pass2"},
+        {"username": "admin@example.com", "password": "admin_pass"}
+    ]
+    
+    contexts_and_tabs = []
+    
+    # Create isolated context for each account
+    for i, account in enumerate(accounts):
+        context_id = await browser.create_browser_context()
+        tab = await browser.new_tab("https://app.example.com/login", browser_context_id=context_id)
+        
+        # Login with account credentials
+        await tab.find(tag_name="input", name="username").type(account["username"])
+        await tab.find(tag_name="input", name="password").type(account["password"])
+        await tab.find(tag_name="button", type="submit").click()
+        
+        contexts_and_tabs.append((context_id, tab, account["username"]))
+    
+    # Now test different scenarios with each account simultaneously
+    for context_id, tab, username in contexts_and_tabs:
+        # Each tab maintains its own login session
+        await tab.go_to("https://app.example.com/dashboard")
+        user_info = await tab.find(class_name="user-info").text
+        print(f"User {username} dashboard: {user_info}")
+    
+    # Cleanup: delete all contexts
+    for context_id, _, _ in contexts_and_tabs:
+        await browser.delete_browser_context(context_id)
+    
+    await browser.stop()
+```
+
+### Context-Specific Proxy Configuration
+
+Each browser context can have its own proxy settings, making it perfect for geo-location testing or IP rotation:
+
+```python
+# Create context with specific proxy
+context_id = await browser.create_browser_context(
+    proxy_server="http://proxy.example.com:8080",
+    proxy_bypass_list="localhost,127.0.0.1"
+)
+
+# All tabs in this context will use the specified proxy
+tab = await browser.new_tab("https://example.com", browser_context_id=context_id)
+```
+
+### Advanced Context Management
+
+#### Context Lifecycle Management
+
+```python
+async def manage_context_lifecycle():
+    browser = Chrome()
+    await browser.start()
+    
+    # Create multiple contexts for different purposes
+    contexts = {}
+    
+    # Context for US region testing
+    us_context = await browser.create_browser_context(
+        proxy_server="http://us-proxy.example.com:8080"
+    )
+    contexts['us'] = us_context
+    
+    # Context for EU region testing  
+    eu_context = await browser.create_browser_context(
+        proxy_server="http://eu-proxy.example.com:8080"
+    )
+    contexts['eu'] = eu_context
+    
+    # Context for admin testing (no proxy)
+    admin_context = await browser.create_browser_context()
+    contexts['admin'] = admin_context
+    
+    try:
+        # Use contexts for parallel testing
+        us_tab = await browser.new_tab("https://api.example.com/geo", browser_context_id=contexts['us'])
+        eu_tab = await browser.new_tab("https://api.example.com/geo", browser_context_id=contexts['eu'])
+        admin_tab = await browser.new_tab("https://admin.example.com", browser_context_id=contexts['admin'])
+        
+        # Each tab will have different IP/location
+        us_location = await us_tab.execute_script("return fetch('/api/location').then(r => r.json())")
+        eu_location = await eu_tab.execute_script("return fetch('/api/location').then(r => r.json())")
+        
+        print(f"US Context Location: {us_location}")
+        print(f"EU Context Location: {eu_location}")
+        
+    finally:
+        # Clean up all contexts
+        for region, context_id in contexts.items():
+            await browser.delete_browser_context(context_id)
+            print(f"Deleted {region} context")
+        
+        await browser.stop()
+```
+
+#### Context Storage Isolation
+
+```python
+async def demonstrate_storage_isolation():
+    browser = Chrome()
+    await browser.start()
+    
+    # Create two contexts
+    context1 = await browser.create_browser_context()
+    context2 = await browser.create_browser_context()
+    
+    # Create tabs in each context
+    tab1 = await browser.new_tab("https://example.com", browser_context_id=context1)
+    tab2 = await browser.new_tab("https://example.com", browser_context_id=context2)
+    
+    # Set different data in localStorage for each context
+    await tab1.execute_script("localStorage.setItem('user', 'Alice')")
+    await tab2.execute_script("localStorage.setItem('user', 'Bob')")
+    
+    # Verify isolation - each context has its own storage
+    user1 = await tab1.execute_script("return localStorage.getItem('user')")
+    user2 = await tab2.execute_script("return localStorage.getItem('user')")
+    
+    print(f"Context 1 user: {user1}")  # Alice
+    print(f"Context 2 user: {user2}")  # Bob
+    
+    # Clean up
+    await browser.delete_browser_context(context1)
+    await browser.delete_browser_context(context2)
+    await browser.stop()
+```
+
+## Target Management
+
+Get information about all active targets (tabs, service workers, etc.) in the browser:
+
+```python
+# Get all targets
 targets = await browser.get_targets()
 
 # Filter for page targets only
 pages = [t for t in targets if t.get('type') == 'page']
 
 for page in pages:
-    print(f"Page ID: {page['targetId']}")
+    print(f"Target ID: {page['targetId']}")
     print(f"URL: {page['url']}")
+    print(f"Title: {page.get('title', 'No title')}")
 ```
 
 ## Window Management
@@ -442,42 +574,130 @@ print(f"Number of cookies: {len(all_cookies)}")
 await browser.delete_all_cookies()
 ```
 
-!!! tip "Browser vs Page Cookie Management"
-    - **Browser-level cookies** (using the methods above) apply to all pages in the browser
-    - **Page-level cookies** (using `page.set_cookies()`) apply only to that specific page
+### Context-Specific Cookie Management
+
+```python
+# Create browser context
+context_id = await browser.create_browser_context()
+
+# Set cookies for specific context
+await browser.set_cookies(cookies_to_set, browser_context_id=context_id)
+
+# Get cookies from specific context
+context_cookies = await browser.get_cookies(browser_context_id=context_id)
+
+# Delete cookies from specific context
+await browser.delete_all_cookies(browser_context_id=context_id)
+```
+
+!!! tip "Browser vs Tab Cookie Management"
+    - **Browser-level cookies** (using the methods above) apply to all tabs in the browser or specific context
+    - **Tab-level cookies** (using `tab.set_cookies()`) apply only to that specific tab
     
     Choose the appropriate scope based on your automation needs.
 
 ## Download Management
 
-You can specify a download path for browser downloads:
+Configure download behavior for the browser or specific contexts:
 
 ```python
 # Set a custom download path
 download_path = "/path/to/downloads"
 await browser.set_download_path(download_path)
 
-# Navigate to a page with downloadable content
-page = await browser.get_page()
-await page.go_to("https://example.com/download")
+# Advanced download configuration
+await browser.set_download_behavior(
+    behavior=DownloadBehavior.ALLOW,
+    download_path=download_path,
+    events_enabled=True  # Enable download progress events
+)
 
-# Click a download link
-download_link = await page.find_element(By.ID, "download-button")
-await download_link.click()
+# Context-specific download configuration
+context_id = await browser.create_browser_context()
+await browser.set_download_behavior(
+    behavior=DownloadBehavior.ALLOW,
+    download_path="/path/to/context/downloads",
+    browser_context_id=context_id
+)
+```
 
-# Files will be saved to the specified path
+## Permission Management
+
+Grant or reset browser permissions for automated testing:
+
+```python
+from pydoll.constants import PermissionType
+
+# Grant permissions globally
+await browser.grant_permissions([
+    PermissionType.GEOLOCATION,
+    PermissionType.NOTIFICATIONS,
+    PermissionType.CAMERA
+])
+
+# Grant permissions for specific origin
+await browser.grant_permissions(
+    [PermissionType.GEOLOCATION],
+    origin="https://example.com"
+)
+
+# Grant permissions for specific context
+context_id = await browser.create_browser_context()
+await browser.grant_permissions(
+    [PermissionType.MICROPHONE],
+    browser_context_id=context_id
+)
+
+# Reset all permissions to defaults
+await browser.reset_permissions()
 ```
 
 ## Event System Overview
 
 The Browser domain provides methods to enable and monitor various types of events. These methods include `enable_fetch_events()` and the `on()` method for registering event callbacks.
 
-!!! warning "Browser vs Page Event Scope"
-    When enabling events at the Browser level (e.g., `browser.enable_fetch_events()`), they apply **globally** to all pages in the browser. In contrast, enabling events at the Page level (e.g., `page.enable_fetch_events()`) affects only that specific page.
+### Request Interception
+
+```python
+# Enable request interception
+await browser.enable_fetch_events(handle_auth_requests=True)
+
+# Register event handler for intercepted requests
+async def handle_request(event):
+    request_id = event['params']['requestId']
+    url = event['params']['request']['url']
     
-    This distinction is important for performance and resource management. Enable events at the browser level when you need to monitor activity across all pages, and at the page level when you only care about a specific page's events.
+    if 'analytics' in url:
+        # Block analytics requests
+        await browser.fail_request(request_id, NetworkErrorReason.BLOCKED_BY_CLIENT)
+    else:
+        # Continue other requests
+        await browser.continue_request(request_id)
+
+await browser.on('Fetch.requestPaused', handle_request)
+```
+
+### Custom Response Fulfillment
+
+```python
+async def fulfill_custom_response(event):
+    request_id = event['params']['requestId']
     
-    Not all event types are available at both levels. For example, Page-specific events can only be enabled at the Page level, while browser-wide events can only be enabled at the Browser level.
+    # Fulfill with custom response
+    await browser.fulfill_request(
+        request_id=request_id,
+        response_code=200,
+        response_headers=[{'name': 'Content-Type', 'value': 'application/json'}],
+        response_body={'message': 'Custom response from Pydoll'}
+    )
+
+await browser.on('Fetch.requestPaused', fulfill_custom_response)
+```
+
+!!! warning "Browser vs Tab Event Scope"
+    When enabling events at the Browser level (e.g., `browser.enable_fetch_events()`), they apply **globally** to all tabs in the browser. In contrast, enabling events at the Tab level (e.g., `tab.enable_fetch_events()`) affects only that specific tab.
+    
+    This distinction is important for performance and resource management. Enable events at the browser level when you need to monitor activity across all tabs, and at the tab level when you only care about a specific tab's events.
 
 !!! info "Detailed Event System Documentation"
     The event system is a core component of Pydoll's architecture and will be covered in detail in a dedicated section. This will include event types, handling patterns, and advanced event-driven techniques.
@@ -487,21 +707,20 @@ The Browser domain provides methods to enable and monitor various types of event
 Pydoll supports using proxies for browser connections. This is useful for web scraping, testing geo-specific content, or bypassing IP-based rate limits:
 
 ```python
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.options import Options
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
 
-options = Options()
+options = ChromiumOptions()
 
 # Configure a proxy
 options.add_argument('--proxy-server=http://proxy.example.com:8080')
 
 # For proxies requiring authentication
 browser = Chrome(options=options)
-await browser.start()
+tab = await browser.start()
 
 # Pydoll automatically handles proxy authentication challenges
-page = await browser.get_page()
-await page.go_to("https://example.com")
+await tab.go_to("https://example.com")
 ```
 
 !!! tip "Private Proxy Authentication"
@@ -518,4 +737,4 @@ await page.go_to("https://example.com")
 
 The Browser domain serves as the foundation of Pydoll's architecture, providing a powerful interface to browser instances through the Chrome DevTools Protocol. By understanding its capabilities and patterns, you can create sophisticated browser automation that's more reliable and efficient than traditional webdriver-based approaches.
 
-The combination of a clean abstraction layer, comprehensive event system, and direct control over the browser process enables advanced automation scenarios while maintaining a simple and intuitive API.
+The combination of a clean abstraction layer, comprehensive event system, tab-based architecture, and direct control over the browser process enables advanced automation scenarios while maintaining a simple and intuitive API.

@@ -57,6 +57,86 @@ Capture visual content from web pages:
 - **High-Quality PDF Export**: Generate PDF documents from web pages
 - **Custom Formatting**: Coming soon!
 
+## Intuitive Element Finding
+
+Pydoll v2.0+ introduces a revolutionary approach to finding elements that's both more intuitive and more powerful than traditional selector-based methods.
+
+### Modern find() Method
+
+The new `find()` method allows you to search for elements using natural attributes:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def element_finding_examples():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+        
+        # Find by tag name and class
+        submit_button = await tab.find(tag_name='button', class_name='btn-primary')
+        
+        # Find by ID (most common)
+        username_field = await tab.find(id='username')
+        
+        # Find by text content
+        login_link = await tab.find(tag_name='a', text='Login')
+        
+        # Find by multiple attributes
+        search_input = await tab.find(
+            tag_name='input',
+            type='text',
+            placeholder='Search...'
+        )
+        
+        # Find with custom data attributes
+        custom_element = await tab.find(
+            data_testid='submit-button',
+            aria_label='Submit form'
+        )
+        
+        # Find multiple elements
+        all_links = await tab.find(tag_name='a', find_all=True)
+        
+        # With timeout and error handling
+        delayed_element = await tab.find(
+            class_name='dynamic-content',
+            timeout=10,
+            raise_exc=False  # Returns None if not found
+        )
+
+asyncio.run(element_finding_examples())
+```
+
+### CSS Selectors and XPath with query()
+
+For developers who prefer traditional selectors, the `query()` method provides direct CSS selector and XPath support:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def query_examples():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+        
+        # CSS selectors
+        nav_menu = await tab.query('nav.main-menu')
+        first_article = await tab.query('article:first-child')
+        submit_button = await tab.query('button[type="submit"]')
+        
+        # XPath expressions
+        specific_item = await tab.query('//div[@data-testid="item-123"]')
+        text_content = await tab.query('//span[contains(text(), "Welcome")]')
+        
+        # Complex selectors
+        nested_element = await tab.query('div.container > .content .item:nth-child(2)')
+
+asyncio.run(query_examples())
+```
+
 ## Native Cloudflare Captcha Bypass
 
 !!! warning "Important Information About Captcha Bypass"
@@ -75,24 +155,23 @@ One of Pydoll's most powerful features is its ability to automatically bypass Cl
 
 ```python
 import asyncio
-from pydoll.browser import Chrome
+from pydoll.browser.chromium import Chrome
 
 async def bypass_cloudflare_example():
-    browser = Chrome()
-    await browser.start()
-    page = await browser.get_page()
+    async with Chrome() as browser:
+        tab = await browser.start()
     
     # The context manager will wait for the captcha to be processed
     # before continuing execution
-    async with page.expect_and_bypass_cloudflare_captcha():
-        await page.go_to('https://site-with-cloudflare.com')
+        async with tab.expect_and_bypass_cloudflare_captcha():
+            await tab.go_to('https://site-with-cloudflare.com')
         print("Waiting for captcha to be handled...")
     
     # This code runs only after the captcha is successfully bypassed
     print("Captcha bypassed! Continuing with automation...")
-    await page.find_element_by_id('protected-content').get_text()
-    
-    await browser.stop()
+        protected_content = await tab.find(id='protected-content')
+        content_text = await protected_content.text
+        print(f"Protected content: {content_text}")
 
 asyncio.run(bypass_cloudflare_example())
 ```
@@ -101,30 +180,29 @@ asyncio.run(bypass_cloudflare_example())
 
 ```python
 import asyncio
-from pydoll.browser import Chrome
+from pydoll.browser.chromium import Chrome
 
 async def background_bypass_example():
-    browser = Chrome()
-    await browser.start()
-    page = await browser.get_page()
+    async with Chrome() as browser:
+        tab = await browser.start()
     
     # Enable automatic captcha solving before navigating
-    await page.enable_auto_solve_cloudflare_captcha()
+        await tab.enable_auto_solve_cloudflare_captcha()
     
     # Navigate to the protected site - captcha handled automatically in background
-    await page.go_to('https://site-with-cloudflare.com')
+        await tab.go_to('https://site-with-cloudflare.com')
     print("Page loaded, captcha will be handled in the background...")
     
     # Add a small delay to allow captcha solving to complete
     await asyncio.sleep(3)
     
     # Continue with automation
-    await page.find_element_by_id('protected-content').get_text()
+        protected_content = await tab.find(id='protected-content')
+        content_text = await protected_content.text
+        print(f"Protected content: {content_text}")
     
     # Disable auto-solving when no longer needed
-    await page.disable_auto_solve_cloudflare_captcha()
-    
-    await browser.stop()
+        await tab.disable_auto_solve_cloudflare_captcha()
 
 asyncio.run(background_bypass_example())
 ```
@@ -137,24 +215,25 @@ Pydoll's async architecture allows you to scrape multiple pages or websites simu
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.constants import By
+from functools import partial
+from pydoll.browser.chromium import Chrome
 
-async def scrape_page(url):
-    """Process a single page and extract data"""
-    async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to(url)
+async def scrape_page(browser, url):
+    """Process a single page and extract data using a shared browser"""
+    # Create a new tab for this URL
+    tab = await browser.new_tab()
+    
+    try:
+        await tab.go_to(url)
         
         # Extract data
-        title = await page.execute_script('return document.title')
+        title = await tab.execute_script('return document.title')
         
         # Find elements and extract content
-        elements = await page.find_elements(By.CSS_SELECTOR, '.article-content')
+        elements = await tab.find(class_name='article-content', find_all=True)
         content = []
         for element in elements:
-            text = await element.get_element_text()
+            text = await element.text
             content.append(text)
             
         return {
@@ -162,6 +241,9 @@ async def scrape_page(url):
             "title": title,
             "content": content
         }
+    finally:
+        # Close the tab when done to free resources
+        await tab.close()
 
 async def main():
     # List of URLs to scrape in parallel
@@ -173,8 +255,15 @@ async def main():
         'https://example.com/page5',
     ]
     
-    # Process all URLs concurrently
-    results = await asyncio.gather(*(scrape_page(url) for url in urls))
+    async with Chrome() as browser:
+        # Start the browser once
+        await browser.start()
+        
+        # Create partial function with browser parameter
+        scrape_with_browser = partial(scrape_page, browser)
+        
+        # Process all URLs concurrently using the same browser
+        results = await asyncio.gather(*(scrape_with_browser(url) for url in urls))
     
     # Print results
     for result in results:
@@ -195,31 +284,29 @@ Pydoll provides human-like keyboard interaction with precise control over typing
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.constants import By
+from pydoll.browser.chromium import Chrome
 from pydoll.common.keys import Keys
 
 async def realistic_typing_example():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://example.com/login')
+        tab = await browser.start()
+        await tab.go_to('https://example.com/login')
         
         # Find login form elements
-        username = await page.find_element(By.ID, 'username')
-        password = await page.find_element(By.ID, 'password')
+        username = await tab.find(id='username')
+        password = await tab.find(id='password')
         
         # Type with realistic timing (interval between keystrokes)
-        await username.type_keys("user@example.com", interval=0.15)
+        await username.type_text("user@example.com", interval=0.15)
         
         # Use special key combinations
         await password.click()
         await password.key_down(Keys.SHIFT)
-        await password.send_keys("PASSWORD")
+        await password.type_text("PASSWORD")
         await password.key_up(Keys.SHIFT)
         
         # Press Enter to submit
-        await password.send_keys(Keys.ENTER)
+        await password.press_keyboard_key(Keys.ENTER)
         
         # Wait for navigation
         await asyncio.sleep(2)
@@ -236,34 +323,30 @@ Pydoll's event system allows you to react to browser events in real-time:
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.events.network import NetworkEvents
-from pydoll.events.page import PageEvents
-from functools import partial
+from pydoll.browser.chromium import Chrome
+from pydoll.protocol.page.events import PageEvent
 
 async def event_monitoring_example():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
         # Monitor page load events
         async def on_page_loaded(event):
             print(f"🌐 Page loaded: {event['params'].get('url')}")
             
-        await page.enable_page_events()
-        await page.on(PageEvents.PAGE_LOADED, on_page_loaded)
+        await tab.enable_page_events()
+        await tab.on(PageEvent.LOAD_EVENT_FIRED, on_page_loaded)
         
         # Monitor network requests
-        async def on_request(page, event):
+        async def on_request(event):
             url = event['params']['request']['url']
             print(f"🔄 Request to: {url}")
             
-        await page.enable_network_events()
-        await page.on(NetworkEvents.REQUEST_WILL_BE_SENT, 
-                      partial(on_request, page))
+        await tab.enable_network_events()
+        await tab.on('Network.requestWillBeSent', on_request)
         
         # Navigate and see events in action
-        await page.go_to('https://example.com')
+        await tab.go_to('https://example.com')
         await asyncio.sleep(5)  # Allow time to see events
         
 asyncio.run(event_monitoring_example())
@@ -278,27 +361,25 @@ Seamlessly handle file uploads in your automation:
 ```python
 import asyncio
 import os
-from pydoll.browser.chrome import Chrome
-from pydoll.constants import By
+from pydoll.browser.chromium import Chrome
 
 async def file_upload_example():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://example.com/upload')
+        tab = await browser.start()
+        await tab.go_to('https://example.com/upload')
         
         # Method 1: Direct file input
-        file_input = await page.find_element(By.XPATH, '//input[@type="file"]')
+        file_input = await tab.find(tag_name='input', type='file')
         await file_input.set_input_files('path/to/document.pdf')
         
         # Method 2: Using file chooser with an upload button
         sample_file = os.path.join(os.getcwd(), 'sample.jpg')
-        async with page.expect_file_chooser(files=sample_file):
-            upload_button = await page.find_element(By.ID, 'upload-button')
+        async with tab.expect_file_chooser(files=sample_file):
+            upload_button = await tab.find(id='upload-button')
             await upload_button.click()
             
         # Submit the form
-        submit = await page.find_element(By.ID, 'submit-button')
+        submit = await tab.find(id='submit-button')
         await submit.click()
         
         print("Files uploaded successfully!")
@@ -314,24 +395,21 @@ Pydoll works with different browsers through a consistent API:
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.edge import Edge
+from pydoll.browser.chromium import Chrome, Edge
 
 async def multi_browser_example():
     # Run the same automation in Chrome
     async with Chrome() as chrome:
-        await chrome.start()
-        chrome_page = await chrome.get_page()
-        await chrome_page.go_to('https://example.com')
-        chrome_title = await chrome_page.execute_script('return document.title')
+        chrome_tab = await chrome.start()
+        await chrome_tab.go_to('https://example.com')
+        chrome_title = await chrome_tab.execute_script('return document.title')
         print(f"Chrome title: {chrome_title}")
     
     # Run the same automation in Edge
     async with Edge() as edge:
-        await edge.start()
-        edge_page = await edge.get_page()
-        await edge_page.go_to('https://example.com')
-        edge_title = await edge_page.execute_script('return document.title')
+        edge_tab = await edge.start()
+        await edge_tab.go_to('https://example.com')
+        edge_title = await edge_tab.execute_script('return document.title')
         print(f"Edge title: {edge_title}")
 
 asyncio.run(multi_browser_example())
@@ -352,12 +430,12 @@ Configuring proxies in Pydoll is straightforward:
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.options import Options
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 async def proxy_example():
     # Create browser options
-    options = Options()
+    options = ChromiumOptions()
     
     # Simple proxy without authentication
     options.add_argument('--proxy-server=192.168.1.100:8080')
@@ -369,40 +447,71 @@ async def proxy_example():
 
     # Start browser with proxy configuration
     async with Chrome(options=options) as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
         # Test the proxy by visiting an IP echo service
-        await page.go_to('https://api.ipify.org')
-        ip_address = await page.page_source
+        await tab.go_to('https://api.ipify.org')
+        ip_address = await tab.execute_script('return document.body.textContent')
         print(f"Current IP address: {ip_address}")
         
         # Continue with your automation
-        await page.go_to('https://example.com')
-        title = await page.execute_script('document.title')
+        await tab.go_to('https://example.com')
+        title = await tab.execute_script('return document.title')
         print(f"Page title: {title}")
 
 asyncio.run(proxy_example())
+```
+
+## Working with iFrames
+
+Pydoll provides seamless iframe interaction through the `get_frame()` method:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def iframe_interaction():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/page-with-iframe')
+        
+        # Find the iframe element
+        iframe_element = await tab.query('.hcaptcha-iframe', timeout=10)
+        
+        # Get a Tab instance for the iframe content
+        frame = await tab.get_frame(iframe_element)
+        
+        # Now interact with elements inside the iframe
+        submit_button = await frame.find(tag_name='button', class_name='submit')
+        await submit_button.click()
+        
+        # You can use all Tab methods on the frame
+        form_input = await frame.find(id='captcha-input')
+        await form_input.type('verification-code')
+        
+        # Find elements by various methods
+        links = await frame.find(tag_name='a', find_all=True)
+        specific_element = await frame.query('#specific-id')
+
+asyncio.run(iframe_interaction())
 ```
 
 ## Request Interception
 
 Intercept and modify network requests before they're sent:
 
+### Basic Request Modification
+
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.events.fetch import FetchEvents
-from pydoll.commands.fetch import FetchCommands
-from functools import partial
+from pydoll.browser.chromium import Chrome
 
 async def request_interception_example():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
         # Define the request interceptor
-        async def intercept_request(page, event):
+        async def intercept_request(event):
             request_id = event['params']['requestId']
             url = event['params']['request']['url']
             
@@ -418,32 +527,238 @@ async def request_interception_example():
                 }
                 
                 print(f"🔄 Modifying request to: {url}")
-                await page._execute_command(
-                    FetchCommands.continue_request(
+                await tab.continue_request(
                         request_id=request_id,
                         headers=custom_headers
-                    )
                 )
             else:
                 # Continue normally for non-API requests
-                await page._execute_command(
-                    FetchCommands.continue_request(
-                        request_id=request_id
-                    )
-                )
+                await tab.continue_request(request_id=request_id)
         
         # Enable interception and register handler
-        await page.enable_fetch_events()
-        await page.on(FetchEvents.REQUEST_PAUSED, 
-                      partial(intercept_request, page))
+        await tab.enable_request_interception()
+        await tab.on('Fetch.requestPaused', intercept_request)
         
         # Navigate to trigger requests
-        await page.go_to('https://example.com')
+        await tab.go_to('https://example.com')
         await asyncio.sleep(5)  # Allow time for requests to process
 
 asyncio.run(request_interception_example())
 ```
 
-This powerful capability allows you to add authentication headers dynamically, modify request payloads before they're sent, mock API responses for testing, and analyze and debug network traffic.
+### Blocking Unwanted Requests
+
+Use `fail_request` to block specific requests like ads, trackers, or unwanted resources:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def block_requests_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Define blocked domains and resource types
+        blocked_domains = ['doubleclick.net', 'googletagmanager.com', 'facebook.com']
+        blocked_resources = ['image', 'stylesheet', 'font']
+        
+        async def block_unwanted_requests(event):
+            request_id = event['params']['requestId']
+            url = event['params']['request']['url']
+            resource_type = event['params'].get('resourceType', '').lower()
+            
+            # Block requests from specific domains
+            if any(domain in url for domain in blocked_domains):
+                print(f"🚫 Blocking request to: {url}")
+                await tab.fail_request(
+                    request_id=request_id,
+                    error_reason='BlockedByClient'
+                )
+                return
+            
+            # Block specific resource types (images, CSS, fonts)
+            if resource_type in blocked_resources:
+                print(f"🚫 Blocking {resource_type}: {url}")
+                await tab.fail_request(
+                    request_id=request_id,
+                    error_reason='BlockedByClient'
+                )
+                return
+            
+            # Continue with allowed requests
+            await tab.continue_request(request_id=request_id)
+        
+        # Enable interception and register handler
+        await tab.enable_request_interception()
+        await tab.on('Fetch.requestPaused', block_unwanted_requests)
+        
+        # Navigate to a page with many external resources
+        await tab.go_to('https://example.com')
+        await asyncio.sleep(10)  # Allow time to see blocked requests
+
+asyncio.run(block_requests_example())
+```
+
+### Mocking API Responses
+
+Use `fulfill_request` to return custom responses without making actual network requests:
+
+```python
+import asyncio
+import json
+from pydoll.browser.chromium import Chrome
+
+async def mock_api_responses_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        async def mock_api_requests(event):
+            request_id = event['params']['requestId']
+            url = event['params']['request']['url']
+            
+            # Mock user API endpoint
+            if '/api/user' in url:
+                mock_user_data = {
+                    "id": 123,
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "role": "admin"
+                }
+                
+                print(f"🎭 Mocking API response for: {url}")
+                await tab.fulfill_request(
+                    request_id=request_id,
+                    response_code=200,
+                    response_headers={
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body=json.dumps(mock_user_data)
+                )
+                return
+            
+            # Mock products API endpoint
+            elif '/api/products' in url:
+                mock_products = [
+                    {"id": 1, "name": "Product A", "price": 29.99},
+                    {"id": 2, "name": "Product B", "price": 39.99},
+                    {"id": 3, "name": "Product C", "price": 19.99}
+                ]
+                
+                print(f"🎭 Mocking products API response for: {url}")
+                await tab.fulfill_request(
+                    request_id=request_id,
+                    response_code=200,
+                    response_headers={'Content-Type': 'application/json'},
+                    body=json.dumps(mock_products)
+                )
+                return
+            
+            # Simulate API error for specific endpoints
+            elif '/api/error' in url:
+                error_response = {"error": "Internal Server Error", "code": 500}
+                
+                print(f"🎭 Mocking error response for: {url}")
+                await tab.fulfill_request(
+                    request_id=request_id,
+                    response_code=500,
+                    response_headers={'Content-Type': 'application/json'},
+                    body=json.dumps(error_response)
+                )
+                return
+            
+            # Continue with real requests for everything else
+            await tab.continue_request(request_id=request_id)
+        
+        # Enable interception and register handler
+        await tab.enable_request_interception()
+        await tab.on('Fetch.requestPaused', mock_api_requests)
+        
+        # Navigate to a page that makes API calls
+        await tab.go_to('https://example.com/dashboard')
+        await asyncio.sleep(5)  # Allow time for API calls
+
+asyncio.run(mock_api_responses_example())
+```
+
+### Advanced Request Manipulation
+
+Combine all interception methods for comprehensive request control:
+
+```python
+import asyncio
+import json
+from pydoll.browser.chromium import Chrome
+
+async def advanced_request_control():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        async def advanced_interceptor(event):
+            request_id = event['params']['requestId']
+            url = event['params']['request']['url']
+            method = event['params']['request']['method']
+            headers = event['params']['request'].get('headers', {})
+            
+            print(f"📡 Intercepted {method} request to: {url}")
+            
+            # Block analytics and tracking
+            if any(tracker in url for tracker in ['analytics', 'tracking', 'ads']):
+                print(f"🚫 Blocked tracking request: {url}")
+                await tab.fail_request(request_id=request_id, error_reason='BlockedByClient')
+                return
+            
+            # Mock authentication endpoint
+            if '/auth/login' in url and method == 'POST':
+                mock_auth_response = {
+                    "success": True,
+                    "token": "mock-jwt-token-12345",
+                    "user": {"id": 1, "username": "testuser"}
+                }
+                print(f"🎭 Mocking login response")
+                await tab.fulfill_request(
+                    request_id=request_id,
+                    response_code=200,
+                    response_headers={'Content-Type': 'application/json'},
+                    body=json.dumps(mock_auth_response)
+                )
+                return
+            
+            # Add authentication to API requests
+            if '/api/' in url and 'Authorization' not in headers:
+                modified_headers = {
+                    **headers,
+                    'Authorization': 'Bearer mock-token-12345',
+                    'X-Test-Mode': 'true'
+                }
+                print(f"🔧 Adding auth headers to: {url}")
+                await tab.continue_request(
+                    request_id=request_id,
+                    headers=modified_headers
+                )
+                return
+            
+            # Continue with unmodified request
+            await tab.continue_request(request_id=request_id)
+        
+        # Enable interception
+        await tab.enable_request_interception()
+        await tab.on('Fetch.requestPaused', advanced_interceptor)
+        
+        # Test the interception
+        await tab.go_to('https://example.com/app')
+        await asyncio.sleep(10)
+
+asyncio.run(advanced_request_control())
+```
+
+This powerful capability allows you to:
+
+- **Add authentication headers dynamically** for API requests
+- **Block unwanted resources** like ads, trackers, and heavy images for faster loading
+- **Mock API responses** for testing without backend dependencies
+- **Simulate network errors** to test error handling
+- **Modify request payloads** before they're sent
+- **Analyze and debug network traffic** in real-time
 
 Each of these features showcases what makes Pydoll a next-generation browser automation tool, combining the power of direct browser control with an intuitive, async-native API. 

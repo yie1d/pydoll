@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/c4615101-d932-4e79-8a08-f50fbc686e3b" alt="Alt text" /> <br><br>
+    <img src="./images/E2ECED-cinza-azulado.png" alt="Pydoll Logo" /> <br><br>
 </p>
 
 <p align="center">
@@ -9,6 +9,7 @@
     <img src="https://github.com/thalissonvs/pydoll/actions/workflows/tests.yml/badge.svg" alt="Tests">
     <img src="https://github.com/thalissonvs/pydoll/actions/workflows/ruff-ci.yml/badge.svg" alt="Ruff CI">
     <img src="https://github.com/thalissonvs/pydoll/actions/workflows/release.yml/badge.svg" alt="Release">
+    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/mypy.yml/badge.svg" alt="MyPy CI">
 </p>
 
 
@@ -42,12 +43,15 @@ $ pip install git+https://github.com/autoscrape-labs/pydoll.git
 
 ## Why Choose Pydoll?
 
-- **Zero Webdrivers**: Say goodbye to compatibility nightmares and flaky connections
-- **Native Captcha Bypass**: Smoothly handles Cloudflare Turnstile and reCAPTCHA v3
-- **Async Performance**: Lightning-fast operations with Python's asyncio
-- **Human-like Interactions**: Realistic browsing patterns that avoid detection
-- **Powerful Event System**: React to browser events in real-time
-- **Multi-browser Support**: Works with Chrome and Edge (more coming soon!)
+- **Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate.
+- **Truly Human Interactions**: Our algorithms simulate real human behavior patterns - from timing between clicks to how the mouse moves across the screen.
+- **Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them.
+- **Integrated Intelligence**: Automatic bypass of Cloudflare Turnstile and reCAPTCHA v3 captchas, without external services or complex configurations.
+- **Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests.
+- **Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time.
+- **Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect.
+- **Robust Type Safety**: Comprehensive type system for better IDE support and error prevention.
+
 
 Ready to dive in? The following pages will guide you through installation, basic usage, and advanced features to help you get the most out of Pydoll.
 
@@ -59,17 +63,15 @@ Let's start with a practical example. The following script will open the Pydoll 
 
 ```python
 import asyncio
-import time
-from pydoll.browser.chrome import Chrome
-from pydoll.constants import By
+from pydoll.browser.chromium import Chrome
 
 async def main():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://github.com/autoscrape-labs/pydoll')
-        star_button = await page.wait_element(
-            By.XPATH, '//form[@action="/autoscrape-labs/pydoll/star"]//button',
+        tab = await browser.start()
+        await tab.go_to('https://github.com/autoscrape-labs/pydoll')
+        
+        star_button = await tab.find(
+            tag_name='button',
             timeout=5,
             raise_exc=False
         )
@@ -90,16 +92,15 @@ This example demonstrates how to navigate to a website, wait for an element to a
     
     ```python
     import asyncio
-    from pydoll.browser.chrome import Chrome
-    from pydoll.constants import By
+    from pydoll.browser.chromium import Chrome
     
     async def main():
         browser = Chrome()
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://github.com/autoscrape-labs/pydoll')
-        star_button = await page.wait_element(
-            By.XPATH, '//form[@action="/autoscrape-labs/pydoll/star"]//button',
+        tab = await browser.start()
+        await tab.go_to('https://github.com/autoscrape-labs/pydoll')
+        
+        star_button = await tab.find(
+            tag_name='button',
             timeout=5,
             raise_exc=False
         )
@@ -118,7 +119,7 @@ This example demonstrates how to navigate to a website, wait for an element to a
 
 ## Extended Example: Custom Browser Configuration
 
-For more advanced usage scenarios, Pydoll allows you to customize your browser configuration using the `Options` class. This is useful when you need to:
+For more advanced usage scenarios, Pydoll allows you to customize your browser configuration using the `ChromiumOptions` class. This is useful when you need to:
 
 - Run in headless mode (no visible browser window)
 - Specify a custom browser executable path
@@ -130,23 +131,22 @@ Here's an example showing how to use custom options for Chrome:
 ```python hl_lines="8-12 30-32 34-38"
 import asyncio
 import os
-from pydoll.browser.chrome import Chrome
-from pydoll.browser.options import Options
-from pydoll.constants import By
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 async def main():
-    options = Options()
+    options = ChromiumOptions()
     options.binary_location = '/usr/bin/google-chrome-stable'
     options.add_argument('--headless=new')
     options.add_argument('--start-maximized')
     options.add_argument('--disable-notifications')
     
     async with Chrome(options=options) as browser:
-        await browser.start()
-        page = await browser.get_page()
-        await page.go_to('https://github.com/autoscrape-labs/pydoll')
-        star_button = await page.wait_element(
-            By.XPATH, '//form[@action="/autoscrape-labs/pydoll/star"]//button',
+        tab = await browser.start()
+        await tab.go_to('https://github.com/autoscrape-labs/pydoll')
+        
+        star_button = await tab.find(
+            tag_name='button',
             timeout=5,
             raise_exc=False
         )
@@ -158,11 +158,13 @@ async def main():
         await asyncio.sleep(3)
 
         screenshot_path = os.path.join(os.getcwd(), 'pydoll_repo.png')
-        await page.get_screenshot(screenshot_path)
+        await tab.take_screenshot(path=screenshot_path)
         print(f"Screenshot saved to: {screenshot_path}")
 
-        repo_description_element = await page.find_element(
-            By.CLASS_NAME, 'f4.my-3'
+        base64_screenshot = await tab.take_screenshot(as_base64=True)
+
+        repo_description_element = await tab.find(
+            class_name='f4.my-3'
         )
         repo_description = await repo_description_element.text
         print(f"Repository description: {repo_description}")
