@@ -14,6 +14,7 @@ websockets = "^13.1"
 aiohttp = "^3.9.5"
 aiofiles = "^23.2.1"
 bs4 = "^0.0.2"
+mkdocstrings = "^0.29.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,13 +28,14 @@ mkdocs = "^1.6.1"
 mkdocs-material = "^9.6.11"
 pymdown-extensions = "^10.14.3"
 mkdocstrings = {extras = ["python"], version = "^0.29.1"}
+griffe-typingdoc = "^0.2.8"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 79
+line-length = 100
 target-version = "py310"
 
 
@@ -58,3 +60,8 @@ lint = 'ruff check .; ruff check . --diff'
 format = 'ruff check . --fix; ruff format .'
 test = 'pytest -s -x --cov=pydoll -vv'
 post_test = 'coverage html'
+
+[tool.mypy]
+exclude = [
+    "tests/",
+]

@@ -1,4 +1,4 @@
-site_name: Pydoll
+site_name: Pydoll - Async Web Automation Library
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
 
@@ -11,11 +11,43 @@ nav:
       - Chrome DevTools Protocol: deep-dive/cdp.md
       - The Connection Layer: deep-dive/connection-layer.md      
       - The Browser Domain: deep-dive/browser-domain.md
-      - The Page Domain: deep-dive/page-domain.md
+      - The Tab Domain: deep-dive/tab-domain.md
       - The Find Elements Mixin: deep-dive/find-elements-mixin.md
       - The WebElement Domain: deep-dive/webelement-domain.md
       - The Event System: deep-dive/event-system.md
       - Network Capabilities: deep-dive/network-capabilities.md
+  - API Reference:
+      - Overview: api/index.md
+      - Browser:
+          - Chrome: api/browser/chrome.md
+          - Edge: api/browser/edge.md
+          - Options: api/browser/options.md
+          - Tab: api/browser/tab.md
+          - Managers: api/browser/managers.md
+      - Elements:
+          - WebElement: api/elements/web_element.md
+          - Mixins: api/elements/mixins.md
+      - Connection:
+          - Connection Handler: api/connection/connection.md
+          - Managers: api/connection/managers.md
+      - Commands:
+          - Overview: api/commands/index.md
+          - Browser: api/commands/browser.md
+          - DOM: api/commands/dom.md
+          - Input: api/commands/input.md
+          - Network: api/commands/network.md
+          - Page: api/commands/page.md
+          - Runtime: api/commands/runtime.md
+          - Storage: api/commands/storage.md
+          - Target: api/commands/target.md
+          - Fetch: api/commands/fetch.md
+      - Protocol:
+          - Commands: api/protocol/commands.md
+          - Events: api/protocol/events.md
+      - Core:
+          - Constants: api/core/constants.md
+          - Exceptions: api/core/exceptions.md
+          - Utils: api/core/utils.md
 
 theme:
   name: material
@@ -40,8 +72,8 @@ theme:
         name: Light Mode
   icon:
     repo: fontawesome/brands/github
-    logo: fontawesome/solid/bolt
-    favicon: fontawesome/solid/bolt
+    logo: material/lightning-bolt
+  favicon: images/favicon.png
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -58,30 +90,22 @@ plugins:
       handlers:
         python:
           options:
-            extensions:
-            - griffe_typingdoc
             show_root_heading: true
             show_if_no_docstring: true
-            preload_modules:
-            - pydoll
-            - pydoll.browser
-            - pydoll.browser.chrome
-            - pydoll.browser.options
-            - pydoll.constants
-            - pydoll.exceptions
-            - pydoll.utils
             inherited_members: true
             members_order: source
             separate_signature: true
-            unwrap_annotated: true
             filters:
             - '!^_'
+            - '!^__'
             merge_init_into_class: true
             docstring_section_style: spacy
             signature_crossrefs: true
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-
+            show_source: false
+            show_bases: true
+            heading_level: 1
 
 extra_css:
   - stylesheets/termynal.css

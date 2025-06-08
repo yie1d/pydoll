@@ -4,18 +4,17 @@ The FindElementsMixin is a fundamental component in Pydoll's architecture that i
 
 ```mermaid
 graph TB
-    User[User Code] --> Page[Page Class]
-    Page --> Mixin[FindElementsMixin]
-    Mixin --> Selectors[Selector Strategies]
-    Mixin --> Wait[Wait Mechanisms]
+    User["User Code"] --> Tab["Tab Class"]
+    Tab --> Mixin["FindElementsMixin"]
+    Mixin --> Methods["Core Methods"]
+    Mixin --> Wait["Wait Mechanisms"]
     
-    Selectors --> CSS[CSS Selectors]
-    Selectors --> XPath[XPath]
-    Selectors --> ID[Element ID]
-    Selectors --> Other[Other Strategies]
+    Methods --> Find["find()"]
+    Methods --> Query["query()"]
+    Methods --> Internal["Internal Methods"]
     
-    Mixin --> DOM[Browser DOM]
-    DOM --> Elements[WebElements]
+    Mixin --> DOM["Browser DOM"]
+    DOM --> Elements["WebElements"]
 ```
 
 ## Understanding Mixins in Python
@@ -86,561 +85,597 @@ Pydoll interacts with the DOM through the Chrome DevTools Protocol (CDP), which 
 
 The CDP allows both direct DOM manipulation through the DOM domain and JavaScript-based interaction through the Runtime domain. FindElementsMixin leverages both approaches for robust element selection.
 
-## Selector Types and Strategies
+## Core API Methods
 
-The FindElementsMixin supports several types of selectors, each with its own strengths and use cases:
+Pydoll introduces two primary methods for element finding that provide a more intuitive and flexible approach:
 
-### CSS Selectors
+### The find() Method
 
-CSS selectors are the most common way to locate elements, using the same syntax as CSS stylesheets:
-
-```python
-# CSS selector examples
-await page.find_element(By.CSS_SELECTOR, "div.content > p.intro")
-await page.find_element(By.CSS_SELECTOR, "#login-form input[type='password']")
-```
-
-CSS selectors offer:
-
-- **Familiarity**: Web developers already know the syntax
-- **Conciseness**: Often shorter than XPath
-- **Performance**: Generally faster than XPath in most browsers
-- **Specificity**: Can target elements based on attributes, position, and state
-
-Common CSS selector patterns:
-
-| Selector | Description | Example |
-|----------|-------------|---------|
-| `#id` | Selects by element ID | `#username` |
-| `.class` | Selects by class name | `.btn-primary` |
-| `element` | Selects by tag name | `div` |
-| `parent > child` | Direct child | `form > input` |
-| `ancestor descendant` | Any descendant | `form input` |
-| `element[attr=value]` | Attribute value | `input[type=password]` |
-| `:nth-child(n)` | Positional | `li:nth-child(3)` |
-| `:not(selector)` | Negation | `div:not(.hidden)` |
-
-!!! tip "CSS Selector Efficiency"
-    For best performance, start your CSS selectors with an ID or a unique attribute when possible. The browser evaluates CSS selectors from right to left, so `#main-content .title` will first find all `.title` elements, then filter for those inside `#main-content`.
-
-### XPath
-
-XPath is a powerful language for navigating XML/HTML documents:
+The `find()` method provides an intuitive way to locate elements using common HTML attributes:
 
 ```python
-# XPath examples
-await page.find_element(By.XPATH, "//div[@id='content']/p[contains(text(), 'Welcome')]")
-await page.find_element(By.XPATH, "//button[text()='Submit']")
+# Find by ID
+element = await tab.find(id="username")
+
+# Find by class name
+element = await tab.find(class_name="submit-button")
+
+# Find by tag name
+element = await tab.find(tag_name="button")
+
+# Find by text content
+element = await tab.find(text="Click here")
+
+# Find by name attribute
+element = await tab.find(name="email")
+
+# Combine multiple attributes
+element = await tab.find(tag_name="input", name="password", type="password")
+
+# Find all matching elements
+elements = await tab.find(class_name="item", find_all=True)
+
+# Find with timeout
+element = await tab.find(id="dynamic-content", timeout=10)
 ```
 
-XPath offers:
+#### Method Signature
 
-- **Power**: Can navigate up the DOM tree (unlike CSS selectors)
-- **Text Content**: Can select elements based on their text content
-- **Axes**: Can select based on relationships (following, preceding, ancestor, etc.)
-- **Functions**: Built-in functions for complex matching
-- **Logical Operators**: Support for AND, OR and other logical operations
-
-#### Basic XPath Patterns
-
-| Pattern | Description | Example |
-|---------|-------------|---------|
-| `//tag` | Any tag anywhere | `//div` |
-| `/tag` | Direct child of current node | `/html/body` |
-| `[@attr='value']` | Attribute condition | `//input[@type='text']` |
-| `[text()='text']` | Text content exactly matches | `//button[text()='Submit']` |
-| `[contains(@attr, 'value')]` | Attribute contains value | `//div[contains(@class, 'item')]` |
-| `[contains(text(), 'text')]` | Text content contains | `//p[contains(text(), 'Welcome')]` |
-| `[position()=n]` | Position in parent | `//tr[position()=1]` |
-| `parent::tag` | Parent with tag | `//li/parent::ul` |
-| `following-sibling::tag` | Following sibling | `//h1/following-sibling::p` |
-
-#### Advanced XPath Techniques
-
-##### Conditional Expressions
-
-XPath supports logical operators for complex conditions:
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `and` | Both conditions must be true | `//input[@type='text' and @required]` |
-| `or` | Either condition can be true | `//button[@type='submit' or @class='submit']` |
-| `not()` | Negation of a condition | `//input[not(@disabled)]` |
-| `|` | Union operator (combines results) | `//button | //input[@type='submit']` |
-
-Consider this HTML example:
-
-```html
-<form id="registration">
-  <div class="form-group">
-    <label for="username">Username</label>
-    <input type="text" id="username" name="username" required>
-  </div>
-  <div class="form-group">
-    <label for="email">Email</label>
-    <input type="email" id="email" name="email" required>
-  </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" required>
-  </div>
-  <div class="actions">
-    <button type="reset" class="btn-secondary">Reset</button>
-    <button type="submit" class="btn-primary">Register</button>
-  </div>
-</form>
-```
-
-To select all required text or email inputs:
 ```python
-await page.find_elements(By.XPATH, "//input[(@type='text' or @type='email') and @required]")
+async def find(
+    self,
+    id: Optional[str] = None,
+    class_name: Optional[str] = None,
+    name: Optional[str] = None,
+    tag_name: Optional[str] = None,
+    text: Optional[str] = None,
+    timeout: int = 0,
+    find_all: bool = False,
+    raise_exc: bool = True,
+    **attributes,
+) -> Union[WebElement, list[WebElement], None]:
 ```
 
-To select all buttons that are either reset or have the secondary class:
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `Optional[str]` | Element ID attribute value |
+| `class_name` | `Optional[str]` | CSS class name to match |
+| `name` | `Optional[str]` | Element name attribute value |
+| `tag_name` | `Optional[str]` | HTML tag name (e.g., "div", "input") |
+| `text` | `Optional[str]` | Text content to match within element |
+| `timeout` | `int` | Maximum seconds to wait for elements to appear |
+| `find_all` | `bool` | If True, returns all matches; if False, first match only |
+| `raise_exc` | `bool` | Whether to raise exception if no elements found |
+| `**attributes` | `dict` | Additional HTML attributes to match |
+
+### The query() Method
+
+The `query()` method provides direct access using CSS selectors or XPath expressions:
+
 ```python
-await page.find_elements(By.XPATH, "//button[@type='reset' or contains(@class, 'secondary')]")
+# CSS selectors
+element = await tab.query("div.content > p.intro")
+element = await tab.query("#login-form input[type='password']")
+
+# XPath expressions
+element = await tab.query("//div[@id='content']/p[contains(text(), 'Welcome')]")
+element = await tab.query("//button[text()='Submit']")
+
+# ID shorthand (automatically detected)
+element = await tab.query("#username")
+
+# Class shorthand (automatically detected)
+element = await tab.query(".submit-button")
+
+# Find all matching elements
+elements = await tab.query("div.item", find_all=True)
+
+# Query with timeout
+element = await tab.query("#dynamic-content", timeout=10)
 ```
 
-To select the submit button using the union operator:
+#### Method Signature
+
 ```python
-await page.find_element(By.XPATH, "//button[@type='submit'] | //input[@type='submit']")
+async def query(
+    self, 
+    expression: str, 
+    timeout: int = 0, 
+    find_all: bool = False, 
+    raise_exc: bool = True
+) -> Union[WebElement, list[WebElement], None]:
 ```
 
-##### Ancestor and Other Axes
+#### Parameters
 
-XPath provides various axes to navigate the DOM in different directions:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `expression` | `str` | Selector expression (CSS, XPath, ID with #, class with .) |
+| `timeout` | `int` | Maximum seconds to wait for elements to appear |
+| `find_all` | `bool` | If True, returns all matches; if False, first match only |
+| `raise_exc` | `bool` | Whether to raise exception if no elements found |
 
-| Axis | Description | Example |
-|------|-------------|---------|
-| `ancestor::` | All ancestors (parent, grandparent, etc.) | `//input[@id='email']/ancestor::form` |
-| `ancestor-or-self::` | The node itself and its ancestors | `//div[@class='form-group']/ancestor-or-self::*[@id]` |
-| `descendant::` | All descendants (children, grandchildren, etc.) | `//form[@id='registration']/descendant::input` |
-| `preceding::` | All nodes that appear before | `//button[@type='submit']/preceding::input` |
-| `preceding-sibling::` | Siblings that appear before | `//button[@type='submit']/preceding-sibling::button` |
-| `following::` | All nodes that appear after | `//label[@for='username']/following::input` |
-| `following-sibling::` | Siblings that appear after | `//button[@type='reset']/following-sibling::button` |
+## Practical Usage Examples
 
-For example, with this HTML structure:
+### Basic Element Finding
 
-```html
-<div id="products">
-  <div class="category">
-    <h2>Electronics</h2>
-    <div class="product" data-id="e1">
-      <h3>Smartphone</h3>
-      <p class="price">$599</p>
-      <p class="description">Latest model with high-resolution camera</p>
-      <button class="add-to-cart">Add to Cart</button>
-    </div>
-    <div class="product" data-id="e2">
-      <h3>Laptop</h3>
-      <p class="price">$999</p>
-      <p class="description">Powerful processor with SSD storage</p>
-      <button class="add-to-cart">Add to Cart</button>
-    </div>
-  </div>
-  <div class="category">
-    <h2>Books</h2>
-    <div class="product" data-id="b1">
-      <h3>Python Programming</h3>
-      <p class="price">$39</p>
-      <p class="description">Learn Python from basics to advanced</p>
-      <button class="add-to-cart">Add to Cart</button>
-    </div>
-  </div>
-</div>
-```
-
-To find the category that contains a specific product:
 ```python
-await page.find_element(By.XPATH, "//div[@class='product' and contains(.,'Python Programming')]/ancestor::div[@class='category']")
-```
+import asyncio
+from pydoll.browser.chromium import Chrome
 
-To find all products in the same category as the Python book:
-```python
-await page.find_elements(By.XPATH, "//div[@class='product' and contains(.,'Python Programming')]/ancestor::div[@class='category']/div[@class='product']")
-```
-
-To find all prices that come after the Laptop product:
-```python
-await page.find_elements(By.XPATH, "//div[@class='product' and contains(.,'Laptop')]/following::p[@class='price']")
-```
-
-##### Chained Predicates and Functions
-
-XPath allows chaining multiple predicates for precise selection:
-
-```html
-<table id="employees">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Department</th>
-      <th>Salary</th>
-      <th>Start Date</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1001</td>
-      <td>John Smith</td>
-      <td>Engineering</td>
-      <td>75000</td>
-      <td>2019-04-15</td>
-    </tr>
-    <tr>
-      <td>1002</td>
-      <td>Maria Garcia</td>
-      <td>Marketing</td>
-      <td>70000</td>
-      <td>2020-08-01</td>
-    </tr>
-    <tr>
-      <td>1003</td>
-      <td>Ahmed Khan</td>
-      <td>Engineering</td>
-      <td>85000</td>
-      <td>2018-02-12</td>
-    </tr>
-  </tbody>
-</table>
-```
-
-To find employees in Engineering with salary > 80000:
-```python
-await page.find_elements(
-    By.XPATH,
-    "//table[@id='employees']//tr[td[3]='Engineering' and number(translate(td[4], '$,', '')) > 80000]"
-)
-```
-
-To find the newest employee (using date comparison):
-```python
-await page.find_element(
-    By.XPATH,
-    "//table[@id='employees']//tr[not(//tr/td[5] > td[5])]"
-)
-```
-
-##### Dynamic Content and Variable Processing
-
-XPath can be used to extract data from dynamic content structures:
-
-```html
-<div id="search-results">
-  <div class="result">
-    <div class="score">98</div>
-    <h3>Result Title 1</h3>
-    <div class="metadata">
-      <span class="author">User123</span>
-      <span class="date">2023-06-15</span>
-      <span class="category">Technology</span>
-    </div>
-  </div>
-  <div class="result">
-    <div class="score">75</div>
-    <h3>Result Title 2</h3>
-    <div class="metadata">
-      <span class="author">Expert99</span>
-      <span class="date">2023-04-22</span>
-      <span class="category">Science</span>
-    </div>
-  </div>
-  <!-- More results... -->
-</div>
-```
-
-To find results with high scores (>=90) in a specific category:
-```python
-await page.find_elements(
-    By.XPATH,
-    "//div[@class='result'][number(div[@class='score']) >= 90 and .//span[@class='category']='Technology']"
-)
-```
-
-To find the most recent result:
-```python
-await page.find_element(
-    By.XPATH,
-    "//div[@class='result'][not(//div[@class='result']/div[@class='metadata']/span[@class='date'] > ./div[@class='metadata']/span[@class='date'])]"
-)
-```
-
-##### Text Manipulation
-
-XPath provides functions to manipulate text content:
-
-```html
-<div id="article">
-  <h1>Data Analysis with Python</h1>
-  <p>This article discusses data analysis techniques using <span class="code">pandas</span> and <span class="code">numpy</span>.</p>
-  <div class="section">
-    <h2>1. Data Preparation</h2>
-    <p>Before analysis, data must be cleaned...</p>
-  </div>
-  <div class="section">
-    <h2>2. Exploratory Analysis</h2>
-    <p>Explore patterns using visualization...</p>
-  </div>
-</div>
-```
-
-To find sections with titles containing numbers:
-```python
-await page.find_elements(
-    By.XPATH,
-    "//div[@class='section'][contains(translate(h2, '0123456789', '##########'), '#')]"
-)
-```
-
-To find paragraphs mentioning Python libraries (case-insensitive):
-```python
-await page.find_elements(
-    By.XPATH,
-    "//p[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'pandas') or contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'numpy')]"
-)
-```
-
-!!! warning "XPath Performance"
-    While extremely powerful, XPath queries can be slower than CSS selectors, especially complex ones. Use CSS selectors for simple cases, and reserve XPath for scenarios that require its unique capabilities.
+async def basic_element_finding():
+    browser = Chrome()
+    tab = await browser.start()
     
-!!! tip "XPath Testing"
-    When developing complex XPath expressions, test them in browser DevTools before implementing them in your automation code. In Chrome's DevTools Console, you can use `$x("your xpath here")` to evaluate an XPath expression.
+    try:
+        await tab.go_to("https://example.com/login")
+        
+        # Find login form elements
+        username_field = await tab.find(id="username")
+        password_field = await tab.find(name="password")
+        submit_button = await tab.find(tag_name="button", type="submit")
+        
+        # Interact with elements
+        await username_field.type_text("user@example.com")
+        await password_field.type_text("password123")
+        await submit_button.click()
+        
+    finally:
+        await browser.stop()
 
-### Other Selector Types
-
-In addition to CSS and XPath, FindElementsMixin supports several convenience selectors:
-
-```python
-# ID selector (shorthand for CSS #id)
-await page.find_element(By.ID, "username")
-
-# Class name (shorthand for CSS .classname)
-await page.find_element(By.CLASS_NAME, "submit-button")
-
-# Tag name (shorthand for CSS tagname)
-await page.find_element(By.TAG_NAME, "button")
-
-# Link text (finds <a> elements by their text)
-await page.find_element(By.LINK_TEXT, "Click here")
-
-# Partial link text
-await page.find_element(By.PARTIAL_LINK_TEXT, "Click")
-
-# Name attribute (shorthand for CSS [name='value'])
-await page.find_element(By.NAME, "username")
+asyncio.run(basic_element_finding())
 ```
 
-These specialized selectors offer:
+### Advanced Selector Combinations
 
-- **Simplicity**: More readable for common cases
-- **Optimization**: Some browsers optimize certain selector types internally
-- **Specificity**: Communicate intent clearly in the code
+```python
+async def advanced_selectors():
+    browser = Chrome()
+    tab = await browser.start()
+    
+    try:
+        await tab.go_to("https://example.com/products")
+        
+        # Find specific product by combining attributes
+        product = await tab.find(
+            tag_name="div",
+            class_name="product",
+            data_category="electronics",
+            data_price_range="500-1000"
+        )
+        
+        # Find all products in a category
+        electronics = await tab.find(
+            class_name="product",
+            data_category="electronics",
+            find_all=True
+        )
+        
+        # Find element by text content
+        add_to_cart = await tab.find(text="Add to Cart")
+        
+        print(f"Found {len(electronics)} electronics products")
+        
+    finally:
+        await browser.stop()
+```
 
-## FindElementsMixin Architecture
+### Using CSS Selectors and XPath
 
-The FindElementsMixin implements element location strategies through a combination of CDP commands and appropriate waiting mechanisms:
+```python
+async def css_and_xpath_examples():
+    browser = Chrome()
+    tab = await browser.start()
+    
+    try:
+        await tab.go_to("https://example.com/table")
+        
+        # CSS selectors
+        header_cells = await tab.query("table thead th", find_all=True)
+        first_row = await tab.query("table tbody tr:first-child")
+        
+        # XPath for complex selections
+        # Find table cell containing specific text
+        price_cell = await tab.query("//td[contains(text(), '$')]")
+        
+        # Find button in the same row as specific text
+        edit_button = await tab.query(
+            "//tr[td[contains(text(), 'John Doe')]]//button[text()='Edit']"
+        )
+        
+        # Find all rows with price > $100 (using XPath functions)
+        expensive_items = await tab.query(
+            "//tr[number(translate(td[3], '$,', '')) > 100]",
+            find_all=True
+        )
+        
+        print(f"Found {len(expensive_items)} expensive items")
+        
+    finally:
+        await browser.stop()
+```
+
+## Waiting Mechanisms
+
+The FindElementsMixin implements sophisticated waiting mechanisms for handling dynamic content:
+
+### Timeout-Based Waiting
+
+```python
+async def waiting_examples():
+    browser = Chrome()
+    tab = await browser.start()
+    
+    try:
+        await tab.go_to("https://example.com/dynamic")
+        
+        # Wait up to 10 seconds for element to appear
+        dynamic_content = await tab.find(id="dynamic-content", timeout=10)
+        
+        # Wait for multiple elements
+        items = await tab.find(class_name="item", timeout=5, find_all=True)
+        
+        # Handle cases where element might not appear
+        optional_element = await tab.find(
+            id="optional-banner", 
+            timeout=3, 
+            raise_exc=False
+        )
+        
+        if optional_element:
+            await optional_element.click()
+        else:
+            print("Optional banner not found, continuing...")
+            
+    finally:
+        await browser.stop()
+```
+
+### Error Handling Strategies
+
+```python
+async def robust_element_finding():
+    browser = Chrome()
+    tab = await browser.start()
+    
+    try:
+        await tab.go_to("https://example.com")
+        
+        # Strategy 1: Try multiple selectors
+        submit_button = None
+        selectors = [
+            {"id": "submit"},
+            {"class_name": "submit-btn"},
+            {"tag_name": "button", "type": "submit"},
+            {"text": "Submit"}
+        ]
+        
+        for selector in selectors:
+            try:
+                submit_button = await tab.find(**selector, timeout=2)
+                break
+            except ElementNotFound:
+                continue
+        
+        if not submit_button:
+            raise Exception("Submit button not found with any selector")
+        
+        # Strategy 2: Graceful degradation
+        try:
+            premium_feature = await tab.find(class_name="premium-only", timeout=1)
+            await premium_feature.click()
+        except ElementNotFound:
+            # Fall back to basic feature
+            basic_feature = await tab.find(class_name="basic-feature")
+            await basic_feature.click()
+            
+    finally:
+        await browser.stop()
+```
+
+## Selector Strategy Selection
+
+The FindElementsMixin automatically chooses the most appropriate selector strategy based on the provided parameters:
+
+### Single Attribute Selection
+
+When only one attribute is provided, the mixin uses the most efficient selector:
+
+```python
+# These use optimized single-attribute selectors
+await tab.find(id="username")           # Uses By.ID
+await tab.find(class_name="button")     # Uses By.CLASS_NAME  
+await tab.find(tag_name="input")        # Uses By.TAG_NAME
+await tab.find(name="email")            # Uses By.NAME
+```
+
+### Multiple Attribute Selection
+
+When multiple attributes are provided, the mixin builds an XPath expression:
+
+```python
+# This builds XPath: //input[@type='password' and @name='password']
+await tab.find(tag_name="input", type="password", name="password")
+
+# This builds XPath: //div[@class='product' and @data-id='123']
+await tab.find(tag_name="div", class_name="product", data_id="123")
+```
+
+### Expression Type Detection
+
+The `query()` method automatically detects the expression type:
+
+```python
+# Detected as XPath (starts with //)
+await tab.query("//div[@id='content']")
+
+# Detected as ID (starts with #)
+await tab.query("#username")
+
+# Detected as class (starts with . but not ./)
+await tab.query(".submit-button")
+
+# Detected as CSS selector (default)
+await tab.query("div.content > p")
+```
+
+## Internal Architecture
+
+The FindElementsMixin implements element location through a sophisticated internal architecture:
 
 ```mermaid
 classDiagram
     class FindElementsMixin {
-        +find_element(by, value)
-        +find_elements(by, value)
-        +wait_element(by, value, timeout)
-        +wait_elements(by, value, timeout)
-        -_get_selector_function(by)
-        -_from_by_to_selector(by, value)
+        +find(**kwargs) WebElement|List[WebElement]
+        +query(expression) WebElement|List[WebElement]
+        +find_or_wait_element(by, value, timeout) WebElement|List[WebElement]
+        -_find_element(by, value) WebElement
+        -_find_elements(by, value) List[WebElement]
+        -_get_by_and_value(**kwargs) Tuple[By, str]
+        -_build_xpath(**kwargs) str
+        -_get_expression_type(expression) By
     }
     
-    class Page {
+    class Tab {
         -_connection_handler
         +go_to(url)
-        +refresh()
+        +execute_script(script)
     }
     
     class WebElement {
+        -_object_id
         -_connection_handler
-        -_element_id
         +click()
-        +type_keys(text)
+        +type(text)
+        +text
     }
     
-    Page --|> FindElementsMixin : inherits
+    Tab --|> FindElementsMixin : inherits
     FindElementsMixin ..> WebElement : creates
 ```
 
-The mixin implements several key methods:
+### Core Internal Methods
 
-1. **find_element**: Finds the first matching element
-2. **find_elements**: Finds all matching elements
-3. **wait_element**: Waits for an element to appear with a timeout
-4. **wait_elements**: Waits for multiple elements to appear
+#### find_or_wait_element()
 
-### Selector Strategy Implementation
-
-Internally, the mixin converts the `By` enum and value into the appropriate CDP command:
+The core method that handles both immediate finding and waiting:
 
 ```python
-def _from_by_to_selector(self, by: By, value: str) -> str:
-    """Converts a By enum and value to the appropriate selector string."""
-    if by == By.ID:
-        return f'#{value}'
-    elif by == By.CLASS_NAME:
-        return f'.{value}'
-    elif by == By.TAG_NAME:
-        return value
-    # ... other conversions
-    else:
-        return value  # CSS_SELECTOR and XPATH use the value directly
+async def find_or_wait_element(
+    self,
+    by: By,
+    value: str,
+    timeout: int = 0,
+    find_all: bool = False,
+    raise_exc: bool = True,
+) -> Union[WebElement, list[WebElement], None]:
+    """
+    Core element finding method with optional waiting capability.
+    
+    Searches for elements with flexible waiting. If timeout specified,
+    repeatedly attempts to find elements with 0.5s delays until success or timeout.
+    """
 ```
 
-Each search method then uses the appropriate CDP domain command:
+This method:
+1. Determines the appropriate find method (`_find_element` or `_find_elements`)
+2. Implements polling logic with 0.5-second intervals
+3. Handles timeout and exception raising logic
+4. Returns appropriate results based on `find_all` parameter
 
-- **For CSS Selectors**: `DOM.querySelector` or `DOM.querySelectorAll`
-- **For XPath**: `Runtime.evaluate` with an XPath evaluation function
-- **For other selectors**: Converted to CSS then using DOM methods
+#### _get_by_and_value()
 
-!!! info "CDP Command Selection"
-    FindElementsMixin intelligently selects the most efficient CDP command based on the selector type. For example, using `DOM.querySelector` for CSS but falling back to JavaScript execution for XPath which is not directly supported by the DOM domain.
-
-## Waiting Mechanisms
-
-A crucial aspect of web automation is handling the asynchronous nature of web pages. FindElementsMixin implements sophisticated waiting mechanisms:
+Converts high-level parameters into CDP-compatible selector strategies:
 
 ```python
-async def wait_element(
-    self, by: By, value: str, timeout: int = 10, raise_exc: bool = True
-) -> Optional[WebElement]:
-    """
-    Waits for an element to be present on the page.
-    
-    Args:
-        by: The method to locate the element
-        value: The selector value
-        timeout: Maximum time to wait in seconds
-        raise_exc: Whether to raise exception if element not found
-        
-    Returns:
-        WebElement if found, None otherwise (if raise_exc is False)
-        
-    Raises:
-        ElementNotFound: If the element is not found within timeout
-    """
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        element = await self.find_element(by, value, raise_exc=False)
-        if element:
-            return element
-        await asyncio.sleep(0.1)
-        
-    if raise_exc:
-        raise ElementNotFound(f"Element not found with {by}: {value}")
-    return None
+def _get_by_and_value(
+    self,
+    by_map: dict[str, By],
+    id: Optional[str] = None,
+    class_name: Optional[str] = None,
+    name: Optional[str] = None,
+    tag_name: Optional[str] = None,
+    text: Optional[str] = None,
+    **attributes,
+) -> tuple[By, str]:
 ```
 
-The waiting logic provides:
+This method:
+1. Identifies which attributes were provided
+2. For single attributes, returns the appropriate `By` enum and value
+3. For multiple attributes, builds an XPath expression using `_build_xpath()`
 
-1. **Polling**: Periodically checks for the element
-2. **Timeout Management**: Limits the maximum wait time
-3. **Configurability**: Allows customizing behavior when elements aren't found
-4. **Exception Handling**: Clear error messages when timeouts occur
+#### _build_xpath()
 
-!!! tip "Effective Waiting Strategies"
-    When designing robust automation, choose appropriate timeouts based on:
-    
-    - **Page Load Speed**: Slower sites need longer timeouts
-    - **Network Conditions**: Consider variability in connection speeds
-    - **Application Behavior**: Some elements appear after client-side rendering
-    - **Critical Path**: Key elements may need longer timeouts than optional ones
-
-## Element Creation
-
-Once elements are located, FindElementsMixin creates WebElement instances to represent them:
+Constructs complex XPath expressions from multiple criteria:
 
 ```python
-async def find_element(
-    self, by: By, value: str, raise_exc: bool = True
-) -> Optional[WebElement]:
-    """
-    Finds an element on the page using the specified locator strategy.
-    
-    Args:
-        by: The method to locate the element
-        value: The selector value
-        raise_exc: Whether to raise exception if element not found
-        
-    Returns:
-        WebElement if found, None otherwise (if raise_exc is False)
-        
-    Raises:
-        ElementNotFound: If the element is not found and raise_exc is True
-    """
-    selector = self._from_by_to_selector(by, value)
-    selector_function = self._get_selector_function(by)
-    
-    result = await selector_function(selector)
-    if not result:
-        if raise_exc:
-            raise ElementNotFound(f"Element not found with {by}: {value}")
-        return None
-        
-    # Create WebElement from result data
-    return WebElement(self._connection_handler, result['nodeId'], result['objectId'])
+@staticmethod
+def _build_xpath(
+    id: Optional[str] = None,
+    class_name: Optional[str] = None,
+    name: Optional[str] = None,
+    tag_name: Optional[str] = None,
+    text: Optional[str] = None,
+    **attributes,
+) -> str:
 ```
 
-This pattern demonstrates the factory method design pattern, where the mixin creates WebElement instances but doesn't tightly couple to the details of how those elements work.
+This method:
+1. Builds the base XPath (`//tag` or `//*`)
+2. Adds conditions for each provided attribute
+3. Handles special cases like class names and text content
+4. Combines conditions with `and` operators
 
-## Selector Translation to CDP
+### CDP Command Generation
 
-Under the hood, FindElementsMixin translates high-level selector concepts into specific CDP commands:
+The mixin generates appropriate CDP commands based on selector type:
 
-| Selector Type | CDP Command | JavaScript Fallback |
-|---------------|-------------|---------------------|
-| CSS Selector | `DOM.querySelector` | `document.querySelector()` |
-| XPath | N/A (not directly supported) | `document.evaluate()` |
-| ID | `DOM.querySelector` | `document.getElementById()` |
-| Class Name | `DOM.querySelectorAll` | `document.getElementsByClassName()` |
-| Tag Name | `DOM.querySelectorAll` | `document.getElementsByTagName()` |
-
-The mixin chooses the most efficient approach based on the capabilities of CDP and the browser:
+#### For CSS Selectors
 
 ```python
-async def _find_by_xpath(self, xpath: str):
-    """Finds an element using XPath via JavaScript execution."""
-    result = await self._execute_command(
-        RuntimeCommands.evaluate_script(
-            """
-            function getElementByXpath(path) {
-              return document.evaluate(
-                path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
-              ).singleNodeValue;
-            }
-            return getElementByXpath(arguments[0]);
-            """,
-            arguments=[xpath]
-        )
-    )
-    # Process result...
+def _get_find_element_command(self, by: By, value: str, object_id: str = ''):
+    # Converts to CSS selector format
+    if by == By.CLASS_NAME:
+        selector = f'.{escaped_value}'
+    elif by == By.ID:
+        selector = f'#{escaped_value}'
+    
+    # Uses DOM.querySelector or Runtime.evaluate
 ```
 
-!!! info "Performance Considerations"
-    The FindElementsMixin optimizes element location based on selector type:
-    
-    - CSS selectors use direct DOM API calls when possible
-    - XPath requires JavaScript execution, which is slightly slower
-    - ID lookups are typically the fastest across all browsers
-    - Complex selectors may require more processing time
+#### For XPath Expressions
+
+```python
+def _get_find_element_by_xpath_command(self, xpath: str, object_id: str):
+    # Uses Runtime.evaluate with document.evaluate()
+    script = Scripts.FIND_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
+    command = RuntimeCommands.evaluate(expression=script)
+```
+
+## Performance Considerations
+
+### Selector Efficiency
+
+Different selector types have varying performance characteristics:
+
+| Selector Type | Performance | Use Case |
+|---------------|-------------|----------|
+| ID | Fastest | Unique elements with ID attributes |
+| CSS Class | Fast | Elements with specific styling |
+| Tag Name | Fast | When you need all elements of a type |
+| CSS Selector | Good | Complex but common patterns |
+| XPath | Slower | Complex relationships and text matching |
+
+### Optimization Strategies
+
+```python
+# Good: Use ID when available
+element = await tab.find(id="unique-element")
+
+# Good: Use simple CSS selectors
+element = await tab.query("#form .submit-button")
+
+# Avoid: Complex XPath when CSS would work
+# element = await tab.query("//div[@id='form']//button[@class='submit-button']")
+
+# Good: Combine attributes efficiently
+element = await tab.find(tag_name="input", type="email", required=True)
+
+# Good: Use find_all=False when you only need the first match
+first_item = await tab.find(class_name="item", find_all=False)
+```
+
+### Waiting Best Practices
+
+```python
+# Good: Use appropriate timeouts
+quick_element = await tab.find(id="static-content", timeout=2)
+slow_element = await tab.find(id="ajax-content", timeout=10)
+
+# Good: Handle optional elements gracefully
+optional = await tab.find(class_name="optional", timeout=1, raise_exc=False)
+
+# Good: Use specific selectors to reduce false positives
+specific_button = await tab.find(
+    tag_name="button", 
+    class_name="submit", 
+    type="submit",
+    timeout=5
+)
+```
+
+## Error Handling
+
+The FindElementsMixin provides comprehensive error handling:
+
+### Exception Types
+
+```python
+from pydoll.exceptions import ElementNotFound, WaitElementTimeout
+
+try:
+    element = await tab.find(id="missing-element")
+except ElementNotFound:
+    print("Element not found immediately")
+
+try:
+    element = await tab.find(id="slow-element", timeout=10)
+except WaitElementTimeout:
+    print("Element did not appear within timeout")
+```
+
+### Graceful Handling
+
+```python
+# Option 1: Use raise_exc=False
+element = await tab.find(id="optional-element", raise_exc=False)
+if element:
+    await element.click()
+
+# Option 2: Try-except with fallback
+try:
+    primary_button = await tab.find(id="primary-action")
+    await primary_button.click()
+except ElementNotFound:
+    # Fallback to alternative selector
+    fallback_button = await tab.find(class_name="action-button")
+    await fallback_button.click()
+```
+
+## Integration with WebElement
+
+Found elements are returned as WebElement instances that provide rich interaction capabilities:
+
+```python
+# Find and interact with form elements
+username = await tab.find(name="username")
+await username.type("user@example.com")
+
+password = await tab.find(type="password")
+await password.type("secretpassword")
+
+submit = await tab.find(tag_name="button", type="submit")
+await submit.click()
+
+# Get element properties
+text_content = await username.text
+is_visible = await username.is_visible()
+attribute_value = await username.get_attribute("placeholder")
+```
 
 ## Conclusion
 
-The FindElementsMixin serves as a critical bridge between Pydoll's high-level automation API and the browser's DOM. By understanding its design and capabilities, you gain insight into how element location works in modern browser automation.
+The FindElementsMixin serves as the foundation for element interaction in Pydoll, providing a powerful and intuitive API for locating DOM elements. The combination of the `find()` and `query()` methods offers flexibility for both simple and complex element selection scenarios.
 
-The mixin showcases several important design principles:
+Key advantages of the FindElementsMixin design:
 
-1. **Separation of Concerns**: Element location is isolated from other page functionality
-2. **Abstraction**: Complex CDP interactions are hidden behind a simple API
-3. **Composability**: The mixin can be used by any class needing element location
-4. **Robustness**: Built-in waiting mechanisms handle asynchronous page behavior
+1. **Intuitive API**: The `find()` method uses natural HTML attribute names
+2. **Flexible Selection**: Support for CSS selectors, XPath, and attribute combinations
+3. **Robust Waiting**: Built-in timeout and polling mechanisms
+4. **Performance Optimization**: Automatic selection of the most efficient selector strategy
+5. **Error Handling**: Comprehensive exception handling with graceful degradation options
 
-When combined with the Page and WebElement domains, FindElementsMixin creates a powerful and intuitive API for browser automation that handles the complexities of DOM interaction. 
+By understanding the capabilities and patterns of the FindElementsMixin, you can create robust and maintainable browser automation that handles the complexities of modern web applications.

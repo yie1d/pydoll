@@ -51,24 +51,21 @@ To start monitoring network activity, you need to enable network events:
 
 ```python
 import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.events.network import NetworkEvents
+from pydoll.browser.chromium import Chrome
+from pydoll.protocol.network.events import NetworkEvent
 from functools import partial
 
 async def main():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
         # Enable network monitoring
-        await page.enable_network_events()
+        await tab.enable_network_events()
         
         # Navigate to a page
-        await page.go_to('https://example.com')
+        await tab.go_to('https://example.com')
         
-        # Retrieve network logs
-        logs = await page.get_network_logs()
-        print(f"Captured {len(logs)} network requests")
+        print("Network monitoring enabled and page loaded")
         
 asyncio.run(main())
 ```
@@ -88,11 +85,11 @@ When you enable network events, Pydoll automatically captures information about 
 You can register callbacks to be notified about specific network events in real-time:
 
 ```python
-from pydoll.events.network import NetworkEvents
+from pydoll.protocol.network.events import NetworkEvent
 from functools import partial
 
 # Define a callback to handle request events
-async def on_request(page, event):
+async def on_request(tab, event):
     url = event['params']['request']['url']
     method = event['params']['request']['method']
     
@@ -104,7 +101,7 @@ async def on_request(page, event):
         print(f"Content-Type: {headers['content-type']}")
 
 # Define a callback to handle response events
-async def on_response(page, event):
+async def on_response(tab, event):
     url = event['params']['response']['url']
     status = event['params']['response']['status']
     
@@ -116,10 +113,22 @@ async def on_response(page, event):
         total_time = timing['receiveHeadersEnd'] - timing['requestTime']
         print(f"Request completed in {total_time:.2f}s")
 
-# Register the callbacks
-await page.enable_network_events()
-await page.on(NetworkEvents.REQUEST_WILL_BE_SENT, partial(on_request, page))
-await page.on(NetworkEvents.RESPONSE_RECEIVED, partial(on_response, page))
+async def main():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Register the callbacks
+        await tab.enable_network_events()
+        await tab.on(NetworkEvent.REQUEST_WILL_BE_SENT, partial(on_request, tab))
+        await tab.on(NetworkEvent.RESPONSE_RECEIVED, partial(on_response, tab))
+        
+        # Navigate to trigger network activity
+        await tab.go_to('https://example.com')
+        
+        # Wait to see network activity
+        await asyncio.sleep(5)
+
+asyncio.run(main())
 ```
 
 ### Key Network Events
@@ -128,369 +137,24 @@ Pydoll provides access to a wide range of network-related events:
 
 | Event Constant | Description | Useful Information Available |
 |----------------|-------------|------------------------------|
-| `NetworkEvents.REQUEST_WILL_BE_SENT` | Fired when a request is about to be sent | URL, method, headers, POST data |
-| `NetworkEvents.RESPONSE_RECEIVED` | Fired when HTTP response is received | Status code, headers, MIME type, timing |
-| `NetworkEvents.LOADING_FAILED` | Fired when a request fails | Error information, canceled status |
-| `NetworkEvents.LOADING_FINISHED` | Fired when a request completes | Encoding, compressed data size |
-| `NetworkEvents.RESOURCE_CHANGED_PRIORITY` | Fired when resource loading priority changes | New priority level |
-| `NetworkEvents.WEBSOCKET_CREATED` | Fired when a WebSocket is created | URL, initiator |
-| `NetworkEvents.WEBSOCKET_FRAME_SENT` | Fired when a WebSocket frame is sent | Payload data |
-| `NetworkEvents.WEBSOCKET_FRAME_RECEIVED` | Fired when a WebSocket frame is received | Response data |
+| `NetworkEvent.REQUEST_WILL_BE_SENT` | Fired when a request is about to be sent | URL, method, headers, POST data |
+| `NetworkEvent.RESPONSE_RECEIVED` | Fired when HTTP response is available | Status code, headers, MIME type, timing |
+| `NetworkEvent.LOADING_FAILED` | Fired when a request fails | Error information, canceled status |
+| `NetworkEvent.LOADING_FINISHED` | Fired when a request completes | Encoding, compressed data size |
+| `NetworkEvent.RESOURCE_CHANGED_PRIORITY` | Fired when resource loading priority changes | New priority level |
+| `NetworkEvent.WEBSOCKET_CREATED` | Fired when a WebSocket is created | URL, initiator |
+| `NetworkEvent.WEBSOCKET_FRAME_SENT` | Fired when a WebSocket frame is sent | Payload data |
+| `NetworkEvent.WEBSOCKET_FRAME_RECEIVED` | Fired when a WebSocket frame is received | Response data |
 
-### Retrieving Response Bodies
+### Advanced Network Monitoring Example
 
-One of the most powerful features of Pydoll's network monitoring is the ability to retrieve the actual content of responses:
-
-```python
-import asyncio
-import json
-from pydoll.browser.chrome import Chrome
-from pydoll.events.network import NetworkEvents
-from functools import partial
-
-async def main():
-    async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        
-        # Enable network events
-        await page.enable_network_events()
-        
-        # Track API requests
-        api_request_ids = []
-        
-        async def track_api_request(page, event):
-            if '/api/' in event['params']['request']['url']:
-                request_id = event['params']['requestId']
-                api_request_ids.append(request_id)
-        
-        await page.on(
-            NetworkEvents.REQUEST_WILL_BE_SENT, 
-            partial(track_api_request, page)
-        )
-        
-        # Navigate to a page with API calls
-        await page.go_to('https://example.com/data-heavy-page')
-        
-        # Wait a moment for requests to complete
-        await asyncio.sleep(3)
-        
-        # Fetch response bodies for API requests
-        for request_id in api_request_ids:
-            try:
-                body, is_base64 = await page.get_network_response_body(request_id)
-                
-                # Parse JSON responses
-                if not is_base64 and body:
-                    try:
-                        data = json.loads(body)
-                        print(f"API Response Data: {json.dumps(data, indent=2)[:200]}...")
-                    except json.JSONDecodeError:
-                        print(f"Non-JSON response: {body[:100]}...")
-            except Exception as e:
-                print(f"Error retrieving response for request {request_id}: {e}")
-        
-        # Alternative: use the built-in method to get responses matching a pattern
-        api_responses = await page.get_network_response_bodies(matches=['api'])
-        print(f"Found {len(api_responses)} API responses")
-        
-asyncio.run(main())
-```
-
-The `get_network_response_body` method retrieves the complete response body for a specific request, while `get_network_response_bodies` is a convenience method that retrieves response bodies for all requests matching a URL pattern.
-
-### Filtering Network Logs
-
-You can filter network logs to focus on specific requests:
-
-```python
-# Get all network logs
-all_logs = await page.get_network_logs()
-
-# Filter logs by URL pattern
-api_logs = await page.get_network_logs(matches=['api'])
-image_logs = await page.get_network_logs(matches=['.jpg', '.png', '.gif'])
-```
-
-This filtering capability is particularly useful when analyzing complex web applications with many network requests.
-
-## Request Interception and Modification
-
-Request interception is where Pydoll's network capabilities truly shine. Unlike traditional browser automation tools that can only observe network traffic, Pydoll allows you to intercept and modify network requests before they are sent.
-
-### The Fetch Domain
-
-The Fetch domain in the Chrome DevTools Protocol provides advanced functionality for intercepting and manipulating network requests. Pydoll exposes this functionality through a clean API that makes it easy to implement complex network manipulation scenarios.
-
-```mermaid
-sequenceDiagram
-    participant App as Application Code
-    participant Pydoll as Pydoll Library
-    participant Browser as Browser
-    participant Server as Web Server
-    
-    App->>Pydoll: Enable fetch events
-    Pydoll->>Browser: FetchCommands.enable_fetch_events()
-    Browser-->>Pydoll: Enabled
-    
-    App->>Pydoll: Register callback for REQUEST_PAUSED
-    
-    App->>Pydoll: Navigate to URL
-    Pydoll->>Browser: Navigate command
-    Browser->>Browser: Initiates request
-    Browser->>Pydoll: Fetch.requestPaused event
-    Pydoll->>App: Execute callback
-    
-    App->>Pydoll: Modify and continue request
-    Pydoll->>Browser: FetchCommands.continue_request() with modifications
-    Browser->>Server: Modified request
-    
-    Server-->>Browser: Response
-    Browser-->>Pydoll: Complete
-    Pydoll-->>App: Continue execution
-```
-
-### Enabling Request Interception
-
-To intercept requests, you need to enable the Fetch domain:
-
-```python
-import asyncio
-from pydoll.browser.chrome import Chrome
-from pydoll.events.fetch import FetchEvents
-from pydoll.commands.fetch import FetchCommands
-from functools import partial
-
-async def main():
-    async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        
-        # Define a request interceptor
-        async def intercept_request(page, event):
-            request_id = event['params']['requestId']
-            request = event['params']['request']
-            url = request['url']
-            
-            print(f"Intercepted request to: {url}")
-            
-            # You must continue the request to proceed
-            await page._execute_command(
-                FetchCommands.continue_request(request_id)
-            )
-        
-        # Enable fetch events and register the interceptor
-        await page.enable_fetch_events()
-        await page.on(
-            FetchEvents.REQUEST_PAUSED, 
-            partial(intercept_request, page)
-        )
-        
-        # Navigate to a page
-        await page.go_to('https://example.com')
-        
-asyncio.run(main())
-```
-
-!!! warning "Always Continue Intercepted Requests"
-    When intercepting requests, you must always call `FetchCommands.continue_request()` to proceed with the request, either with modifications or as is. If you don't, the browser will hang, waiting for a resolution of the intercepted request.
-
-### Interception Scope and Resource Types
-
-You can limit the scope of request interception to specific resource types:
-
-```python
-# Intercept all requests (could be resource-intensive)
-await page.enable_fetch_events(resource_type='')
-
-# Intercept only document (HTML) requests
-await page.enable_fetch_events(resource_type='Document')
-
-# Intercept only XHR/fetch API requests
-await page.enable_fetch_events(resource_type='XHR')
-
-# Intercept only image requests
-await page.enable_fetch_events(resource_type='Image')
-```
-
-Resource types available for interception:
-
-| Resource Type | Description | Common Examples |
-|---------------|-------------|----------------|
-| `Document` | Main HTML documents | HTML pages, iframes |
-| `Stylesheet` | CSS files | .css files |
-| `Image` | Image resources | .jpg, .png, .gif, .webp |
-| `Media` | Media files | .mp4, .webm, audio files |
-| `Font` | Font files | .woff, .woff2, .ttf |
-| `Script` | JavaScript files | .js files |
-| `TextTrack` | Text track files | .vtt, .srt (captions, subtitles) |
-| `XHR` | XMLHttpRequest calls | API calls, AJAX requests |
-| `Fetch` | Fetch API requests | Modern API calls |
-| `EventSource` | Server-sent events | Stream connections |
-| `WebSocket` | WebSocket connections | Real-time communications |
-| `Manifest` | Web app manifests | .webmanifest files |
-| `Other` | Other resource types | Miscellaneous resources |
-
-### Request Modification Capabilities
-
-When intercepting requests, you can modify various aspects of the request before it's sent to the server:
-
-#### 1. Modifying URL and Method
-
-```python
-async def redirect_request(page, event):
-    request_id = event['params']['requestId']
-    request = event['params']['request']
-    url = request['url']
-    
-    # Redirect requests for one domain to another
-    if 'old-domain.com' in url:
-        new_url = url.replace('old-domain.com', 'new-domain.com')
-        print(f"Redirecting {url} to {new_url}")
-        
-        await page._execute_command(
-            FetchCommands.continue_request(
-                request_id=request_id,
-                url=new_url
-            )
-        )
-    # Change GET to POST for specific endpoints
-    elif '/api/data' in url and request['method'] == 'GET':
-        print(f"Converting GET to POST for {url}")
-        
-        await page._execute_command(
-            FetchCommands.continue_request(
-                request_id=request_id,
-                method='POST'
-            )
-        )
-    else:
-        # Continue normally
-        await page._execute_command(
-            FetchCommands.continue_request(request_id)
-        )
-```
-
-#### 2. Adding or Modifying Headers
-
-```python
-async def inject_headers(page, event):
-    request_id = event['params']['requestId']
-    request = event['params']['request']
-    url = request['url']
-    
-    # Get existing headers
-    headers = request.get('headers', {})
-    
-    # Add or modify headers
-    custom_headers = {
-        **headers,  # Keep existing headers
-        'X-Custom-Header': 'CustomValue',
-        'Authorization': 'Bearer your-token-here',
-        'User-Agent': 'Custom User Agent String',
-    }
-    
-    await page._execute_command(
-        FetchCommands.continue_request(
-            request_id=request_id,
-            headers=custom_headers
-        )
-    )
-```
-
-#### 3. Modifying Request Body
-
-```python
-async def modify_post_data(page, event):
-    request_id = event['params']['requestId']
-    request = event['params']['request']
-    url = request['url']
-    method = request['method']
-    
-    # Only process POST requests to specific endpoints
-    if method == 'POST' and '/api/submit' in url:
-        # Get the original post data, if any
-        original_post_data = request.get('postData', '{}')
-        
-        try:
-            # Parse the original data
-            data = json.loads(original_post_data)
-            
-            # Modify the data
-            data['additionalField'] = 'injected-value'
-            data['timestamp'] = int(time.time())
-            
-            # Convert back to string
-            modified_post_data = json.dumps(data)
-            
-            print(f"Modified POST data for {url}")
-            
-            await page._execute_command(
-                FetchCommands.continue_request(
-                    request_id=request_id,
-                    post_data=modified_post_data
-                )
-            )
-        except json.JSONDecodeError:
-            # If not JSON, continue normally
-            await page._execute_command(
-                FetchCommands.continue_request(request_id)
-            )
-    else:
-        # Continue normally for non-POST requests
-        await page._execute_command(
-            FetchCommands.continue_request(request_id)
-        )
-```
-
-### Authentication Handling
-
-The Fetch domain can also intercept authentication challenges, allowing you to automatically handle HTTP authentication:
-
-```python
-async def main():
-    async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
-        
-        # Define authentication handler
-        async def handle_auth(page, event):
-            request_id = event['params']['requestId']
-            auth_challenge = event['params']['authChallenge']
-            
-            print(f"Authentication required: {auth_challenge['origin']}")
-            
-            # Provide credentials
-            await page._execute_command(
-                FetchCommands.continue_request_with_auth(
-                    request_id=request_id,
-                    proxy_username="username",
-                    proxy_password="password"
-                )
-            )
-        
-        # Enable fetch events with auth handling
-        await page.enable_fetch_events(handle_auth=True)
-        await page.on(
-            FetchEvents.AUTH_REQUIRED, 
-            partial(handle_auth, page)
-        )
-        
-        # Navigate to a page requiring authentication
-        await page.go_to('https://protected-site.com')
-```
-
-## Advanced Network Monitoring Patterns
-
-### Creating a Network Activity Dashboard
-
-You can combine network monitoring with event handling to create a real-time dashboard of network activity:
+Here's a more comprehensive example that tracks various network metrics:
 
 ```python
 import asyncio
 import time
-from pydoll.browser.chrome import Chrome
-from pydoll.events.network import NetworkEvents
+from pydoll.browser.chromium import Chrome
+from pydoll.protocol.network.events import NetworkEvent
 from functools import partial
 
 async def main():
@@ -537,11 +201,10 @@ async def main():
     dashboard_task = asyncio.create_task(update_dashboard())
     
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
         # Track request starts
-        async def on_request_sent(page, event):
+        async def on_request_sent(tab, event):
             stats['total_requests'] += 1
             
             # Track request type
@@ -558,29 +221,29 @@ async def main():
                 pass
         
         # Track responses
-        async def on_response(page, event):
+        async def on_response(tab, event):
             status = event['params']['response']['status']
             stats['status_codes'][status] = stats['status_codes'].get(status, 0) + 1
         
         # Track request completions
-        async def on_loading_finished(page, event):
+        async def on_loading_finished(tab, event):
             stats['completed_requests'] += 1
             if 'encodedDataLength' in event['params']:
                 stats['bytes_received'] += event['params']['encodedDataLength']
         
         # Track failures
-        async def on_loading_failed(page, event):
+        async def on_loading_failed(tab, event):
             stats['failed_requests'] += 1
         
         # Register callbacks
-        await page.enable_network_events()
-        await page.on(NetworkEvents.REQUEST_WILL_BE_SENT, partial(on_request_sent, page))
-        await page.on(NetworkEvents.RESPONSE_RECEIVED, partial(on_response, page))
-        await page.on(NetworkEvents.LOADING_FINISHED, partial(on_loading_finished, page))
-        await page.on(NetworkEvents.LOADING_FAILED, partial(on_loading_failed, page))
+        await tab.enable_network_events()
+        await tab.on(NetworkEvent.REQUEST_WILL_BE_SENT, partial(on_request_sent, tab))
+        await tab.on(NetworkEvent.RESPONSE_RECEIVED, partial(on_response, tab))
+        await tab.on(NetworkEvent.LOADING_FINISHED, partial(on_loading_finished, tab))
+        await tab.on(NetworkEvent.LOADING_FAILED, partial(on_loading_failed, tab))
         
         # Navigate to a page with lots of requests
-        await page.go_to('https://news.ycombinator.com')
+        await tab.go_to('https://news.ycombinator.com')
         
         # Wait for user to press Enter to exit
         await asyncio.sleep(60)
@@ -591,117 +254,390 @@ async def main():
 asyncio.run(main())
 ```
 
-### API Traffic Analysis
+## Request Interception and Modification
 
-You can use network monitoring to analyze API traffic patterns:
+Request interception is where Pydoll's network capabilities truly shine. Unlike traditional browser automation tools that can only observe network traffic, Pydoll allows you to intercept and modify network requests before they are sent.
+
+### The Fetch Domain
+
+The Fetch domain in the Chrome DevTools Protocol provides advanced functionality for intercepting and manipulating network requests. Pydoll exposes this functionality through a clean API that makes it easy to implement complex network manipulation scenarios.
+
+```mermaid
+sequenceDiagram
+    participant App as Application Code
+    participant Pydoll as Pydoll Library
+    participant Browser as Browser
+    participant Server as Web Server
+    
+    App->>Pydoll: Enable fetch events
+    Pydoll->>Browser: FetchCommands.enable()
+    Browser-->>Pydoll: Enabled
+    
+    App->>Pydoll: Register callback for REQUEST_PAUSED
+    
+    App->>Pydoll: Navigate to URL
+    Pydoll->>Browser: Navigate command
+    Browser->>Browser: Initiates request
+    Browser->>Pydoll: Fetch.requestPaused event
+    Pydoll->>App: Execute callback
+    
+    App->>Pydoll: Modify and continue request
+    Pydoll->>Browser: browser.continue_request() with modifications
+    Browser->>Server: Modified request
+    
+    Server-->>Browser: Response
+    Browser-->>Pydoll: Complete
+    Pydoll-->>App: Continue execution
+```
+
+### Enabling Request Interception
+
+To intercept requests, you need to enable the Fetch domain:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.protocol.fetch.events import FetchEvent
+from functools import partial
+
+async def main():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Define a request interceptor
+        async def intercept_request(tab, event):
+            request_id = event['params']['requestId']
+            request = event['params']['request']
+            url = request['url']
+            
+            print(f"Intercepted request to: {url}")
+            
+            # You must continue the request to proceed
+            await browser.continue_request(request_id)
+        
+        # Enable fetch events and register the interceptor
+        await tab.enable_fetch_events()
+        await tab.on(FetchEvent.REQUEST_PAUSED, partial(intercept_request, tab))
+        
+        # Navigate to a page
+        await tab.go_to('https://example.com')
+        
+asyncio.run(main())
+```
+
+!!! warning "Always Continue Intercepted Requests"
+    When intercepting requests, you must always call `browser.continue_request()`, `browser.fail_request()`, or `browser.fulfill_request()` to resolve the intercepted request. If you don't, the browser will hang, waiting for a resolution of the intercepted request.
+
+### Interception Scope and Resource Types
+
+You can limit the scope of request interception to specific resource types:
+
+```python
+from pydoll.constants import ResourceType
+
+# Intercept all requests (could be resource-intensive)
+await tab.enable_fetch_events()
+
+# Intercept only document (HTML) requests
+await tab.enable_fetch_events(resource_type=ResourceType.DOCUMENT)
+
+# Intercept only XHR/fetch API requests
+await tab.enable_fetch_events(resource_type=ResourceType.XHR)
+
+# Intercept only image requests
+await tab.enable_fetch_events(resource_type=ResourceType.IMAGE)
+```
+
+Resource types available for interception:
+
+| Resource Type | Description | Common Examples |
+|---------------|-------------|----------------|
+| `ResourceType.DOCUMENT` | Main HTML documents | HTML pages, iframes |
+| `ResourceType.STYLESHEET` | CSS files | .css files |
+| `ResourceType.IMAGE` | Image resources | .jpg, .png, .gif, .webp |
+| `ResourceType.MEDIA` | Media files | .mp4, .webm, audio files |
+| `ResourceType.FONT` | Font files | .woff, .woff2, .ttf |
+| `ResourceType.SCRIPT` | JavaScript files | .js files |
+| `ResourceType.TEXTTRACK` | Text track files | .vtt, .srt (captions, subtitles) |
+| `ResourceType.XHR` | XMLHttpRequest calls | API calls, AJAX requests |
+| `ResourceType.FETCH` | Fetch API requests | Modern API calls |
+| `ResourceType.EVENTSOURCE` | Server-sent events | Stream connections |
+| `ResourceType.WEBSOCKET` | WebSocket connections | Real-time communications |
+| `ResourceType.MANIFEST` | Web app manifests | .webmanifest files |
+| `ResourceType.OTHER` | Other resource types | Miscellaneous resources |
+
+### Request Modification Capabilities
+
+When intercepting requests, you can modify various aspects of the request before it's sent to the server:
+
+#### 1. Modifying URL and Method
+
+```python
+async def redirect_request(tab, event):
+    request_id = event['params']['requestId']
+    request = event['params']['request']
+    url = request['url']
+    
+    # Redirect requests for one domain to another
+    if 'old-domain.com' in url:
+        new_url = url.replace('old-domain.com', 'new-domain.com')
+        print(f"Redirecting {url} to {new_url}")
+        
+        await browser.continue_request(
+            request_id=request_id,
+            url=new_url
+        )
+    # Change GET to POST for specific endpoints
+    elif '/api/data' in url and request['method'] == 'GET':
+        print(f"Converting GET to POST for {url}")
+        
+        await browser.continue_request(
+            request_id=request_id,
+            method='POST'
+        )
+    else:
+        # Continue normally
+        await browser.continue_request(request_id)
+```
+
+#### 2. Adding or Modifying Headers
+
+```python
+async def inject_headers(tab, event):
+    request_id = event['params']['requestId']
+    request = event['params']['request']
+    url = request['url']
+    
+    # Get existing headers
+    headers = request.get('headers', {})
+    
+    # Add or modify headers
+    custom_headers = [
+        {'name': 'X-Custom-Header', 'value': 'CustomValue'},
+        {'name': 'Authorization', 'value': 'Bearer your-token-here'},
+        {'name': 'User-Agent', 'value': 'Custom User Agent String'},
+    ]
+    
+    # Add existing headers to the list
+    for name, value in headers.items():
+        custom_headers.append({'name': name, 'value': value})
+    
+    await browser.continue_request(
+        request_id=request_id,
+        headers=custom_headers
+    )
+```
+
+#### 3. Modifying Request Body
+
+```python
+import json
+import time
+
+async def modify_post_data(tab, event):
+    request_id = event['params']['requestId']
+    request = event['params']['request']
+    url = request['url']
+    method = request['method']
+    
+    # Only process POST requests to specific endpoints
+    if method == 'POST' and '/api/submit' in url:
+        # Get the original post data, if any
+        original_post_data = request.get('postData', '{}')
+        
+        try:
+            # Parse the original data
+            data = json.loads(original_post_data)
+            
+            # Modify the data
+            data['additionalField'] = 'injected-value'
+            data['timestamp'] = int(time.time())
+            
+            # Convert back to string
+            modified_post_data = json.dumps(data)
+            
+            print(f"Modified POST data for {url}")
+            
+            await browser.continue_request(
+                request_id=request_id,
+                post_data=modified_post_data
+            )
+        except json.JSONDecodeError:
+            # If not JSON, continue normally
+            await browser.continue_request(request_id)
+    else:
+        # Continue normally for non-POST requests
+        await browser.continue_request(request_id)
+```
+
+### Failing and Fulfilling Requests
+
+Besides continuing requests with modifications, you can also fail requests or fulfill them with custom responses:
+
+#### Failing Requests
+
+```python
+from pydoll.constants import NetworkErrorReason
+
+async def block_requests(tab, event):
+    request_id = event['params']['requestId']
+    request = event['params']['request']
+    url = request['url']
+    
+    # Block requests to tracking domains
+    blocked_domains = ['google-analytics.com', 'facebook.com/tr']
+    
+    if any(domain in url for domain in blocked_domains):
+        print(f"Blocking request to: {url}")
+        await browser.fail_request(request_id, NetworkErrorReason.BLOCKED_BY_CLIENT)
+    else:
+        await browser.continue_request(request_id)
+```
+
+#### Fulfilling Requests with Custom Responses
+
+```python
+async def mock_api_response(tab, event):
+    request_id = event['params']['requestId']
+    request = event['params']['request']
+    url = request['url']
+    
+    # Mock API responses
+    if '/api/user' in url:
+        mock_response = {
+            'id': 123,
+            'name': 'Mock User',
+            'email': 'mock@example.com'
+        }
+        
+        response_headers = [
+            {'name': 'Content-Type', 'value': 'application/json'},
+            {'name': 'Access-Control-Allow-Origin', 'value': '*'}
+        ]
+        
+        print(f"Mocking response for: {url}")
+        
+        await browser.fulfill_request(
+            request_id=request_id,
+            response_code=200,
+            response_headers=response_headers,
+            response_body=json.dumps(mock_response)
+        )
+    else:
+        await browser.continue_request(request_id)
+```
+
+### Authentication Handling
+
+The Fetch domain can also intercept authentication challenges, allowing you to automatically handle HTTP authentication:
+
+```python
+async def main():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Define authentication handler
+        async def handle_auth(tab, event):
+            request_id = event['params']['requestId']
+            auth_challenge = event['params']['authChallenge']
+            
+            print(f"Authentication required: {auth_challenge['origin']}")
+            
+            # Provide credentials
+            await browser.continue_request_with_auth(
+                request_id=request_id,
+                auth_challenge_response='ProvideCredentials',
+                username="username",
+                password="password"
+            )
+        
+        # Enable fetch events with auth handling
+        await tab.enable_fetch_events(handle_auth=True)
+        await tab.on(FetchEvent.AUTH_REQUIRED, partial(handle_auth, tab))
+        
+        # Navigate to a page requiring authentication
+        await tab.go_to('https://protected-site.com')
+```
+
+## Advanced Network Patterns
+
+### Comprehensive Request Interception Example
+
+Here's a complete example that demonstrates various interception techniques:
 
 ```python
 import asyncio
 import json
-from pydoll.browser.chrome import Chrome
-from pydoll.events.network import NetworkEvents
+from pydoll.browser.chromium import Chrome
+from pydoll.protocol.fetch.events import FetchEvent
+from pydoll.constants import NetworkErrorReason, ResourceType
 from functools import partial
 
-async def analyze_api_traffic():
-    api_calls = []
-    
+async def main():
     async with Chrome() as browser:
-        await browser.start()
-        page = await browser.get_page()
+        tab = await browser.start()
         
-        # Track API requests
-        async def track_api(page, event, request_type='request'):
-            if '/api/' in event['params']['request']['url']:
-                # Create a new tracking entry for requests
-                if request_type == 'request':
-                    request_id = event['params']['requestId']
-                    request = event['params']['request']
-                    
-                    api_calls.append({
-                        'id': request_id,
-                        'url': request['url'],
-                        'method': request['method'],
-                        'timestamp': event['params'].get('timestamp', 0),
-                        'headers': request.get('headers', {}),
-                        'postData': request.get('postData'),
-                        'status': None,
-                        'responseHeaders': None,
-                        'responseBody': None,
-                        'duration': None
-                    })
+        async def comprehensive_interceptor(tab, event):
+            request_id = event['params']['requestId']
+            request = event['params']['request']
+            url = request['url']
+            method = request['method']
+            
+            print(f"Intercepting {method} request to: {url}")
+            
+            # Block tracking scripts
+            if any(tracker in url for tracker in ['google-analytics', 'facebook.com/tr']):
+                print(f"Blocking tracker: {url}")
+                await browser.fail_request(request_id, NetworkErrorReason.BLOCKED_BY_CLIENT)
+                return
+            
+            # Mock API responses
+            if '/api/config' in url:
+                mock_config = {
+                    'feature_flags': {'new_ui': True, 'beta_features': True},
+                    'api_version': '2.0'
+                }
                 
-                # Update existing entries with response data
-                elif request_type == 'response':
-                    request_id = event['params']['requestId']
-                    response = event['params']['response']
-                    
-                    # Find the matching request
-                    for call in api_calls:
-                        if call['id'] == request_id:
-                            call['status'] = response['status']
-                            call['responseHeaders'] = response.get('headers', {})
-                            
-                            # Calculate request duration if timing info is available
-                            if 'timing' in response:
-                                start = response['timing'].get('requestTime', 0) * 1000
-                                end = response['timing'].get('receiveHeadersEnd', 0)
-                                call['duration'] = end - start
-        
-        # Register event handlers
-        await page.enable_network_events()
-        await page.on(
-            NetworkEvents.REQUEST_WILL_BE_SENT, 
-            partial(track_api, page, request_type='request')
-        )
-        await page.on(
-            NetworkEvents.RESPONSE_RECEIVED, 
-            partial(track_api, page, request_type='response')
-        )
-        
-        # Navigate to the page and wait for activity
-        await page.go_to('https://example.com/app')
-        await asyncio.sleep(10)  # Wait for API activity
-        
-        # Fetch response bodies for the API calls
-        for call in api_calls:
-            try:
-                body, is_base64 = await page.get_network_response_body(call['id'])
-                if not is_base64:
-                    try:
-                        call['responseBody'] = json.loads(body)
-                    except:
-                        call['responseBody'] = body
-            except Exception as e:
-                print(f"Error retrieving response body: {e}")
-        
-        # Analyze the API calls
-        print(f"Found {len(api_calls)} API calls")
-        
-        # Group by endpoint
-        endpoints = {}
-        for call in api_calls:
-            url = call['url']
-            endpoint = url.split('/api/')[1].split('?')[0]  # Extract endpoint path
+                await browser.fulfill_request(
+                    request_id=request_id,
+                    response_code=200,
+                    response_headers=[
+                        {'name': 'Content-Type', 'value': 'application/json'},
+                        {'name': 'Cache-Control', 'value': 'no-cache'}
+                    ],
+                    response_body=json.dumps(mock_config)
+                )
+                return
             
-            if endpoint not in endpoints:
-                endpoints[endpoint] = []
-            endpoints[endpoint].append(call)
-        
-        # Print summary of endpoints
-        for endpoint, calls in endpoints.items():
-            avg_time = sum(c['duration'] for c in calls if c['duration']) / len(calls) if calls else 0
-            success_rate = sum(1 for c in calls if 200 <= c.get('status', 0) < 300) / len(calls) if calls else 0
+            # Inject custom headers for API requests
+            if '/api/' in url:
+                headers = [
+                    {'name': 'X-Custom-Client', 'value': 'Pydoll-Automation'},
+                    {'name': 'X-Request-ID', 'value': f'req-{request_id}'}
+                ]
+                
+                # Preserve existing headers
+                for name, value in request.get('headers', {}).items():
+                    headers.append({'name': name, 'value': value})
+                
+                await browser.continue_request(
+                    request_id=request_id,
+                    headers=headers
+                )
+                return
             
-            print(f"\nEndpoint: /api/{endpoint}")
-            print(f"  Calls: {len(calls)}")
-            print(f"  Methods: {set(c['method'] for c in calls)}")
-            print(f"  Avg Response Time: {avg_time:.2f}ms")
-            print(f"  Success Rate: {success_rate:.1%}")
+            # Continue all other requests normally
+            await browser.continue_request(request_id)
         
-        return api_calls
+        # Enable fetch events for XHR and Fetch requests only
+        await tab.enable_fetch_events(resource_type=ResourceType.XHR)
+        await tab.on(FetchEvent.REQUEST_PAUSED, partial(comprehensive_interceptor, tab))
+        
+        # Navigate and interact with the page
+        await tab.go_to('https://example.com')
+        await asyncio.sleep(5)  # Wait for network activity
 
-# Run the analysis
-asyncio.run(analyze_api_traffic())
+asyncio.run(main())
 ```
 
 ## Performance Considerations
@@ -710,7 +646,7 @@ While Pydoll's network capabilities are powerful, there are some performance con
 
 1. **Selective Interception**: Intercepting all requests can significantly slow down page loading. Be selective about which resource types you intercept.
 
-2. **Memory Management**: Network logs can consume a significant amount of memory for pages with many requests. Consider clearing logs periodically.
+2. **Memory Management**: Network event callbacks can consume memory if they store large amounts of data. Be mindful of memory usage in long-running automations.
 
 3. **Callback Efficiency**: Keep your event callbacks efficient, especially for high-frequency events like network requests. Inefficient callbacks can slow down the entire automation process.
 
@@ -718,14 +654,14 @@ While Pydoll's network capabilities are powerful, there are some performance con
 
 ```python
 # Enable events only when needed
-await page.enable_network_events()
-await page.enable_fetch_events(resource_type='XHR')  # Only intercept XHR requests
+await tab.enable_network_events()
+await tab.enable_fetch_events(resource_type=ResourceType.XHR)  # Only intercept XHR requests
 
 # Do your automation work...
 
 # Clean up when done
-await page.disable_network_events()
-await page.disable_fetch_events()
+await tab.disable_network_events()
+await tab.disable_fetch_events()
 ```
 
 ## Best Practices
@@ -734,49 +670,59 @@ await page.disable_fetch_events()
 
 ```python
 # Bad: Intercept all requests (performance impact)
-await page.enable_fetch_events(resource_type='')
+await tab.enable_fetch_events()
 
 # Good: Only intercept the specific resource types you need
-await page.enable_fetch_events(resource_type='XHR')  # For API calls
-await page.enable_fetch_events(resource_type='Document')  # For main documents
+await tab.enable_fetch_events(resource_type=ResourceType.XHR)  # For API calls
+await tab.enable_fetch_events(resource_type=ResourceType.DOCUMENT)  # For main documents
 ```
 
-### 2. Always Continue Intercepted Requests
+### 2. Always Resolve Intercepted Requests
 
 ```python
-# Always continue every intercepted request
-async def intercept_handler(page, event):
+# Always resolve every intercepted request
+async def intercept_handler(tab, event):
     request_id = event['params']['requestId']
     
-    # Make any modifications needed
-    custom_headers = { ... }
-    
-    # Continue the request
-    await page._execute_command(
-        FetchCommands.continue_request(
+    try:
+        # Make any modifications needed
+        custom_headers = [{'name': 'X-Custom', 'value': 'Value'}]
+        
+        # Continue the request
+        await browser.continue_request(
             request_id=request_id,
             headers=custom_headers
         )
-    )
+    except Exception as e:
+        print(f"Error in request handler: {e}")
+        # Always try to continue the request even if there was an error
+        try:
+            await browser.continue_request(request_id)
+        except:
+            pass
 ```
 
 ### 3. Implement Proper Error Handling
 
 ```python
-async def safe_network_handler(page, event):
+async def safe_network_handler(tab, event):
+    request_id = event['params']['requestId']
+    
     try:
         # Your interception logic here
-        request_id = event['params']['requestId']
-        # ...
-        await page._execute_command(FetchCommands.continue_request(request_id))
+        await process_request(event)
+        await browser.continue_request(request_id)
     except Exception as e:
         print(f"Error in request handler: {e}")
         # Try to continue the request even if there was an error
         try:
-            request_id = event['params']['requestId']
-            await page._execute_command(FetchCommands.continue_request(request_id))
+            await browser.continue_request(request_id)
         except:
-            pass
+            # If we can't continue, try to fail it gracefully
+            try:
+                await browser.fail_request(request_id, NetworkErrorReason.FAILED)
+            except:
+                pass
 ```
 
 ### 4. Use Partial for Clean Callback Management
@@ -784,15 +730,21 @@ async def safe_network_handler(page, event):
 ```python
 from functools import partial
 
-# Define your handler with page object as first parameter
-async def handle_request(page, config, event):
-    # Now you have access to both page and custom config
+# Define your handler with tab object as first parameter
+async def handle_request(tab, config, event):
+    # Now you have access to both tab and custom config
+    request_id = event['params']['requestId']
     
+    if config['block_trackers'] and is_tracker(event['params']['request']['url']):
+        await browser.fail_request(request_id, NetworkErrorReason.BLOCKED_BY_CLIENT)
+    else:
+        await browser.continue_request(request_id)
+
 # Register with partial to pre-bind parameters
-config = {"headers_to_add": {"X-Custom": "Value"}}
-await page.on(
-    FetchEvents.REQUEST_PAUSED, 
-    partial(handle_request, page, config)
+config = {"block_trackers": True}
+await tab.on(
+    FetchEvent.REQUEST_PAUSED, 
+    partial(handle_request, tab, config)
 )
 ```
 

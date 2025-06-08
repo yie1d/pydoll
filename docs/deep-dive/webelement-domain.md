@@ -4,22 +4,22 @@ The WebElement domain is a cornerstone of Pydoll's architecture, providing a ric
 
 ```mermaid
 graph TB
-    Client[User Code] --> Page[Page Domain]
-    Page --> FindElement[FindElementsMixin]
-    FindElement --> WebElement[WebElement Domain]
-    WebElement --> DOM[Browser DOM]
+    Client["User Code"] --> Tab["Tab Domain"]
+    Tab --> FindElement["FindElementsMixin"]
+    FindElement --> WebElement["WebElement Domain"]
+    WebElement --> DOM["Browser DOM"]
     
-    WebElement --> Properties[Properties & Attributes]
-    WebElement --> Interactions[User Interactions]
-    WebElement --> State[Element State]
-    WebElement --> TextOperations[Text Operations]
+    WebElement --> Properties["Properties & Attributes"]
+    WebElement --> Interactions["User Interactions"]
+    WebElement --> State["Element State"]
+    WebElement --> TextOperations["Text Operations"]
     
     class WebElement stroke:#4CAF50,stroke-width:3px
 ```
 
 ## Understanding WebElement
 
-At its core, a WebElement represents a snapshot of a DOM element within a page. Unlike traditional DOM references in JavaScript, a WebElement in Pydoll is:
+At its core, a WebElement represents a snapshot of a DOM element within a tab. Unlike traditional DOM references in JavaScript, a WebElement in Pydoll is:
 
 1. **Asynchronous** - All interactions follow Python's async/await pattern
 2. **Persistent** - Maintains a reference to the element across page changes
@@ -34,17 +34,15 @@ class WebElement(FindElementsMixin):
         self,
         object_id: str,
         connection_handler: ConnectionHandler,
-        method: str = None,
-        selector: str = None,
-        attributes_list: list = [],
+        method: Optional[str] = None,
+        selector: Optional[str] = None,
+        attributes_list: list[str] = [],
     ):
         self._object_id = object_id
         self._search_method = method
         self._selector = selector
         self._connection_handler = connection_handler
-        self._attributes = {}
-        self._last_input = ''
-        self._command_id = 0
+        self._attributes: dict[str, str] = {}
         self._def_attributes(attributes_list)
 ```
 
@@ -53,7 +51,6 @@ The core components include:
 - The `connection_handler` enables communication with the browser
 - The `_search_method` and `_selector` track how the element was found
 - The `_attributes` dictionary stores element attributes
-- The `_last_input` remembers the last text input (useful for backspacing)
 
 By inheriting from `FindElementsMixin`, each WebElement can also function as a starting point for finding child elements.
 
@@ -65,29 +62,32 @@ The WebElement domain combines several key design patterns to provide a robust a
 classDiagram
     class WebElement {
         -_object_id: str
-        -_search_method: str
-        -_selector: str
+        -_search_method: Optional[str]
+        -_selector: Optional[str]
         -_connection_handler: ConnectionHandler
-        -_attributes: dict
-        -_last_input: str
-        -_command_id: int
+        -_attributes: dict[str, str]
         +click()
         +click_using_js()
-        +type_keys(text: str)
+        +type_text(text: str)
+        +insert_text(text: str)
         +get_attribute(name: str)
+        +set_input_files(files: list[str])
+        +scroll_into_view()
+        +take_screenshot(path: str)
         +text
         +inner_html
+        +bounds
         +value
         +id
         +class_name
+        +tag_name
         +is_enabled
     }
     
     class FindElementsMixin {
-        +find_element(by: By, value: str, raise_exc: bool = True)
-        +find_elements(by: By, value: str, raise_exc: bool = True)
-        +wait_element(by: By, value: str, timeout: int, raise_exc: bool = True)
-        +wait_elements(by: By, value: str, timeout: int, raise_exc: bool = True)
+        +find(**kwargs) WebElement|List[WebElement]
+        +query(expression: str) WebElement|List[WebElement]
+        +find_or_wait_element(by: By, value: str, timeout: int) WebElement|List[WebElement]
     }
     
     class ConnectionHandler {
@@ -252,33 +252,20 @@ async def click(
 WebElement provides multiple ways to input text into form elements:
 
 ```python
-# Quick text insertion
+# Quick text insertion (faster but less realistic)
 await element.insert_text("Hello, world!")
 
 # Realistic typing with configurable speed
-await element.type_keys("Hello, world!", interval=0.05)
+await element.type_text("Hello, world!", interval=0.1)
 
-# Raw keyboard events
-await element.send_keys("Hello")
+# Individual key events
+await element.key_down(Key.CONTROL)
+await element.key_down(Key.A)
+await element.key_up(Key.A)
+await element.key_up(Key.CONTROL)
 
-# Special key combinations
-await element.send_keys(("Control", 65))  # Ctrl+A
-
-# Clearing previous input
-await element.backspace()
-```
-
-The implementation tracks input state to enable operations like backspacing:
-
-```python
-async def backspace(self, interval: float = 0.1):
-    """
-    Backspaces the key at the element.
-    """
-    for _ in range(len(self._last_input)):
-        await self.send_keys(('Backspace', 8))
-        await asyncio.sleep(interval)
-        self._last_input = self._last_input[:-1]
+# Press and release key combination
+await element.press_keyboard_key(Key.ENTER, interval=0.1)
 ```
 
 !!! info "File Upload Handling"
@@ -286,14 +273,10 @@ async def backspace(self, interval: float = 0.1):
     
     ```python
     # Upload a single file
-    await file_input.set_input_files("path/to/file.pdf")
+    await file_input.set_input_files(["path/to/file.pdf"])
     
     # Upload multiple files
     await file_input.set_input_files(["file1.jpg", "file2.jpg"])
-    
-    # Using Path objects
-    from pathlib import Path
-    await file_input.set_input_files(Path("path/to/file.pdf"))
     ```
 
 ## Visual Capabilities
@@ -304,33 +287,40 @@ WebElement can capture screenshots of specific elements:
 
 ```python
 # Take a screenshot of just this element
-await element.get_screenshot("element.png")
+await element.take_screenshot("element.png")
+
+# Take a high-quality screenshot
+await element.take_screenshot("element.jpg", quality=95)
 ```
 
 This implementation involves:
-1. Getting the element's bounds
+1. Getting the element's bounds using JavaScript
 2. Creating a clip region for the screenshot
 3. Taking a screenshot of just that region
 4. Saving the image to the specified path
 
 ```python
-async def get_screenshot(self, path: str):
+async def take_screenshot(self, path: str, quality: int = 100):
     """
-    Takes a screenshot of the element.
+    Capture screenshot of this element only.
+    
+    Automatically scrolls element into view before capturing.
     """
     bounds = await self.get_bounds_using_js()
-    clip = {
-        'x': bounds['x'],
-        'y': bounds['y'],
-        'width': bounds['width'],
-        'height': bounds['height'],
-        'scale': 1,
-    }
+    clip = Viewport(
+        x=bounds['x'],
+        y=bounds['y'],
+        width=bounds['width'],
+        height=bounds['height'],
+        scale=1,
+    )
     screenshot = await self._connection_handler.execute_command(
-        PageCommands.screenshot(fmt='jpeg', clip=clip)
+        PageCommands.capture_screenshot(
+            format=ScreenshotFormat.JPEG, clip=clip, quality=quality
+        )
     )
     async with aiofiles.open(path, 'wb') as file:
-        image_bytes = decode_image_to_bytes(screenshot['result']['data'])
+        image_bytes = decode_base64_to_bytes(screenshot['result']['data'])
         await file.write(image_bytes)
 ```
 
@@ -453,4 +443,4 @@ The domain demonstrates several key design principles:
 3. **Hybrid Access** - Balances synchronous and asynchronous operations for optimal performance
 4. **Resilience** - Implements fallback strategies for common operations
 
-When used in conjunction with the Page domain and Browser domain, WebElement creates a powerful toolset for web automation that handles the complexities of modern web applications while providing a straightforward and reliable API for developers. 
+When used in conjunction with the Tab domain and Browser domain, WebElement creates a powerful toolset for web automation that handles the complexities of modern web applications while providing a straightforward and reliable API for developers. 
