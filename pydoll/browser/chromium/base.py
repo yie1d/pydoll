@@ -24,9 +24,10 @@ from pydoll.constants import (
     DownloadBehavior,
     NetworkErrorReason,
     PermissionType,
+    ResourceType,
 )
 from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
-from pydoll.protocol.base import Command
+from pydoll.protocol.base import Command, Response
 from pydoll.protocol.browser.responses import (
     GetVersionResponse,
     GetVersionResultDict,
@@ -367,7 +368,9 @@ class Browser(ABC):  # noqa: PLR0904
         )
 
     async def enable_fetch_events(
-        self, handle_auth_requests: bool = False, resource_type: str = ''
+        self,
+        handle_auth_requests: bool = False,
+        resource_type: Optional[ResourceType] = None,
     ):
         """
         Enable network request interception via Fetch domain.
@@ -383,7 +386,10 @@ class Browser(ABC):  # noqa: PLR0904
             Paused requests must be continued or they will timeout.
         """
         return await self._connection_handler.execute_command(
-            FetchCommands.enable(handle_auth_requests, resource_type)
+            FetchCommands.enable(
+                handle_auth_requests=handle_auth_requests,
+                resource_type=resource_type,
+            )
         )
 
     async def disable_fetch_events(self):
@@ -444,8 +450,7 @@ class Browser(ABC):  # noqa: PLR0904
     ):
         """Internal callback for proxy authentication."""
         request_id = event['params']['requestId']
-        await self.disable_fetch_events()
-        return await self._execute_command(
+        response: Response = await self._execute_command(
             FetchCommands.continue_request_with_auth(
                 request_id,
                 auth_challenge_response=AuthChallengeResponseValues.PROVIDE_CREDENTIALS,
@@ -453,6 +458,8 @@ class Browser(ABC):  # noqa: PLR0904
                 proxy_password=proxy_password,
             )
         )
+        await self.disable_fetch_events()
+        return response
 
     async def _verify_browser_running(self):
         """
