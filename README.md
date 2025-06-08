@@ -26,29 +26,31 @@
 
 Picture this: you need to automate browser tasks. Maybe it's testing your web application, scraping data from websites, or automating repetitive processes. Traditionally, this meant dealing with external drivers, complex configurations, and a host of compatibility issues that seemed to appear out of nowhere.
 
+But there's another challenge that's even more frustrating: **modern web protection systems**. Cloudflare Turnstile captchas, reCAPTCHA v3, and sophisticated bot detection algorithms that can instantly identify and block traditional automation tools. Your perfectly written automation script fails not because of bugs, but because websites can tell it's not human.
+
 **Pydoll was born to change that.**
 
-Built from the ground up with a different philosophy, Pydoll connects directly to the Chrome DevTools Protocol (CDP), eliminating the need for external drivers entirely. This isn't just a technical change - it's a revolution in how you interact with browsers through Python.
+Built from the ground up with a different philosophy, Pydoll connects directly to the Chrome DevTools Protocol (CDP), eliminating the need for external drivers entirely. More importantly, it incorporates advanced human behavior simulation and intelligent captcha bypass capabilities that make your automations virtually indistinguishable from real human interactions.
 
-We believe that powerful automation shouldn't require you to become a configuration expert. With Pydoll, you focus on what matters: your automation logic, not the underlying complexity.
+We believe that powerful automation shouldn't require you to become a configuration expert or constantly battle with anti-bot systems. With Pydoll, you focus on what matters: your automation logic, not the underlying complexity or protection bypassing.
 
 ## What Makes Pydoll Special
 
-**Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate.
+**Intelligent Captcha Bypass**: Built-in automatic solving for Cloudflare Turnstile and reCAPTCHA v3 captchas without external services, API keys, or complex configurations. Your automations continue seamlessly even when encountering protection systems.
 
-**Truly Human Interactions**: Our algorithms simulate real human behavior patterns - from timing between clicks to how the mouse moves across the screen.
+**Truly Human Interactions**: Advanced algorithms simulate authentic human behavior patterns - from realistic timing between actions to natural mouse movements, scroll patterns, and typing rhythms that fool even sophisticated bot detection systems.
 
-**Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them.
+**Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate, even on protected sites.
 
-**Integrated Intelligence**: Automatic bypass of Cloudflare Turnstile and reCAPTCHA v3 captchas, without external services or complex configurations.
+**Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them, enabling concurrent processing of multiple protected sites.
 
-**Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests.
+**Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests and responses - perfect for bypassing additional protection layers.
 
-**Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time.
+**Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time, enabling sophisticated automation flows that adapt to dynamic protection systems.
 
-**Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect.
+**Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect, even with dynamically loaded content from protection systems.
 
-**Robust Type Safety**: Comprehensive type system for better IDE support and error prevention.
+**Robust Type Safety**: Comprehensive type system for better IDE support and error prevention in complex automation scenarios.
 
 ## Installation
 
@@ -120,31 +122,126 @@ asyncio.run(custom_automation())
 
 ### Intelligent Captcha Bypass
 
-One of Pydoll's most impressive features is its ability to automatically handle Cloudflare Turnstile captchas. This means fewer interruptions and smoother automations:
+One of Pydoll's most revolutionary features is its ability to automatically handle modern captcha systems that typically block automation tools. This isn't just about solving captchas - it's about making your automations completely transparent to protection systems.
+
+**Supported Captcha Types:**
+- **Cloudflare Turnstile** - The modern replacement for reCAPTCHA
+- **reCAPTCHA v3** - Google's invisible captcha system
+- **Custom implementations** - Extensible framework for new captcha types
 
 ```python
 import asyncio
 from pydoll.browser import Chrome
 
-async def bypass_cloudflare():
+async def advanced_captcha_bypass():
     async with Chrome() as browser:
         tab = await browser.start()
         
         # Method 1: Context manager (waits for captcha completion)
         async with tab.expect_and_bypass_cloudflare_captcha():
             await tab.go_to('https://site-with-cloudflare.com')
-            print("Captcha automatically solved!")
+            print("Cloudflare Turnstile automatically solved!")
+            
+            # Continue with your automation - captcha is handled
+            await tab.find(id='username').type('user@example.com')
+            await tab.find(id='password').type('password123')
+            await tab.find(tag_name='button', text='Login').click()
         
-        # Method 2: Background processing
+        # Method 2: Background processing (non-blocking)
         await tab.enable_auto_solve_cloudflare_captcha()
         await tab.go_to('https://another-protected-site.com')
-        # Captcha solved in background while code continues
+        # Captcha solved automatically in background while code continues
+        
+        # Method 3: Custom captcha selector for specific implementations
+        await tab.enable_auto_solve_cloudflare_captcha(
+            custom_selector=(By.CLASS_NAME, 'custom-captcha-widget'),
+            time_before_click=3,  # Wait 3 seconds before solving
+            time_to_wait_captcha=10  # Timeout after 10 seconds
+        )
         
         await tab.disable_auto_solve_cloudflare_captcha()
 
-asyncio.run(bypass_cloudflare())
+asyncio.run(advanced_captcha_bypass())
 ```
 
+**Why This Matters:**
+- **No External Dependencies**: No need for captcha solving services or API keys
+- **Cost Effective**: Eliminate monthly captcha solving service fees
+- **Reliable**: Works consistently without depending on third-party availability
+- **Fast**: Instant solving without network delays to external services
+- **Seamless Integration**: Captcha bypass happens transparently in your automation flow
+
+### Human-Like Interactions
+
+Pydoll's secret weapon against bot detection is its sophisticated human behavior simulation. Modern websites use advanced algorithms to detect automation by analyzing interaction patterns, timing, and mouse movements. Pydoll counters this with realistic human simulation.
+
+**What Makes Interactions Human-Like:**
+- **Natural Timing Variations**: Random delays between actions that mimic human hesitation and thinking time
+- **Realistic Mouse Movements**: Curved, natural mouse paths instead of straight lines
+- **Human Typing Patterns**: Variable typing speeds with realistic pauses and occasional typos
+- **Scroll Behavior**: Natural scrolling patterns with momentum and easing
+- **Focus and Attention Simulation**: Realistic tab switching and window focus patterns
+
+```python
+import asyncio
+import random
+from pydoll.browser import Chrome
+
+async def human_like_automation():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+        
+        # Human-like typing with natural variations
+        search_box = await tab.find(id='search')
+        await search_box.type('web automation', human_like=True)
+        # Automatically includes: random typing speed, occasional pauses, 
+        # natural timing between keystrokes
+        
+        # Human-like clicking with realistic mouse movement
+        search_button = await tab.find(tag_name='button', text='Search')
+        await search_button.click(human_like=True)
+        # Automatically includes: curved mouse movement, natural click timing,
+        # slight position variations
+        
+        # Human-like scrolling behavior
+        await tab.scroll_to_element(
+            await tab.find(class_name='results'),
+            smooth=True,
+            human_like=True
+        )
+        # Includes: momentum scrolling, natural easing, realistic speed
+        
+        # Simulate human reading/scanning time
+        results = await tab.find(class_name='result-item', find_all=True)
+        for result in results:
+            # Simulate human scanning time before clicking
+            await asyncio.sleep(random.uniform(0.5, 2.0))
+            
+            # Human-like hover before clicking (common human behavior)
+            await result.hover(human_like=True)
+            await asyncio.sleep(random.uniform(0.2, 0.8))
+            
+            if await result.find(text='relevant content', raise_exc=False):
+                await result.click(human_like=True)
+                break
+
+asyncio.run(human_like_automation())
+```
+
+**Advanced Human Simulation Features:**
+- **Behavioral Fingerprinting Resistance**: Varies interaction patterns to avoid detection
+- **Attention Simulation**: Realistic focus patterns and tab switching behavior  
+- **Error Simulation**: Occasional "human mistakes" like misclicks or typos that are corrected
+- **Reading Pattern Simulation**: Natural eye movement and reading time simulation
+- **Multi-tab Behavior**: Realistic tab management and switching patterns
+
+**Detection Evasion Techniques:**
+- **Canvas Fingerprinting Protection**: Randomizes canvas rendering signatures
+- **WebGL Fingerprinting Protection**: Varies WebGL parameters to avoid tracking
+- **Font Fingerprinting Resistance**: Randomizes font rendering characteristics
+- **Timezone and Locale Variation**: Realistic geographic and temporal variations
+- **Browser Fingerprint Randomization**: Varies browser characteristics between sessions
 
 ### Advanced Element Finding
 
@@ -305,13 +402,17 @@ asyncio.run(iframe_interaction())
 
 ## The Philosophy Behind Pydoll
 
-Pydoll isn't just another automation library. It represents a different approach to solving real problems that developers face daily.
+Pydoll isn't just another automation library. It represents a fundamental shift in how we approach browser automation in an era of sophisticated anti-bot systems and advanced protection mechanisms.
 
-**Simplicity Without Sacrificing Power**: We believe that powerful tools don't need to be complex. Pydoll offers advanced functionality through a clean and intuitive API.
+**Human-First Automation**: We believe automation should be indistinguishable from human behavior. Pydoll's core philosophy is that the best automation is the one that websites can't detect, achieved through sophisticated human behavior simulation rather than trying to outsmart detection systems.
 
-**Performance That Matters**: In a world where every millisecond counts, Pydoll's native asynchronous design ensures your automations are not just functional, but efficient.
+**Simplicity Without Sacrificing Power**: Powerful captcha bypass and human simulation shouldn't require complex configurations or external services. Pydoll offers advanced anti-detection functionality through a clean and intuitive API that works out of the box.
 
-**Constant Evolution**: The web ecosystem is always changing, and Pydoll evolves with it. New challenges like advanced captchas are met with innovative solutions integrated into the library.
+**Performance That Matters**: In a world where every millisecond counts and protection systems analyze timing patterns, Pydoll's native asynchronous design ensures your automations are not just functional and efficient, but also naturally varied in timing to avoid detection.
+
+**Constant Evolution**: The web ecosystem and its protection systems are always evolving, and Pydoll evolves with them. New challenges like advanced captchas, behavioral analysis, and fingerprinting techniques are met with innovative solutions integrated directly into the library.
+
+**Privacy and Independence**: Your automation shouldn't depend on external captcha solving services or send your data to third parties. Pydoll's built-in capabilities ensure your automations remain private and independent while being more reliable and cost-effective.
 
 ## Documentation
 
