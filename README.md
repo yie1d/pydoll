@@ -45,21 +45,21 @@ We believe that powerful automation shouldn't require you to become a configurat
 
 ## What Makes Pydoll Special
 
-**Intelligent Captcha Bypass**: Built-in automatic solving for Cloudflare Turnstile and reCAPTCHA v3 captchas without external services, API keys, or complex configurations. Your automations continue seamlessly even when encountering protection systems.
+- **Intelligent Captcha Bypass**: Built-in automatic solving for Cloudflare Turnstile and reCAPTCHA v3 captchas without external services, API keys, or complex configurations. Your automations continue seamlessly even when encountering protection systems.
 
-**Truly Human Interactions**: Advanced algorithms simulate authentic human behavior patterns - from realistic timing between actions to natural mouse movements, scroll patterns, and typing rhythms that fool even sophisticated bot detection systems.
+- **Truly Human Interactions**: Advanced algorithms simulate authentic human behavior patterns - from realistic timing between actions to natural mouse movements, scroll patterns, and typing rhythms that fool even sophisticated bot detection systems.
 
-**Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate, even on protected sites.
+- **Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate, even on protected sites.
 
-**Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them, enabling concurrent processing of multiple protected sites.
+- **Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them, enabling concurrent processing of multiple protected sites.
 
-**Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests and responses - perfect for bypassing additional protection layers.
+- **Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests and responses - perfect for bypassing additional protection layers.
 
-**Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time, enabling sophisticated automation flows that adapt to dynamic protection systems.
+- **Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time, enabling sophisticated automation flows that adapt to dynamic protection systems.
 
-**Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect, even with dynamically loaded content from protection systems.
+- **Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect, even with dynamically loaded content from protection systems.
 
-**Robust Type Safety**: Comprehensive type system for better IDE support and error prevention in complex automation scenarios.
+- **Robust Type Safety**: Comprehensive type system for better IDE support and error prevention in complex automation scenarios.
 
 ## Installation
 
@@ -337,20 +337,6 @@ async def iframe_interaction():
 
 asyncio.run(iframe_interaction())
 ```
-
-## The Philosophy Behind Pydoll
-
-Pydoll isn't just another automation library. It represents a fundamental shift in how we approach browser automation in an era of sophisticated anti-bot systems and advanced protection mechanisms.
-
-**Human-First Automation**: We believe automation should be indistinguishable from human behavior. Pydoll's core philosophy is that the best automation is the one that websites can't detect, achieved through sophisticated human behavior simulation rather than trying to outsmart detection systems.
-
-**Simplicity Without Sacrificing Power**: Powerful captcha bypass and human simulation shouldn't require complex configurations or external services. Pydoll offers advanced anti-detection functionality through a clean and intuitive API that works out of the box.
-
-**Performance That Matters**: In a world where every millisecond counts and protection systems analyze timing patterns, Pydoll's native asynchronous design ensures your automations are not just functional and efficient, but also naturally varied in timing to avoid detection.
-
-**Constant Evolution**: The web ecosystem and its protection systems are always evolving, and Pydoll evolves with them. New challenges like advanced captchas, behavioral analysis, and fingerprinting techniques are met with innovative solutions integrated directly into the library.
-
-**Privacy and Independence**: Your automation shouldn't depend on external captcha solving services or send your data to third parties. Pydoll's built-in capabilities ensure your automations remain private and independent while being more reliable and cost-effective.
 
 ## Documentation
 
