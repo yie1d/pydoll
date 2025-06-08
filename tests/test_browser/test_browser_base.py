@@ -118,7 +118,7 @@ async def test_proxy_configuration(mock_browser):
     await mock_browser.start()
 
     mock_browser._connection_handler.execute_command.assert_any_call(
-        FetchCommands.enable(True, '')
+        FetchCommands.enable(handle_auth_requests=True, resource_type=None)
     )
     mock_browser._connection_handler.register_callback.assert_any_call(
         FetchEvent.REQUEST_PAUSED, ANY, True
@@ -257,7 +257,7 @@ async def test_enable_events(mock_browser):
         handle_auth_requests=True, resource_type='XHR'
     )
     mock_browser._connection_handler.execute_command.assert_called_with(
-        FetchCommands.enable(True, 'XHR')
+        FetchCommands.enable(handle_auth_requests=True, resource_type='XHR')
     )
 
 
