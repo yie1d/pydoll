@@ -1,3 +1,154 @@
+## 2.0.0 (2025-06-08)
+
+### BREAKING CHANGE
+
+- pydoll v2 finished
+
+### Feat
+
+- intuitive way to interact with iframes
+- refactor Keys class to Key and add utility methods for enums
+- add Event TypedDict for standardized event structure
+- add TargetEvent enum for Chrome DevTools Protocol events
+- add StorageEvent enumeration for Chrome DevTools Protocol events
+- add RuntimeEvent enumeration for Chrome DevTools Protocol events
+- add PageEvent enumeration for Chrome DevTools Protocol events
+- add NetworkEvent enumeration for Chrome DevTools Protocol events
+- add InputEvent enum for Chrome DevTools input events
+- add FetchEvent enumeration for Chrome DevTools Protocol events
+- add DomEvent enumeration for Chrome DevTools Protocol events
+- add BrowserEvent enum for Chrome DevTools protocol events
+- add methods to enable and disable the runtime domain commands
+- add new enums for whitespace, axes, pseudo types, and modes
+- add DOM response types and corresponding response classes
+- add DOM command types and parameter definitions for pydoll
+- add enums for key, mouse, touch, and drag event types
+- add input command types for touch, mouse, and keyboard events
+- enhance TargetCommands class with new methods for targets management
+- add TypedDicts for target response types and browser contexts
+- add TypedDict definitions for target command parameters
+- add storage-related enumerations for bucket durability and types
+- enhance StorageCommands with new methods for data management
+- add storage response types and related classes for handling data
+- add storage command types using TypedDict for structured params
+- add new enumeration classes for serialization and object types
+- add runtime response types for handling various object previews
+- add initial runtime command types for protocol handling
+- add constants for various encoding, formats, and policies
+- add TypedDict definitions for page response types and results
+- add typed dictionaries for various page command parameters
+- add new command parameter classes for network resource handling
+- add TypedDict definitions for network response types
+- organize command types into structured imports and exports
+- add network command types and parameters for cookie management
+- add enums for cookie priorities, connection types, and encodings
+- add response classes for browser window target retrieval
+- setup mkdocs and install related packages
+- add async text property for retrieving element text
+
+### Fix
+
+- remove target directory from .gitignore file
+- fix typo in USB_UNRESTRICTED constant for consistency
+- add new network command parameters and methods for cookies
+- change postData type from dict to string in ContinueRequestParams
+
+### Refactor
+
+- refactor screenshot path handling and enhance error checking
+- refactor type hints from List to built-in list for consistency
+- refine XPath condition handling and ensure integer coordinates
+- refactor condition checks to ensure against None values
+- refactor exception handling and add browser path validation function
+- rename BrowserOptionsManager to ChromiumOptionsManager
+- refactor Edge class to use ChromiumOptionsManager and simplify path validation
+- refactor Chrome class to use Chromium-specific options manager
+- refactor Browser class to use options manager and improve methods
+- refactor Options class to ChromiumOptions and use type hints
+- refactor to create ChromiumOptionsManager for better clarity
+- add abstract base classes for browser options management
+- use `message.get('id')` for safer ID checks in response
+- refactor message handling to support multiple message types
+- refactor element finding methods for enhanced flexibility and clarity
+- rename method for better clarity in captcha element handling
+- refactor type hints for event callback parameters and options
+- simplify ping call by inlining WebSocketClientProtocol cast
+- refactor EventsManager to use typed Event objects consistently
+- add runtime events management to the Tab class functionality
+- update event callback signatures for better type handling
+- remove unused import of Response in runtime_commands.py
+- add Response import to page_commands for improved functionality
+- refactor response classes to use TypedDict for better typing
+- refactor WebElement class to organize exception imports clearly
+- refactor exception handling in FindElementsMixin class
+- refactor exception handling to use custom timeout and connection errors
+- remove unused import statements in events_manager.py
+- refactor error handling to use specific exceptions for clarity
+- refactor error handling to use custom exception for arguments
+- fix PermissionError raising in TempDirectoryManager class
+- refactor error handling to use specific exceptions for clarity
+- handle unsupported OS with a custom exception in Edge class
+- raise UnsupportedOS exception for unsupported operating systems
+- refactor browser error handling and improve method return types
+- refactor exception classes to improve organization and clarity
+- refactor element finding methods to use updated command structure
+- refactor WebElement class for improved structure and clarity
+- refactor import statements and clean up code formatting
+- refactor command imports and enhance download behavior method
+- refactor Tab import and update FetchCommands method calls
+- refactor ConnectionHandler docstrings for clarity and conciseness
+- refactor command and event managers for improved type safety
+- refactor ConnectionHandler to improve WebSocket management and clarity
+- add Tab class for managing browser tabs via CDP integration
+- enhance TempDirectoryManager with detailed docstrings and type hints
+- refactor ProxyManager to enhance proxy credential handling
+- refactor Browser class to enhance automation capabilities and structure
+- move commands to a different module
+- define base structures for commands and responses in protocol
+- import Rect from dom_commands_types for response handling
+- refactor cookie-related types for improved clarity and consistency
+- remove unnecessary whitespace in docstring of InputCommands class
+- refactor DOM commands to improve structure and add functionality
+- refactor InputCommands to enhance user input simulation methods
+- add CookieParam TypedDict to define cookie attributes
+- add new runtime command methods for JavaScript bindings and promises
+- remove unused method to clear accepted encodings in network commands
+- update ResetPermissionsParams to use NotRequired for context ID
+- refactor PageCommands to improve structure and add type hints
+- simplify import statements by using wildcard imports for responses
+- add new response types and update existing response classes
+- consolidate command imports using wildcard imports for clarity
+- correct post_data type from dict to str in FetchCommands class
+- refactor NetworkCommands to use structured command parameters
+- refactor fetch command methods to use static methods directly
+- refactor BrowserCommands to use static methods and improve clarity
+- refactor response imports and update __all__ definitions
+- refactor import statements for better readability and structure
+- refactor import statements for consistency in response types
+- refactor import and rename EnableParams to FetchEnableParams
+- refactor import statement for CommandParams module path
+- refactor fetch command templates to use Command class
+- add enums for window states, download behaviors, and permissions
+- remove unused enum imports and rename base_types module
+- refactor command structures for better organization and clarity
+- rename command and response modules for better clarity
+- refactor imports for better organization and readability
+- add browser command methods for version, permissions, and downloads
+- add command and response types for protocol implementation
+- refactor execute_command to use type annotations for clarity
+- refactor command methods to specify response types in BrowserCommands
+- refactor command structures and introduce base CommandParams class
+- refactor browser command constants to use Command class type
+- refactor connection imports and rename manager files for clarity
+- refactor BrowserType import to a common constants module
+- refactor browser modules to use the new chromium structure
+- refactor element imports and remove deprecated element file
+- refactor import paths to use the protocol submodule structure
+- move command files to the protocol directory for better structure
+- rename insert_text to paste_text and remove unused files
+- refactor the `InputCommands` class to enhance clarity and simplicity in its operations
+- add deprecation warning to get_element_text()
+
 ## 1.7.0 (2025-04-06)
 
 ### Feat
