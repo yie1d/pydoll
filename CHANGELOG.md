@@ -1,3 +1,9 @@
+## 2.0.1 (2025-06-08)
+
+### Fix
+
+- fix private proxy configuration
+
 ## 2.0.0 (2025-06-08)
 
 ### BREAKING CHANGE
