@@ -22,6 +22,15 @@
 </p>
 
 
+## Key Features
+
+🔹 **Zero Webdrivers!** Say goodbye to webdriver compatibility nightmares  
+🔹 **Native Captcha Bypass!** Smoothly handles Cloudflare Turnstile and reCAPTCHA v3*  
+🔹 **Async Performance** for lightning-fast automation  
+🔹 **Human-like Interactions** that mimic real user behavior  
+🔹 **Powerful Event System** for reactive automations  
+🔹 **Multi-browser Support** including Chrome and Edge
+
 ## Why Pydoll Exists
 
 Picture this: you need to automate browser tasks. Maybe it's testing your web application, scraping data from websites, or automating repetitive processes. Traditionally, this meant dealing with external drivers, complex configurations, and a host of compatibility issues that seemed to appear out of nowhere.
@@ -171,77 +180,6 @@ asyncio.run(advanced_captcha_bypass())
 - **Fast**: Instant solving without network delays to external services
 - **Seamless Integration**: Captcha bypass happens transparently in your automation flow
 
-### Human-Like Interactions
-
-Pydoll's secret weapon against bot detection is its sophisticated human behavior simulation. Modern websites use advanced algorithms to detect automation by analyzing interaction patterns, timing, and mouse movements. Pydoll counters this with realistic human simulation.
-
-**What Makes Interactions Human-Like:**
-- **Natural Timing Variations**: Random delays between actions that mimic human hesitation and thinking time
-- **Realistic Mouse Movements**: Curved, natural mouse paths instead of straight lines
-- **Human Typing Patterns**: Variable typing speeds with realistic pauses and occasional typos
-- **Scroll Behavior**: Natural scrolling patterns with momentum and easing
-- **Focus and Attention Simulation**: Realistic tab switching and window focus patterns
-
-```python
-import asyncio
-import random
-from pydoll.browser import Chrome
-
-async def human_like_automation():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.go_to('https://example.com')
-        
-        # Human-like typing with natural variations
-        search_box = await tab.find(id='search')
-        await search_box.type('web automation', human_like=True)
-        # Automatically includes: random typing speed, occasional pauses, 
-        # natural timing between keystrokes
-        
-        # Human-like clicking with realistic mouse movement
-        search_button = await tab.find(tag_name='button', text='Search')
-        await search_button.click(human_like=True)
-        # Automatically includes: curved mouse movement, natural click timing,
-        # slight position variations
-        
-        # Human-like scrolling behavior
-        await tab.scroll_to_element(
-            await tab.find(class_name='results'),
-            smooth=True,
-            human_like=True
-        )
-        # Includes: momentum scrolling, natural easing, realistic speed
-        
-        # Simulate human reading/scanning time
-        results = await tab.find(class_name='result-item', find_all=True)
-        for result in results:
-            # Simulate human scanning time before clicking
-            await asyncio.sleep(random.uniform(0.5, 2.0))
-            
-            # Human-like hover before clicking (common human behavior)
-            await result.hover(human_like=True)
-            await asyncio.sleep(random.uniform(0.2, 0.8))
-            
-            if await result.find(text='relevant content', raise_exc=False):
-                await result.click(human_like=True)
-                break
-
-asyncio.run(human_like_automation())
-```
-
-**Advanced Human Simulation Features:**
-- **Behavioral Fingerprinting Resistance**: Varies interaction patterns to avoid detection
-- **Attention Simulation**: Realistic focus patterns and tab switching behavior  
-- **Error Simulation**: Occasional "human mistakes" like misclicks or typos that are corrected
-- **Reading Pattern Simulation**: Natural eye movement and reading time simulation
-- **Multi-tab Behavior**: Realistic tab management and switching patterns
-
-**Detection Evasion Techniques:**
-- **Canvas Fingerprinting Protection**: Randomizes canvas rendering signatures
-- **WebGL Fingerprinting Protection**: Varies WebGL parameters to avoid tracking
-- **Font Fingerprinting Resistance**: Randomizes font rendering characteristics
-- **Timezone and Locale Variation**: Realistic geographic and temporal variations
-- **Browser Fingerprint Randomization**: Varies browser characteristics between sessions
 
 ### Advanced Element Finding
 
@@ -422,7 +360,6 @@ The documentation includes:
 - **Getting Started Guide** - Step-by-step tutorials
 - **API Reference** - Complete method documentation  
 - **Advanced Techniques** - Network interception, event handling, performance optimization
-- **Migration Guide** - Upgrading from older versions
 - **Troubleshooting** - Common issues and solutions
 - **Best Practices** - Patterns for reliable automation
 
