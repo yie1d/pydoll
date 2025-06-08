@@ -21,6 +21,7 @@
   <a href="#license">License</a>
 </p>
 
+
 ## Why Pydoll Exists
 
 Picture this: you need to automate browser tasks. Maybe it's testing your web application, scraping data from websites, or automating repetitive processes. Traditionally, this meant dealing with external drivers, complex configurations, and a host of compatibility issues that seemed to appear out of nowhere.
@@ -143,6 +144,7 @@ async def bypass_cloudflare():
 
 asyncio.run(bypass_cloudflare())
 ```
+
 
 ### Advanced Element Finding
 
