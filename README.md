@@ -33,29 +33,21 @@ We believe that powerful automation shouldn't require you to become a configurat
 
 ## What Makes Pydoll Special
 
-**Genuine Simplicity**  
-We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate.
+**Genuine Simplicity**: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate.
 
-**Truly Human Interactions**  
-Our algorithms simulate real human behavior patterns - from timing between clicks to how the mouse moves across the screen.
+**Truly Human Interactions**: Our algorithms simulate real human behavior patterns - from timing between clicks to how the mouse moves across the screen.
 
-**Native Async Performance**  
-Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them.
+**Native Async Performance**: Built from the ground up with `asyncio`, Pydoll doesn't just support asynchronous operations - it was designed for them.
 
-**Integrated Intelligence**  
-Automatic bypass of Cloudflare Turnstile and reCAPTCHA v3 captchas, without external services or complex configurations.
+**Integrated Intelligence**: Automatic bypass of Cloudflare Turnstile and reCAPTCHA v3 captchas, without external services or complex configurations.
 
-**Powerful Network Monitoring**  
-Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests.
+**Powerful Network Monitoring**: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests.
 
-**Event-Driven Architecture**  
-React to page events, network requests, and user interactions in real-time.
+**Event-Driven Architecture**: React to page events, network requests, and user interactions in real-time.
 
-**Intuitive Element Finding**  
-Modern `find()` and `query()` methods that make sense and work as you'd expect.
+**Intuitive Element Finding**: Modern `find()` and `query()` methods that make sense and work as you'd expect.
 
-**Robust Type Safety**  
-Comprehensive type system for better IDE support and error prevention.
+**Robust Type Safety**: Comprehensive type system for better IDE support and error prevention.
 
 ## Installation
 
