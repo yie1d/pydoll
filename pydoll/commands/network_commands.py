@@ -104,9 +104,6 @@ class NetworkCommands:  # noqa: PLR0904
         to simulate a fresh user session without any previously stored
         cookies that might affect the application's behavior.
 
-        Args:
-            None
-
         Returns:
             Command[Response]: A command to clear all cookies in the browser.
         """

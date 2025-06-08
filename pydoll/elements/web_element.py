@@ -129,7 +129,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         response = await self._execute_script(Scripts.BOUNDS, return_by_value=True)
         return json.loads(response['result']['result']['value'])
 
-    async def get_screenshot(self, path: str, quality: int = 100):
+    async def take_screenshot(self, path: str, quality: int = 100):
         """
         Capture screenshot of this element only.
 

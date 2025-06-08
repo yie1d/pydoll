@@ -55,7 +55,7 @@ class FindElementsMixin:
         timeout: int = 0,
         find_all: bool = False,
         raise_exc: bool = True,
-        **attributes,
+        **attributes: dict[str, str],
     ) -> Union['WebElement', list['WebElement'], None]:
         """
         Find element(s) using combination of common HTML attributes.

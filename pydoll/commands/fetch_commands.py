@@ -69,9 +69,9 @@ class FetchCommands:
             post_data (Optional[dict]): The body data to send with the fetch
                 request. Defaults to None.
             headers (Optional[list[HeaderEntry]]): A list of HTTP headers to include
-              in the fetch request. Defaults to None.
+                in the fetch request. Defaults to None.
             intercept_response (Optional[bool]): Indicates if the response
-              should be intercepted. Defaults to None.
+                should be intercepted. Defaults to None.
 
         Returns:
             Command[Response]: A command for continuing the fetch request.

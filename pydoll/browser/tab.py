@@ -385,7 +385,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
     async def take_screenshot(
         self,
-        path: str,
+        path: Optional[str] = None,
         quality: int = 100,
         as_base64: bool = False,
     ) -> Optional[str]:
@@ -402,8 +402,12 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
         Raises:
             InvalidFileExtension: If file extension not supported.
+            ValueError: If path is None and as_base64 is False.
         """
-        output_extension = path.split('.')[-1]
+        if not path and not as_base64:
+            raise ValueError('path is required when as_base64 is False')
+
+        output_extension = path.split('.')[-1] if path else ScreenshotFormat.PNG
         if not ScreenshotFormat.has_value(output_extension):
             raise InvalidFileExtension(f'{output_extension} extension is not supported.')
 
@@ -417,9 +421,10 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         if as_base64:
             return screenshot_data
 
-        screenshot_bytes = decode_base64_to_bytes(screenshot_data)
-        async with aiofiles.open(path, 'wb') as file:
-            await file.write(screenshot_bytes)
+        if path:
+            screenshot_bytes = decode_base64_to_bytes(screenshot_data)
+            async with aiofiles.open(path, 'wb') as file:
+                await file.write(screenshot_bytes)
 
         return None
 
@@ -540,6 +545,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         Args:
             files: File path(s) for upload.
         """
+
         async def event_handler(event):
             await self._execute_command(
                 DomCommands.upload_files(
@@ -547,6 +553,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
                     backend_node_id=event['params']['backendNodeId'],
                 )
             )
+
         if self.page_events_enabled is False:
             _before_page_events_enabled = False
             await self.enable_page_events()

@@ -30,8 +30,9 @@ async def get_browser_ws_address(port: int) -> str:
         str: The WebSocket address for the browser.
 
     Raises:
-        ValueError: If the address cannot be fetched due to network errors
-        or missing data.
+        NetworkError: If the address cannot be fetched due to network errors
+            or missing data.
+        InvalidResponse: If the response is not valid JSON.
     """
     try:
         async with aiohttp.ClientSession() as session:
