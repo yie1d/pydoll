@@ -512,7 +512,7 @@ class TestWebElementScreenshot:
     """Test screenshot functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_screenshot_success(self, web_element, tmp_path):
+    async def test_take_screenshot_success(self, web_element, tmp_path):
         """Test successful element screenshot."""
         bounds = {'x': 10, 'y': 20, 'width': 100, 'height': 50}
         screenshot_data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
@@ -530,13 +530,13 @@ class TestWebElementScreenshot:
         
         with patch('aiofiles.open') as mock_aiofiles_open:
             mock_aiofiles_open.return_value.__aenter__.return_value = mock_file
-            await web_element.get_screenshot(str(screenshot_path), quality=90)
+            await web_element.take_screenshot(str(screenshot_path), quality=90)
         
         # Should call get_bounds_using_js and capture_screenshot
         assert web_element._connection_handler.execute_command.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_get_screenshot_default_quality(self, web_element, tmp_path):
+    async def test_take_screenshot_default_quality(self, web_element, tmp_path):
         """Test screenshot with default quality."""
         bounds = {'x': 0, 'y': 0, 'width': 50, 'height': 50}
         screenshot_data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
@@ -553,7 +553,7 @@ class TestWebElementScreenshot:
         
         with patch('aiofiles.open') as mock_aiofiles_open:
             mock_aiofiles_open.return_value.__aenter__.return_value = mock_file
-            await web_element.get_screenshot(str(screenshot_path))
+            await web_element.take_screenshot(str(screenshot_path))
         
         # Should call get_bounds_using_js and capture_screenshot
         assert web_element._connection_handler.execute_command.call_count == 2
