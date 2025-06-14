@@ -1,3 +1,19 @@
+## 2.1.0 (2025-06-14)
+
+### Feat
+
+- add new script-related exception classes for better handling
+- add functions to clean scripts and check return statements
+- add methods to retrieve network response body and logs
+
+### Fix
+
+- click in the input before typing and fix documentation
+
+### Refactor
+
+- add overloads for execute_script to improve type safety
+
 ## 2.0.1 (2025-06-08)
 
 ### Fix
