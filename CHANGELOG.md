@@ -1,3 +1,14 @@
+## 2.2.0 (2025-06-15)
+
+### Feat
+
+- add method to retrieve non-extension opened tabs as Tab instances
+
+### Refactor
+
+- refactor attribute assignments to include type annotations
+- implement singleton pattern for Tab instances by target_id
+
 ## 2.1.0 (2025-06-14)
 
 ### Feat
