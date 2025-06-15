@@ -124,19 +124,21 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         if hasattr(self, '_initialized') and self._initialized:
             return
 
-        self._browser = browser
-        self._connection_port = connection_port
-        self._target_id = target_id
-        self._connection_handler = ConnectionHandler(connection_port, self._target_id)
-        self._page_events_enabled = False
-        self._network_events_enabled = False
-        self._fetch_events_enabled = False
-        self._dom_events_enabled = False
-        self._runtime_events_enabled = False
-        self._intercept_file_chooser_dialog_enabled = False
+        self._browser: 'Browser' = browser
+        self._connection_port: int = connection_port
+        self._target_id: str = target_id
+        self._connection_handler: ConnectionHandler = ConnectionHandler(
+            connection_port, self._target_id
+        )
+        self._page_events_enabled: bool = False
+        self._network_events_enabled: bool = False
+        self._fetch_events_enabled: bool = False
+        self._dom_events_enabled: bool = False
+        self._runtime_events_enabled: bool = False
+        self._intercept_file_chooser_dialog_enabled: bool = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
-        self._browser_context_id = browser_context_id
-        self._initialized = True
+        self._browser_context_id: Optional[str] = browser_context_id
+        self._initialized: bool = True
 
     @classmethod
     def _remove_instance(cls, target_id: str) -> None:
