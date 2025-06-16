@@ -482,8 +482,8 @@ class FindElementsMixin:
             escaped_value = self._ensure_relative_xpath(escaped_value)
             script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
             command = RuntimeCommands.call_function_on(
-                object_id,
-                script,
+                function_declaration=script,
+                object_id=object_id,
                 return_by_value=False,
             )
         else:
