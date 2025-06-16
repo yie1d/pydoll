@@ -1,3 +1,9 @@
+## 2.2.1 (2025-06-16)
+
+### Fix
+
+- fix call parameters order in call_function_on method
+
 ## 2.2.0 (2025-06-15)
 
 ### Feat
