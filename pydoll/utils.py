@@ -90,7 +90,7 @@ def extract_text_from_html(html: str, separator: str = '', strip: bool = False) 
     Args:
         html (str): The HTML string to extract text from.
         separator (str, optional): String inserted between extracted text fragments. Defaults to ''.
-        strip (bool, optional): Whether to strip whitespace from each text fragment. Defaults to False.
+        strip (bool, optional): Whether to strip whitespace from text fragments. Defaults to False.
 
     Returns:
         str: The extracted visible text.
