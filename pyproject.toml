@@ -13,7 +13,6 @@ python = "^3.10"
 websockets = "^13.1"
 aiohttp = "^3.9.5"
 aiofiles = "^23.2.1"
-mkdocstrings = "^0.29.1"
 
 
 [tool.poetry.group.dev.dependencies]
