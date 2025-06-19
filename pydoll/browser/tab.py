@@ -680,7 +680,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         """
 
         async def event_handler(event: EventFileChooserOpened):
-            file_list = files if isinstance(files, list) else [files]
+            file_list = [str(file) for file in files] if isinstance(files, list) else [str(files)]
             await self._execute_command(
                 DomCommands.set_file_input_files(
                     files=file_list,
@@ -697,7 +697,11 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         if self.intercept_file_chooser_dialog_enabled is False:
             await self.enable_intercept_file_chooser_dialog()
 
-        await self.on(PageEvent.FILE_CHOOSER_OPENED, event_handler, temporary=True)
+        await self.on(
+            PageEvent.FILE_CHOOSER_OPENED,
+            cast(Callable[[dict], Any], event_handler),
+            temporary=True,
+        )
 
         yield
 
