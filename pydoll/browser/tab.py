@@ -41,6 +41,7 @@ from pydoll.exceptions import (
     WaitElementTimeout,
 )
 from pydoll.protocol.base import Response
+from pydoll.protocol.dom.types import EventFileChooserOpened
 from pydoll.protocol.network.responses import GetResponseBodyResponse
 from pydoll.protocol.network.types import Cookie, CookieParam, NetworkLog
 from pydoll.protocol.page.events import PageEvent
@@ -678,10 +679,11 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             files: File path(s) for upload.
         """
 
-        async def event_handler(event):
+        async def event_handler(event: EventFileChooserOpened):
+            file_list = files if isinstance(files, list) else [files]
             await self._execute_command(
-                DomCommands.upload_files(
-                    files=files,
+                DomCommands.set_file_input_files(
+                    files=file_list,
                     backend_node_id=event['params']['backendNodeId'],
                 )
             )
