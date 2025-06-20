@@ -1,4 +1,4 @@
-from typing import NotRequired
+from typing_extensions import NotRequired
 
 from pydoll.constants import (
     DragEventType,

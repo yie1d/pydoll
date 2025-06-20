@@ -1,4 +1,6 @@
-from typing import Generic, NotRequired, TypedDict, TypeVar
+from typing import Generic, TypeVar
+
+from typing_extensions import NotRequired, TypedDict
 
 T_CommandResponse = TypeVar('T_CommandResponse')
 

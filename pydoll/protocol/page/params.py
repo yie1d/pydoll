@@ -1,4 +1,6 @@
-from typing import Literal, NotRequired
+from typing import Literal
+
+from typing_extensions import NotRequired
 
 from pydoll.constants import (
     AutoResponseMode,

@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from pydoll.protocol.fetch.types import HeaderEntry
 from pydoll.protocol.network.types import Cookie, SearchMatch, SecurityIsolationStatus

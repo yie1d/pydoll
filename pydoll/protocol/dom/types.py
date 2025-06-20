@@ -1,4 +1,6 @@
-from typing import Annotated, Any, NotRequired, TypedDict
+from typing import Annotated, Any
+
+from typing_extensions import NotRequired, TypedDict
 
 from pydoll.constants import CompatibilityMode, PseudoType, ShadowRootType
 
