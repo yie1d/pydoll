@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-websockets = "^13.1"
+websockets = "^14"
 aiohttp = "^3.9.5"
 aiofiles = "^23.2.1"
 
