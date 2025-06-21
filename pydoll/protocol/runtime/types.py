@@ -1,4 +1,6 @@
-from typing import Any, NotRequired, TypedDict, Union
+from typing import Any, Union
+
+from typing_extensions import NotRequired, TypedDict
 
 from pydoll.constants import (
     DeepSerializedValueType,
