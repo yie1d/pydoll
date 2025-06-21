@@ -15,7 +15,9 @@ from typing import (
 )
 
 import websockets
-from websockets.legacy.client import Connect, WebSocketClientProtocol
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.client import connect as Connect
+from websockets.protocol import State
 
 from pydoll.connection.managers import CommandsManager, EventsManager
 from pydoll.exceptions import (
@@ -59,7 +61,7 @@ class ConnectionHandler:
         self._page_id = page_id
         self._ws_address_resolver = ws_address_resolver
         self._ws_connector = ws_connector
-        self._ws_connection: Optional[WebSocketClientProtocol] = None
+        self._ws_connection: Optional[ClientConnection] = None
         self._command_manager = CommandsManager()
         self._events_handler = EventsManager()
         self._receive_task: Optional[asyncio.Task] = None
@@ -79,7 +81,7 @@ class ConnectionHandler:
         """Test if WebSocket connection is active and responsive."""
         with suppress(Exception):
             await self._ensure_active_connection()
-            await cast(WebSocketClientProtocol, self._ws_connection).ping()
+            await cast(ClientConnection, self._ws_connection).ping()
             return True
         return False
 
@@ -103,7 +105,7 @@ class ConnectionHandler:
         command_str = json.dumps(command)
 
         try:
-            ws = cast(WebSocketClientProtocol, self._ws_connection)
+            ws = cast(ClientConnection, self._ws_connection)
             await ws.send(command_str)
             response: str = await asyncio.wait_for(future, timeout)
             return json.loads(response)
@@ -156,7 +158,7 @@ class ConnectionHandler:
 
     async def _ensure_active_connection(self):
         """Ensure active connection exists, establishing new one if needed."""
-        if self._ws_connection is None or self._ws_connection.closed:
+        if self._ws_connection is None or self._ws_connection.state is State.CLOSED:
             await self._establish_new_connection()
 
     async def _establish_new_connection(self):
@@ -178,7 +180,7 @@ class ConnectionHandler:
 
     async def _handle_connection_loss(self):
         """Clean up resources after connection loss."""
-        if self._ws_connection and not self._ws_connection.closed:
+        if self._ws_connection and self._ws_connection.state is not State.CLOSED:
             await self._ws_connection.close()
         self._ws_connection = None
 
@@ -200,8 +202,9 @@ class ConnectionHandler:
 
     async def _incoming_messages(self) -> AsyncGenerator[Union[str, bytes], None]:
         """Generator yielding raw messages from WebSocket connection."""
-        ws = cast(WebSocketClientProtocol, self._ws_connection)
-        while not ws.closed:
+        ws = cast(ClientConnection, self._ws_connection)
+
+        while ws.state is not State.CLOSED:
             yield await ws.recv()
 
     async def _process_single_message(self, raw_message: str):
