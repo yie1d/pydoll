@@ -1,6 +1,7 @@
 <p align="center">
     <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="Pydoll Logo" /> <br><br>
 </p>
+<h1 align="center">Pydoll: Async Browser Automation</h1>
 
 <p align="center">
     <a href="https://codecov.io/gh/autoscrape-labs/pydoll" >
@@ -13,6 +14,7 @@
     <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue" alt="Python Versions">
     <a href="https://deepwiki.com/autoscrape-labs/pydoll"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
+
 
 <p align="center">
   📖 <a href="https://autoscrape-labs.github.io/pydoll/">Documentation</a> •
@@ -34,9 +36,9 @@ We believe that powerful automation shouldn't require you to become an expert in
 
 - **Zero Webdrivers**: Say goodbye to webdriver compatibility issues
 - **Native Captcha Bypass**: Handles Cloudflare Turnstile and reCAPTCHA v3*
-- **Asynchronous Performance**: for high-speed automation and multiple simultaneous tasks
-- **Humanized Interactions**: that mimic real user behavior
-- **Simplicity**: With pydoll, you install and you're ready to automate.
+- **Asynchronous Performance**: For high-speed automation and multiple simultaneous tasks
+- **Humanized Interactions**: Mimic real user behavior
+- **Simplicity**: With Pydoll, you install and you're ready to automate.
 
 > The effectiveness of captcha bypass depends on various factors, such as IP address reputation. Pydoll can achieve scores comparable to real users, but cannot handle restrictive configurations or IP blocks.
 
