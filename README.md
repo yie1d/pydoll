@@ -134,7 +134,7 @@ print(data)
 In the image below we can see the execution speed and the result of the automation.
 For demonstration purposes, the browser is not displayed.
 
-![google_seach](./docs/images/google-search.gif)
+![google_seach](./docs/images/google-search-example.gif)
 
 
 In just 5 seconds, we managed to extract all the necessary data! This is the 
