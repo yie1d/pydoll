@@ -19,8 +19,7 @@
   🚀 <a href="#getting-started">Getting Started</a> •
   ⚡ <a href="#advanced-features">Advanced Features</a> •
   🤝 <a href="#contributing">Contributing</a> •
-  💖 <a href="#support-my-work">Support My Work</a> •
-  📄 <a href="#license">License</a>
+  💖 <a href="#support-my-work">Support My Work</a>
 </p>
 
 Imagine the following scenario: you need to automate tasks in your browser. Maybe it's testing a web application, collecting data from a site, or even automating repetitive processes. Normally this involves using external drivers, complex configurations, and many compatibility issues.
