@@ -1,3 +1,4 @@
+import base64
 import pytest
 import pytest_asyncio
 import uuid
@@ -1358,7 +1359,8 @@ class TestTabRequestManagement:
         request_id = 'test_request_complete'
         response_code = 200
         response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
-        body = '{"status": "success", "data": "test"}'
+        json_response = '{"status": "success", "data": "test"}'
+        body = base64.b64encode(json_response.encode('utf-8')).decode('utf-8')
         response_phrase = 'OK'
         
         await tab.fulfill_request(
@@ -1390,7 +1392,8 @@ class TestTabRequestManagement:
         request_id = 'test_request_404'
         response_code = 404
         response_headers = [{'name': 'Content-Type', 'value': 'text/html'}]
-        response_body = {'error': 'Not Found'}
+        html_response = '<html><body><h1>404 - Not Found</h1></body></html>'
+        response_body = base64.b64encode(html_response.encode('utf-8')).decode('utf-8')
         
         await tab.fulfill_request(
             request_id, response_code, response_headers, response_body
@@ -1411,7 +1414,8 @@ class TestTabRequestManagement:
         request_id = 'test_request_empty_headers'
         response_code = 200
         response_headers = []
-        response_body = {'message': 'success'}
+        json_response = '{"message": "success"}'
+        response_body = base64.b64encode(json_response.encode('utf-8')).decode('utf-8')
         
         await tab.fulfill_request(
             request_id, response_code, response_headers, response_body
@@ -1423,6 +1427,7 @@ class TestTabRequestManagement:
         call_args = tab._connection_handler.execute_command.call_args_list[-1]
         command = call_args[0][0]
         assert command['params']['responseHeaders'] == []
+        assert command['params']['body'] == response_body
 
 
 class TestTabEdgeCases:

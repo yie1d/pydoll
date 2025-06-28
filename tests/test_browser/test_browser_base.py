@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
@@ -701,7 +702,8 @@ async def test_fulfill_request_with_all_params(mock_browser):
     request_id = 'test_request_123'
     response_code = 200
     response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
-    body = '{"status": "success", "data": "test"}'
+    json_response = '{"status": "success", "data": "test"}'
+    body = base64.b64encode(json_response.encode('utf-8')).decode('utf-8')
     response_phrase = 'OK'
     
     await mock_browser.fulfill_request(
