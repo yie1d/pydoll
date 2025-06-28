@@ -39,7 +39,7 @@ class FulfillRequestParams(CommandParams):
     requestId: str
     responseCode: int
     responseHeaders: NotRequired[list[HeaderEntry]]
-    body: NotRequired[dict]
+    body: NotRequired[str]
     responsePhrase: NotRequired[str]
 
 
