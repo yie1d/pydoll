@@ -29,6 +29,7 @@ from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
     By,
     NetworkErrorReason,
+    RequestMethod,
     RequestStage,
     ResourceType,
     ScreenshotFormat,
@@ -676,11 +677,28 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         return await self._execute_script_without_element(script)
 
     # TODO: think about how to remove these duplications with the base class
-    async def continue_request(self, request_id: str):
+    async def continue_request(  # noqa: PLR0913, PLR0917
+        self,
+        request_id: str,
+        url: Optional[str] = None,
+        method: Optional[RequestMethod] = None,
+        post_data: Optional[str] = None,
+        headers: Optional[list[HeaderEntry]] = None,
+        intercept_response: Optional[bool] = None,
+    ):
         """
         Continue paused request without modifications.
         """
-        return await self._execute_command(FetchCommands.continue_request(request_id))
+        return await self._execute_command(
+            FetchCommands.continue_request(
+                request_id=request_id,
+                url=url,
+                method=method,
+                post_data=post_data,
+                headers=headers,
+                intercept_response=intercept_response,
+            )
+        )
 
     async def fail_request(self, request_id: str, error_reason: NetworkErrorReason):
         """Fail request with error code."""
@@ -690,16 +708,18 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         self,
         request_id: str,
         response_code: int,
-        response_headers: list[HeaderEntry],
-        response_body: dict[Any, Any],
+        response_headers: Optional[list[HeaderEntry]] = None,
+        body: Optional[str] = None,
+        response_phrase: Optional[str] = None,
     ):
         """Fulfill request with response data."""
         return await self._execute_command(
             FetchCommands.fulfill_request(
-                request_id,
-                response_code,
-                response_headers,
-                response_body,
+                request_id=request_id,
+                response_code=response_code,
+                response_headers=response_headers,
+                body=body,
+                response_phrase=response_phrase,
             )
         )
 
