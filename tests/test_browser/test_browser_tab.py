@@ -4,7 +4,7 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch, ANY
 from pathlib import Path
 
-from pydoll.constants import By, RequestStage, ResourceType
+from pydoll.constants import By, RequestStage, ResourceType, RequestMethod
 from pydoll.browser.tab import Tab
 from pydoll.exceptions import (
     NoDialogPresent,
@@ -1214,7 +1214,7 @@ class TestTabRequestManagement:
 
     @pytest.mark.asyncio
     async def test_continue_request(self, tab):
-        """Test continue_request method."""
+        """Test continue_request method with minimal parameters."""
         request_id = 'test_request_123'
         
         await tab.continue_request(request_id)
@@ -1229,6 +1229,13 @@ class TestTabRequestManagement:
         # Verify it's a FetchCommands.continue_request command
         assert command['method'] == 'Fetch.continueRequest'
         assert command['params']['requestId'] == request_id
+        # Verify optional parameters are None/not set
+        params = command['params']
+        assert params.get('url') is None
+        assert params.get('method') is None
+        assert params.get('postData') is None
+        assert params.get('headers') is None
+        assert params.get('interceptResponse') is None
 
     @pytest.mark.asyncio
     async def test_fail_request(self, tab):
@@ -1254,15 +1261,11 @@ class TestTabRequestManagement:
 
     @pytest.mark.asyncio
     async def test_fulfill_request(self, tab):
-        """Test fulfill_request method."""
+        """Test fulfill_request method with minimal parameters."""
         request_id = 'test_request_789'
         response_code = 200
-        response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
-        response_body = {'status': 'success', 'data': 'test'}
         
-        await tab.fulfill_request(
-            request_id, response_code, response_headers, response_body
-        )
+        await tab.fulfill_request(request_id, response_code)
         
         # Verify the command was executed with correct parameters
         assert_mock_called_at_least_once(tab._connection_handler)
@@ -1275,8 +1278,48 @@ class TestTabRequestManagement:
         assert command['method'] == 'Fetch.fulfillRequest'
         assert command['params']['requestId'] == request_id
         assert command['params']['responseCode'] == response_code
-        assert command['params']['responseHeaders'] == response_headers
-        assert command['params']['body'] == response_body
+        # Verify optional parameters are None/not set
+        params = command['params']
+        assert params.get('responseHeaders') is None
+        assert params.get('body') is None
+        assert params.get('responsePhrase') is None
+
+    @pytest.mark.asyncio
+    async def test_continue_request_with_all_params(self, tab):
+        """Test continue_request with all parameters."""
+        from pydoll.constants import RequestMethod
+        
+        request_id = 'test_request_456'
+        url = 'https://modified-example.com'
+        method = RequestMethod.POST
+        post_data = 'modified_data=test'
+        headers = [{'name': 'Authorization', 'value': 'Bearer token123'}]
+        intercept_response = True
+        
+        await tab.continue_request(
+            request_id=request_id,
+            url=url,
+            method=method,
+            post_data=post_data,
+            headers=headers,
+            intercept_response=intercept_response,
+        )
+        
+        # Verify the command was executed with correct parameters
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Get the call arguments to verify the command
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]  # First argument is the command
+        
+        # Verify all parameters
+        params = command['params']
+        assert params['requestId'] == request_id
+        assert params['url'] == url
+        assert params['method'] == method
+        assert params['postData'] == post_data
+        assert params['headers'] == headers
+        assert params['interceptResponse'] == intercept_response
 
     @pytest.mark.asyncio
     async def test_continue_request_with_different_id(self, tab):
@@ -1308,6 +1351,38 @@ class TestTabRequestManagement:
         call_args = tab._connection_handler.execute_command.call_args_list[-1]
         command = call_args[0][0]
         assert command['params']['errorReason'] == error_reason
+
+    @pytest.mark.asyncio
+    async def test_fulfill_request_with_all_params(self, tab):
+        """Test fulfill_request with all parameters."""
+        request_id = 'test_request_complete'
+        response_code = 200
+        response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
+        body = '{"status": "success", "data": "test"}'
+        response_phrase = 'OK'
+        
+        await tab.fulfill_request(
+            request_id=request_id,
+            response_code=response_code,
+            response_headers=response_headers,
+            body=body,
+            response_phrase=response_phrase,
+        )
+        
+        # Verify the command was executed with correct parameters
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Get the call arguments to verify the command
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]  # First argument is the command
+        
+        # Verify all parameters
+        params = command['params']
+        assert params['requestId'] == request_id
+        assert params['responseCode'] == response_code
+        assert params['responseHeaders'] == response_headers
+        assert params['body'] == body
+        assert params['responsePhrase'] == response_phrase
 
     @pytest.mark.asyncio
     async def test_fulfill_request_with_different_status_code(self, tab):
