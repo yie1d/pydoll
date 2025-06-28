@@ -1209,6 +1209,147 @@ class TestTabUtilityMethods:
         assert_mock_called_at_least_once(tab._connection_handler)
 
 
+class TestTabRequestManagement:
+    """Test Tab request management methods."""
+
+    @pytest.mark.asyncio
+    async def test_continue_request(self, tab):
+        """Test continue_request method."""
+        request_id = 'test_request_123'
+        
+        await tab.continue_request(request_id)
+        
+        # Verify the command was executed with correct parameters
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Get the call arguments to verify the command
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]  # First argument is the command
+        
+        # Verify it's a FetchCommands.continue_request command
+        assert command['method'] == 'Fetch.continueRequest'
+        assert command['params']['requestId'] == request_id
+
+    @pytest.mark.asyncio
+    async def test_fail_request(self, tab):
+        """Test fail_request method."""
+        from pydoll.constants import NetworkErrorReason
+        
+        request_id = 'test_request_456'
+        error_reason = NetworkErrorReason.FAILED
+        
+        await tab.fail_request(request_id, error_reason)
+        
+        # Verify the command was executed with correct parameters
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Get the call arguments to verify the command
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]  # First argument is the command
+        
+        # Verify it's a FetchCommands.fail_request command
+        assert command['method'] == 'Fetch.failRequest'
+        assert command['params']['requestId'] == request_id
+        assert command['params']['errorReason'] == error_reason
+
+    @pytest.mark.asyncio
+    async def test_fulfill_request(self, tab):
+        """Test fulfill_request method."""
+        request_id = 'test_request_789'
+        response_code = 200
+        response_headers = [{'name': 'Content-Type', 'value': 'application/json'}]
+        response_body = {'status': 'success', 'data': 'test'}
+        
+        await tab.fulfill_request(
+            request_id, response_code, response_headers, response_body
+        )
+        
+        # Verify the command was executed with correct parameters
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Get the call arguments to verify the command
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]  # First argument is the command
+        
+        # Verify it's a FetchCommands.fulfill_request command
+        assert command['method'] == 'Fetch.fulfillRequest'
+        assert command['params']['requestId'] == request_id
+        assert command['params']['responseCode'] == response_code
+        assert command['params']['responseHeaders'] == response_headers
+        assert command['params']['body'] == response_body
+
+    @pytest.mark.asyncio
+    async def test_continue_request_with_different_id(self, tab):
+        """Test continue_request with different request ID."""
+        request_id = 'another_request_id_xyz'
+        
+        await tab.continue_request(request_id)
+        
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Verify the request ID was passed correctly
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]
+        assert command['params']['requestId'] == request_id
+
+    @pytest.mark.asyncio
+    async def test_fail_request_with_different_error(self, tab):
+        """Test fail_request with different error reason."""
+        from pydoll.constants import NetworkErrorReason
+        
+        request_id = 'test_request_error'
+        error_reason = NetworkErrorReason.ABORTED
+        
+        await tab.fail_request(request_id, error_reason)
+        
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Verify the error reason was passed correctly
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]
+        assert command['params']['errorReason'] == error_reason
+
+    @pytest.mark.asyncio
+    async def test_fulfill_request_with_different_status_code(self, tab):
+        """Test fulfill_request with different status code."""
+        request_id = 'test_request_404'
+        response_code = 404
+        response_headers = [{'name': 'Content-Type', 'value': 'text/html'}]
+        response_body = {'error': 'Not Found'}
+        
+        await tab.fulfill_request(
+            request_id, response_code, response_headers, response_body
+        )
+        
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Verify all parameters were passed correctly
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]
+        assert command['params']['responseCode'] == response_code
+        assert command['params']['responseHeaders'] == response_headers
+        assert command['params']['body'] == response_body
+
+    @pytest.mark.asyncio
+    async def test_fulfill_request_empty_headers(self, tab):
+        """Test fulfill_request with empty headers."""
+        request_id = 'test_request_empty_headers'
+        response_code = 200
+        response_headers = []
+        response_body = {'message': 'success'}
+        
+        await tab.fulfill_request(
+            request_id, response_code, response_headers, response_body
+        )
+        
+        assert_mock_called_at_least_once(tab._connection_handler)
+        
+        # Verify empty headers are handled correctly
+        call_args = tab._connection_handler.execute_command.call_args_list[-1]
+        command = call_args[0][0]
+        assert command['params']['responseHeaders'] == []
+
+
 class TestTabEdgeCases:
     """Test Tab edge cases and error conditions."""
 
