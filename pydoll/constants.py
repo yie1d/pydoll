@@ -46,19 +46,12 @@ class Scripts:
     """
 
     CLICK_OPTION_TAG = """
-    document.querySelector('option[value="{self.value}"]').selected = true;
-    var selectParentXpath = (
-        '//option[@value="{self.value}"]//ancestor::select'
-    );
-    var select = document.evaluate(
-        selectParentXpath,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-    ).singleNodeValue;
+    function() {
+    this.selected = true;
+    var select = this.parentElement.closest('select');
     var event = new Event('change', { bubbles: true });
     select.dispatchEvent(event);
+    }
     """
 
     BOUNDS = """
