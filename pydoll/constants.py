@@ -48,7 +48,7 @@ class Scripts:
     CLICK_OPTION_TAG = """
     function() {
     this.selected = true;
-    var select = this.parentElement;
+    var select = this.parentElement.closest('select');
     var event = new Event('change', { bubbles: true });
     select.dispatchEvent(event);
     }
