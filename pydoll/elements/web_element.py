@@ -345,10 +345,9 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def _click_option_tag(self):
         """Specialized method for clicking <option> elements in dropdowns."""
-        script = Scripts.CLICK_OPTION_TAG.replace('{self.value}', self.value)
         await self._execute_command(RuntimeCommands.call_function_on(
             object_id=self._object_id,
-            function_declaration=script,
+            function_declaration=Scripts.CLICK_OPTION_TAG,
             return_by_value=True,
         ))
 
