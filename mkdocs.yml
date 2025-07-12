@@ -2,6 +2,7 @@ site_name: Pydoll - Async Web Automation Library
 site_url: https://autoscrape-labs.github.io/pydoll/
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
+use_directory_urls: true
 
 # Configuração da navegação
 nav:
@@ -102,9 +103,11 @@ plugins:
           default: true
           name: English
           build: true
+          site_name: "Pydoll - Async Web Automation Library"
         - locale: zh
           name: 中文
           build: true
+          site_name: "Pydoll - 异步网页自动化库"
           nav_translations:
             Pydoll: Pydoll
             Features: 特性
@@ -166,14 +169,7 @@ plugins:
             show_bases: true
             heading_level: 1
 
-extra:
-  alternate:
-    - name: English
-      link: /pydoll/
-      lang: en
-    - name: 中文
-      link: /pydoll/zh/
-      lang: zh
+extra: {}
 
 extra_css:
   - stylesheets/termynal.css
