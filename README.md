@@ -23,8 +23,6 @@
   💖 <a href="#support-my-work">Support My Work</a>
 </p>
 
-- [简体中文](README_zh.md)
-
 Imagine the following scenario: you need to automate tasks in your browser. Maybe it's testing a web application, collecting data from a site, or even automating repetitive processes. Normally this involves using external drivers, complex configurations, and many compatibility issues.
 
 **Pydoll was born to solve these problems.**
@@ -332,6 +330,8 @@ The documentation includes:
 - **Getting Started Guide** - Step-by-step tutorials
 - **API Reference** - Complete method documentation
 - **Advanced Techniques** - Network interception, event handling, performance optimization
+
+>The chinese version of this README is [here](README_zh.md).
 
 ## 🤝 Contributing
 
