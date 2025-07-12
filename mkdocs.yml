@@ -1,4 +1,5 @@
 site_name: Pydoll - Async Web Automation Library
+site_url: https://autoscrape-labs.github.io/pydoll/
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
 
@@ -168,10 +169,10 @@ plugins:
 extra:
   alternate:
     - name: English
-      link: /
+      link: /pydoll/
       lang: en
     - name: 中文
-      link: /zh/
+      link: /pydoll/zh/
       lang: zh
 
 extra_css:
