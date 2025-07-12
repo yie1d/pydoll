@@ -1,3 +1,19 @@
+## 2.3.1 (2025-07-12)
+
+### Fix
+
+- refactor click_option_tag to use direct script reference
+- update script to use closest for more reliable DOM selection
+- improve selection script for higher accuracy
+- use correct class name and id selector in query()
+- add fetch command methods to handle request processing
+
+### Refactor
+
+- change body type from dict to string in fetch command parameters
+- refactor continue_request and fulfill_request to use options
+- enhance continue_request and fulfill_request with new options
+
 ## 2.3.0 (2025-06-25)
 
 ### Feat
