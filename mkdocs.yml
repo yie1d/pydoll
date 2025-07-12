@@ -83,9 +83,67 @@ theme:
     - navigation.path
     - navigation.top
     - toc.follow
+    - content.code.copy
+    - content.code.select
+    - content.tooltips
+    - search.highlight
+    - search.suggest
   
 plugins:
   - search
+  - i18n:
+      docs_structure: folder
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
+          nav_translations:
+            Pydoll: Pydoll
+            Features: 特性
+            Deep Dive: 深入了解
+            Overview: 概述
+            Chrome DevTools Protocol: Chrome DevTools 协议
+            The Connection Layer: 连接层
+            The Browser Domain: 浏览器域
+            The Tab Domain: 标签页域
+            The Find Elements Mixin: 查找元素混合器
+            The WebElement Domain: Web元素域
+            The Event System: 事件系统
+            Network Capabilities: 网络功能
+            API Reference: API 参考
+            Browser: 浏览器
+            Chrome: Chrome
+            Edge: Edge
+            Options: 选项
+            Tab: 标签页
+            Managers: 管理器
+            Elements: 元素
+            WebElement: Web元素
+            Mixins: 混合器
+            Connection: 连接
+            Connection Handler: 连接处理器
+            Commands: 命令
+            DOM: DOM
+            Input: 输入
+            Network: 网络
+            Page: 页面
+            Runtime: 运行时
+            Storage: 存储
+            Target: 目标
+            Fetch: 获取
+            Protocol: 协议
+            Events: 事件
+            Core: 核心
+            Constants: 常量
+            Exceptions: 异常
+            Utils: 工具
   - mkdocstrings:
       handlers:
         python:
@@ -106,6 +164,15 @@ plugins:
             show_source: false
             show_bases: true
             heading_level: 1
+
+extra:
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    - name: 中文
+      link: /zh/
+      lang: zh
 
 extra_css:
   - stylesheets/termynal.css
