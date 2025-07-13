@@ -119,6 +119,12 @@ class Scripts:
         }
     """
 
+    GET_PARENT_NODE = """
+        function() {
+            return this.parentElement;
+        }
+    """
+
 
 class Key(tuple[str, int], Enum):
     BACKSPACE = ('Backspace', 8)
