@@ -498,8 +498,8 @@ class FindElementsMixin:
         return f'.{xpath}' if not xpath.startswith('.') else xpath
 
     @staticmethod
-    def _has_object_id_key(response: dict) -> bool:
+    def _has_object_id_key(response: Union[EvaluateResponse, CallFunctionOnResponse]) -> bool:
         """
         Check if response has objectId key.
         """
-        return response.get('result', {}).get('result', {}).get('objectId')
+        return bool(response.get('result', {}).get('result', {}).get('objectId'))
