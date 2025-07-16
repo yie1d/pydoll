@@ -2,7 +2,7 @@ import pytest
 
 from pydoll.browser.options import ChromiumOptions as Options
 
-from pydoll.exceptions import ArgumentAlreadyExistsInOptions
+from pydoll.exceptions import ArgumentAlreadyExistsInOptions, WrongPrefsDict
 
 
 def test_initial_arguments():
@@ -86,7 +86,10 @@ def test_set_block_notifications():
 def test_set_allow_automatic_downloads():
     options = Options()
     options.set_allow_automatic_downloads(True)
-    assert options.prefs_options['profile']['default_content_setting_values']['automatic_downloads'] == 1
+    assert (
+        options.prefs_options['profile']['default_content_setting_values']['automatic_downloads']
+        == 1
+    )
 
 
 def test_set_block_geolocation():
@@ -133,8 +136,35 @@ def test_set_multiple_prefs():
     assert options.prefs_options['profile']['default_content_setting_values']['popups'] == 0
     assert options.prefs_options['profile']['password_manager_enabled'] is False
     assert options.prefs_options['profile']['default_content_setting_values']['notifications'] == 2
-    assert options.prefs_options['profile']['default_content_setting_values']['automatic_downloads'] == 1
+    assert (
+        options.prefs_options['profile']['default_content_setting_values']['automatic_downloads']
+        == 1
+    )
     assert options.prefs_options['profile']['managed_default_content_settings']['geolocation'] == 2
     assert options.prefs_options['plugins']['always_open_pdf_externally'] is True
     assert options.prefs_options['homepage'] == 'https://example.com'
     assert options.prefs_options['intl']['accept_languages'] == 'pt-BR,pt,en-US,en'
+
+
+def test_dict_prefs():
+    options = Options()
+    options.prefs_options = {
+        "download": {"directory_upgrade": True},
+    }
+    assert options.prefs_options['download']['directory_upgrade'] == True
+
+
+def test_not_dict_prefs_error():
+    with pytest.raises(ValueError, match='The experimental options value must be a dict.'):
+        options = Options()
+        options.prefs_options = ["download", "directory_upgrade"]
+
+
+def test_wrong_dict_prefs_error():
+    with pytest.raises(WrongPrefsDict):
+        options = Options()
+        options.prefs_options = {
+            'prefs': {
+                "download": {"directory_upgrade": True},
+            }
+        }
