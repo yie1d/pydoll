@@ -1,4 +1,6 @@
 import asyncio
+import json
+import os
 from abc import ABC, abstractmethod
 from functools import partial
 from random import randint
@@ -117,9 +119,7 @@ class Browser(ABC):  # noqa: PLR0904
         proxy_config = self._proxy_manager.get_proxy_credentials()
 
         self._browser_process_manager.start_browser_process(
-            binary_location,
-            self._connection_port,
-            self.options.arguments,
+            binary_location, self._connection_port, self.options.arguments
         )
         await self._verify_browser_running()
         await self._configure_proxy(proxy_config[0], proxy_config[1])
@@ -179,15 +179,11 @@ class Browser(ABC):  # noqa: PLR0904
         Note:
             Closes all associated tabs immediately.
         """
-        return await self._execute_command(
-            TargetCommands.dispose_browser_context(browser_context_id)
-        )
+        return await self._execute_command(TargetCommands.dispose_browser_context(browser_context_id))
 
     async def get_browser_contexts(self) -> list[str]:
         """Get all browser context IDs including the default context."""
-        response: GetBrowserContextsResponse = await self._execute_command(
-            TargetCommands.get_browser_contexts()
-        )
+        response: GetBrowserContextsResponse = await self._execute_command(TargetCommands.get_browser_contexts())
         return response['result']['browserContextIds']
 
     async def new_tab(self, url: str = '', browser_context_id: Optional[str] = None) -> Tab:
@@ -232,14 +228,9 @@ class Browser(ABC):  # noqa: PLR0904
         """
         targets = await self.get_targets()
         valid_tab_targets = [
-            target
-            for target in targets
-            if target['type'] == 'page' and 'extension' not in target['url']
+            target for target in targets if target['type'] == 'page' and 'extension' not in target['url']
         ]
-        return [
-            Tab(self, self._connection_port, target['targetId'])
-            for target in reversed(valid_tab_targets)
-        ]
+        return [Tab(self, self._connection_port, target['targetId']) for target in reversed(valid_tab_targets)]
 
     async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
         """Set download directory path (convenience method for set_download_behavior)."""
@@ -264,26 +255,20 @@ class Browser(ABC):  # noqa: PLR0904
             events_enabled: Generate download events for progress tracking.
         """
         return await self._execute_command(
-            BrowserCommands.set_download_behavior(
-                behavior, download_path, browser_context_id, events_enabled
-            )
+            BrowserCommands.set_download_behavior(behavior, download_path, browser_context_id, events_enabled)
         )
 
     async def delete_all_cookies(self, browser_context_id: Optional[str] = None):
         """Delete all cookies (session, persistent, third-party) from browser or context."""
         return await self._execute_command(StorageCommands.clear_cookies(browser_context_id))
 
-    async def set_cookies(
-        self, cookies: list[CookieParam], browser_context_id: Optional[str] = None
-    ):
+    async def set_cookies(self, cookies: list[CookieParam], browser_context_id: Optional[str] = None):
         """Set multiple cookies in browser or context."""
         return await self._execute_command(StorageCommands.set_cookies(cookies, browser_context_id))
 
     async def get_cookies(self, browser_context_id: Optional[str] = None) -> list[Cookie]:
         """Get all cookies from browser or context."""
-        response: GetCookiesResponse = await self._execute_command(
-            StorageCommands.get_cookies(browser_context_id)
-        )
+        response: GetCookiesResponse = await self._execute_command(StorageCommands.get_cookies(browser_context_id))
         return response['result']['cookies']
 
     async def get_version(self) -> GetVersionResultDict:
@@ -350,17 +335,13 @@ class Browser(ABC):  # noqa: PLR0904
             origin: Origin to grant to (all origins if None).
             browser_context_id: Context to apply to (default if None).
         """
-        return await self._execute_command(
-            BrowserCommands.grant_permissions(permissions, origin, browser_context_id)
-        )
+        return await self._execute_command(BrowserCommands.grant_permissions(permissions, origin, browser_context_id))
 
     async def reset_permissions(self, browser_context_id: Optional[str] = None):
         """Reset all permissions to defaults and restore prompting behavior."""
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
-    async def on(
-        self, event_name: str, callback: Callable[[Any], Any], temporary: bool = False
-    ) -> int:
+    async def on(self, event_name: str, callback: Callable[[Any], Any], temporary: bool = False) -> int:
         """
         Register CDP event listener at browser level.
 
@@ -385,9 +366,7 @@ class Browser(ABC):  # noqa: PLR0904
             function_to_register = callback_wrapper
         else:
             function_to_register = callback
-        return await self._connection_handler.register_callback(
-            event_name, function_to_register, temporary
-        )
+        return await self._connection_handler.register_callback(event_name, function_to_register, temporary)
 
     async def enable_fetch_events(
         self,
@@ -512,9 +491,7 @@ class Browser(ABC):  # noqa: PLR0904
         if not await self._is_browser_running(self.options.start_timeout):
             raise FailedToStartBrowser()
 
-    async def _configure_proxy(
-        self, private_proxy: bool, proxy_credentials: tuple[Optional[str], Optional[str]]
-    ):
+    async def _configure_proxy(self, private_proxy: bool, proxy_credentials: tuple[Optional[str], Optional[str]]):
         """Setup proxy authentication handling if needed."""
         if private_proxy:
             await self.enable_fetch_events(handle_auth_requests=True)
@@ -547,11 +524,7 @@ class Browser(ABC):  # noqa: PLR0904
             NoValidTabFound: If no valid attached tab is found.
         """
         valid_tab = next(
-            (
-                tab
-                for tab in targets
-                if tab.get('type') == 'page' and 'extension' not in tab.get('url', '')
-            ),
+            (tab for tab in targets if tab.get('type') == 'page' and 'extension' not in tab.get('url', '')),
             None,
         )
 
@@ -579,9 +552,15 @@ class Browser(ABC):  # noqa: PLR0904
 
     def _setup_user_dir(self):
         """Setup temporary user data directory if not specified in options."""
+        temp_dir = self._temp_directory_manager.create_temp_dir()
+        if self.options.prefs_options:
+            os.mkdir(os.path.join(temp_dir.name, 'Default'))
+            preferences = self.options.prefs_options
+            with open(os.path.join(temp_dir.name, 'Default', 'Preferences'), 'w', encoding='utf-8') as json_file:
+                json.dump(preferences, json_file)
+
         if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
             # For all browsers, use a temporary directory
-            temp_dir = self._temp_directory_manager.create_temp_dir()
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
 
     @abstractmethod
