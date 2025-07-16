@@ -114,7 +114,8 @@ class ChromiumOptions(Options):
         Safely sets a nested value in self._prefs_options, creating intermediate dicts as needed.
 
         Arguments:
-            path -- List of keys representing the nested path (e.g., ['plugins', 'always_open_pdf_externally'])
+            path -- List of keys representing the nested
+                    path (e.g., ['plugins', 'always_open_pdf_externally'])
             value -- The value to set at the given path
         """
         d = self._prefs_options
@@ -164,7 +165,9 @@ class ChromiumOptions(Options):
         Arguments:
             block -- If True, pop-ups will be blocked (value = 0); otherwise allowed (value = 1).
         """
-        self.set_pref_path(['profile', 'default_content_setting_values', 'popups'], 0 if block else 1)
+        self.set_pref_path(
+            ['profile', 'default_content_setting_values', 'popups'], 0 if block else 1
+        )
 
     def set_password_manager_enabled(self, enabled: bool):
         """
@@ -184,9 +187,12 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.default_content_setting_values.notifications' preference.
 
         Arguments:
-            block -- If True, notifications will be blocked (value = 2); otherwise allowed (value = 1).
+            block -- If True, notifications will be blocked (value = 2);
+            otherwise allowed (value = 1).
         """
-        self.set_pref_path(['profile', 'default_content_setting_values', 'notifications'], 2 if block else 1)
+        self.set_pref_path(
+            ['profile', 'default_content_setting_values', 'notifications'], 2 if block else 1
+        )
 
     def set_allow_automatic_downloads(self, allow: bool):
         """
@@ -195,9 +201,12 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.default_content_setting_values.automatic_downloads' preference.
 
         Arguments:
-            allow -- If True, automatic downloads are allowed (value = 1); otherwise blocked (value = 2).
+            allow -- If True, automatic downloads are allowed (value = 1);
+            otherwise blocked (value = 2).
         """
-        self.set_pref_path(['profile', 'default_content_setting_values', 'automatic_downloads'], 1 if allow else 2)
+        self.set_pref_path(
+            ['profile', 'default_content_setting_values', 'automatic_downloads'], 1 if allow else 2
+        )
 
     def set_block_geolocation(self, block: bool):
         """
@@ -208,7 +217,9 @@ class ChromiumOptions(Options):
         Arguments:
             block -- If True, location access is blocked (value = 2); otherwise allowed (value = 1).
         """
-        self.set_pref_path(['profile', 'managed_default_content_settings', 'geolocation'], 2 if block else 1)
+        self.set_pref_path(
+            ['profile', 'managed_default_content_settings', 'geolocation'], 2 if block else 1
+        )
 
     def set_open_pdf_externally(self, enabled: bool):
         """
