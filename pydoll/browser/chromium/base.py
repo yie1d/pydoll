@@ -203,12 +203,13 @@ class Browser(ABC):  # noqa: PLR0904
         """
         response: CreateTargetResponse = await self._execute_command(
             TargetCommands.create_target(
-                url=url,
                 browser_context_id=browser_context_id,
             )
         )
         target_id = response['result']['targetId']
-        return Tab(self, self._connection_port, target_id, browser_context_id)
+        tab = Tab(self, self._connection_port, target_id, browser_context_id)
+        if url: await tab.go_to(url)
+        return tab
 
     async def get_targets(self) -> list[TargetInfo]:
         """
