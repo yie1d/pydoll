@@ -379,11 +379,11 @@ class TestChromeIntegration:
         custom_options = ChromiumOptions()
         custom_options.add_argument('--disable-gpu')
         custom_options.add_argument('--no-sandbox')
-        custom_options.prefs_options = {
+        custom_options.browser_preferences = {
         "download": {"directory_upgrade": True},
         }
         custom_options.set_default_download_directory('/tmp/all')
-        custom_options.set_block_notifications(True)
+        custom_options.block_notifications = True
         custom_options.binary_location = '/custom/chrome'
         custom_port = 9876
         
@@ -410,7 +410,7 @@ class TestChromeIntegration:
                 os.path.join(chrome._temp_directory_manager._temp_dirs[0].name, 'Default', 'Preferences'), 'r'
             ) as json_file:
                 preferences = json.loads(json_file.read())
-            assert preferences == custom_options.prefs_options
+            assert preferences == custom_options.browser_preferences
 
             # Verify correct initialization
             assert chrome.options == custom_options
@@ -453,3 +453,66 @@ class TestChromeIntegration:
             chrome2 = Chrome(options=custom_options)
             assert chrome2.options == custom_options
             assert '--test-arg' in chrome2.options.arguments
+
+    @pytest.mark.asyncio
+    async def test_chrome_user_data_dir_and_preferences(self, tmp_path):
+        """Test Chrome with user data directory and preferences."""
+        user_data_dir = tmp_path / 'chrome_profile'
+        user_data_dir.mkdir()
+        
+        prefs_dir = user_data_dir / 'Default'
+        prefs_dir.mkdir()
+        prefs_file = prefs_dir / 'Preferences'
+        
+        initial_prefs = {
+            'profile': {
+                'exit_type': 'Normal',
+                'exited_cleanly': True
+            },
+            'test_pref': 'initial_value'
+        }
+        
+        prefs_file.write_text(json.dumps(initial_prefs), encoding='utf-8')
+        
+        custom_options = ChromiumOptions()
+        custom_options.add_argument(f'--user-data-dir={user_data_dir}')
+        custom_options.browser_preferences = {
+            'test_pref': 'new_value',
+            'new_pref': 'some_value'
+        }
+        custom_options.prompt_for_download = False # ok
+        with patch.multiple(
+            Chrome,
+            _get_default_binary_location=MagicMock(return_value='/fake/chrome'),
+        ), patch(
+            'pydoll.browser.managers.browser_process_manager.BrowserProcessManager',
+            autospec=True,
+        ), patch(
+            'pydoll.browser.managers.temp_dir_manager.TempDirectoryManager',
+            autospec=True,
+        ), patch(
+            'pydoll.connection.connection_handler.ConnectionHandler',
+            autospec=True,
+        ), patch(
+            'pydoll.browser.managers.proxy_manager.ProxyManager',
+            autospec=True,
+        ):
+            async with Chrome(options=custom_options) as chrome:
+                chrome._setup_user_dir()
+                assert f'--user-data-dir={user_data_dir}' in chrome.options.arguments
+
+                with open(prefs_file, 'r', encoding='utf-8') as f:
+                    updated_prefs = json.load(f)
+                assert updated_prefs['test_pref'] == 'new_value'
+                assert updated_prefs['new_pref'] == 'some_value'
+                
+                assert updated_prefs['profile']['exit_type'] == 'Normal'
+                assert updated_prefs['profile']['exited_cleanly'] is True
+                backup_file = user_data_dir / 'Default' / 'Preferences.backup'
+                assert backup_file.exists()
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    backup_prefs = json.load(f)
+                assert backup_prefs == initial_prefs
+            with open(prefs_file, 'r', encoding='utf-8') as f:
+                final_prefs = json.load(f)
+            assert final_prefs == initial_prefs
