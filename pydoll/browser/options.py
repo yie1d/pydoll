@@ -21,12 +21,6 @@ class ChromiumOptions(Options):
         self._binary_location = ''
         self._start_timeout = 10
         self._browser_preferences = {}
-        self._prompt_for_download = True
-        self._block_popups = False
-        self._password_manager_enabled = True
-        self._block_notifications = False
-        self._allow_automatic_downloads = False
-        self._open_pdf_externally = False
 
     @property
     def arguments(self) -> list[str]:
@@ -131,6 +125,25 @@ class ChromiumOptions(Options):
             d = d.setdefault(key, {})
         d[path[-1]] = value
 
+    def _get_pref_path(self, path: list):
+        """
+        Safely gets a nested value from self._browser_preferences.
+
+        Arguments:
+            path -- List of keys representing the nested
+                    path (e.g., ['plugins', 'always_open_pdf_externally'])
+
+        Returns:
+            The value at the given path, or None if path doesn't exist
+        """
+        d = self._browser_preferences
+        try:
+            for key in path:
+                d = d[key]
+            return d
+        except (KeyError, TypeError):
+            return None
+
     def set_default_download_directory(self, path: str):
         """
         Set the default directory where downloaded files will be saved.
@@ -155,7 +168,7 @@ class ChromiumOptions(Options):
 
     @property
     def prompt_for_download(self) -> bool:
-        return self._prompt_for_download
+        return self._get_pref_path(['download', 'prompt_for_download'])
 
     @prompt_for_download.setter
     def prompt_for_download(self, enabled: bool):
@@ -167,12 +180,11 @@ class ChromiumOptions(Options):
         Arguments:
             enabled -- If True, Chrome will ask for confirmation before downloading.
         """
-        self._prompt_for_download = enabled
-        self._set_pref_path(['download', 'prompt_for_download'], self._prompt_for_download)
+        self._set_pref_path(['download', 'prompt_for_download'], enabled)
 
     @property
     def block_popups(self) -> bool:
-        return self._block_popups == 0
+        return self._get_pref_path(['profile', 'default_content_setting_values', 'popups']) == 0
 
     @block_popups.setter
     def block_popups(self, block: bool):
@@ -184,14 +196,13 @@ class ChromiumOptions(Options):
         Arguments:
             block -- If True, pop-ups will be blocked (value = 0); otherwise allowed (value = 1).
         """
-        self._block_popups = 0 if block else 1
         self._set_pref_path(
-            ['profile', 'default_content_setting_values', 'popups'], self._block_popups
+            ['profile', 'default_content_setting_values', 'popups'], 0 if block else 1
         )
 
     @property
     def password_manager_enabled(self) -> bool:
-        return self._password_manager_enabled
+        return self._get_pref_path(['profile', 'password_manager_enabled'])
 
     @password_manager_enabled.setter
     def password_manager_enabled(self, enabled: bool):
@@ -203,16 +214,16 @@ class ChromiumOptions(Options):
         Arguments:
             enabled -- If True, the password manager is active.
         """
-        self._password_manager_enabled = enabled
-        self._set_pref_path(['profile', 'password_manager_enabled'], self._password_manager_enabled)
-        self._set_pref_path(
-            ['credentials_enable_service'], self._password_manager_enabled
-        )  # todo: colocar em outra propriedade
+        self._set_pref_path(['profile', 'password_manager_enabled'], enabled)
+        self._set_pref_path(['credentials_enable_service'], enabled)
 
     @property
     def block_notifications(self) -> bool:
         block_notifications_true_value = 2
-        return self._block_notifications == block_notifications_true_value
+        return (
+            self._get_pref_path(['profile', 'default_content_setting_values', 'notifications'])
+            == block_notifications_true_value
+        )
 
     @block_notifications.setter
     def block_notifications(self, block: bool):
@@ -225,15 +236,19 @@ class ChromiumOptions(Options):
             block -- If True, notifications will be blocked (value = 2);
             otherwise allowed (value = 1).
         """
-        self._block_notifications = 2 if block else 1
         self._set_pref_path(
             ['profile', 'default_content_setting_values', 'notifications'],
-            self._block_notifications,
+            2 if block else 1,
         )
 
     @property
     def allow_automatic_downloads(self) -> bool:
-        return self._allow_automatic_downloads == 1
+        return (
+            self._get_pref_path(
+                ['profile', 'default_content_setting_values', 'automatic_downloads']
+            )
+            == 1
+        )
 
     @allow_automatic_downloads.setter
     def allow_automatic_downloads(self, allow: bool):
@@ -246,15 +261,14 @@ class ChromiumOptions(Options):
             allow -- If True, automatic downloads are allowed (value = 1);
             otherwise blocked (value = 2).
         """
-        self._allow_automatic_downloads = 1 if allow else 2
         self._set_pref_path(
             ['profile', 'default_content_setting_values', 'automatic_downloads'],
-            self._allow_automatic_downloads,
+            1 if allow else 2,
         )
 
     @property
     def open_pdf_externally(self) -> bool:
-        return self._open_pdf_externally
+        return self._get_pref_path(['plugins', 'always_open_pdf_externally'])
 
     @open_pdf_externally.setter
     def open_pdf_externally(self, enabled: bool):
@@ -266,5 +280,4 @@ class ChromiumOptions(Options):
         Arguments:
             block -- If True, location access is blocked (value = 2); otherwise allowed (value = 1).
         """
-        self._open_pdf_externally = enabled
-        self._set_pref_path(['plugins', 'always_open_pdf_externally'], self._open_pdf_externally)
+        self._set_pref_path(['plugins', 'always_open_pdf_externally'], enabled)

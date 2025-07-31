@@ -102,7 +102,6 @@ def test_set_open_pdf_externally():
     assert options.open_pdf_externally is True
 
 
-
 def test_set_accept_languages():
     options = Options()
     options.set_accept_languages('pt-BR,pt,en-US,en')
@@ -161,27 +160,50 @@ def test_wrong_dict_prefs_error():
             }
         }
 
+def test_set_arguments():
+    options = Options()
+    options.arguments = ['--headless']
+    assert options.arguments == ['--headless']
+
+def test_get_pref_path():
+    options = Options()
+    options.set_default_download_directory('/tmp/downloads')
+    assert options._get_pref_path(['download', 'default_directory']) == '/tmp/downloads'
+
+
+def test_get_pref_path_none():
+    options = Options()
+    assert options._get_pref_path(['download', 'default_directory']) is None
+
 
 def test_options_interface_enforcement():
     with pytest.raises(TypeError):
         OptionsInterface()
+
     class IncompleteOptions(OptionsInterface):
         pass
+
     with pytest.raises(TypeError):
         IncompleteOptions()
+
     class CompleteOptions(OptionsInterface):
         @property
         def arguments(self):
             return []
+
         @property
         def binary_location(self):
             return ''
+
         @property
         def start_timeout(self):
             return 0
+
         def add_argument(self, argument):
             pass
+
         @property
         def browser_preferences(self):
             return {}
+
     CompleteOptions()

@@ -516,3 +516,59 @@ class TestChromeIntegration:
             with open(prefs_file, 'r', encoding='utf-8') as f:
                 final_prefs = json.load(f)
             assert final_prefs == initial_prefs
+
+    @pytest.mark.asyncio
+    async def test_chrome_user_data_dir_with_invalid_json_preferences(self, tmp_path):
+        """Test Chrome with user data directory containing invalid JSON preferences."""
+        user_data_dir = tmp_path / 'chrome_profile'
+        user_data_dir.mkdir()
+        
+        prefs_dir = user_data_dir / 'Default'
+        prefs_dir.mkdir()
+        prefs_file = prefs_dir / 'Preferences'
+        
+        # Write invalid JSON to the Preferences file
+        invalid_json = '{ "profile": { "exit_type": "Normal", "exited_cleanly": true, } }' # trailing comma makes it invalid
+        prefs_file.write_text(invalid_json, encoding='utf-8')
+        
+        custom_options = ChromiumOptions()
+        custom_options.add_argument(f'--user-data-dir={user_data_dir}')
+        custom_options.browser_preferences = {
+            'test_pref': 'new_value',
+            'new_pref': 'some_value'
+        }
+        custom_options.prompt_for_download = False
+        
+        with patch.multiple(
+            Chrome,
+            _get_default_binary_location=MagicMock(return_value='/fake/chrome'),
+        ), patch(
+            'pydoll.browser.managers.browser_process_manager.BrowserProcessManager',
+            autospec=True,
+        ), patch(
+            'pydoll.browser.managers.temp_dir_manager.TempDirectoryManager',
+            autospec=True,
+        ), patch(
+            'pydoll.connection.connection_handler.ConnectionHandler',
+            autospec=True,
+        ), patch(
+            'pydoll.browser.managers.proxy_manager.ProxyManager',
+            autospec=True,
+        ):
+            async with Chrome(options=custom_options) as chrome:
+                chrome._setup_user_dir()
+                assert f'--user-data-dir={user_data_dir}' in chrome.options.arguments
+
+                # The invalid JSON should be handled gracefully by suppress(json.JSONDecodeError)
+                # and the preferences should be written with only the new preferences
+                with open(prefs_file, 'r', encoding='utf-8') as f:
+                    updated_prefs = json.load(f)
+                assert updated_prefs['test_pref'] == 'new_value'
+                assert updated_prefs['new_pref'] == 'some_value'
+                
+                # The original invalid JSON should be backed up
+                backup_file = user_data_dir / 'Default' / 'Preferences.backup'
+                assert backup_file.exists()
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                assert backup_content == invalid_json
