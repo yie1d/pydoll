@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from pydoll.browser.interfaces import Options
 from pydoll.exceptions import ArgumentAlreadyExistsInOptions, WrongPrefsDict
 
@@ -136,13 +138,12 @@ class ChromiumOptions(Options):
         Returns:
             The value at the given path, or None if path doesn't exist
         """
-        d = self._browser_preferences
-        try:
+        nested_preferences = self._browser_preferences
+        with suppress(KeyError, TypeError):
             for key in path:
-                d = d[key]
-            return d
-        except (KeyError, TypeError):
-            return None
+                nested_preferences = nested_preferences[key]
+            return nested_preferences
+        return None
 
     def set_default_download_directory(self, path: str):
         """

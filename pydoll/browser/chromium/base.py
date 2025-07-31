@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from functools import partial
 from random import randint
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, Optional, TypeVar
 
 from pydoll.browser.interfaces import BrowserOptionsManager
@@ -598,7 +599,7 @@ class Browser(ABC):  # noqa: PLR0904
             if self.options.browser_preferences:
                 self._set_browser_preferences_in_temp_dir(temp_dir)
 
-    def _set_browser_preferences_in_temp_dir(self, temp_dir):
+    def _set_browser_preferences_in_temp_dir(self, temp_dir: TemporaryDirectory):
         os.mkdir(os.path.join(temp_dir.name, 'Default'))
         preferences = self.options.browser_preferences
         with open(
@@ -628,21 +629,16 @@ class Browser(ABC):  # noqa: PLR0904
             # Backup existing Preferences file
             shutil.copy2(preferences_path, self._backup_preferences_dir)
 
-        existing_prefs = {}
+        preferences = {}
         if os.path.exists(preferences_path):
             with suppress(json.JSONDecodeError):
                 with open(preferences_path, 'r', encoding='utf-8') as preferences_file:
-                    existing_prefs = json.load(preferences_file)
-
-        if existing_prefs:
-            existing_prefs.update(self.options.browser_preferences)
-            preferences = existing_prefs
-        else:
-            preferences = self.options.browser_preferences
+                    preferences = json.load(preferences_file)
+        preferences.update(self.options.browser_preferences)
         with open(preferences_path, 'w', encoding='utf-8') as json_file:
             json.dump(preferences, json_file, indent=2)
 
-    def _get_user_data_dir(self):
+    def _get_user_data_dir(self) -> Optional[str]:
         for arg in self.options.arguments:
             if arg.startswith('--user-data-dir='):
                 return arg.split('=', 1)[1]
