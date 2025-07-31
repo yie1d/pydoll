@@ -1,7 +1,6 @@
 import pytest
-
 from pydoll.browser.options import ChromiumOptions as Options
-
+from pydoll.browser.interfaces import Options as OptionsInterface
 from pydoll.exceptions import ArgumentAlreadyExistsInOptions, WrongPrefsDict
 
 
@@ -161,3 +160,28 @@ def test_wrong_dict_prefs_error():
                 "download": {"directory_upgrade": True},
             }
         }
+
+
+def test_options_interface_enforcement():
+    with pytest.raises(TypeError):
+        OptionsInterface()
+    class IncompleteOptions(OptionsInterface):
+        pass
+    with pytest.raises(TypeError):
+        IncompleteOptions()
+    class CompleteOptions(OptionsInterface):
+        @property
+        def arguments(self):
+            return []
+        @property
+        def binary_location(self):
+            return ''
+        @property
+        def start_timeout(self):
+            return 0
+        def add_argument(self, argument):
+            pass
+        @property
+        def browser_preferences(self):
+            return {}
+    CompleteOptions()

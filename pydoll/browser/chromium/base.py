@@ -639,7 +639,6 @@ class Browser(ABC):  # noqa: PLR0904
             preferences = existing_prefs
         else:
             preferences = self.options.browser_preferences
-
         with open(preferences_path, 'w', encoding='utf-8') as json_file:
             json.dump(preferences, json_file, indent=2)
 

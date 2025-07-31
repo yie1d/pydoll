@@ -118,7 +118,8 @@ class ChromiumOptions(Options):
 
     def _set_pref_path(self, path: list, value):
         """
-        Safely sets a nested value in self._browser_preferences, creating intermediate dicts as needed.
+        Safely sets a nested value in self._browser_preferences,
+        creating intermediate dicts as needed.
 
         Arguments:
             path -- List of keys representing the nested
@@ -204,7 +205,9 @@ class ChromiumOptions(Options):
         """
         self._password_manager_enabled = enabled
         self._set_pref_path(['profile', 'password_manager_enabled'], self._password_manager_enabled)
-        self._set_pref_path(['credentials_enable_service'], self._password_manager_enabled) # todo: colocar em outra propriedade
+        self._set_pref_path(
+            ['credentials_enable_service'], self._password_manager_enabled
+        )  # todo: colocar em outra propriedade
 
     @property
     def block_notifications(self) -> bool:

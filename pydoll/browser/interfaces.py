@@ -21,6 +21,11 @@ class Options(ABC):
     def add_argument(self, argument: str):
         pass
 
+    @property
+    @abstractmethod
+    def browser_preferences(self) -> dict:
+        pass
+
 
 class BrowserOptionsManager(ABC):
     @abstractmethod
