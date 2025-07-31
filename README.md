@@ -316,8 +316,33 @@ from pydoll.browser.options import ChromiumOptions
 
 options = ChromiumOptions()
 options.binary_location = '/path/to/your/chrome'
+options.browser_preferences = {
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False
+    },
+    'intl': {
+        'accept_languages': 'en-US,en,pt-BR'
+    },
+    'profile': {
+        'default_content_setting_values': {
+            'notifications': 2  # Block notifications
+        }
+    }
+}
+
+options.set_default_download_directory('/tmp/downloads')
+options.set_accept_languages('en-US,en,pt-BR')
+options.prompt_for_download = False
+
 browser = Chrome(options=options)
 ```
+
+**Custom Preferences**
+- Set download directory, language, notification blocking, PDF handling, and more
+- Merge multiple calls; only changed keys are updated
+- See [docs/features.md](docs/features.md#custom-browser-preferences) for more details
+
 
 **Browser starts after a FailedToStartBrowser error?**
 ```python
