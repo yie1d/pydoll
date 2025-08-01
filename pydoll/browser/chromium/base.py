@@ -1,7 +1,12 @@
 import asyncio
+import json
+import os
+import shutil
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from functools import partial
 from random import randint
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, Optional, TypeVar
 
 from pydoll.browser.interfaces import BrowserOptionsManager
@@ -81,6 +86,7 @@ class Browser(ABC):  # noqa: PLR0904
         self._browser_process_manager = BrowserProcessManager()
         self._temp_directory_manager = TempDirectoryManager()
         self._connection_handler = ConnectionHandler(self._connection_port)
+        self._backup_preferences_dir = ''
 
     async def __aenter__(self) -> 'Browser':
         """Async context manager entry."""
@@ -88,6 +94,12 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit with cleanup."""
+        if self._backup_preferences_dir:
+            user_data_dir = self._get_user_data_dir()
+            shutil.copy2(
+                self._backup_preferences_dir,
+                os.path.join(user_data_dir, 'Default', 'Preferences'),
+            )
         if await self._is_browser_running(timeout=2):
             await self.stop()
 
@@ -117,9 +129,7 @@ class Browser(ABC):  # noqa: PLR0904
         proxy_config = self._proxy_manager.get_proxy_credentials()
 
         self._browser_process_manager.start_browser_process(
-            binary_location,
-            self._connection_port,
-            self.options.arguments,
+            binary_location, self._connection_port, self.options.arguments
         )
         await self._verify_browser_running()
         await self._configure_proxy(proxy_config[0], proxy_config[1])
@@ -580,10 +590,60 @@ class Browser(ABC):  # noqa: PLR0904
 
     def _setup_user_dir(self):
         """Setup temporary user data directory if not specified in options."""
-        if '--user-data-dir' not in [arg.split('=')[0] for arg in self.options.arguments]:
-            # For all browsers, use a temporary directory
+        user_data_dir = self._get_user_data_dir()
+        if user_data_dir and self.options.browser_preferences:
+            self._set_browser_preferences_in_user_data_dir(user_data_dir)
+        elif not user_data_dir:
             temp_dir = self._temp_directory_manager.create_temp_dir()
+            # For all browsers, use a temporary directory
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
+            if self.options.browser_preferences:
+                self._set_browser_preferences_in_temp_dir(temp_dir)
+
+    def _set_browser_preferences_in_temp_dir(self, temp_dir: TemporaryDirectory):
+        os.mkdir(os.path.join(temp_dir.name, 'Default'))
+        preferences = self.options.browser_preferences
+        with open(
+            os.path.join(temp_dir.name, 'Default', 'Preferences'), 'w', encoding='utf-8'
+        ) as json_file:
+            json.dump(preferences, json_file)
+
+    def _set_browser_preferences_in_user_data_dir(self, user_data_dir: str):
+        """
+        Set browser preferences in the user data directory.
+
+        This function will:
+        1. Create a backup of the existing Preferences file if it exists
+        2. Create Default directory if it doesn't exist
+        3. Write the new preferences to the Preferences file
+
+        Args:
+            user_data_dir: Path to the user data directory
+        """
+        default_dir = os.path.join(user_data_dir, 'Default')
+        os.makedirs(default_dir, exist_ok=True)
+
+        preferences_path = os.path.join(default_dir, 'Preferences')
+        self._backup_preferences_dir = os.path.join(default_dir, 'Preferences.backup')
+
+        if os.path.exists(preferences_path):
+            # Backup existing Preferences file
+            shutil.copy2(preferences_path, self._backup_preferences_dir)
+
+        preferences = {}
+        if os.path.exists(preferences_path):
+            with suppress(json.JSONDecodeError):
+                with open(preferences_path, 'r', encoding='utf-8') as preferences_file:
+                    preferences = json.load(preferences_file)
+        preferences.update(self.options.browser_preferences)
+        with open(preferences_path, 'w', encoding='utf-8') as json_file:
+            json.dump(preferences, json_file, indent=2)
+
+    def _get_user_data_dir(self) -> Optional[str]:
+        for arg in self.options.arguments:
+            if arg.startswith('--user-data-dir='):
+                return arg.split('=', 1)[1]
+        return None
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:
