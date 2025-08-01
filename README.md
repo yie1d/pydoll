@@ -51,7 +51,7 @@ Use it responsibly. 🚨
 ## What's New in 2.4.0
 
 ### Advanced browser preferences support (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
-You can now customize Chromium browser preferences through the browser_preferences dict in ChromiumOptions.<br><br>
+You can now customize Chromium browser preferences through the `browser_preferences` dict in ChromiumOptions.<br><br>
 Set things like download directory, language, notification blocking, PDF handling, and more.
 Helper properties like `set_default_download_directory`, `set_accept_languages`, and `prompt_for_download` were added for convenience.
 Preferences are merged automatically, no need to redefine everything.<br><br>
@@ -80,11 +80,11 @@ options.prompt_for_download = False
 ```
 See [docs/features.md](docs/features.md#custom-browser-preferences) for more details.
 
-### New get_parent() method
+### New `get_parent_element()` method
 Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
 ```python
 element = await tab.find(id='button')
-parent = await element.get_parent()
+parent = await element.get_parent_parent()
 ```
 ### New start_timeout option (thanks to [@j0j1j2](https://github.com/j0j1j2))
 Added to ChromiumOptions to control how long the browser can take to start. Useful on slower machines or CI environments.
