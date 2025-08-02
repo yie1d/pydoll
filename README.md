@@ -4,6 +4,7 @@
 <h1 align="center">Pydoll: Automate the Web, Naturally</h1>
 
 <p align="center">
+    <a href="https://github.com/autoscrape-labs/pydoll/stargazers"><img src="https://img.shields.io/github/stars/autoscrape-labs/pydoll?style=social"></a>
     <a href="https://codecov.io/gh/autoscrape-labs/pydoll" >
         <img src="https://codecov.io/gh/autoscrape-labs/pydoll/graph/badge.svg?token=40I938OGM9"/>
     </a>
@@ -31,6 +32,11 @@ Built from scratch with a different philosophy, Pydoll connects directly to the 
 
 We believe that powerful automation shouldn't require you to become an expert in configuration or constantly fight with bot protection systems. With Pydoll, you can focus on what really matters: your automation logic, not the underlying complexity or protection systems.
 
+<div>
+  <h4>Be a good human. Give it a star ⭐</h4> 
+    No stars, no bugs fixed. Just kidding (maybe)
+</div>
+
 ## 🌟 What makes Pydoll special?
 
 - **Zero Webdrivers**: Say goodbye to webdriver compatibility issues
@@ -38,15 +44,6 @@ We believe that powerful automation shouldn't require you to become an expert in
 - **Asynchronous Performance**: For high-speed automation and multiple simultaneous tasks
 - **Humanized Interactions**: Mimic real user behavior
 - **Simplicity**: With Pydoll, you install and you're ready to automate.
-
-### ⚖️ Ethical Use Disclaimer
-Pydoll is designed to simulate realistic browser interactions in order to avoid being flagged as a bot during legitimate automation tasks. It does not break or circumvent CAPTCHA challenges in the traditional sense (e.g. by solving image puzzles or hacking the system).
-
-Instead, it increases the likelihood of being treated as a real user by mimicking human behavior, which can result in passing behavioral-based protections like reCAPTCHA v3 or Cloudflare Turnstile.
-
-We do not support or endorse using this tool to access websites against their terms of service, scrape personal data, or bypass explicit access restrictions.
-
-Use it responsibly. 🚨
 
 ## What's New in 2.4.0
 
