@@ -410,13 +410,17 @@ Please make sure to:
 If you find Pydoll useful, consider [supporting me on GitHub](https://github.com/sponsors/thalissonvs).  
 You'll get access to exclusive benefits like priority support, custom features and much more!
 
-Can't sponsor right now? No problem — you can still help a lot by:
+Can't sponsor right now? No problem, you can still help a lot by:
 - Starring the repository
 - Sharing on social media
 - Writing posts or tutorials
 - Giving feedback or reporting issues
 
-Every bit of support makes a difference — thank you!
+Every bit of support makes a difference/
+
+## 💬 Spread the word
+
+If Pydoll saved you time, mental health, or a keyboard from being smashed, give it a ⭐, share it, or tell your weird dev friends.
 
 ## 📄 License
 
