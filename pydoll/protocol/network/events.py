@@ -1,4 +1,41 @@
 from enum import Enum
+from typing import NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.network.types import (
+    AssociatedCookie,
+    AuthChallenge,
+    BlockedReason,
+    BlockedSetCookieWithReason,
+    ClientSecurityState,
+    ConnectTiming,
+    CookiePartitionKey,
+    CorsErrorStatus,
+    DirectTCPSocketOptions,
+    DirectUDPMessage,
+    DirectUDPSocketOptions,
+    ErrorReason,
+    ExemptedSetCookieWithReason,
+    Headers,
+    Initiator,
+    InterceptionId,
+    IPAddressSpace,
+    LoaderId,
+    MonotonicTime,
+    ReportingApiEndpoint,
+    ReportingApiReport,
+    Request,
+    RequestId,
+    ResourcePriority,
+    ResourceType,
+    Response,
+    SignedExchangeInfo,
+    TimeSinceEpoch,
+    TrustTokenOperationType,
+    WebSocketFrame,
+    WebSocketRequest,
+    WebSocketResponse,
+)
 
 
 class NetworkEvent(str, Enum):
@@ -516,3 +553,359 @@ class NetworkEvent(str, Enum):
         issuedTokenCount (int): The number of obtained Trust Tokens on a successful
             "Issuance" operation.
     """
+
+
+class DataReceivedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    dataLength: int
+    encodedDataLength: int
+    data: NotRequired[str]
+
+
+class EventSourceMessageReceivedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    eventName: str
+    eventId: str
+    data: str
+
+
+class LoadingFailedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    type: ResourceType
+    errorText: str
+    canceled: NotRequired[bool]
+    blockedReason: NotRequired[BlockedReason]
+    corsErrorStatus: NotRequired[CorsErrorStatus]
+
+
+class LoadingFinishedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    encodedDataLength: float
+
+
+class RequestInterceptedEventParams(TypedDict):
+    interceptionId: InterceptionId
+    request: Request
+    frameId: str
+    resourceType: ResourceType
+    isNavigationRequest: bool
+    isDownload: NotRequired[bool]
+    redirectUrl: NotRequired[str]
+    authChallenge: NotRequired[AuthChallenge]
+    responseErrorReason: NotRequired[ErrorReason]
+    responseStatusCode: NotRequired[int]
+    responseHeaders: NotRequired[Headers]
+    requestId: NotRequired[RequestId]
+
+
+class RequestServedFromCacheEventParams(TypedDict):
+    requestId: RequestId
+
+
+class RequestWillBeSentEventParams(TypedDict):
+    requestId: RequestId
+    loaderId: LoaderId
+    documentURL: str
+    request: Request
+    timestamp: MonotonicTime
+    wallTime: TimeSinceEpoch
+    initiator: Initiator
+    redirectHasExtraInfo: bool
+    redirectResponse: NotRequired[Response]
+    type: NotRequired[ResourceType]
+    frameId: NotRequired[str]
+    hasUserGesture: NotRequired[bool]
+
+
+class ResourceChangedPriorityEventParams(TypedDict):
+    requestId: RequestId
+    newPriority: ResourcePriority
+    timestamp: MonotonicTime
+
+
+class SignedExchangeReceivedEventParams(TypedDict):
+    requestId: RequestId
+    info: SignedExchangeInfo
+
+
+class ResponseReceivedEventParams(TypedDict):
+    requestId: RequestId
+    loaderId: LoaderId
+    timestamp: MonotonicTime
+    type: ResourceType
+    response: Response
+    hasExtraInfo: bool
+    frameId: NotRequired[str]
+
+
+class WebSocketClosedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+
+
+class WebSocketCreatedEventParams(TypedDict):
+    requestId: RequestId
+    url: str
+    initiator: NotRequired[Initiator]
+
+
+class WebSocketFrameErrorEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    errorMessage: str
+
+
+class WebSocketFrameReceivedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    response: WebSocketFrame
+
+
+class WebSocketFrameSentEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    response: WebSocketFrame
+
+
+class WebSocketHandshakeResponseReceivedEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    response: WebSocketResponse
+
+
+class WebSocketWillSendHandshakeRequestEventParams(TypedDict):
+    requestId: RequestId
+    timestamp: MonotonicTime
+    wallTime: TimeSinceEpoch
+    request: WebSocketRequest
+
+
+class WebTransportCreatedEventParams(TypedDict):
+    transportId: RequestId
+    url: str
+    timestamp: MonotonicTime
+    initiator: NotRequired[Initiator]
+
+
+class WebTransportConnectionEstablishedEventParams(TypedDict):
+    transportId: RequestId
+    timestamp: MonotonicTime
+
+
+class WebTransportClosedEventParams(TypedDict):
+    transportId: RequestId
+    timestamp: MonotonicTime
+
+
+class DirectTCPSocketCreatedEventParams(TypedDict):
+    identifier: RequestId
+    remoteAddr: str
+    remotePort: int
+    options: DirectTCPSocketOptions
+    timestamp: MonotonicTime
+    initiator: NotRequired[Initiator]
+
+
+class DirectTCPSocketOpenedEventParams(TypedDict):
+    identifier: RequestId
+    remoteAddr: str
+    remotePort: int
+    timestamp: MonotonicTime
+    localAddr: NotRequired[str]
+    localPort: NotRequired[int]
+
+
+class DirectTCPSocketAbortedEventParams(TypedDict):
+    identifier: RequestId
+    errorMessage: str
+    timestamp: MonotonicTime
+
+
+class DirectTCPSocketClosedEventParams(TypedDict):
+    identifier: RequestId
+    timestamp: MonotonicTime
+
+
+class DirectTCPSocketChunkSentEventParams(TypedDict):
+    identifier: RequestId
+    data: str
+    timestamp: MonotonicTime
+
+
+class DirectTCPSocketChunkReceivedEventParams(TypedDict):
+    identifier: RequestId
+    data: str
+    timestamp: MonotonicTime
+
+
+class DirectUDPSocketCreatedEventParams(TypedDict):
+    identifier: RequestId
+    options: DirectUDPSocketOptions
+    timestamp: MonotonicTime
+    initiator: NotRequired[Initiator]
+
+
+class DirectUDPSocketOpenedEventParams(TypedDict):
+    identifier: RequestId
+    localAddr: str
+    localPort: int
+    timestamp: MonotonicTime
+    remoteAddr: NotRequired[str]
+    remotePort: NotRequired[int]
+
+
+class DirectUDPSocketAbortedEventParams(TypedDict):
+    identifier: RequestId
+    errorMessage: str
+    timestamp: MonotonicTime
+
+
+class DirectUDPSocketClosedEventParams(TypedDict):
+    identifier: RequestId
+    timestamp: MonotonicTime
+
+
+class DirectUDPSocketChunkSentEventParams(TypedDict):
+    identifier: RequestId
+    message: DirectUDPMessage
+    timestamp: MonotonicTime
+
+
+class DirectUDPSocketChunkReceivedEventParams(TypedDict):
+    identifier: RequestId
+    message: DirectUDPMessage
+    timestamp: MonotonicTime
+
+
+class RequestWillBeSentExtraInfoEventParams(TypedDict):
+    requestId: RequestId
+    associatedCookies: list[AssociatedCookie]
+    headers: Headers
+    connectTiming: ConnectTiming
+    clientSecurityState: NotRequired[ClientSecurityState]
+    siteHasCookieInOtherPartition: NotRequired[bool]
+
+
+class ResponseReceivedExtraInfoEventParams(TypedDict):
+    requestId: RequestId
+    blockedCookies: list[BlockedSetCookieWithReason]
+    headers: Headers
+    resourceIPAddressSpace: IPAddressSpace
+    statusCode: int
+    headersText: NotRequired[str]
+    cookiePartitionKey: NotRequired[CookiePartitionKey]
+    cookiePartitionKeyOpaque: NotRequired[bool]
+    exemptedCookies: NotRequired[list[ExemptedSetCookieWithReason]]
+
+
+class ResponseReceivedEarlyHintsEventParams(TypedDict):
+    requestId: RequestId
+    headers: Headers
+
+
+class TrustTokenOperationDoneEventParams(TypedDict):
+    status: str  # enum values: Ok, InvalidArgument, etc.
+    type: TrustTokenOperationType
+    requestId: RequestId
+    topLevelOrigin: NotRequired[str]
+    issuerOrigin: NotRequired[str]
+    issuedTokenCount: NotRequired[int]
+
+
+class PolicyUpdatedEventParams(TypedDict):
+    pass
+
+
+class SubresourceWebBundleMetadataReceivedEventParams(TypedDict):
+    requestId: RequestId
+    urls: list[str]
+
+
+class SubresourceWebBundleMetadataErrorEventParams(TypedDict):
+    requestId: RequestId
+    errorMessage: str
+
+
+class SubresourceWebBundleInnerResponseParsedEventParams(TypedDict):
+    innerRequestId: RequestId
+    innerRequestURL: str
+    bundleRequestId: NotRequired[RequestId]
+
+
+class SubresourceWebBundleInnerResponseErrorEventParams(TypedDict):
+    innerRequestId: RequestId
+    innerRequestURL: str
+    errorMessage: str
+    bundleRequestId: NotRequired[RequestId]
+
+
+class ReportingApiReportAddedEventParams(TypedDict):
+    report: ReportingApiReport
+
+
+class ReportingApiReportUpdatedEventParams(TypedDict):
+    report: ReportingApiReport
+
+
+class ReportingApiEndpointsChangedForOriginEventParams(TypedDict):
+    origin: str
+    endpoints: list[ReportingApiEndpoint]
+
+
+# Event Type Aliases using CDPEvent generic
+DataReceivedEvent = CDPEvent[DataReceivedEventParams]
+EventSourceMessageReceivedEvent = CDPEvent[EventSourceMessageReceivedEventParams]
+LoadingFailedEvent = CDPEvent[LoadingFailedEventParams]
+LoadingFinishedEvent = CDPEvent[LoadingFinishedEventParams]
+RequestInterceptedEvent = CDPEvent[RequestInterceptedEventParams]
+RequestServedFromCacheEvent = CDPEvent[RequestServedFromCacheEventParams]
+RequestWillBeSentEvent = CDPEvent[RequestWillBeSentEventParams]
+ResourceChangedPriorityEvent = CDPEvent[ResourceChangedPriorityEventParams]
+SignedExchangeReceivedEvent = CDPEvent[SignedExchangeReceivedEventParams]
+ResponseReceivedEvent = CDPEvent[ResponseReceivedEventParams]
+WebSocketClosedEvent = CDPEvent[WebSocketClosedEventParams]
+WebSocketCreatedEvent = CDPEvent[WebSocketCreatedEventParams]
+WebSocketFrameErrorEvent = CDPEvent[WebSocketFrameErrorEventParams]
+WebSocketFrameReceivedEvent = CDPEvent[WebSocketFrameReceivedEventParams]
+WebSocketFrameSentEvent = CDPEvent[WebSocketFrameSentEventParams]
+WebSocketHandshakeResponseReceivedEvent = CDPEvent[WebSocketHandshakeResponseReceivedEventParams]
+WebSocketWillSendHandshakeRequestEvent = CDPEvent[WebSocketWillSendHandshakeRequestEventParams]
+WebTransportCreatedEvent = CDPEvent[WebTransportCreatedEventParams]
+WebTransportConnectionEstablishedEvent = CDPEvent[WebTransportConnectionEstablishedEventParams]
+WebTransportClosedEvent = CDPEvent[WebTransportClosedEventParams]
+DirectTCPSocketCreatedEvent = CDPEvent[DirectTCPSocketCreatedEventParams]
+DirectTCPSocketOpenedEvent = CDPEvent[DirectTCPSocketOpenedEventParams]
+DirectTCPSocketAbortedEvent = CDPEvent[DirectTCPSocketAbortedEventParams]
+DirectTCPSocketClosedEvent = CDPEvent[DirectTCPSocketClosedEventParams]
+DirectTCPSocketChunkSentEvent = CDPEvent[DirectTCPSocketChunkSentEventParams]
+DirectTCPSocketChunkReceivedEvent = CDPEvent[DirectTCPSocketChunkReceivedEventParams]
+DirectUDPSocketCreatedEvent = CDPEvent[DirectUDPSocketCreatedEventParams]
+DirectUDPSocketOpenedEvent = CDPEvent[DirectUDPSocketOpenedEventParams]
+DirectUDPSocketAbortedEvent = CDPEvent[DirectUDPSocketAbortedEventParams]
+DirectUDPSocketClosedEvent = CDPEvent[DirectUDPSocketClosedEventParams]
+DirectUDPSocketChunkSentEvent = CDPEvent[DirectUDPSocketChunkSentEventParams]
+DirectUDPSocketChunkReceivedEvent = CDPEvent[DirectUDPSocketChunkReceivedEventParams]
+RequestWillBeSentExtraInfoEvent = CDPEvent[RequestWillBeSentExtraInfoEventParams]
+ResponseReceivedExtraInfoEvent = CDPEvent[ResponseReceivedExtraInfoEventParams]
+ResponseReceivedEarlyHintsEvent = CDPEvent[ResponseReceivedEarlyHintsEventParams]
+TrustTokenOperationDoneEvent = CDPEvent[TrustTokenOperationDoneEventParams]
+PolicyUpdatedEvent = CDPEvent[PolicyUpdatedEventParams]
+SubresourceWebBundleMetadataReceivedEvent = CDPEvent[
+    SubresourceWebBundleMetadataReceivedEventParams
+]
+SubresourceWebBundleMetadataErrorEvent = CDPEvent[SubresourceWebBundleMetadataErrorEventParams]
+SubresourceWebBundleInnerResponseParsedEvent = CDPEvent[
+    SubresourceWebBundleInnerResponseParsedEventParams
+]
+SubresourceWebBundleInnerResponseErrorEvent = CDPEvent[
+    SubresourceWebBundleInnerResponseErrorEventParams
+]
+ReportingApiReportAddedEvent = CDPEvent[ReportingApiReportAddedEventParams]
+ReportingApiReportUpdatedEvent = CDPEvent[ReportingApiReportUpdatedEventParams]
+ReportingApiEndpointsChangedForOriginEvent = CDPEvent[
+    ReportingApiEndpointsChangedForOriginEventParams
+]
