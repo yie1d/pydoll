@@ -144,7 +144,7 @@ class TargetCommands:
 
     @staticmethod
     def create_target(
-        url: str,
+        url: str = 'about:blank',
         left: Optional[int] = None,
         top: Optional[int] = None,
         width: Optional[int] = None,

@@ -4,6 +4,7 @@
 <h1 align="center">Pydoll: Automate the Web, Naturally</h1>
 
 <p align="center">
+    <a href="https://github.com/autoscrape-labs/pydoll/stargazers"><img src="https://img.shields.io/github/stars/autoscrape-labs/pydoll?style=social"></a>
     <a href="https://codecov.io/gh/autoscrape-labs/pydoll" >
         <img src="https://codecov.io/gh/autoscrape-labs/pydoll/graph/badge.svg?token=40I938OGM9"/>
     </a>
@@ -31,15 +32,64 @@ Built from scratch with a different philosophy, Pydoll connects directly to the 
 
 We believe that powerful automation shouldn't require you to become an expert in configuration or constantly fight with bot protection systems. With Pydoll, you can focus on what really matters: your automation logic, not the underlying complexity or protection systems.
 
+<div>
+  <h4>Be a good human. Give it a star ⭐</h4> 
+    No stars, no bugs fixed. Just kidding (maybe)
+</div>
+
 ## 🌟 What makes Pydoll special?
 
 - **Zero Webdrivers**: Say goodbye to webdriver compatibility issues
-- **Native Captcha Bypass**: Handles Cloudflare Turnstile and reCAPTCHA v3*
+- **Human-like Interaction Engine**: Capable of passing behavioral CAPTCHAs like reCAPTCHA v3 or Turnstile, depending on IP reputation and interaction patterns
 - **Asynchronous Performance**: For high-speed automation and multiple simultaneous tasks
 - **Humanized Interactions**: Mimic real user behavior
 - **Simplicity**: With Pydoll, you install and you're ready to automate.
 
->⚠️ The effectiveness of captcha bypass depends on various factors, such as IP address reputation. Pydoll can achieve scores comparable to real users, but cannot handle restrictive configurations or IP blocks.
+## What's New in 2.4.0
+
+### Advanced browser preferences support (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
+You can now customize Chromium browser preferences through the `browser_preferences` dict in ChromiumOptions.<br><br>
+Set things like download directory, language, notification blocking, PDF handling, and more.
+Helper properties like `set_default_download_directory`, `set_accept_languages`, and `prompt_for_download` were added for convenience.
+Preferences are merged automatically, no need to redefine everything.<br><br>
+Here's an example:
+
+```python
+options = ChromiumOptions()
+options.browser_preferences = {  # you can set the entire dict
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False
+    },
+    'intl': {
+        'accept_languages': 'en-US,en,pt-BR'
+    },
+    'profile': {
+        'default_content_setting_values': {
+            'notifications': 2  # Block notifications
+        }
+    }
+}
+
+options.set_default_download_directory('/tmp/downloads')   # or just the individual properties
+options.set_accept_languages('en-US,en,pt-BR')
+options.prompt_for_download = False
+```
+See [docs/features.md](docs/features.md#custom-browser-preferences) for more details.
+
+### New `get_parent_element()` method
+Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
+```python
+element = await tab.find(id='button')
+parent = await element.get_parent_parent()
+```
+### New start_timeout option (thanks to [@j0j1j2](https://github.com/j0j1j2))
+Added to ChromiumOptions to control how long the browser can take to start. Useful on slower machines or CI environments.
+
+```python
+options = ChromiumOptions()
+options.start_timeout = 20  # wait 20 seconds
+```
 
 ## 📦 Installation
 
@@ -360,13 +410,17 @@ Please make sure to:
 If you find Pydoll useful, consider [supporting me on GitHub](https://github.com/sponsors/thalissonvs).  
 You'll get access to exclusive benefits like priority support, custom features and much more!
 
-Can't sponsor right now? No problem — you can still help a lot by:
+Can't sponsor right now? No problem, you can still help a lot by:
 - Starring the repository
 - Sharing on social media
 - Writing posts or tutorials
 - Giving feedback or reporting issues
 
-Every bit of support makes a difference — thank you!
+Every bit of support makes a difference/
+
+## 💬 Spread the word
+
+If Pydoll saved you time, mental health, or a keyboard from being smashed, give it a ⭐, share it, or tell your weird dev friends.
 
 ## 📄 License
 

@@ -1,3 +1,26 @@
+## 2.4.0 (2025-08-01)
+
+### Feat
+
+- changing bool prefs to properties and adding support to user-data-dir preferences
+- adding prefs options customization
+- add overloads for find and query methods in FindElementsMixin
+- add method to retrieve parent element and its attributes
+- implements start_timeout option
+
+### Fix
+
+- adding typehint and fixing some codes
+- removing options preferences private attributes
+- set default URL to 'about:blank' in create_target method
+- change navigation when creating a new tab
+- add type hinting support and update project description
+
+### Refactor
+
+- remove redundant asterisk from find method overloads and reorganize query method overloads
+- refine type hint for response parameter and improve key check
+
 ## 2.3.1 (2025-07-12)
 
 ### Fix

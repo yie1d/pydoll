@@ -662,6 +662,55 @@ These network analysis capabilities make Pydoll ideal for:
 - **Debugging**: Identify failed requests and network issues
 - **Security Testing**: Analyze request/response patterns
 
+## Custom Browser Preferences
+
+Pydoll now supports advanced browser customization through the `ChromiumOptions.browser_preferences` property. This allows you to set any Chromium browser preference for your automation session.
+
+### What You Can Customize
+- Download directory and prompt behavior
+- Accepted languages
+- Notification blocking
+- PDF handling
+- Any other Chromium-supported preference
+
+### Example: Setting Preferences
+```python
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
+
+options = ChromiumOptions()
+options.browser_preferences = {
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False
+    },
+    'intl': {
+        'accept_languages': 'en-US,en,pt-BR'
+    },
+    'profile': {
+        'default_content_setting_values': {
+            'notifications': 2  # Block notifications
+        }
+    }
+}
+
+# Helper methods for common preferences
+options.set_default_download_directory('/tmp/downloads')
+options.set_accept_languages('en-US,en,pt-BR')
+options.prompt_for_download = False
+
+browser = Chrome(options=options)
+```
+
+You can call `browser_preferences` multiple times—new keys will be merged, not replaced.
+
+### Why is this useful?
+- Fine-grained control for scraping, testing, or automation
+- Avoid popups or unwanted prompts
+- Match user locale or automate downloads
+
+---
+
 ## File Upload Support
 
 Seamlessly handle file uploads in your automation:
