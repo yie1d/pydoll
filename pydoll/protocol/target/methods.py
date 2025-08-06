@@ -217,44 +217,35 @@ class OpenDevToolsResult(TypedDict):
 
 
 # Response types
-ActivateTargetResponse = EmptyResponse
 AttachToTargetResponse = Response[AttachToTargetResult]
 AttachToBrowserTargetResponse = Response[AttachToBrowserTargetResult]
 CloseTargetResponse = Response[CloseTargetResult]
-ExposeDevToolsProtocolResponse = EmptyResponse
 CreateBrowserContextResponse = Response[CreateBrowserContextResult]
 GetBrowserContextsResponse = Response[GetBrowserContextsResult]
 CreateTargetResponse = Response[CreateTargetResult]
-DetachFromTargetResponse = EmptyResponse
-DisposeBrowserContextResponse = EmptyResponse
 GetTargetInfoResponse = Response[GetTargetInfoResult]
 GetTargetsResponse = Response[GetTargetsResult]
-SendMessageToTargetResponse = EmptyResponse
-SetAutoAttachResponse = EmptyResponse
-AutoAttachRelatedResponse = EmptyResponse
-SetDiscoverTargetsResponse = EmptyResponse
-SetRemoteLocationsResponse = EmptyResponse
 OpenDevToolsResponse = Response[OpenDevToolsResult]
 
 
 # Command types
-ActivateTargetCommand = Command[ActivateTargetParams, ActivateTargetResponse]
+ActivateTargetCommand = Command[ActivateTargetParams, EmptyResponse]
 AttachToTargetCommand = Command[AttachToTargetParams, AttachToTargetResponse]
 AttachToBrowserTargetCommand = Command[EmptyParams, AttachToBrowserTargetResponse]
 CloseTargetCommand = Command[CloseTargetParams, CloseTargetResponse]
 ExposeDevToolsProtocolCommand = Command[
-    ExposeDevToolsProtocolParams, ExposeDevToolsProtocolResponse
+    ExposeDevToolsProtocolParams, EmptyResponse
 ]
 CreateBrowserContextCommand = Command[CreateBrowserContextParams, CreateBrowserContextResponse]
 GetBrowserContextsCommand = Command[EmptyParams, GetBrowserContextsResponse]
 CreateTargetCommand = Command[CreateTargetParams, CreateTargetResponse]
-DetachFromTargetCommand = Command[DetachFromTargetParams, DetachFromTargetResponse]
-DisposeBrowserContextCommand = Command[DisposeBrowserContextParams, DisposeBrowserContextResponse]
+DetachFromTargetCommand = Command[DetachFromTargetParams, EmptyResponse]
+DisposeBrowserContextCommand = Command[DisposeBrowserContextParams, EmptyResponse]
 GetTargetInfoCommand = Command[GetTargetInfoParams, GetTargetInfoResponse]
 GetTargetsCommand = Command[GetTargetsParams, GetTargetsResponse]
-SendMessageToTargetCommand = Command[SendMessageToTargetParams, SendMessageToTargetResponse]
-SetAutoAttachCommand = Command[SetAutoAttachParams, SetAutoAttachResponse]
-AutoAttachRelatedCommand = Command[AutoAttachRelatedParams, AutoAttachRelatedResponse]
-SetDiscoverTargetsCommand = Command[SetDiscoverTargetsParams, SetDiscoverTargetsResponse]
-SetRemoteLocationsCommand = Command[SetRemoteLocationsParams, SetRemoteLocationsResponse]
+SendMessageToTargetCommand = Command[SendMessageToTargetParams, EmptyResponse]
+SetAutoAttachCommand = Command[SetAutoAttachParams, EmptyResponse]
+AutoAttachRelatedCommand = Command[AutoAttachRelatedParams, EmptyResponse]
+SetDiscoverTargetsCommand = Command[SetDiscoverTargetsParams, EmptyResponse]
+SetRemoteLocationsCommand = Command[SetRemoteLocationsParams, EmptyResponse]
 OpenDevToolsCommand = Command[OpenDevToolsParams, OpenDevToolsResponse]

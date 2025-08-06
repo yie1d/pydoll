@@ -7,7 +7,6 @@ from pydoll.protocol.page.types import FrameId
 
 TargetID = str
 SessionID = str
-"""Unique identifier of attached debugging session."""
 
 
 class TargetInfo(TypedDict):
