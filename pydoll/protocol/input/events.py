@@ -1,5 +1,10 @@
 from enum import Enum
 
+from typing_extensions import TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.input.types import DragData
+
 
 class InputEvent(str, Enum):
     """
@@ -18,3 +23,12 @@ class InputEvent(str, Enum):
     Args:
         data (DragData): Contains information about the dragged data.
     """
+
+
+class DragInterceptedEventParams(TypedDict):
+    """Parameters for dragIntercepted event."""
+
+    data: DragData
+
+
+DragInterceptedEvent = CDPEvent[DragInterceptedEventParams]
