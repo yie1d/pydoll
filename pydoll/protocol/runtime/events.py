@@ -1,5 +1,7 @@
 from enum import Enum
-from typing import Any, NotRequired, TypedDict
+from typing import Any
+
+from typing_extensions import NotRequired, TypedDict
 
 from pydoll.protocol.base import CDPEvent
 from pydoll.protocol.runtime.types import (
