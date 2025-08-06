@@ -1,4 +1,28 @@
 from enum import Enum
+from typing import Any
+
+from typing_extensions import NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.network.types import RequestId, TimeSinceEpoch
+from pydoll.protocol.page.types import FrameId
+from pydoll.protocol.storage.types import (
+    AttributionReportingAggregatableResult,
+    AttributionReportingEventLevelResult,
+    AttributionReportingReportResult,
+    AttributionReportingSourceRegistration,
+    AttributionReportingSourceRegistrationResult,
+    AttributionReportingTriggerRegistration,
+    InterestGroupAccessType,
+    InterestGroupAuctionEventType,
+    InterestGroupAuctionFetchType,
+    InterestGroupAuctionId,
+    SharedStorageAccessMethod,
+    SharedStorageAccessParams,
+    SharedStorageAccessScope,
+    StorageBucketInfo,
+)
+from pydoll.protocol.target.types import TargetID
 
 
 class StorageEvent(str, Enum):
@@ -153,19 +177,6 @@ class StorageEvent(str, Enum):
         bucketId (str): ID of the deleted storage bucket.
     """
 
-    ATTRIBUTION_REPORTING_REPORT_SENT = 'Storage.attributionReportingReportSent'
-    """
-    Fired when an attribution report is sent.
-
-    Args:
-        url (str): URL the report was sent to.
-        body (object): Body of the report.
-        result (AttributionReportingReportResult): Result of the report sending.
-        netError (int): If result is sent, populated with net/HTTP status.
-        netErrorName (str): Name of the network error if any.
-        httpStatusCode (int): HTTP status code if available.
-    """
-
     ATTRIBUTION_REPORTING_SOURCE_REGISTERED = 'Storage.attributionReportingSourceRegistered'
     """
     Fired when an attribution source is registered.
@@ -184,3 +195,161 @@ class StorageEvent(str, Enum):
         eventLevel (AttributionReportingEventLevelResult): Event level result.
         aggregatable (AttributionReportingAggregatableResult): Aggregatable result.
     """
+
+    ATTRIBUTION_REPORTING_REPORT_SENT = 'Storage.attributionReportingReportSent'
+    """
+    Fired when an attribution report is sent.
+
+    Args:
+        url (str): URL the report was sent to.
+        body (object): Body of the report.
+        result (AttributionReportingReportResult): Result of the report sending.
+        netError (int): If result is sent, populated with net/HTTP status.
+        netErrorName (str): Name of the network error if any.
+        httpStatusCode (int): HTTP status code if available.
+    """
+
+    ATTRIBUTION_REPORTING_VERBOSE_DEBUG_REPORT_SENT = (
+        'Storage.attributionReportingVerboseDebugReportSent'
+    )
+    """
+    Fired when a verbose debug report is sent for an attribution source.
+
+    Args:
+        url (str): URL the report was sent to.
+        body (array[object]): Body of the report.
+        netError (int): If result is sent, populated with net/HTTP status.
+        netErrorName (str): Name of the network error if any.
+        httpStatusCode (int): HTTP status code if available.
+    """
+
+
+class CacheStorageContentUpdatedEventParams(TypedDict):
+    origin: str
+    storageKey: str
+    bucketId: str
+    cacheName: str
+
+
+class CacheStorageListUpdatedEventParams(TypedDict):
+    origin: str
+    storageKey: str
+    bucketId: str
+
+
+class IndexedDBContentUpdatedEventParams(TypedDict):
+    origin: str
+    storageKey: str
+    bucketId: str
+    databaseName: str
+    objectStoreName: str
+
+
+class IndexedDBListUpdatedEventParams(TypedDict):
+    origin: str
+    storageKey: str
+    bucketId: str
+
+
+class InterestGroupAccessedEventParams(TypedDict):
+    accessTime: TimeSinceEpoch
+    type: InterestGroupAccessType
+    ownerOrigin: str
+    name: str
+    componentSellerOrigin: NotRequired[str]
+    bid: NotRequired[float]
+    bidCurrency: NotRequired[str]
+    uniqueAuctionId: NotRequired[InterestGroupAuctionId]
+
+
+class InterestGroupAuctionEventOccurredEventParams(TypedDict):
+    eventTime: TimeSinceEpoch
+    type: InterestGroupAuctionEventType
+    uniqueAuctionId: InterestGroupAuctionId
+    parentAuctionId: NotRequired[InterestGroupAuctionId]
+    auctionConfig: NotRequired[dict[str, Any]]
+
+
+class InterestGroupAuctionNetworkRequestCreatedEventParams(TypedDict):
+    type: InterestGroupAuctionFetchType
+    requestId: RequestId
+    auctions: list[InterestGroupAuctionId]
+
+
+class SharedStorageAccessedEventParams(TypedDict):
+    accessTime: TimeSinceEpoch
+    scope: SharedStorageAccessScope
+    method: SharedStorageAccessMethod
+    mainFrameId: FrameId
+    ownerOrigin: str
+    ownerSite: str
+    params: SharedStorageAccessParams
+
+
+class SharedStorageWorkletOperationExecutionFinishedEventParams(TypedDict):
+    finishedTime: TimeSinceEpoch
+    executionTime: int
+    method: SharedStorageAccessMethod
+    operationId: str
+    workletTargetId: TargetID
+    mainFrameId: FrameId
+    ownerOrigin: str
+
+
+class StorageBucketCreatedOrUpdatedEventParams(TypedDict):
+    bucketInfo: StorageBucketInfo
+
+
+class StorageBucketDeletedEventParams(TypedDict):
+    bucketId: str
+
+
+class AttributionReportingSourceRegisteredEventParams(TypedDict):
+    registration: AttributionReportingSourceRegistration
+    result: AttributionReportingSourceRegistrationResult
+
+
+class AttributionReportingTriggerRegisteredEventParams(TypedDict):
+    registration: AttributionReportingTriggerRegistration
+    eventLevel: AttributionReportingEventLevelResult
+    aggregatable: AttributionReportingAggregatableResult
+
+
+class AttributionReportingReportSentEventParams(TypedDict):
+    url: str
+    body: dict[str, Any]
+    result: AttributionReportingReportResult
+    netError: NotRequired[int]
+    netErrorName: NotRequired[str]
+    httpStatusCode: NotRequired[int]
+
+
+class AttributionReportingVerboseDebugReportSentEventParams(TypedDict):
+    url: str
+    body: NotRequired[list[dict[str, Any]]]
+    netError: NotRequired[int]
+    netErrorName: NotRequired[str]
+    httpStatusCode: NotRequired[int]
+
+
+CacheStorageContentUpdated = CDPEvent[CacheStorageContentUpdatedEventParams]
+CacheStorageListUpdated = CDPEvent[CacheStorageListUpdatedEventParams]
+IndexedDBContentUpdated = CDPEvent[IndexedDBContentUpdatedEventParams]
+IndexedDBListUpdated = CDPEvent[IndexedDBListUpdatedEventParams]
+InterestGroupAccessed = CDPEvent[InterestGroupAccessedEventParams]
+InterestGroupAuctionEventOccurred = CDPEvent[InterestGroupAuctionEventOccurredEventParams]
+InterestGroupAuctionNetworkRequestCreated = CDPEvent[
+    InterestGroupAuctionNetworkRequestCreatedEventParams
+]
+SharedStorageAccessed = CDPEvent[SharedStorageAccessedEventParams]
+SharedStorageWorkletOperationExecutionFinished = CDPEvent[
+    SharedStorageWorkletOperationExecutionFinishedEventParams
+]
+StorageBucketCreatedOrUpdated = CDPEvent[StorageBucketCreatedOrUpdatedEventParams]
+StorageBucketDeleted = CDPEvent[StorageBucketDeletedEventParams]
+AttributionReportingSourceRegistered = CDPEvent[AttributionReportingSourceRegisteredEventParams]
+AttributionReportingTriggerRegistered = CDPEvent[AttributionReportingTriggerRegisteredEventParams]
+AttributionReportingReportSent = CDPEvent[AttributionReportingReportSentEventParams]
+AttributionReportingVerboseDebugReportSent = CDPEvent[
+    AttributionReportingVerboseDebugReportSentEventParams
+]

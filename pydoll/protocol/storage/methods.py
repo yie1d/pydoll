@@ -1,5 +1,21 @@
 from enum import Enum
 
+from typing_extensions import NotRequired, TypedDict
+
+from pydoll.protocol.base import Command, EmptyParams, EmptyResponse, Response
+from pydoll.protocol.browser.types import BrowserContextID
+from pydoll.protocol.network.types import Cookie, CookieParam
+from pydoll.protocol.page.types import FrameId
+from pydoll.protocol.storage.types import (
+    RelatedWebsiteSet,
+    SerializedStorageKey,
+    SharedStorageEntry,
+    SharedStorageMetadata,
+    StorageBucket,
+    TrustTokens,
+    UsageForType,
+)
+
 
 class StorageMethod(str, Enum):
     CLEAR_COOKIES = 'Storage.clearCookies'
@@ -41,3 +57,259 @@ class StorageMethod(str, Enum):
     SET_SHARED_STORAGE_ENTRY = 'Storage.setSharedStorageEntry'
     SET_SHARED_STORAGE_TRACKING = 'Storage.setSharedStorageTracking'
     SET_STORAGE_BUCKET_TRACKING = 'Storage.setStorageBucketTracking'
+    SET_PROTECTED_AUDIENCE_K_ANONYMITY = 'Storage.setProtectedAudienceKAnonymity'
+
+
+class GetStorageKeyForFrameParams(TypedDict):
+    frameId: FrameId
+
+
+class GetStorageKeyForFrameResult(TypedDict):
+    storageKey: SerializedStorageKey
+
+
+class ClearDataForOriginParams(TypedDict):
+    origin: str
+    storageTypes: str
+
+
+class ClearDataForStorageKeyParams(TypedDict):
+    storageKey: str
+    storageTypes: str
+
+
+class GetCookiesParams(TypedDict):
+    browserContextId: NotRequired[BrowserContextID]
+
+
+class GetCookiesResult(TypedDict):
+    cookies: list[Cookie]
+
+
+class SetCookiesParams(TypedDict):
+    cookies: list[CookieParam]
+    browserContextId: NotRequired[BrowserContextID]
+
+
+class ClearCookiesParams(TypedDict):
+    browserContextId: NotRequired[BrowserContextID]
+
+
+class GetUsageAndQuotaParams(TypedDict):
+    origin: str
+
+
+class GetUsageAndQuotaResult(TypedDict):
+    usage: float
+    quota: float
+    overrideActive: bool
+    usageBreakdown: list[UsageForType]
+
+
+class OverrideQuotaForOriginParams(TypedDict):
+    origin: str
+    quotaSize: NotRequired[float]
+
+
+class TrackCacheStorageForOriginParams(TypedDict):
+    origin: str
+
+
+class TrackCacheStorageForStorageKeyParams(TypedDict):
+    storageKey: str
+
+
+class TrackIndexedDBForOriginParams(TypedDict):
+    origin: str
+
+
+class TrackIndexedDBForStorageKeyParams(TypedDict):
+    storageKey: str
+
+
+class UntrackCacheStorageForOriginParams(TypedDict):
+    origin: str
+
+
+class UntrackCacheStorageForStorageKeyParams(TypedDict):
+    storageKey: str
+
+
+class UntrackIndexedDBForOriginParams(TypedDict):
+    origin: str
+
+
+class UntrackIndexedDBForStorageKeyParams(TypedDict):
+    storageKey: str
+
+
+class GetTrustTokensResult(TypedDict):
+    tokens: list[TrustTokens]
+
+
+class ClearTrustTokensParams(TypedDict):
+    issuerOrigin: str
+
+
+class ClearTrustTokensResult(TypedDict):
+    didDeleteTokens: bool
+
+
+class GetInterestGroupDetailsParams(TypedDict):
+    ownerOrigin: str
+    name: str
+
+
+class GetInterestGroupDetailsResult(TypedDict):
+    details: dict
+
+
+class SetInterestGroupTrackingParams(TypedDict):
+    enable: bool
+
+
+class SetInterestGroupAuctionTrackingParams(TypedDict):
+    enable: bool
+
+
+class GetSharedStorageMetadataParams(TypedDict):
+    ownerOrigin: str
+
+
+class GetSharedStorageMetadataResult(TypedDict):
+    metadata: SharedStorageMetadata
+
+
+class GetSharedStorageEntriesParams(TypedDict):
+    ownerOrigin: str
+
+
+class GetSharedStorageEntriesResult(TypedDict):
+    entries: list[SharedStorageEntry]
+
+
+class SetSharedStorageEntryParams(TypedDict):
+    ownerOrigin: str
+    key: str
+    value: str
+    ignoreIfPresent: NotRequired[bool]
+
+
+class DeleteSharedStorageEntryParams(TypedDict):
+    ownerOrigin: str
+    key: str
+
+
+class ClearSharedStorageEntriesParams(TypedDict):
+    ownerOrigin: str
+
+
+class ResetSharedStorageBudgetParams(TypedDict):
+    ownerOrigin: str
+
+
+class SetSharedStorageTrackingParams(TypedDict):
+    enable: bool
+
+
+class SetStorageBucketTrackingParams(TypedDict):
+    storageKey: str
+    enable: bool
+
+
+class DeleteStorageBucketParams(TypedDict):
+    bucket: StorageBucket
+
+
+class RunBounceTrackingMitigationsResult(TypedDict):
+    deletedSites: list[str]
+
+
+class SetAttributionReportingLocalTestingModeParams(TypedDict):
+    enabled: bool
+
+
+class SetAttributionReportingTrackingParams(TypedDict):
+    enable: bool
+
+
+class SendPendingAttributionReportsResult(TypedDict):
+    numSent: int
+
+
+class GetRelatedWebsiteSetsResult(TypedDict):
+    sets: list[RelatedWebsiteSet]
+
+
+class GetAffectedUrlsForThirdPartyCookieMetadataParams(TypedDict):
+    firstPartyUrl: str
+    thirdPartyUrls: list[str]
+
+
+class GetAffectedUrlsForThirdPartyCookieMetadataResult(TypedDict):
+    matchedUrls: list[str]
+
+
+class SetProtectedAudienceKAnonymityParams(TypedDict):
+    owner: str
+    name: str
+    hashes: list[str]
+
+
+GetStorageKeyForFrameResponse = Response[GetStorageKeyForFrameResult]
+GetCookiesResponse = Response[GetCookiesResult]
+GetUsageAndQuotaResponse = Response[GetUsageAndQuotaResult]
+GetTrustTokensResponse = Response[GetTrustTokensResult]
+GetInterestGroupDetailsResponse = Response[GetInterestGroupDetailsResult]
+GetSharedStorageMetadataResponse = Response[GetSharedStorageMetadataResult]
+GetSharedStorageEntriesResponse = Response[GetSharedStorageEntriesResult]
+RunBounceTrackingMitigationsResponse = Response[RunBounceTrackingMitigationsResult]
+SendPendingAttributionReportsResponse = Response[SendPendingAttributionReportsResult]
+GetRelatedWebsiteSetsResponse = Response[GetRelatedWebsiteSetsResult]
+GetAffectedUrlsForThirdPartyCookieMetadataResponse = Response[
+    GetAffectedUrlsForThirdPartyCookieMetadataResult
+]
+
+
+GetStorageKeyForFrame = Command[GetStorageKeyForFrameParams, GetStorageKeyForFrameResponse]
+ClearDataForOrigin = Command[ClearDataForOriginParams, EmptyResponse]
+ClearDataForStorageKey = Command[ClearDataForStorageKeyParams, EmptyResponse]
+GetCookies = Command[GetCookiesParams, GetCookiesResponse]
+SetCookies = Command[SetCookiesParams, EmptyResponse]
+ClearCookies = Command[ClearCookiesParams, EmptyResponse]
+GetUsageAndQuota = Command[GetUsageAndQuotaParams, GetUsageAndQuotaResponse]
+OverrideQuotaForOrigin = Command[OverrideQuotaForOriginParams, EmptyResponse]
+TrackCacheStorageForOrigin = Command[TrackCacheStorageForOriginParams, EmptyResponse]
+TrackCacheStorageForStorageKey = Command[TrackCacheStorageForStorageKeyParams, EmptyResponse]
+TrackIndexedDBForOrigin = Command[TrackIndexedDBForOriginParams, EmptyResponse]
+TrackIndexedDBForStorageKey = Command[TrackIndexedDBForStorageKeyParams, EmptyResponse]
+UntrackCacheStorageForOrigin = Command[UntrackCacheStorageForOriginParams, EmptyResponse]
+UntrackCacheStorageForStorageKey = Command[UntrackCacheStorageForStorageKeyParams, EmptyResponse]
+UntrackIndexedDBForOrigin = Command[UntrackIndexedDBForOriginParams, EmptyResponse]
+UntrackIndexedDBForStorageKey = Command[UntrackIndexedDBForStorageKeyParams, EmptyResponse]
+GetTrustTokens = Command[EmptyParams, GetTrustTokensResponse]
+ClearTrustTokens = Command[ClearTrustTokensParams, EmptyResponse]
+GetInterestGroupDetails = Command[GetInterestGroupDetailsParams, GetInterestGroupDetailsResponse]
+SetInterestGroupTracking = Command[SetInterestGroupTrackingParams, EmptyResponse]
+SetInterestGroupAuctionTracking = Command[SetInterestGroupAuctionTrackingParams, EmptyResponse]
+GetSharedStorageMetadata = Command[GetSharedStorageMetadataParams, GetSharedStorageMetadataResponse]
+GetSharedStorageEntries = Command[GetSharedStorageEntriesParams, GetSharedStorageEntriesResponse]
+SetSharedStorageEntry = Command[SetSharedStorageEntryParams, EmptyResponse]
+DeleteSharedStorageEntry = Command[DeleteSharedStorageEntryParams, EmptyResponse]
+ClearSharedStorageEntries = Command[ClearSharedStorageEntriesParams, EmptyResponse]
+ResetSharedStorageBudget = Command[ResetSharedStorageBudgetParams, EmptyResponse]
+SetSharedStorageTracking = Command[SetSharedStorageTrackingParams, EmptyResponse]
+SetStorageBucketTracking = Command[SetStorageBucketTrackingParams, EmptyResponse]
+DeleteStorageBucket = Command[DeleteStorageBucketParams, EmptyResponse]
+RunBounceTrackingMitigations = Command[EmptyParams, RunBounceTrackingMitigationsResponse]
+SetAttributionReportingLocalTestingMode = Command[
+    SetAttributionReportingLocalTestingModeParams, EmptyResponse
+]
+SetAttributionReportingTracking = Command[SetAttributionReportingTrackingParams, EmptyResponse]
+SendPendingAttributionReports = Command[EmptyParams, SendPendingAttributionReportsResponse]
+GetRelatedWebsiteSets = Command[EmptyParams, GetRelatedWebsiteSetsResponse]
+GetAffectedUrlsForThirdPartyCookieMetadata = Command[
+    GetAffectedUrlsForThirdPartyCookieMetadataParams,
+    GetAffectedUrlsForThirdPartyCookieMetadataResponse,
+]
+SetProtectedAudienceKAnonymity = Command[SetProtectedAudienceKAnonymityParams, EmptyResponse]
