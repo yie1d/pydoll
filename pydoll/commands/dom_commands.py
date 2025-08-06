@@ -102,7 +102,7 @@ from pydoll.protocol.dom.methods import (
 from pydoll.protocol.dom.types import IncludeWhitespace, LogicalAxes, PhysicalAxes, RelationType
 
 
-class DomCommands:  # noqa
+class DomCommands:
     """
     Implementation of Chrome DevTools Protocol for the DOM domain.
 
