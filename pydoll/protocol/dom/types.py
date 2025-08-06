@@ -90,6 +90,21 @@ class ScrollOrientation(Enum):
     VERTICAL = 'vertical'
 
 
+class IncludeWhitespace(Enum):
+    """Include whitespace options."""
+
+    NONE = 'none'
+    ALL = 'all'
+
+
+class RelationType(Enum):
+    """Element relation types."""
+
+    POPOVER_TARGET = 'PopoverTarget'
+    INTEREST_TARGET = 'InterestTarget'
+    COMMAND_FOR = 'CommandFor'
+
+
 class BackendNode(TypedDict):
     """Backend node with a friendly name."""
 

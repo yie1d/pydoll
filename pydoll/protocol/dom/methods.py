@@ -8,12 +8,14 @@ from pydoll.protocol.dom.types import (
     BoxModel,
     CSSComputedStyleProperty,
     DetachedElementInfo,
+    IncludeWhitespace,
     LogicalAxes,
     Node,
     NodeId,
     PhysicalAxes,
     Quad,
     Rect,
+    RelationType,
 )
 from pydoll.protocol.page.types import FrameId
 from pydoll.protocol.runtime.types import (
@@ -82,22 +84,6 @@ class DomMethod(str, Enum):
     UNDO = 'DOM.undo'
 
 
-class IncludeWhitespace(Enum):
-    """Include whitespace options."""
-
-    NONE = 'none'
-    ALL = 'all'
-
-
-class RelationType(Enum):
-    """Element relation types."""
-
-    POPOVER_TARGET = 'PopoverTarget'
-    INTEREST_TARGET = 'InterestTarget'
-    COMMAND_FOR = 'CommandFor'
-
-
-# Parameter types
 class CollectClassNamesFromSubtreeParams(TypedDict):
     """Parameters for collecting class names from subtree."""
 
