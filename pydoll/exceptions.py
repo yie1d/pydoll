@@ -199,6 +199,12 @@ class ArgumentAlreadyExistsInOptions(ConfigurationException):
     message = 'The argument already exists in the options'
 
 
+class ArgumentNotFoundInOptions(ConfigurationException):
+    """Raised when attempting to remove an argument that does not exist in browser options."""
+
+    message = 'The argument does not exist in the options'
+
+
 class InvalidFileExtension(ConfigurationException):
     """Raised when an unsupported file extension is provided."""
 

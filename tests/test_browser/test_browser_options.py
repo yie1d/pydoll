@@ -1,7 +1,12 @@
 import pytest
-from pydoll.browser.options import ChromiumOptions as Options
+
 from pydoll.browser.interfaces import Options as OptionsInterface
-from pydoll.exceptions import ArgumentAlreadyExistsInOptions, WrongPrefsDict
+from pydoll.browser.options import ChromiumOptions as Options
+from pydoll.exceptions import (
+    ArgumentAlreadyExistsInOptions,
+    ArgumentNotFoundInOptions,
+    WrongPrefsDict,
+)
 
 
 def test_initial_arguments():
@@ -38,6 +43,16 @@ def test_add_duplicate_argument():
     with pytest.raises(ArgumentAlreadyExistsInOptions, match='Argument already exists: --headless'):
         options.add_argument('--headless')
 
+def test_remove_argument():
+    options = Options()
+    options.add_argument('--headless')
+    options.remove_argument('--headless')
+    assert options.arguments == []
+
+def test_remove_argument_not_exists():
+    options = Options()
+    with pytest.raises(ArgumentNotFoundInOptions, match='Argument not found: --headless'):
+        options.remove_argument('--headless')
 
 def test_add_multiple_arguments():
     options = Options()
@@ -206,4 +221,41 @@ def test_options_interface_enforcement():
         def browser_preferences(self):
             return {}
 
+        @property
+        def headless(self):
+            return False
+
     CompleteOptions()
+
+def test_set_headless():
+    options = Options()
+    options.headless = True
+    assert options.headless is True
+    assert options.arguments == ['--headless']
+
+def test_set_headless_false():
+    options = Options()
+    options.headless = True
+    assert options.headless is True
+    assert options.arguments == ['--headless']
+    options.headless = False
+    assert options.headless is False
+    assert options.arguments == []
+
+def test_set_headless_true_twice():
+    options = Options()
+    options.headless = True
+    assert options.headless is True
+    assert options.arguments == ['--headless']
+    options.headless = True
+    assert options.headless is True
+    assert options.arguments == ['--headless']
+
+def test_set_headless_false_twice():
+    options = Options()
+    options.headless = False
+    assert options.headless is False
+    assert options.arguments == []
+    options.headless = False
+    assert options.headless is False
+    assert options.arguments == []
