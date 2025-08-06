@@ -17,6 +17,7 @@ from typing import (
 
 import aiofiles
 
+from pydoll.browser.requests import Request
 from pydoll.commands import (
     DomCommands,
     FetchCommands,
@@ -28,11 +29,6 @@ from pydoll.commands import (
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
     By,
-    NetworkErrorReason,
-    RequestMethod,
-    RequestStage,
-    ResourceType,
-    ScreenshotFormat,
 )
 from pydoll.elements.mixins import FindElementsMixin
 from pydoll.elements.web_element import WebElement
@@ -48,14 +44,21 @@ from pydoll.exceptions import (
     WaitElementTimeout,
 )
 from pydoll.protocol.base import Response
-from pydoll.protocol.dom.types import EventFileChooserOpened
-from pydoll.protocol.fetch.types import HeaderEntry
-from pydoll.protocol.network.responses import GetResponseBodyResponse
-from pydoll.protocol.network.types import Cookie, CookieParam, NetworkLog
-from pydoll.protocol.page.events import PageEvent
-from pydoll.protocol.page.responses import CaptureScreenshotResponse, PrintToPDFResponse
-from pydoll.protocol.runtime.responses import CallFunctionOnResponse, EvaluateResponse
-from pydoll.protocol.storage.responses import GetCookiesResponse
+from pydoll.protocol.fetch.types import HeaderEntry, RequestStage
+from pydoll.protocol.network.events import RequestWillBeSentEvent
+from pydoll.protocol.network.methods import GetResponseBodyResponse
+from pydoll.protocol.network.types import (
+    Cookie,
+    CookieParam,
+    ErrorReason,
+    RequestMethod,
+    ResourceType,
+)
+from pydoll.protocol.page.events import FileChooserOpenedEvent, PageEvent
+from pydoll.protocol.page.methods import CaptureScreenshotResponse, PrintToPDFResponse
+from pydoll.protocol.page.types import ScreenshotFormat
+from pydoll.protocol.runtime.methods import CallFunctionOnResponse, EvaluateResponse
+from pydoll.protocol.storage.methods import GetCookiesResponse
 from pydoll.utils import (
     decode_base64_to_bytes,
     has_return_outside_function,
@@ -70,7 +73,7 @@ logger = logging.getLogger(__name__)
 IFrame: TypeAlias = 'Tab'
 
 
-class Tab(FindElementsMixin):  # noqa: PLR0904
+class Tab(FindElementsMixin):
     """
     Controls a browser tab via Chrome DevTools Protocol.
 
@@ -148,6 +151,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._browser_context_id: Optional[str] = browser_context_id
         self._initialized: bool = True
+        self._request: Optional[Request] = None
 
     @classmethod
     def _remove_instance(cls, target_id: str) -> None:
@@ -206,6 +210,18 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
     def runtime_events_enabled(self) -> bool:
         """Whether CDP Runtime domain events are enabled."""
         return self._runtime_events_enabled
+
+    @property
+    def request(self) -> Request:
+        """
+        Get the request object for making HTTP requests using the browser's fetch API.
+
+        Returns:
+            Request: An instance of the Request class for making HTTP requests.
+        """
+        if self._request is None:
+            self._request = Request(self)
+        return self._request
 
     @property
     def intercept_file_chooser_dialog_enabled(self) -> bool:
@@ -427,7 +443,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         )
         return response['result']['body']
 
-    async def get_network_logs(self, filter: Optional[str] = None) -> list[NetworkLog]:
+    async def get_network_logs(self, filter: Optional[str] = None) -> list[RequestWillBeSentEvent]:
         """
         Get network logs.
 
@@ -561,7 +577,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
 
         return None
 
-    async def print_to_pdf(  # noqa: PLR0913, PLR0917
+    async def print_to_pdf(
         self,
         path: str,
         landscape: bool = False,
@@ -677,7 +693,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         return await self._execute_script_without_element(script)
 
     # TODO: think about how to remove these duplications with the base class
-    async def continue_request(  # noqa: PLR0913, PLR0917
+    async def continue_request(
         self,
         request_id: str,
         url: Optional[str] = None,
@@ -700,7 +716,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             )
         )
 
-    async def fail_request(self, request_id: str, error_reason: NetworkErrorReason):
+    async def fail_request(self, request_id: str, error_reason: ErrorReason):
         """Fail request with error code."""
         return await self._execute_command(FetchCommands.fail_request(request_id, error_reason))
 
@@ -734,7 +750,7 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
             files: File path(s) for upload.
         """
 
-        async def event_handler(event: EventFileChooserOpened):
+        async def event_handler(event: FileChooserOpenedEvent):
             file_list = [str(file) for file in files] if isinstance(files, list) else [str(files)]
             await self._execute_command(
                 DomCommands.set_file_input_files(
@@ -843,6 +859,10 @@ class Tab(FindElementsMixin):  # noqa: PLR0904
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
+
+    async def clear_callbacks(self):
+        """Clear all registered event callbacks."""
+        await self._connection_handler.clear_callbacks()
 
     async def _execute_script_with_element(self, script: str, element: WebElement):
         """
