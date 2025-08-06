@@ -2,8 +2,9 @@ import asyncio
 import logging
 from typing import Any, Callable, cast
 
-from pydoll.protocol.base import Event
-from pydoll.protocol.page.types import (
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.network.events import RequestWillBeSentEvent
+from pydoll.protocol.page.events import (
     JavascriptDialogOpeningEvent,
     JavascriptDialogOpeningEventParams,
 )
@@ -23,7 +24,7 @@ class EventsManager:
         """Initialize events manager with empty state."""
         self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
-        self.network_logs: list[Event] = []
+        self.network_logs: list[RequestWillBeSentEvent] = []
         self.dialog = JavascriptDialogOpeningEvent(method='')
         logger.info('EventsManager initialized')
 
@@ -65,7 +66,7 @@ class EventsManager:
         self._event_callbacks.clear()
         logger.info('All callbacks cleared')
 
-    async def process_event(self, event_data: Event):
+    async def process_event(self, event_data: CDPEvent):
         """
         Process received event and trigger callbacks.
 
@@ -89,12 +90,12 @@ class EventsManager:
 
         await self._trigger_callbacks(event_name, event_data)
 
-    def _update_network_logs(self, event_data: Event):
+    def _update_network_logs(self, event_data: RequestWillBeSentEvent):
         """Add network event to logs (keeps last 10000 entries)."""
         self.network_logs.append(event_data)
         self.network_logs = self.network_logs[-10000:]  # keep only last 10000 logs
 
-    async def _trigger_callbacks(self, event_name: str, event_data: Event):
+    async def _trigger_callbacks(self, event_name: str, event_data: CDPEvent):
         """Trigger all registered callbacks for event, removing temporary ones."""
         callbacks_to_remove = []
 
