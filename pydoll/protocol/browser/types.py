@@ -6,7 +6,7 @@ BrowserContextID = str
 WindowID = int
 
 
-class WindowState(Enum):
+class WindowState(str, Enum):
     """The state of the browser window."""
 
     NORMAL = 'normal'
@@ -15,7 +15,7 @@ class WindowState(Enum):
     FULLSCREEN = 'fullscreen'
 
 
-class DownloadBehavior(Enum):
+class DownloadBehavior(str, Enum):
     """Download behavior options."""
 
     DENY = 'deny'
@@ -24,7 +24,7 @@ class DownloadBehavior(Enum):
     DEFAULT = 'default'
 
 
-class DownloadProgressState(Enum):
+class DownloadProgressState(str, Enum):
     """Download progress state."""
 
     IN_PROGRESS = 'inProgress'
@@ -42,7 +42,7 @@ class Bounds(TypedDict, total=False):
     windowState: WindowState  # The window state. Default to normal.
 
 
-class PermissionType(Enum):
+class PermissionType(str, Enum):
     """Permission types."""
 
     AR = 'ar'
@@ -84,7 +84,7 @@ class PermissionType(Enum):
     WINDOW_MANAGEMENT = 'windowManagement'
 
 
-class PermissionSetting(Enum):
+class PermissionSetting(str, Enum):
     """Permission setting values."""
 
     GRANTED = 'granted'
@@ -108,7 +108,7 @@ class PermissionDescriptor(TypedDict, total=False):
     panTiltZoom: bool  # For "camera" permission, may specify panTiltZoom.
 
 
-class BrowserCommandId(Enum):
+class BrowserCommandId(str, Enum):
     """Browser command ids used by executeBrowserCommand."""
 
     OPEN_TAB_SEARCH = 'openTabSearch'
@@ -133,7 +133,7 @@ class Histogram(TypedDict):
     buckets: list['Bucket']  # Buckets.
 
 
-class PrivacySandboxAPI(Enum):
+class PrivacySandboxAPI(str, Enum):
     """Privacy Sandbox API types."""
 
     BIDDING_AND_AUCTION_SERVICES = 'BiddingAndAuctionServices'

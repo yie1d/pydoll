@@ -2,20 +2,18 @@ from enum import Enum
 
 from typing_extensions import NotRequired, TypedDict
 
-from pydoll.constants import (
-    ConnectionType,
-    ContentEncoding,
-    CookiePriority,
-    CookieSameSite,
-    CookieSourceScheme,
-)
 from pydoll.protocol.base import Command, EmptyParams, EmptyResponse, Response
 from pydoll.protocol.debugger.types import SearchMatch
 from pydoll.protocol.emulation.types import UserAgentMetadata
 from pydoll.protocol.fetch.types import HeaderEntry, RequestPattern
 from pydoll.protocol.network.types import (
+    ConnectionType,
+    ContentEncoding,
     Cookie,
     CookiePartitionKey,
+    CookiePriority,
+    CookieSameSite,
+    CookieSourceScheme,
     LoadNetworkResourceOptions,
     SecurityIsolationStatus,
 )

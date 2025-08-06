@@ -2,8 +2,8 @@ from enum import Enum
 
 from typing_extensions import NotRequired, TypedDict
 
-from pydoll.constants import MixedContentType, SecurityState
 from pydoll.protocol.runtime.types import StackTrace
+from pydoll.protocol.security.types import MixedContentType, SecurityState
 
 
 class ResourceType(str, Enum):
@@ -30,25 +30,9 @@ class ResourceType(str, Enum):
     OTHER = 'Other'
 
 
-class LoaderId(str):
-    """Unique loader identifier."""
-
-    pass
-
-
-class RequestId(str):
-    """
-    Unique network request identifier. Note that this does not identify individual HTTP
-    requests that are part of a network request.
-    """
-
-    pass
-
-
-class InterceptionId(str):
-    """Unique intercepted request identifier."""
-
-    pass
+LoaderId = str
+RequestId = str
+InterceptionId = str
 
 
 class ErrorReason(str, Enum):
@@ -70,22 +54,19 @@ class ErrorReason(str, Enum):
     BLOCKED_BY_RESPONSE = 'BlockedByResponse'
 
 
-class TimeSinceEpoch(float):
-    """UTC time in seconds, counted from January 1, 1970."""
-
-    pass
-
-
-class MonotonicTime(float):
-    """Monotonically increasing time in seconds since an arbitrary point in the past."""
-
-    pass
+TimeSinceEpoch = float
+MonotonicTime = float
+Headers = dict[str, str]
 
 
-class Headers(dict[str, str]):
-    """Request / response headers as keys / values of JSON object."""
+class RequestMethod(str, Enum):
+    """HTTP request method."""
 
-    pass
+    GET = 'GET'
+    POST = 'POST'
+    PUT = 'PUT'
+    DELETE = 'DELETE'
+    PATCH = 'PATCH'
 
 
 class ConnectionType(str, Enum):

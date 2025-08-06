@@ -3,15 +3,13 @@ from enum import Enum
 from typing_extensions import NotRequired, TypedDict
 
 from pydoll.protocol.base import Command, EmptyParams, EmptyResponse, Response
-from pydoll.protocol.browser.types import BrowserContextID
-
-from .types import (
+from pydoll.protocol.browser.types import BrowserContextID, WindowState
+from pydoll.protocol.target.types import (
     RemoteLocation,
     SessionID,
     TargetFilter,
     TargetID,
     TargetInfo,
-    WindowState,
 )
 
 
@@ -50,6 +48,12 @@ class AttachToTargetParams(TypedDict):
 
     targetId: TargetID
     flatten: NotRequired[bool]
+
+
+class AttachToBrowserTargetParams(TypedDict):
+    """Parameters for the attachToBrowserTarget command."""
+
+    sessionId: SessionID
 
 
 class CloseTargetParams(TypedDict):
@@ -233,9 +237,7 @@ ActivateTargetCommand = Command[ActivateTargetParams, EmptyResponse]
 AttachToTargetCommand = Command[AttachToTargetParams, AttachToTargetResponse]
 AttachToBrowserTargetCommand = Command[EmptyParams, AttachToBrowserTargetResponse]
 CloseTargetCommand = Command[CloseTargetParams, CloseTargetResponse]
-ExposeDevToolsProtocolCommand = Command[
-    ExposeDevToolsProtocolParams, EmptyResponse
-]
+ExposeDevToolsProtocolCommand = Command[ExposeDevToolsProtocolParams, EmptyResponse]
 CreateBrowserContextCommand = Command[CreateBrowserContextParams, CreateBrowserContextResponse]
 GetBrowserContextsCommand = Command[EmptyParams, GetBrowserContextsResponse]
 CreateTargetCommand = Command[CreateTargetParams, CreateTargetResponse]

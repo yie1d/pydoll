@@ -9,7 +9,7 @@ FrameId = str
 ScriptIdentifier = str
 
 
-class AdFrameType(Enum):
+class AdFrameType(str, Enum):
     """Ad frame types."""
 
     NONE = 'none'
@@ -17,7 +17,7 @@ class AdFrameType(Enum):
     ROOT = 'root'
 
 
-class AdFrameExplanation(Enum):
+class AdFrameExplanation(str, Enum):
     """Ad frame explanation types."""
 
     PARENT_IS_AD = 'ParentIsAd'
@@ -25,7 +25,7 @@ class AdFrameExplanation(Enum):
     MATCHED_BLOCKING_RULE = 'MatchedBlockingRule'
 
 
-class SecureContextType(Enum):
+class SecureContextType(str, Enum):
     """Secure context types."""
 
     SECURE = 'Secure'
@@ -34,7 +34,7 @@ class SecureContextType(Enum):
     INSECURE_ANCESTOR = 'InsecureAncestor'
 
 
-class CrossOriginIsolatedContextType(Enum):
+class CrossOriginIsolatedContextType(str, Enum):
     """Cross-origin isolated context types."""
 
     ISOLATED = 'Isolated'
@@ -42,7 +42,7 @@ class CrossOriginIsolatedContextType(Enum):
     NOT_ISOLATED_FEATURE_DISABLED = 'NotIsolatedFeatureDisabled'
 
 
-class GatedAPIFeatures(Enum):
+class GatedAPIFeatures(str, Enum):
     """Gated API features."""
 
     SHARED_ARRAY_BUFFERS = 'SharedArrayBuffers'
@@ -51,7 +51,7 @@ class GatedAPIFeatures(Enum):
     PERFORMANCE_PROFILE = 'PerformanceProfile'
 
 
-class PermissionsPolicyFeature(Enum):
+class PermissionsPolicyFeature(str, Enum):
     """Permissions policy features."""
 
     ACCELEROMETER = 'accelerometer'
@@ -162,7 +162,7 @@ class PermissionsPolicyFeature(Enum):
     XR_SPATIAL_TRACKING = 'xr-spatial-tracking'
 
 
-class PermissionsPolicyBlockReason(Enum):
+class PermissionsPolicyBlockReason(str, Enum):
     """Permissions policy block reasons."""
 
     HEADER = 'Header'
@@ -171,7 +171,197 @@ class PermissionsPolicyBlockReason(Enum):
     IN_ISOLATED_APP = 'InIsolatedApp'
 
 
-class OriginTrialTokenStatus(Enum):
+class BackForwardCacheNotRestoredReasonType(str, Enum):
+    """Back/forward cache not restored explanation type."""
+
+    SUPPORT_PENDING = 'SupportPending'
+    PAGE_SUPPORT_NEEDED = 'PageSupportNeeded'
+    CIRCUMSTANTIAL = 'Circumstantial'
+
+
+class BackForwardCacheNotRestoredReason(str, Enum):
+    NOT_PRIMARY_MAIN_FRAME = 'NotPrimaryMainFrame'
+    BACK_FORWARD_CACHE_DISABLED = 'BackForwardCacheDisabled'
+    RELATED_ACTIVE_CONTENTS_EXIST = 'RelatedActiveContentsExist'
+    HTTP_STATUS_NOT_OK = 'HTTPStatusNotOK'
+    SCHEME_NOT_HTTP_OR_HTTPS = 'SchemeNotHTTPOrHTTPS'
+    LOADING = 'Loading'
+    WAS_GRANTED_MEDIA_ACCESS = 'WasGrantedMediaAccess'
+    DISABLE_FOR_RENDER_FRAME_HOST_CALLED = 'DisableForRenderFrameHostCalled'
+    DOMAIN_NOT_ALLOWED = 'DomainNotAllowed'
+    HTTP_METHOD_NOT_GET = 'HTTPMethodNotGET'
+    SUBFRAME_IS_NAVIGATING = 'SubframeIsNavigating'
+    TIMEOUT = 'Timeout'
+    CACHE_LIMIT = 'CacheLimit'
+    JAVASCRIPT_EXECUTION = 'JavaScriptExecution'
+    RENDERER_PROCESS_KILLED = 'RendererProcessKilled'
+    RENDERER_PROCESS_CRASHED = 'RendererProcessCrashed'
+    SCHEDULER_TRACKED_FEATURE_USED = 'SchedulerTrackedFeatureUsed'
+    CONFLICTING_BROWSING_INSTANCE = 'ConflictingBrowsingInstance'
+    CACHE_FLUSHED = 'CacheFlushed'
+    SERVICE_WORKER_VERSION_ACTIVATION = 'ServiceWorkerVersionActivation'
+    SESSION_RESTORED = 'SessionRestored'
+    SERVICE_WORKER_POST_MESSAGE = 'ServiceWorkerPostMessage'
+    ENTERED_BACK_FORWARD_CACHE_BEFORE_SERVICE_WORKER_HOST_ADDED = (
+        'EnteredBackForwardCacheBeforeServiceWorkerHostAdded'
+    )
+    RENDER_FRAME_HOST_REUSED_SAME_SITE = 'RenderFrameHostReused_SameSite'
+    RENDER_FRAME_HOST_REUSED_CROSS_SITE = 'RenderFrameHostReused_CrossSite'
+    SERVICE_WORKER_CLAIM = 'ServiceWorkerClaim'
+    IGNORE_EVENT_AND_EVICT = 'IgnoreEventAndEvict'
+    HAVE_INNER_CONTENTS = 'HaveInnerContents'
+    TIMEOUT_PUTTING_IN_CACHE = 'TimeoutPuttingInCache'
+    BACK_FORWARD_CACHE_DISABLED_BY_LOW_MEMORY = 'BackForwardCacheDisabledByLowMemory'
+    BACK_FORWARD_CACHE_DISABLED_BY_COMMAND_LINE = 'BackForwardCacheDisabledByCommandLine'
+    NETWORK_REQUEST_DATAPIPE_DRAINED_AS_BYTES_CONSUMER = (
+        'NetworkRequestDatapipeDrainedAsBytesConsumer'
+    )
+    NETWORK_REQUEST_REDIRECTED = 'NetworkRequestRedirected'
+    NETWORK_REQUEST_TIMEOUT = 'NetworkRequestTimeout'
+    NETWORK_EXCEEDS_BUFFER_LIMIT = 'NetworkExceedsBufferLimit'
+    NAVIGATION_CANCELLED_WHILE_RESTORING = 'NavigationCancelledWhileRestoring'
+    NOT_MOST_RECENT_NAVIGATION_ENTRY = 'NotMostRecentNavigationEntry'
+    BACK_FORWARD_CACHE_DISABLED_FOR_PRERENDER = 'BackForwardCacheDisabledForPrerender'
+    USER_AGENT_OVERRIDE_DIFFERS = 'UserAgentOverrideDiffers'
+    FOREGROUND_CACHE_LIMIT = 'ForegroundCacheLimit'
+    BROWSING_INSTANCE_NOT_SWAPPED = 'BrowsingInstanceNotSwapped'
+    BACK_FORWARD_CACHE_DISABLED_FOR_DELEGATE = 'BackForwardCacheDisabledForDelegate'
+    UNLOAD_HANDLER_EXISTS_IN_MAIN_FRAME = 'UnloadHandlerExistsInMainFrame'
+    UNLOAD_HANDLER_EXISTS_IN_SUB_FRAME = 'UnloadHandlerExistsInSubFrame'
+    SERVICE_WORKER_UNREGISTRATION = 'ServiceWorkerUnregistration'
+    CACHE_CONTROL_NO_STORE = 'CacheControlNoStore'
+    CACHE_CONTROL_NO_STORE_COOKIE_MODIFIED = 'CacheControlNoStoreCookieModified'
+    CACHE_CONTROL_NO_STORE_HTTP_ONLY_COOKIE_MODIFIED = 'CacheControlNoStoreHTTPOnlyCookieModified'
+    NO_RESPONSE_HEAD = 'NoResponseHead'
+    UNKNOWN = 'Unknown'
+    ACTIVATION_NAVIGATIONS_DISALLOWED_FOR_BUG_1234857 = (
+        'ActivationNavigationsDisallowedForBug1234857'
+    )
+    ERROR_DOCUMENT = 'ErrorDocument'
+    FENCED_FRAMES_EMBEDDER = 'FencedFramesEmbedder'
+    COOKIE_DISABLED = 'CookieDisabled'
+    HTTP_AUTH_REQUIRED = 'HTTPAuthRequired'
+    COOKIE_FLUSHED = 'CookieFlushed'
+    BROADCAST_CHANNEL_ON_MESSAGE = 'BroadcastChannelOnMessage'
+    WEB_VIEW_SETTINGS_CHANGED = 'WebViewSettingsChanged'
+    WEB_VIEW_JAVASCRIPT_OBJECT_CHANGED = 'WebViewJavaScriptObjectChanged'
+    WEB_VIEW_MESSAGE_LISTENER_INJECTED = 'WebViewMessageListenerInjected'
+    WEB_VIEW_SAFE_BROWSING_ALLOWLIST_CHANGED = 'WebViewSafeBrowsingAllowlistChanged'
+    WEB_VIEW_DOCUMENT_START_JAVASCRIPT_CHANGED = 'WebViewDocumentStartJavascriptChanged'
+    WEB_SOCKET = 'WebSocket'
+    WEB_TRANSPORT = 'WebTransport'
+    WEB_RTC = 'WebRTC'
+    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_STORE = 'MainResourceHasCacheControlNoStore'
+    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_CACHE = 'MainResourceHasCacheControlNoCache'
+    SUBRESOURCE_HAS_CACHE_CONTROL_NO_STORE = 'SubresourceHasCacheControlNoStore'
+    SUBRESOURCE_HAS_CACHE_CONTROL_NO_CACHE = 'SubresourceHasCacheControlNoCache'
+    CONTAINS_PLUGINS = 'ContainsPlugins'
+    DOCUMENT_LOADED = 'DocumentLoaded'
+    OUTSTANDING_NETWORK_REQUEST_OTHERS = 'OutstandingNetworkRequestOthers'
+    REQUESTED_MIDI_PERMISSION = 'RequestedMIDIPermission'
+    REQUESTED_AUDIO_CAPTURE_PERMISSION = 'RequestedAudioCapturePermission'
+    REQUESTED_VIDEO_CAPTURE_PERMISSION = 'RequestedVideoCapturePermission'
+    REQUESTED_BACK_FORWARD_CACHE_BLOCKED_SENSORS = 'RequestedBackForwardCacheBlockedSensors'
+    REQUESTED_BACKGROUND_WORK_PERMISSION = 'RequestedBackgroundWorkPermission'
+    BROADCAST_CHANNEL = 'BroadcastChannel'
+    WEB_XR = 'WebXR'
+    SHARED_WORKER = 'SharedWorker'
+    SHARED_WORKER_MESSAGE = 'SharedWorkerMessage'
+    WEB_LOCKS = 'WebLocks'
+    WEB_HID = 'WebHID'
+    WEB_SHARE = 'WebShare'
+    REQUESTED_STORAGE_ACCESS_GRANT = 'RequestedStorageAccessGrant'
+    WEB_NFC = 'WebNfc'
+    OUTSTANDING_NETWORK_REQUEST_FETCH = 'OutstandingNetworkRequestFetch'
+    OUTSTANDING_NETWORK_REQUEST_XHR = 'OutstandingNetworkRequestXHR'
+    APP_BANNER = 'AppBanner'
+    PRINTING = 'Printing'
+    WEB_DATABASE = 'WebDatabase'
+    PICTURE_IN_PICTURE = 'PictureInPicture'
+    SPEECH_RECOGNIZER = 'SpeechRecognizer'
+    IDLE_MANAGER = 'IdleManager'
+    PAYMENT_MANAGER = 'PaymentManager'
+    SPEECH_SYNTHESIS = 'SpeechSynthesis'
+    KEYBOARD_LOCK = 'KeyboardLock'
+    WEB_OTP_SERVICE = 'WebOTPService'
+    OUTSTANDING_NETWORK_REQUEST_DIRECT_SOCKET = 'OutstandingNetworkRequestDirectSocket'
+    INJECTED_JAVASCRIPT = 'InjectedJavascript'
+    INJECTED_STYLE_SHEET = 'InjectedStyleSheet'
+    KEEPALIVE_REQUEST = 'KeepaliveRequest'
+    INDEXED_DB_EVENT = 'IndexedDBEvent'
+    DUMMY = 'Dummy'
+    JS_NETWORK_REQUEST_RECEIVED_CACHE_CONTROL_NO_STORE_RESOURCE = (
+        'JsNetworkRequestReceivedCacheControlNoStoreResource'
+    )
+    WEB_RTC_STICKY = 'WebRTCSticky'
+    WEB_TRANSPORT_STICKY = 'WebTransportSticky'
+    WEB_SOCKET_STICKY = 'WebSocketSticky'
+    SMART_CARD = 'SmartCard'
+    LIVE_MEDIA_STREAM_TRACK = 'LiveMediaStreamTrack'
+    UNLOAD_HANDLER = 'UnloadHandler'
+    PARSER_ABORTED = 'ParserAborted'
+    CONTENT_SECURITY_HANDLER = 'ContentSecurityHandler'
+    CONTENT_WEB_AUTHENTICATION_API = 'ContentWebAuthenticationAPI'
+    CONTENT_FILE_CHOOSER = 'ContentFileChooser'
+    CONTENT_SERIAL = 'ContentSerial'
+    CONTENT_FILE_SYSTEM_ACCESS = 'ContentFileSystemAccess'
+    CONTENT_MEDIA_DEVICES_DISPATCHER_HOST = 'ContentMediaDevicesDispatcherHost'
+    CONTENT_WEB_BLUETOOTH = 'ContentWebBluetooth'
+    CONTENT_WEB_USB = 'ContentWebUSB'
+    CONTENT_MEDIA_SESSION_SERVICE = 'ContentMediaSessionService'
+    CONTENT_SCREEN_READER = 'ContentScreenReader'
+    CONTENT_DISCARDED = 'ContentDiscarded'
+    EMBEDDER_POPUP_BLOCKER_TAB_HELPER = 'EmbedderPopupBlockerTabHelper'
+    EMBEDDER_SAFE_BROWSING_TRIGGERED_POPUP_BLOCKER = 'EmbedderSafeBrowsingTriggeredPopupBlocker'
+    EMBEDDER_SAFE_BROWSING_THREAT_DETAILS = 'EmbedderSafeBrowsingThreatDetails'
+    EMBEDDER_APP_BANNER_MANAGER = 'EmbedderAppBannerManager'
+    EMBEDDER_DOM_DISTILLER_VIEWER_SOURCE = 'EmbedderDomDistillerViewerSource'
+    EMBEDDER_DOM_DISTILLER_SELF_DELETING_REQUEST_DELEGATE = (
+        'EmbedderDomDistillerSelfDeletingRequestDelegate'
+    )
+    EMBEDDER_OOM_INTERVENTION_TAB_HELPER = 'EmbedderOomInterventionTabHelper'
+    EMBEDDER_OFFLINE_PAGE = 'EmbedderOfflinePage'
+    EMBEDDER_CHROME_PASSWORD_MANAGER_CLIENT_BIND_CREDENTIAL_MANAGER = (
+        'EmbedderChromePasswordManagerClientBindCredentialManager'
+    )
+    EMBEDDER_PERMISSION_REQUEST_MANAGER = 'EmbedderPermissionRequestManager'
+    EMBEDDER_MODAL_DIALOG = 'EmbedderModalDialog'
+    EMBEDDER_EXTENSIONS = 'EmbedderExtensions'
+    EMBEDDER_EXTENSION_MESSAGING = 'EmbedderExtensionMessaging'
+    EMBEDDER_EXTENSION_MESSAGING_FOR_OPEN_PORT = 'EmbedderExtensionMessagingForOpenPort'
+    EMBEDDER_EXTENSION_SENT_MESSAGE_TO_CACHED_FRAME = 'EmbedderExtensionSentMessageToCachedFrame'
+    REQUESTED_BY_WEB_VIEW_CLIENT = 'RequestedByWebViewClient'
+    POST_MESSAGE_BY_WEB_VIEW_CLIENT = 'PostMessageByWebViewClient'
+    CACHE_CONTROL_NO_STORE_DEVICE_BOUND_SESSION_TERMINATED = (
+        'CacheControlNoStoreDeviceBoundSessionTerminated'
+    )
+    CACHE_LIMIT_PRUNED_ON_MODERATE_MEMORY_PRESSURE = 'CacheLimitPrunedOnModerateMemoryPressure'
+    CACHE_LIMIT_PRUNED_ON_CRITICAL_MEMORY_PRESSURE = 'CacheLimitPrunedOnCriticalMemoryPressure'
+
+
+class BackForwardCacheBlockingDetails(TypedDict):
+    url: NotRequired[str]
+    function: NotRequired[str]
+    lineNumber: int
+    columnNumber: int
+
+
+class BackForwardCacheNotRestoredExplanation(TypedDict):
+    """Back/forward cache not restored explanation."""
+
+    type: BackForwardCacheNotRestoredReasonType
+    reason: BackForwardCacheNotRestoredReason
+    context: NotRequired[str]
+    details: NotRequired[list[BackForwardCacheBlockingDetails]]
+
+
+class BackForwardCacheNotRestoredExplanationTree(TypedDict):
+    url: str
+    explanations: list[BackForwardCacheNotRestoredExplanation]
+    children: NotRequired[list['BackForwardCacheNotRestoredExplanationTree']]
+
+
+class OriginTrialTokenStatus(str, Enum):
     """Origin trial token status."""
 
     SUCCESS = 'Success'
@@ -188,7 +378,7 @@ class OriginTrialTokenStatus(Enum):
     UNKNOWN_TRIAL = 'UnknownTrial'
 
 
-class OriginTrialStatus(Enum):
+class OriginTrialStatus(str, Enum):
     """Origin trial status."""
 
     ENABLED = 'Enabled'
@@ -197,14 +387,14 @@ class OriginTrialStatus(Enum):
     TRIAL_NOT_ALLOWED = 'TrialNotAllowed'
 
 
-class OriginTrialUsageRestriction(Enum):
+class OriginTrialUsageRestriction(str, Enum):
     """Origin trial usage restriction."""
 
     NONE = 'None'
     SUBSET = 'Subset'
 
 
-class TransitionType(Enum):
+class TransitionType(str, Enum):
     """Transition types."""
 
     LINK = 'link'
@@ -222,7 +412,7 @@ class TransitionType(Enum):
     OTHER = 'other'
 
 
-class DialogType(Enum):
+class DialogType(str, Enum):
     """Dialog types."""
 
     ALERT = 'alert'
@@ -246,7 +436,7 @@ class ClientNavigationReason(Enum):
     SCRIPT_INITIATED = 'scriptInitiated'
 
 
-class ClientNavigationDisposition(Enum):
+class ClientNavigationDisposition(str, Enum):
     """Client navigation dispositions."""
 
     CURRENT_TAB = 'currentTab'
@@ -255,7 +445,7 @@ class ClientNavigationDisposition(Enum):
     DOWNLOAD = 'download'
 
 
-class ReferrerPolicy(Enum):
+class ReferrerPolicy(str, Enum):
     """Referrer policy types."""
 
     NO_REFERRER = 'noReferrer'
@@ -268,7 +458,7 @@ class ReferrerPolicy(Enum):
     UNSAFE_URL = 'unsafeUrl'
 
 
-class NavigationType(Enum):
+class NavigationType(str, Enum):
     """Navigation types."""
 
     NAVIGATION = 'Navigation'
@@ -612,3 +802,52 @@ class InstallabilityError(TypedDict):
 
     errorId: str
     errorArguments: list[InstallabilityErrorArgument]
+
+
+class AutoResponseMode(str, Enum):
+    """Auto response mode values."""
+
+    NONE = 'none'
+    AUTO_ACCEPT = 'autoAccept'
+    AUTO_CHOOSE_TO_AUTH_ANOTHER_WAY = 'autoChooseToAuthAnotherWay'
+    AUTO_REJECT = 'autoReject'
+    AUTO_OPT_OUT = 'autoOptOut'
+
+
+class WebLifecycleState(str, Enum):
+    """Web lifecycle state values."""
+
+    FROZEN = 'frozen'
+    ACTIVE = 'active'
+
+
+class ScreenshotFormat(str, Enum):
+    """Screenshot format values."""
+
+    JPEG = 'jpeg'
+    PNG = 'png'
+    WEBP = 'webp'
+
+    @classmethod
+    def has_value(cls, value: str) -> bool:
+        """Check if value is a valid screenshot format."""
+        return value in cls._value2member_map_
+
+    @classmethod
+    def get_value(cls, value: str) -> 'ScreenshotFormat':
+        """Get the value of the screenshot format."""
+        return cls(value)
+
+
+class ScreencastFormat(str, Enum):
+    """Screencast format values."""
+
+    JPEG = 'jpeg'
+    PNG = 'png'
+
+
+class TransferMode(str, Enum):
+    """Transfer mode values."""
+
+    RETURN_AS_BASE64 = 'ReturnAsBase64'
+    RETURN_AS_STREAM = 'ReturnAsStream'

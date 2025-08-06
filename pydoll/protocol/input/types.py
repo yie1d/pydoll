@@ -5,7 +5,7 @@ from typing_extensions import NotRequired, TypedDict
 TimeSinceEpoch = float
 
 
-class GestureSourceType(Enum):
+class GestureSourceType(str, Enum):
     """Gesture source types."""
 
     DEFAULT = 'default'
@@ -13,7 +13,7 @@ class GestureSourceType(Enum):
     MOUSE = 'mouse'
 
 
-class MouseButton(Enum):
+class MouseButton(str, Enum):
     """Mouse button types."""
 
     NONE = 'none'
@@ -24,7 +24,7 @@ class MouseButton(Enum):
     FORWARD = 'forward'
 
 
-class DragEventType(Enum):
+class DragEventType(str, Enum):
     """Drag event types."""
 
     DRAG_ENTER = 'dragEnter'
@@ -33,7 +33,7 @@ class DragEventType(Enum):
     DRAG_CANCEL = 'dragCancel'
 
 
-class KeyEventType(Enum):
+class KeyEventType(str, Enum):
     """Key event types."""
 
     KEY_DOWN = 'keyDown'
@@ -42,7 +42,7 @@ class KeyEventType(Enum):
     CHAR = 'char'
 
 
-class MouseEventType(Enum):
+class MouseEventType(str, Enum):
     """Mouse event types."""
 
     MOUSE_PRESSED = 'mousePressed'
@@ -51,7 +51,7 @@ class MouseEventType(Enum):
     MOUSE_WHEEL = 'mouseWheel'
 
 
-class TouchEventType(Enum):
+class TouchEventType(str, Enum):
     """Touch event types."""
 
     TOUCH_START = 'touchStart'
@@ -60,7 +60,19 @@ class TouchEventType(Enum):
     TOUCH_CANCEL = 'touchCancel'
 
 
-class PointerType(Enum):
+class KeyModifier(int, Enum):
+    ALT = 1
+    CTRL = 2
+    META = 4
+    SHIFT = 8
+
+
+class KeyLocation(int, Enum):
+    LEFT = 1
+    RIGHT = 2
+
+
+class PointerType(str, Enum):
     """Pointer types."""
 
     MOUSE = 'mouse'

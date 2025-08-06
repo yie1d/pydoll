@@ -57,7 +57,6 @@ class StorageMethod(str, Enum):
     SET_SHARED_STORAGE_ENTRY = 'Storage.setSharedStorageEntry'
     SET_SHARED_STORAGE_TRACKING = 'Storage.setSharedStorageTracking'
     SET_STORAGE_BUCKET_TRACKING = 'Storage.setStorageBucketTracking'
-    SET_PROTECTED_AUDIENCE_K_ANONYMITY = 'Storage.setProtectedAudienceKAnonymity'
 
 
 class GetStorageKeyForFrameParams(TypedDict):
@@ -271,45 +270,57 @@ GetAffectedUrlsForThirdPartyCookieMetadataResponse = Response[
 ]
 
 
-GetStorageKeyForFrame = Command[GetStorageKeyForFrameParams, GetStorageKeyForFrameResponse]
-ClearDataForOrigin = Command[ClearDataForOriginParams, EmptyResponse]
-ClearDataForStorageKey = Command[ClearDataForStorageKeyParams, EmptyResponse]
-GetCookies = Command[GetCookiesParams, GetCookiesResponse]
-SetCookies = Command[SetCookiesParams, EmptyResponse]
-ClearCookies = Command[ClearCookiesParams, EmptyResponse]
-GetUsageAndQuota = Command[GetUsageAndQuotaParams, GetUsageAndQuotaResponse]
-OverrideQuotaForOrigin = Command[OverrideQuotaForOriginParams, EmptyResponse]
-TrackCacheStorageForOrigin = Command[TrackCacheStorageForOriginParams, EmptyResponse]
-TrackCacheStorageForStorageKey = Command[TrackCacheStorageForStorageKeyParams, EmptyResponse]
-TrackIndexedDBForOrigin = Command[TrackIndexedDBForOriginParams, EmptyResponse]
-TrackIndexedDBForStorageKey = Command[TrackIndexedDBForStorageKeyParams, EmptyResponse]
-UntrackCacheStorageForOrigin = Command[UntrackCacheStorageForOriginParams, EmptyResponse]
-UntrackCacheStorageForStorageKey = Command[UntrackCacheStorageForStorageKeyParams, EmptyResponse]
-UntrackIndexedDBForOrigin = Command[UntrackIndexedDBForOriginParams, EmptyResponse]
-UntrackIndexedDBForStorageKey = Command[UntrackIndexedDBForStorageKeyParams, EmptyResponse]
-GetTrustTokens = Command[EmptyParams, GetTrustTokensResponse]
-ClearTrustTokens = Command[ClearTrustTokensParams, EmptyResponse]
-GetInterestGroupDetails = Command[GetInterestGroupDetailsParams, GetInterestGroupDetailsResponse]
-SetInterestGroupTracking = Command[SetInterestGroupTrackingParams, EmptyResponse]
-SetInterestGroupAuctionTracking = Command[SetInterestGroupAuctionTrackingParams, EmptyResponse]
-GetSharedStorageMetadata = Command[GetSharedStorageMetadataParams, GetSharedStorageMetadataResponse]
-GetSharedStorageEntries = Command[GetSharedStorageEntriesParams, GetSharedStorageEntriesResponse]
-SetSharedStorageEntry = Command[SetSharedStorageEntryParams, EmptyResponse]
-DeleteSharedStorageEntry = Command[DeleteSharedStorageEntryParams, EmptyResponse]
-ClearSharedStorageEntries = Command[ClearSharedStorageEntriesParams, EmptyResponse]
-ResetSharedStorageBudget = Command[ResetSharedStorageBudgetParams, EmptyResponse]
-SetSharedStorageTracking = Command[SetSharedStorageTrackingParams, EmptyResponse]
-SetStorageBucketTracking = Command[SetStorageBucketTrackingParams, EmptyResponse]
-DeleteStorageBucket = Command[DeleteStorageBucketParams, EmptyResponse]
-RunBounceTrackingMitigations = Command[EmptyParams, RunBounceTrackingMitigationsResponse]
-SetAttributionReportingLocalTestingMode = Command[
+GetStorageKeyForFrameCommand = Command[GetStorageKeyForFrameParams, GetStorageKeyForFrameResponse]
+ClearDataForOriginCommand = Command[ClearDataForOriginParams, EmptyResponse]
+ClearDataForStorageKeyCommand = Command[ClearDataForStorageKeyParams, EmptyResponse]
+GetCookiesCommand = Command[GetCookiesParams, GetCookiesResponse]
+SetCookiesCommand = Command[SetCookiesParams, EmptyResponse]
+ClearCookiesCommand = Command[ClearCookiesParams, EmptyResponse]
+GetUsageAndQuotaCommand = Command[GetUsageAndQuotaParams, GetUsageAndQuotaResponse]
+OverrideQuotaForOriginCommand = Command[OverrideQuotaForOriginParams, EmptyResponse]
+TrackCacheStorageForOriginCommand = Command[TrackCacheStorageForOriginParams, EmptyResponse]
+TrackCacheStorageForStorageKeyCommand = Command[TrackCacheStorageForStorageKeyParams, EmptyResponse]
+TrackIndexedDBForOriginCommand = Command[TrackIndexedDBForOriginParams, EmptyResponse]
+TrackIndexedDBForStorageKeyCommand = Command[TrackIndexedDBForStorageKeyParams, EmptyResponse]
+UntrackCacheStorageForOriginCommand = Command[UntrackCacheStorageForOriginParams, EmptyResponse]
+UntrackCacheStorageForStorageKeyCommand = Command[
+    UntrackCacheStorageForStorageKeyParams, EmptyResponse
+]
+UntrackIndexedDBForOriginCommand = Command[UntrackIndexedDBForOriginParams, EmptyResponse]
+UntrackIndexedDBForStorageKeyCommand = Command[UntrackIndexedDBForStorageKeyParams, EmptyResponse]
+GetTrustTokensCommand = Command[EmptyParams, GetTrustTokensResponse]
+ClearTrustTokensCommand = Command[ClearTrustTokensParams, EmptyResponse]
+GetInterestGroupDetailsCommand = Command[
+    GetInterestGroupDetailsParams, GetInterestGroupDetailsResponse
+]
+SetInterestGroupTrackingCommand = Command[SetInterestGroupTrackingParams, EmptyResponse]
+SetInterestGroupAuctionTrackingCommand = Command[
+    SetInterestGroupAuctionTrackingParams, EmptyResponse
+]
+GetSharedStorageMetadataCommand = Command[
+    GetSharedStorageMetadataParams, GetSharedStorageMetadataResponse
+]
+GetSharedStorageEntriesCommand = Command[
+    GetSharedStorageEntriesParams, GetSharedStorageEntriesResponse
+]
+SetSharedStorageEntryCommand = Command[SetSharedStorageEntryParams, EmptyResponse]
+DeleteSharedStorageEntryCommand = Command[DeleteSharedStorageEntryParams, EmptyResponse]
+ClearSharedStorageEntriesCommand = Command[ClearSharedStorageEntriesParams, EmptyResponse]
+ResetSharedStorageBudgetCommand = Command[ResetSharedStorageBudgetParams, EmptyResponse]
+SetSharedStorageTrackingCommand = Command[SetSharedStorageTrackingParams, EmptyResponse]
+SetStorageBucketTrackingCommand = Command[SetStorageBucketTrackingParams, EmptyResponse]
+DeleteStorageBucketCommand = Command[DeleteStorageBucketParams, EmptyResponse]
+RunBounceTrackingMitigationsCommand = Command[EmptyParams, RunBounceTrackingMitigationsResponse]
+SetAttributionReportingLocalTestingModeCommand = Command[
     SetAttributionReportingLocalTestingModeParams, EmptyResponse
 ]
-SetAttributionReportingTracking = Command[SetAttributionReportingTrackingParams, EmptyResponse]
-SendPendingAttributionReports = Command[EmptyParams, SendPendingAttributionReportsResponse]
-GetRelatedWebsiteSets = Command[EmptyParams, GetRelatedWebsiteSetsResponse]
-GetAffectedUrlsForThirdPartyCookieMetadata = Command[
+SetAttributionReportingTrackingCommand = Command[
+    SetAttributionReportingTrackingParams, EmptyResponse
+]
+SendPendingAttributionReportsCommand = Command[EmptyParams, SendPendingAttributionReportsResponse]
+GetRelatedWebsiteSetsCommand = Command[EmptyParams, GetRelatedWebsiteSetsResponse]
+GetAffectedUrlsForThirdPartyCookieMetadataCommand = Command[
     GetAffectedUrlsForThirdPartyCookieMetadataParams,
     GetAffectedUrlsForThirdPartyCookieMetadataResponse,
 ]
-SetProtectedAudienceKAnonymity = Command[SetProtectedAudienceKAnonymityParams, EmptyResponse]
+SetProtectedAudienceKAnonymityCommand = Command[SetProtectedAudienceKAnonymityParams, EmptyResponse]

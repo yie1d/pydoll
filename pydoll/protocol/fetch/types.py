@@ -5,21 +5,21 @@ from typing_extensions import NotRequired, TypedDict
 from pydoll.protocol.network.types import ResourceType
 
 
-class RequestStage(Enum):
+class RequestStage(str, Enum):
     """Stages of the request to handle."""
 
     REQUEST = 'Request'
     RESPONSE = 'Response'
 
 
-class AuthChallengeSource(Enum):
+class AuthChallengeSource(str, Enum):
     """Source of the authentication challenge."""
 
     SERVER = 'Server'
     PROXY = 'Proxy'
 
 
-class AuthChallengeResponseType(Enum):
+class AuthChallengeResponseType(str, Enum):
     """The decision on what to do in response to the authorization challenge."""
 
     DEFAULT = 'Default'

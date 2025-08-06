@@ -393,3 +393,9 @@ class AttributionReportingReportResult(str, Enum):
     PROHIBITED = 'prohibited'
     FAILED_TO_ASSEMBLE = 'failedToAssemble'
     EXPIRED = 'expired'
+
+
+class RelatedWebsiteSet(TypedDict):
+    primarySites: list[str]
+    associatedSites: list[str]
+    serviceSites: list[str]

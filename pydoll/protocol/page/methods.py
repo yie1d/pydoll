@@ -11,6 +11,10 @@ from pydoll.protocol.page.types import (
     AdScriptAncestry,
     AppManifestError,
     AppManifestParsedProperties,
+    AutoResponseMode,
+    CompilationCacheParams,
+    FontFamilies,
+    FontSizes,
     FrameId,
     FrameResourceTree,
     FrameTree,
@@ -20,64 +24,72 @@ from pydoll.protocol.page.types import (
     OriginTrial,
     PermissionsPolicyFeatureState,
     ReferrerPolicy,
+    ScreencastFormat,
+    ScreenshotFormat,
+    ScriptFontFamilies,
     ScriptIdentifier,
+    TransferMode,
     TransitionType,
     Viewport,
     VisualViewport,
     WebAppManifest,
+    WebLifecycleState,
 )
 from pydoll.protocol.runtime.types import ExecutionContextId
 
 
 class PageMethod(str, Enum):
+    ADD_SCRIPT_TO_EVALUATE_ON_LOAD = 'Page.addScriptToEvaluateOnLoad'
     ADD_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT = 'Page.addScriptToEvaluateOnNewDocument'
     BRING_TO_FRONT = 'Page.bringToFront'
     CAPTURE_SCREENSHOT = 'Page.captureScreenshot'
+    CAPTURE_SNAPSHOT = 'Page.captureSnapshot'
+    CLEAR_COMPILATION_CACHE = 'Page.clearCompilationCache'
     CLOSE = 'Page.close'
+    CRASH = 'Page.crash'
     CREATE_ISOLATED_WORLD = 'Page.createIsolatedWorld'
     DISABLE = 'Page.disable'
     ENABLE = 'Page.enable'
-    GET_APP_MANIFEST = 'Page.getAppManifest'
-    GET_FRAME_TREE = 'Page.getFrameTree'
-    GET_LAYOUT_METRICS = 'Page.getLayoutMetrics'
-    GET_NAVIGATION_HISTORY = 'Page.getNavigationHistory'
-    HANDLE_JAVASCRIPT_DIALOG = 'Page.handleJavaScriptDialog'
-    NAVIGATE = 'Page.navigate'
-    NAVIGATE_TO_HISTORY_ENTRY = 'Page.navigateToHistoryEntry'
-    PRINT_TO_PDF = 'Page.printToPDF'
-    RELOAD = 'Page.reload'
-    REMOVE_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT = 'Page.removeScriptToEvaluateOnNewDocument'
-    RESET_NAVIGATION_HISTORY = 'Page.resetNavigationHistory'
-    SET_BYPASS_CSP = 'Page.setBypassCSP'
-    SET_DOCUMENT_CONTENT = 'Page.setDocumentContent'
-    SET_INTERCEPT_FILE_CHOOSER_DIALOG = 'Page.setInterceptFileChooserDialog'
-    SET_LIFECYCLE_EVENTS_ENABLED = 'Page.setLifecycleEventsEnabled'
-    STOP_LOADING = 'Page.stopLoading'
-    ADD_COMPILATION_CACHE = 'Page.addCompilationCache'
-    CAPTURE_SNAPSHOT = 'Page.captureSnapshot'
-    CLEAR_COMPILATION_CACHE = 'Page.clearCompilationCache'
-    CRASH = 'Page.crash'
     GENERATE_TEST_REPORT = 'Page.generateTestReport'
     GET_AD_SCRIPT_ANCESTRY_IDS = 'Page.getAdScriptAncestryIds'
     GET_APP_ID = 'Page.getAppId'
+    GET_APP_MANIFEST = 'Page.getAppManifest'
+    GET_FRAME_TREE = 'Page.getFrameTree'
     GET_INSTALLABILITY_ERRORS = 'Page.getInstallabilityErrors'
+    GET_LAYOUT_METRICS = 'Page.getLayoutMetrics'
+    GET_MANIFEST_ICONS = 'Page.getManifestIcons'
+    GET_NAVIGATION_HISTORY = 'Page.getNavigationHistory'
     GET_ORIGIN_TRIALS = 'Page.getOriginTrials'
     GET_PERMISSIONS_POLICY_STATE = 'Page.getPermissionsPolicyState'
     GET_RESOURCE_CONTENT = 'Page.getResourceContent'
     GET_RESOURCE_TREE = 'Page.getResourceTree'
+    HANDLE_JAVASCRIPT_DIALOG = 'Page.handleJavaScriptDialog'
+    NAVIGATE = 'Page.navigate'
+    NAVIGATE_TO_HISTORY_ENTRY = 'Page.navigateToHistoryEntry'
+    PRINT_TO_PDF = 'Page.printToPDF'
     PRODUCE_COMPILATION_CACHE = 'Page.produceCompilationCache'
+    RELOAD = 'Page.reload'
+    REMOVE_SCRIPT_TO_EVALUATE_ON_LOAD = 'Page.removeScriptToEvaluateOnLoad'
+    REMOVE_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT = 'Page.removeScriptToEvaluateOnNewDocument'
+    RESET_NAVIGATION_HISTORY = 'Page.resetNavigationHistory'
     SCREENCAST_FRAME_ACK = 'Page.screencastFrameAck'
     SEARCH_IN_RESOURCE = 'Page.searchInResource'
     SET_AD_BLOCKING_ENABLED = 'Page.setAdBlockingEnabled'
+    SET_BYPASS_CSP = 'Page.setBypassCSP'
+    SET_DOCUMENT_CONTENT = 'Page.setDocumentContent'
     SET_FONT_FAMILIES = 'Page.setFontFamilies'
     SET_FONT_SIZES = 'Page.setFontSizes'
+    SET_INTERCEPT_FILE_CHOOSER_DIALOG = 'Page.setInterceptFileChooserDialog'
+    SET_LIFECYCLE_EVENTS_ENABLED = 'Page.setLifecycleEventsEnabled'
     SET_PRERENDERING_ALLOWED = 'Page.setPrerenderingAllowed'
     SET_RPH_REGISTRATION_MODE = 'Page.setRPHRegistrationMode'
     SET_SPC_TRANSACTION_MODE = 'Page.setSPCTransactionMode'
     SET_WEB_LIFECYCLE_STATE = 'Page.setWebLifecycleState'
     START_SCREENCAST = 'Page.startScreencast'
+    STOP_LOADING = 'Page.stopLoading'
     STOP_SCREENCAST = 'Page.stopScreencast'
     WAIT_FOR_DEBUGGER = 'Page.waitForDebugger'
+    ADD_COMPILATION_CACHE = 'Page.addCompilationCache'
 
 
 class AddScriptToEvaluateOnNewDocumentParams(TypedDict):
@@ -92,7 +104,7 @@ class AddScriptToEvaluateOnNewDocumentParams(TypedDict):
 class CaptureScreenshotParams(TypedDict, total=False):
     """Parameters for captureScreenshot."""
 
-    format: str
+    format: ScreenshotFormat
     quality: int
     clip: Viewport
     fromSurface: bool
@@ -168,6 +180,10 @@ class NavigateToHistoryEntryParams(TypedDict):
     entryId: int
 
 
+class EnableParams(TypedDict):
+    enableFileChooserOpenedEvent: NotRequired[bool]
+
+
 class PrintToPDFParams(TypedDict, total=False):
     """Parameters for printToPDF."""
 
@@ -185,7 +201,7 @@ class PrintToPDFParams(TypedDict, total=False):
     headerTemplate: str
     footerTemplate: str
     preferCSSPageSize: bool
-    transferMode: str
+    transferMode: TransferMode
     generateTaggedPDF: bool
     generateDocumentOutline: bool
 
@@ -232,6 +248,124 @@ class SetBypassCSPParams(TypedDict):
     enabled: bool
 
 
+class AddScriptToEvaluateOnLoadParams(TypedDict):
+    """Parameters for addScriptToEvaluateOnLoad."""
+
+    scriptSource: str
+
+
+class SetDocumentContentParams(TypedDict):
+    """Parameters for setDocumentContent."""
+
+    frameId: FrameId
+    html: str
+
+
+class SetInterceptFileChooserDialogParams(TypedDict):
+    """Parameters for setInterceptFileChooserDialog."""
+
+    enabled: bool
+    cancel: NotRequired[bool]
+
+
+class SetLifecycleEventsEnabledParams(TypedDict):
+    """Parameters for setLifecycleEventsEnabled."""
+
+    enabled: bool
+
+
+class AddCompilationCacheParams(TypedDict):
+    """Parameters for addCompilationCache."""
+
+    url: str
+    data: str
+
+
+class GenerateTestReportParams(TypedDict):
+    """Parameters for generateTestReport."""
+
+    message: str
+    group: NotRequired[str]
+
+
+class GetAdScriptAncestryIdsParams(TypedDict):
+    """Parameters for getAdScriptAncestryIds."""
+
+    frameId: FrameId
+
+
+class GetAppIdParams(TypedDict, total=False):
+    """Parameters for getAppId."""
+
+    appId: str
+    recommendedId: str
+
+
+class GetManifestIconsParams(TypedDict):
+    """Parameters for getManifestIcons."""
+
+    pass
+
+
+class RemoveScriptToEvaluateOnLoadParams(TypedDict):
+    """Parameters for removeScriptToEvaluateOnLoad."""
+
+    identifier: ScriptIdentifier
+
+
+class SetFontFamiliesParams(TypedDict):
+    """Parameters for setFontFamilies."""
+
+    fontFamilies: FontFamilies
+    forScripts: NotRequired[list[ScriptFontFamilies]]
+
+
+class SetFontSizesParams(TypedDict):
+    """Parameters for setFontSizes."""
+
+    fontSizes: FontSizes
+
+
+class SetPrerenderingAllowedParams(TypedDict):
+    """Parameters for setPrerenderingAllowed."""
+
+    isAllowed: bool
+
+
+class SetRPHRegistrationModeParams(TypedDict):
+    """Parameters for setRPHRegistrationMode."""
+
+    mode: AutoResponseMode
+
+
+class SetSPCTransactionModeParams(TypedDict):
+    """Parameters for setSPCTransactionMode."""
+
+    mode: AutoResponseMode
+
+
+class SetWebLifecycleStateParams(TypedDict):
+    """Parameters for setWebLifecycleState."""
+
+    state: WebLifecycleState
+
+
+class StartScreencastParams(TypedDict, total=False):
+    """Parameters for startScreencast."""
+
+    format: ScreencastFormat
+    quality: int
+    maxWidth: int
+    maxHeight: int
+    everyNthFrame: int
+
+
+class ProduceCompilationCacheParams(TypedDict):
+    """Parameters for produceCompilationCache."""
+
+    scripts: list[CompilationCacheParams]
+
+
 class AddScriptToEvaluateOnNewDocumentResult(TypedDict):
     identifier: ScriptIdentifier
 
@@ -261,6 +395,8 @@ class GetInstallabilityErrorsResult(TypedDict):
 
 
 class GetAppIdResult(TypedDict, total=False):
+    """Result for getAppId."""
+
     appId: str
     recommendedId: str
 
@@ -322,19 +458,40 @@ class NavigateResult(TypedDict):
     isDownload: NotRequired[bool]
 
 
+class AddScriptToEvaluateOnLoadResult(TypedDict):
+    """Result for addScriptToEvaluateOnLoad."""
+
+    identifier: ScriptIdentifier
+
+
+class GetManifestIconsResult(TypedDict):
+    """Result for getManifestIcons."""
+
+    primaryIcon: NotRequired[str]
+
+
+class GetAdScriptAncestryIdsResult(TypedDict):
+    """Result for getAdScriptAncestryIds."""
+
+    adScriptAncestry: NotRequired[AdScriptAncestry]
+
+
+AddScriptToEvaluateOnLoadResponse = Response[AddScriptToEvaluateOnLoadResult]
 AddScriptToEvaluateOnNewDocumentResponse = Response[AddScriptToEvaluateOnNewDocumentResult]
 CaptureScreenshotResponse = Response[CaptureScreenshotResult]
 CaptureSnapshotResponse = Response[CaptureSnapshotResult]
 CreateIsolatedWorldResponse = Response[CreateIsolatedWorldResult]
-GetAppManifestResponse = Response[GetAppManifestResult]
-GetInstallabilityErrorsResponse = Response[GetInstallabilityErrorsResult]
-GetAppIdResponse = Response[GetAppIdResult]
+GetAdScriptAncestryIdsResponse = Response[GetAdScriptAncestryIdsResult]
 GetAdScriptAncestryResponse = Response[GetAdScriptAncestryResult]
+GetAppIdResponse = Response[GetAppIdResult]
+GetAppManifestResponse = Response[GetAppManifestResult]
 GetFrameTreeResponse = Response[GetFrameTreeResult]
+GetInstallabilityErrorsResponse = Response[GetInstallabilityErrorsResult]
 GetLayoutMetricsResponse = Response[GetLayoutMetricsResult]
+GetManifestIconsResponse = Response[GetManifestIconsResult]
 GetNavigationHistoryResponse = Response[GetNavigationHistoryResult]
-GetPermissionsPolicyStateResponse = Response[GetPermissionsPolicyStateResult]
 GetOriginTrialsResponse = Response[GetOriginTrialsResult]
+GetPermissionsPolicyStateResponse = Response[GetPermissionsPolicyStateResult]
 GetResourceContentResponse = Response[GetResourceContentResult]
 GetResourceTreeResponse = Response[GetResourceTreeResult]
 NavigateResponse = Response[NavigateResult]
@@ -342,35 +499,65 @@ PrintToPDFResponse = Response[PrintToPDFResult]
 SearchInResourceResponse = Response[SearchInResourceResult]
 
 
+AddCompilationCacheCommand = Command[AddCompilationCacheParams, EmptyResponse]
+AddScriptToEvaluateOnLoadCommand = Command[
+    AddScriptToEvaluateOnLoadParams, AddScriptToEvaluateOnLoadResponse
+]
 AddScriptToEvaluateOnNewDocumentCommand = Command[
     AddScriptToEvaluateOnNewDocumentParams, AddScriptToEvaluateOnNewDocumentResponse
 ]
+BringToFrontCommand = Command[EmptyParams, EmptyResponse]
 CaptureScreenshotCommand = Command[CaptureScreenshotParams, CaptureScreenshotResponse]
 CaptureSnapshotCommand = Command[CaptureSnapshotParams, CaptureSnapshotResponse]
+ClearCompilationCacheCommand = Command[EmptyParams, EmptyResponse]
+CloseCommand = Command[EmptyParams, EmptyResponse]
+CrashCommand = Command[EmptyParams, EmptyResponse]
 CreateIsolatedWorldCommand = Command[CreateIsolatedWorldParams, CreateIsolatedWorldResponse]
-EnableCommand = Command[EmptyParams, EmptyResponse]
-GetAppManifestCommand = Command[GetAppManifestParams, GetAppManifestResponse]
-GetInstallabilityErrorsCommand = Command[EmptyParams, GetInstallabilityErrorsResponse]
-GetAppIdCommand = Command[EmptyParams, GetAppIdResponse]
+DisableCommand = Command[EmptyParams, EmptyResponse]
+EnableCommand = Command[EnableParams, EmptyResponse]
+GenerateTestReportCommand = Command[GenerateTestReportParams, EmptyResponse]
 GetAdScriptAncestryCommand = Command[GetAdScriptAncestryParams, GetAdScriptAncestryResponse]
+GetAdScriptAncestryIdsCommand = Command[
+    GetAdScriptAncestryIdsParams, GetAdScriptAncestryIdsResponse
+]
+GetAppIdCommand = Command[GetAppIdParams, GetAppIdResponse]
+GetAppManifestCommand = Command[GetAppManifestParams, GetAppManifestResponse]
 GetFrameTreeCommand = Command[EmptyParams, GetFrameTreeResponse]
+GetInstallabilityErrorsCommand = Command[EmptyParams, GetInstallabilityErrorsResponse]
 GetLayoutMetricsCommand = Command[EmptyParams, GetLayoutMetricsResponse]
+GetManifestIconsCommand = Command[EmptyParams, GetManifestIconsResponse]
 GetNavigationHistoryCommand = Command[EmptyParams, GetNavigationHistoryResponse]
+GetOriginTrialsCommand = Command[GetOriginTrialsParams, GetOriginTrialsResponse]
 GetPermissionsPolicyStateCommand = Command[
     GetPermissionsPolicyStateParams, GetPermissionsPolicyStateResponse
 ]
-GetOriginTrialsCommand = Command[GetOriginTrialsParams, GetOriginTrialsResponse]
 GetResourceContentCommand = Command[GetResourceContentParams, GetResourceContentResponse]
 GetResourceTreeCommand = Command[EmptyParams, GetResourceTreeResponse]
 HandleJavaScriptDialogCommand = Command[HandleJavaScriptDialogParams, EmptyResponse]
 NavigateCommand = Command[NavigateParams, NavigateResponse]
 NavigateToHistoryEntryCommand = Command[NavigateToHistoryEntryParams, EmptyResponse]
 PrintToPDFCommand = Command[PrintToPDFParams, PrintToPDFResponse]
+ProduceCompilationCacheCommand = Command[ProduceCompilationCacheParams, EmptyResponse]
 ReloadCommand = Command[ReloadParams, EmptyResponse]
+RemoveScriptToEvaluateOnLoadCommand = Command[RemoveScriptToEvaluateOnLoadParams, EmptyResponse]
 RemoveScriptToEvaluateOnNewDocumentCommand = Command[
     RemoveScriptToEvaluateOnNewDocumentParams, EmptyResponse
 ]
+ResetNavigationHistoryCommand = Command[EmptyParams, EmptyResponse]
 ScreencastFrameAckCommand = Command[ScreencastFrameAckParams, EmptyResponse]
 SearchInResourceCommand = Command[SearchInResourceParams, SearchInResourceResponse]
 SetAdBlockingEnabledCommand = Command[SetAdBlockingEnabledParams, EmptyResponse]
 SetBypassCSPCommand = Command[SetBypassCSPParams, EmptyResponse]
+SetDocumentContentCommand = Command[SetDocumentContentParams, EmptyResponse]
+SetFontFamiliesCommand = Command[SetFontFamiliesParams, EmptyResponse]
+SetFontSizesCommand = Command[SetFontSizesParams, EmptyResponse]
+SetInterceptFileChooserDialogCommand = Command[SetInterceptFileChooserDialogParams, EmptyResponse]
+SetLifecycleEventsEnabledCommand = Command[SetLifecycleEventsEnabledParams, EmptyResponse]
+SetPrerenderingAllowedCommand = Command[SetPrerenderingAllowedParams, EmptyResponse]
+SetRPHRegistrationModeCommand = Command[SetRPHRegistrationModeParams, EmptyResponse]
+SetSPCTransactionModeCommand = Command[SetSPCTransactionModeParams, EmptyResponse]
+SetWebLifecycleStateCommand = Command[SetWebLifecycleStateParams, EmptyResponse]
+StartScreencastCommand = Command[StartScreencastParams, EmptyResponse]
+StopLoadingCommand = Command[EmptyParams, EmptyResponse]
+StopScreencastCommand = Command[EmptyParams, EmptyResponse]
+WaitForDebuggerCommand = Command[EmptyParams, EmptyResponse]

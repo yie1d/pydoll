@@ -1,5 +1,3 @@
-from enum import Enum
-
 from typing_extensions import NotRequired, TypedDict
 
 from pydoll.protocol.browser.types import BrowserContextID
@@ -35,12 +33,3 @@ TargetFilter = list[FilterEntry]
 class RemoteLocation(TypedDict):
     host: str
     port: int
-
-
-class WindowState(str, Enum):
-    """The state of the target window."""
-
-    NORMAL = 'normal'
-    MINIMIZED = 'minimized'
-    MAXIMIZED = 'maximized'
-    FULLSCREEN = 'fullscreen'

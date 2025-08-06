@@ -8,7 +8,7 @@ BackendNodeId = int
 Quad = Annotated[list[float], 'Format: [x1, y1, x2, y2, x3, y3, x4, y4]']
 
 
-class PseudoType(Enum):
+class PseudoType(str, Enum):
     """Pseudo element type."""
 
     FIRST_LINE = 'first-line'
@@ -51,7 +51,7 @@ class PseudoType(Enum):
     PERMISSION_ICON = 'permission-icon'
 
 
-class ShadowRootType(Enum):
+class ShadowRootType(str, Enum):
     """Shadow root type."""
 
     USER_AGENT = 'user-agent'
@@ -59,7 +59,7 @@ class ShadowRootType(Enum):
     CLOSED = 'closed'
 
 
-class CompatibilityMode(Enum):
+class CompatibilityMode(str, Enum):
     """Document compatibility mode."""
 
     QUIRKS_MODE = 'QuirksMode'
@@ -67,7 +67,7 @@ class CompatibilityMode(Enum):
     NO_QUIRKS_MODE = 'NoQuirksMode'
 
 
-class PhysicalAxes(Enum):
+class PhysicalAxes(str, Enum):
     """ContainerSelector physical axes."""
 
     HORIZONTAL = 'Horizontal'
@@ -75,7 +75,7 @@ class PhysicalAxes(Enum):
     BOTH = 'Both'
 
 
-class LogicalAxes(Enum):
+class LogicalAxes(str, Enum):
     """ContainerSelector logical axes."""
 
     INLINE = 'Inline'
@@ -83,21 +83,21 @@ class LogicalAxes(Enum):
     BOTH = 'Both'
 
 
-class ScrollOrientation(Enum):
+class ScrollOrientation(str, Enum):
     """Physical scroll orientation."""
 
     HORIZONTAL = 'horizontal'
     VERTICAL = 'vertical'
 
 
-class IncludeWhitespace(Enum):
+class IncludeWhitespace(str, Enum):
     """Include whitespace options."""
 
     NONE = 'none'
     ALL = 'all'
 
 
-class RelationType(Enum):
+class RelationType(str, Enum):
     """Element relation types."""
 
     POPOVER_TARGET = 'PopoverTarget'

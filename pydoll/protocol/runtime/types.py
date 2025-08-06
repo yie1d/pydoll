@@ -12,7 +12,7 @@ TimeDelta = float
 UniqueDebuggerId = str
 
 
-class SerializationType(Enum):
+class SerializationType(str, Enum):
     """Serialization types."""
 
     DEEP = 'deep'
@@ -20,7 +20,7 @@ class SerializationType(Enum):
     ID_ONLY = 'idOnly'
 
 
-class DeepSerializedValueType(Enum):
+class DeepSerializedValueType(str, Enum):
     """Deep serialized value types."""
 
     UNDEFINED = 'undefined'
@@ -49,7 +49,7 @@ class DeepSerializedValueType(Enum):
     GENERATOR = 'generator'
 
 
-class RemoteObjectType(Enum):
+class RemoteObjectType(str, Enum):
     """Remote object types."""
 
     OBJECT = 'object'
@@ -62,7 +62,7 @@ class RemoteObjectType(Enum):
     BIGINT = 'bigint'
 
 
-class RemoteObjectSubtype(Enum):
+class RemoteObjectSubtype(str, Enum):
     """Remote object subtypes."""
 
     ARRAY = 'array'
@@ -86,7 +86,7 @@ class RemoteObjectSubtype(Enum):
     WASMVALUE = 'wasmvalue'
 
 
-class ObjectPreviewType(Enum):
+class ObjectPreviewType(str, Enum):
     """Object preview types."""
 
     OBJECT = 'object'
@@ -99,7 +99,7 @@ class ObjectPreviewType(Enum):
     BIGINT = 'bigint'
 
 
-class ObjectPreviewSubtype(Enum):
+class ObjectPreviewSubtype(str, Enum):
     """Object preview subtypes."""
 
     ARRAY = 'array'
@@ -123,7 +123,7 @@ class ObjectPreviewSubtype(Enum):
     WASMVALUE = 'wasmvalue'
 
 
-class PropertyPreviewType(Enum):
+class PropertyPreviewType(str, Enum):
     """Property preview types."""
 
     OBJECT = 'object'
@@ -137,7 +137,7 @@ class PropertyPreviewType(Enum):
     BIGINT = 'bigint'
 
 
-class PropertyPreviewSubtype(Enum):
+class PropertyPreviewSubtype(str, Enum):
     """Property preview subtypes."""
 
     ARRAY = 'array'
