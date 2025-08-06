@@ -1,5 +1,11 @@
 from enum import Enum
 
+from typing_extensions import TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.fetch.types import AuthChallenge
+from pydoll.protocol.network.types import ErrorReason, Request, ResourceType
+
 
 class FetchEvent(str, Enum):
     """
@@ -55,3 +61,29 @@ class FetchEvent(str, Enum):
         redirectedRequestId (RequestId): If the request is due to a redirect response
             from the server, the id of the request that has caused the redirect.
     """
+
+
+class AuthRequiredEventParams(TypedDict):
+    """Parameters for the AuthRequired event."""
+
+    requestId: str
+    request: Request
+    frameId: str
+    resourceType: ResourceType
+    authChallenge: AuthChallenge
+
+
+class RequestPausedEventParams(TypedDict):
+    """Parameters for the RequestPaused event."""
+
+    requestId: str
+    request: Request
+    frameId: str
+    resourceType: ResourceType
+    responseErrorReason: ErrorReason
+    responseStatusCode: int
+    responseStatusText: str
+
+
+RequestPausedEvent = CDPEvent[RequestPausedEventParams]
+AuthRequiredEvent = CDPEvent[AuthRequiredEventParams]
