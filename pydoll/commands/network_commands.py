@@ -1,63 +1,77 @@
 from typing import Optional
 
-from pydoll.constants import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.emulation.types import UserAgentMetadata
+from pydoll.protocol.network.methods import (
+    ClearAcceptedEncodingsOverrideCommand,
+    ClearBrowserCacheCommand,
+    ClearBrowserCookiesCommand,
+    ClearCookiesCommand,
+    DeleteCookiesParams,
+    DisableCommand,
+    EmulateNetworkConditionsCommand,
+    EmulateNetworkConditionsParams,
+    EnableCommand,
+    EnableReportingApiCommand,
+    EnableReportingApiParams,
+    GetCertificateCommand,
+    GetCertificateParams,
+    GetCookiesCommand,
+    GetCookiesParams,
+    GetRequestPostDataCommand,
+    GetRequestPostDataParams,
+    GetResponseBodyCommand,
+    GetResponseBodyForInterceptionCommand,
+    GetResponseBodyForInterceptionParams,
+    GetResponseBodyParams,
+    GetSecurityIsolationStatusCommand,
+    GetSecurityIsolationStatusParams,
+    HeaderEntry,
+    LoadNetworkResourceCommand,
+    LoadNetworkResourceParams,
+    NetworkEnableParams,
+    NetworkMethod,
+    ReplayXHRCommand,
+    ReplayXHRParams,
+    SearchInResponseBodyCommand,
+    SearchInResponseBodyParams,
+    SetAcceptedEncodingsCommand,
+    SetAcceptedEncodingsParams,
+    SetAttachDebugStackCommand,
+    SetAttachDebugStackParams,
+    SetBlockedURLsCommand,
+    SetBlockedURLsParams,
+    SetBypassServiceWorkerCommand,
+    SetBypassServiceWorkerParams,
+    SetCacheDisabledCommand,
+    SetCacheDisabledParams,
+    SetCookieCommand,
+    SetCookieControlsCommand,
+    SetCookieControlsParams,
+    SetCookieParams,
+    SetCookiesCommand,
+    SetCookiesParams,
+    SetExtraHTTPHeadersCommand,
+    SetExtraHTTPHeadersParams,
+    SetUserAgentOverrideCommand,
+    SetUserAgentOverrideParams,
+    StreamResourceContentCommand,
+    StreamResourceContentParams,
+    TakeResponseBodyForInterceptionAsStreamCommand,
+    TakeResponseBodyForInterceptionAsStreamParams,
+)
+from pydoll.protocol.network.types import (
     ConnectionType,
     ContentEncoding,
+    CookiePartitionKey,
     CookiePriority,
     CookieSameSite,
     CookieSourceScheme,
-)
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.network.methods import NetworkMethod
-from pydoll.protocol.network.params import (
-    DeleteCookiesParams,
-    EmulateNetworkConditionsParams,
-    EnableReportingApiParams,
-    GetCertificateParams,
-    GetCookiesParams,
-    GetRequestPostDataParams,
-    GetResponseBodyForInterceptionParams,
-    GetResponseBodyParams,
-    GetSecurityIsolationStatusParams,
-    HeaderEntry,
-    LoadNetworkResourceParams,
-    NetworkEnableParams,
-    ReplayXHRParams,
-    SearchInResponseBodyParams,
-    SetAcceptedEncodingsParams,
-    SetAttachDebugStackParams,
-    SetBlockedURLsParams,
-    SetBypassServiceWorkerParams,
-    SetCacheDisabledParams,
-    SetCookieControlsParams,
-    SetCookieParams,
-    SetCookiesParams,
-    SetExtraHTTPHeadersParams,
-    SetUserAgentOverrideParams,
-    StreamResourceContentParams,
-    TakeResponseBodyForInterceptionAsStreamParams,
-    UserAgentMetadata,
-)
-from pydoll.protocol.network.responses import (
-    GetCertificateResponse,
-    GetCookiesResponse,
-    GetRequestPostDataResponse,
-    GetResponseBodyForInterceptionResponse,
-    GetResponseBodyResponse,
-    GetSecurityIsolationStatusResponse,
-    LoadNetworkResourceResponse,
-    SearchInResponseBodyResponse,
-    SetCookieResponse,
-    StreamResourceContentResponse,
-    TakeResponseBodyForInterceptionAsStreamResponse,
-)
-from pydoll.protocol.network.types import (
-    CookiePartitionKey,
     LoadNetworkResourceOptions,
 )
 
 
-class NetworkCommands:  # noqa: PLR0904
+class NetworkCommands:
     """
     Implementation of Chrome DevTools Protocol for the Network domain.
 
@@ -75,7 +89,7 @@ class NetworkCommands:  # noqa: PLR0904
     """
 
     @staticmethod
-    def clear_browser_cache() -> Command[Response]:
+    def clear_browser_cache() -> ClearBrowserCacheCommand:
         """
         Clears browser cache storage.
 
@@ -96,7 +110,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.CLEAR_BROWSER_CACHE)
 
     @staticmethod
-    def clear_browser_cookies() -> Command[Response]:
+    def clear_browser_cookies() -> ClearBrowserCookiesCommand:
         """
         Command to clear all cookies stored in the browser.
 
@@ -116,7 +130,7 @@ class NetworkCommands:  # noqa: PLR0904
         domain: Optional[str] = None,
         path: Optional[str] = None,
         partition_key: Optional[CookiePartitionKey] = None,
-    ) -> Command[Response]:
+    ) -> ClearCookiesCommand:
         """
         Deletes browser cookies with matching criteria.
 
@@ -147,7 +161,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.DELETE_COOKIES, params=params)
 
     @staticmethod
-    def disable() -> Command[Response]:
+    def disable() -> DisableCommand:
         """
         Stops network monitoring and event reporting.
 
@@ -171,7 +185,7 @@ class NetworkCommands:  # noqa: PLR0904
         max_total_buffer_size: Optional[int] = None,
         max_resource_buffer_size: Optional[int] = None,
         max_post_data_size: Optional[int] = None,
-    ) -> Command[Response]:
+    ) -> EnableCommand:
         """
         Enables network monitoring with configurable buffers.
 
@@ -200,7 +214,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def get_cookies(
         urls: Optional[list[str]] = None,
-    ) -> Command[GetCookiesResponse]:
+    ) -> GetCookiesCommand:
         """
         Retrieves cookies matching specified URLs.
 
@@ -226,7 +240,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def get_request_post_data(
         request_id: str,
-    ) -> Command[GetRequestPostDataResponse]:
+    ) -> GetRequestPostDataCommand:
         """
         Retrieves POST data from a specific network request.
 
@@ -251,7 +265,9 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.GET_REQUEST_POST_DATA, params=params)
 
     @staticmethod
-    def get_response_body(request_id: str) -> Command[GetResponseBodyResponse]:
+    def get_response_body(
+        request_id: str,
+    ) -> GetResponseBodyCommand:
         """
         Retrieves the full content of a network response.
 
@@ -275,7 +291,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.GET_RESPONSE_BODY, params=params)
 
     @staticmethod
-    def set_cache_disabled(cache_disabled: bool) -> Command[Response]:
+    def set_cache_disabled(cache_disabled: bool) -> SetCacheDisabledCommand:
         """
         Controls browser's cache mechanism.
 
@@ -312,7 +328,7 @@ class NetworkCommands:  # noqa: PLR0904
         source_scheme: Optional[CookieSourceScheme] = None,
         source_port: Optional[int] = None,
         partition_key: Optional[CookiePartitionKey] = None,
-    ) -> Command[SetCookieResponse]:
+    ) -> SetCookieCommand:
         """
         Creates or updates a cookie with specified attributes.
 
@@ -377,7 +393,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_COOKIE, params=params)
 
     @staticmethod
-    def set_cookies(cookies: list[SetCookieParams]) -> Command[Response]:
+    def set_cookies(cookies: list[SetCookieParams]) -> SetCookiesCommand:
         """
         Sets multiple cookies in a single operation.
 
@@ -404,7 +420,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def set_extra_http_headers(
         headers: list[HeaderEntry],
-    ) -> Command[Response]:
+    ) -> SetExtraHTTPHeadersCommand:
         """
         Applies custom HTTP headers to all subsequent requests.
 
@@ -434,7 +450,7 @@ class NetworkCommands:  # noqa: PLR0904
         accept_language: Optional[str] = None,
         platform: Optional[str] = None,
         user_agent_metadata: Optional[UserAgentMetadata] = None,
-    ) -> Command[Response]:
+    ) -> SetUserAgentOverrideCommand:
         """
         Overrides the browser's User-Agent string.
 
@@ -468,7 +484,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_USER_AGENT_OVERRIDE, params=params)
 
     @staticmethod
-    def clear_accepted_encodings_override() -> Command[Response]:
+    def clear_accepted_encodings_override() -> ClearAcceptedEncodingsOverrideCommand:
         """
         Restores default content encoding acceptance.
 
@@ -490,7 +506,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def enable_reporting_api(
         enabled: bool,
-    ) -> Command[Response]:
+    ) -> EnableReportingApiCommand:
         """
         Controls the Reporting API functionality.
 
@@ -517,7 +533,7 @@ class NetworkCommands:  # noqa: PLR0904
         query: str,
         case_sensitive: bool = False,
         is_regex: bool = False,
-    ) -> Command[SearchInResponseBodyResponse]:
+    ) -> SearchInResponseBodyCommand:
         """
         Searches for content within response bodies.
 
@@ -548,7 +564,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SEARCH_IN_RESPONSE_BODY, params=params)
 
     @staticmethod
-    def set_blocked_urls(urls: list[str]) -> Command[Response]:
+    def set_blocked_urls(urls: list[str]) -> SetBlockedURLsCommand:
         """
         Blocks specified URLs from loading.
 
@@ -575,7 +591,9 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_BLOCKED_URLS, params=params)
 
     @staticmethod
-    def set_bypass_service_worker(bypass: bool) -> Command[Response]:
+    def set_bypass_service_worker(
+        bypass: bool,
+    ) -> SetBypassServiceWorkerCommand:
         """
         Controls Service Worker interception of network requests.
 
@@ -600,7 +618,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_BYPASS_SERVICE_WORKER, params=params)
 
     @staticmethod
-    def get_certificate(origin: str) -> Command[GetCertificateResponse]:
+    def get_certificate(origin: str) -> GetCertificateCommand:
         """
         Retrieves SSL/TLS certificate information for a domain.
 
@@ -628,7 +646,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def get_response_body_for_interception(
         interception_id: str,
-    ) -> Command[GetResponseBodyForInterceptionResponse]:
+    ) -> GetResponseBodyForInterceptionCommand:
         """
         Retrieves response body from an intercepted request.
 
@@ -655,7 +673,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def set_accepted_encodings(
         encodings: list[ContentEncoding],
-    ) -> Command[Response]:
+    ) -> SetAcceptedEncodingsCommand:
         """
         Specifies accepted content encodings for requests.
 
@@ -680,7 +698,7 @@ class NetworkCommands:  # noqa: PLR0904
         return Command(method=NetworkMethod.SET_ACCEPTED_ENCODINGS, params=params)
 
     @staticmethod
-    def set_attach_debug_stack(enabled: bool) -> Command[Response]:
+    def set_attach_debug_stack(enabled: bool) -> SetAttachDebugStackCommand:
         """
         Enables/disables debug stack attachment to requests.
 
@@ -709,7 +727,7 @@ class NetworkCommands:  # noqa: PLR0904
         enable_third_party_cookie_restriction: bool,
         disable_third_party_cookie_metadata: Optional[bool] = None,
         disable_third_party_cookie_heuristics: Optional[bool] = None,
-    ) -> Command[Response]:
+    ) -> SetCookieControlsCommand:
         """
         Configures third-party cookie handling policies.
 
@@ -744,7 +762,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def stream_resource_content(
         request_id: str,
-    ) -> Command[StreamResourceContentResponse]:
+    ) -> StreamResourceContentCommand:
         """
         Enables streaming of response content.
 
@@ -771,7 +789,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def take_response_body_for_interception_as_stream(
         interception_id: str,
-    ) -> Command[TakeResponseBodyForInterceptionAsStreamResponse]:
+    ) -> TakeResponseBodyForInterceptionAsStreamCommand:
         """
         Creates a stream for intercepted response body.
 
@@ -799,7 +817,7 @@ class NetworkCommands:  # noqa: PLR0904
         )
 
     @staticmethod
-    def emulate_network_conditions(  # noqa: PLR0913, PLR0917
+    def emulate_network_conditions(
         offline: bool,
         latency: float,
         download_throughput: float,
@@ -808,7 +826,7 @@ class NetworkCommands:  # noqa: PLR0904
         packet_loss: Optional[float] = None,
         packet_queue_length: Optional[int] = None,
         packet_reordering: Optional[bool] = None,
-    ) -> Command[Response]:
+    ) -> EmulateNetworkConditionsCommand:
         """
         Emulates custom network conditions for realistic testing scenarios.
 
@@ -855,7 +873,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def get_security_isolation_status(
         frame_id: Optional[str] = None,
-    ) -> Command[GetSecurityIsolationStatusResponse]:
+    ) -> GetSecurityIsolationStatusCommand:
         """
         Retrieves security isolation information.
 
@@ -887,7 +905,7 @@ class NetworkCommands:  # noqa: PLR0904
         url: str,
         options: LoadNetworkResourceOptions,
         frame_id: Optional[str] = None,
-    ) -> Command[LoadNetworkResourceResponse]:
+    ) -> LoadNetworkResourceCommand:
         """
         Loads a network resource with specific options.
 
@@ -919,7 +937,7 @@ class NetworkCommands:  # noqa: PLR0904
     @staticmethod
     def replay_xhr(
         request_id: str,
-    ) -> Command[Response]:
+    ) -> ReplayXHRCommand:
         """
         Replays an XHR request.
 
