@@ -44,7 +44,7 @@ class FindElementsMixin:
     complex location logic themselves.
     """
 
-    async def find(  # noqa: PLR0913, PLR0917
+    async def find(
         self,
         id: Optional[str] = None,
         class_name: Optional[str] = None,
@@ -285,7 +285,7 @@ class FindElementsMixin:
         attributes.extend(['tag_name', tag_name])
         return attributes
 
-    def _get_by_and_value(  # noqa: PLR0913, PLR0917
+    def _get_by_and_value(
         self,
         by_map: dict[str, By],
         id: Optional[str] = None,
