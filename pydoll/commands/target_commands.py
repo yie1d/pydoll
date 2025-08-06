@@ -1,33 +1,38 @@
 from typing import Optional
 
-from pydoll.constants import WindowState
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.target.methods import TargetMethod
-from pydoll.protocol.target.params import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.browser.types import WindowState
+from pydoll.protocol.target.methods import (
+    ActivateTargetCommand,
     ActivateTargetParams,
+    AttachToBrowserTargetCommand,
     AttachToBrowserTargetParams,
+    AttachToTargetCommand,
     AttachToTargetParams,
+    CloseTargetCommand,
     CloseTargetParams,
+    CreateBrowserContextCommand,
     CreateBrowserContextParams,
+    CreateTargetCommand,
     CreateTargetParams,
+    DetachFromTargetCommand,
     DetachFromTargetParams,
+    DisposeBrowserContextCommand,
     DisposeBrowserContextParams,
+    GetBrowserContextsCommand,
+    GetTargetInfoCommand,
     GetTargetInfoParams,
+    GetTargetsCommand,
     GetTargetsParams,
-    RemoteLocation,
+    SetAutoAttachCommand,
     SetAutoAttachParams,
+    SetDiscoverTargetsCommand,
     SetDiscoverTargetsParams,
+    SetRemoteLocationsCommand,
     SetRemoteLocationsParams,
+    TargetMethod,
 )
-from pydoll.protocol.target.responses import (
-    AttachToBrowserTargetResponse,
-    AttachToTargetResponse,
-    CreateBrowserContextResponse,
-    CreateTargetResponse,
-    GetBrowserContextsResponse,
-    GetTargetInfoResponse,
-    GetTargetsResponse,
-)
+from pydoll.protocol.target.types import RemoteLocation
 
 
 class TargetCommands:
@@ -43,7 +48,7 @@ class TargetCommands:
     """
 
     @staticmethod
-    def activate_target(target_id: str) -> Command[Response]:
+    def activate_target(target_id: str) -> ActivateTargetCommand:
         """
         Generates a command to activate (focus) a target.
 
@@ -57,9 +62,7 @@ class TargetCommands:
         return Command(method=TargetMethod.ACTIVATE_TARGET, params=params)
 
     @staticmethod
-    def attach_to_target(
-        target_id: str, flatten: Optional[bool] = None
-    ) -> Command[AttachToTargetResponse]:
+    def attach_to_target(target_id: str, flatten: Optional[bool] = None) -> AttachToTargetCommand:
         """
         Generates a command to attach to a target with the given ID.
 
@@ -81,7 +84,7 @@ class TargetCommands:
         return Command(method=TargetMethod.ATTACH_TO_TARGET, params=params)
 
     @staticmethod
-    def close_target(target_id: str) -> Command[Response]:
+    def close_target(target_id: str) -> CloseTargetCommand:
         """
         Generates a command to close a target.
 
@@ -103,7 +106,7 @@ class TargetCommands:
         proxy_server: Optional[str] = None,
         proxy_bypass_list: Optional[str] = None,
         origins_with_universal_network_access: Optional[list[str]] = None,
-    ) -> Command[CreateBrowserContextResponse]:
+    ) -> CreateBrowserContextCommand:
         """
         Generates a command to create a new empty browser context.
 
@@ -140,7 +143,7 @@ class TargetCommands:
         return Command(method=TargetMethod.CREATE_BROWSER_CONTEXT, params=params)
 
     @staticmethod
-    def create_target(  # noqa: PLR0913, PLR0917
+    def create_target(
         url: str,
         left: Optional[int] = None,
         top: Optional[int] = None,
@@ -153,7 +156,7 @@ class TargetCommands:
         background: Optional[bool] = None,
         for_tab: Optional[bool] = None,
         hidden: Optional[bool] = None,
-    ) -> Command[CreateTargetResponse]:
+    ) -> CreateTargetCommand:
         """
         Generates a command to create a new page (target).
 
@@ -214,7 +217,7 @@ class TargetCommands:
         return Command(method=TargetMethod.CREATE_TARGET, params=params)
 
     @staticmethod
-    def detach_from_target(session_id: Optional[str] = None) -> Command[Response]:
+    def detach_from_target(session_id: Optional[str] = None) -> DetachFromTargetCommand:
         """
         Generates a command to detach a session from its target.
 
@@ -233,7 +236,7 @@ class TargetCommands:
         return Command(method=TargetMethod.DETACH_FROM_TARGET, params=params)
 
     @staticmethod
-    def dispose_browser_context(browser_context_id: str) -> Command[Response]:
+    def dispose_browser_context(browser_context_id: str) -> DisposeBrowserContextCommand:
         """
         Generates a command to delete a browser context.
 
@@ -250,7 +253,7 @@ class TargetCommands:
         return Command(method=TargetMethod.DISPOSE_BROWSER_CONTEXT, params=params)
 
     @staticmethod
-    def get_browser_contexts() -> Command[GetBrowserContextsResponse]:
+    def get_browser_contexts() -> GetBrowserContextsCommand:
         """
         Generates a command to get all browser contexts created with createBrowserContext.
 
@@ -264,7 +267,7 @@ class TargetCommands:
         return Command(method=TargetMethod.GET_BROWSER_CONTEXTS, params={})
 
     @staticmethod
-    def get_targets(filter: Optional[list] = None) -> Command[GetTargetsResponse]:
+    def get_targets(filter: Optional[list] = None) -> GetTargetsCommand:
         """
         Generates a command to retrieve a list of available targets.
 
@@ -289,10 +292,10 @@ class TargetCommands:
     @staticmethod
     def set_auto_attach(
         auto_attach: bool,
-        wait_for_debugger_on_start: Optional[bool] = None,
+        wait_for_debugger_on_start: bool = False,
         flatten: Optional[bool] = None,
         filter: Optional[list] = None,
-    ) -> Command[Response]:
+    ) -> SetAutoAttachCommand:
         """
         Generates a command to control whether to automatically attach to new targets.
 
@@ -313,9 +316,9 @@ class TargetCommands:
         Returns:
             Command: The CDP command to set auto-attach behavior.
         """
-        params = SetAutoAttachParams(autoAttach=auto_attach)
-        if wait_for_debugger_on_start is not None:
-            params['waitForDebuggerOnStart'] = wait_for_debugger_on_start
+        params = SetAutoAttachParams(
+            autoAttach=auto_attach, waitForDebuggerOnStart=wait_for_debugger_on_start
+        )
         if flatten is not None:
             params['flatten'] = flatten
         if filter is not None:
@@ -323,7 +326,9 @@ class TargetCommands:
         return Command(method=TargetMethod.SET_AUTO_ATTACH, params=params)
 
     @staticmethod
-    def set_discover_targets(discover: bool, filter: Optional[list] = None) -> Command[Response]:
+    def set_discover_targets(
+        discover: bool, filter: Optional[list] = None
+    ) -> SetDiscoverTargetsCommand:
         """
         Generates a command to control target discovery.
 
@@ -345,7 +350,7 @@ class TargetCommands:
         return Command(method=TargetMethod.SET_DISCOVER_TARGETS, params=params)
 
     @staticmethod
-    def attach_to_browser_target(session_id: str) -> Command[AttachToBrowserTargetResponse]:
+    def attach_to_browser_target(session_id: str) -> AttachToBrowserTargetCommand:
         """
         Generates a command to attach to the browser target.
 
@@ -364,7 +369,7 @@ class TargetCommands:
         return Command(method=TargetMethod.ATTACH_TO_BROWSER_TARGET, params=params)
 
     @staticmethod
-    def get_target_info(target_id: str) -> Command[GetTargetInfoResponse]:
+    def get_target_info(target_id: str) -> GetTargetInfoCommand:
         """
         Generates a command to get information about a specific target.
 
@@ -382,7 +387,7 @@ class TargetCommands:
         return Command(method=TargetMethod.GET_TARGET_INFO, params=params)
 
     @staticmethod
-    def set_remote_locations(locations: list[RemoteLocation]) -> Command[Response]:
+    def set_remote_locations(locations: list[RemoteLocation]) -> SetRemoteLocationsCommand:
         """
         Generates a command to enable target discovery for specified remote locations.
 
