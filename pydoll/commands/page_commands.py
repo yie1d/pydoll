@@ -1,80 +1,108 @@
 from typing import Literal, Optional
 
-from pydoll.constants import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.page.methods import (
+    AddCompilationCacheCommand,
+    AddCompilationCacheParams,
+    AddScriptToEvaluateOnNewDocumentCommand,
+    AddScriptToEvaluateOnNewDocumentParams,
+    BringToFrontCommand,
+    CaptureScreenshotCommand,
+    CaptureScreenshotParams,
+    CaptureSnapshotCommand,
+    CaptureSnapshotParams,
+    ClearCompilationCacheCommand,
+    CloseCommand,
+    CrashCommand,
+    CreateIsolatedWorldCommand,
+    CreateIsolatedWorldParams,
+    DisableCommand,
+    EnableCommand,
+    EnableParams,
+    GenerateTestReportCommand,
+    GenerateTestReportParams,
+    GetAdScriptAncestryIdsCommand,
+    GetAdScriptAncestryIdsParams,
+    GetAppIdCommand,
+    GetAppIdParams,
+    GetAppManifestCommand,
+    GetAppManifestParams,
+    GetFrameTreeCommand,
+    GetInstallabilityErrorsCommand,
+    GetLayoutMetricsCommand,
+    GetNavigationHistoryCommand,
+    GetOriginTrialsCommand,
+    GetOriginTrialsParams,
+    GetPermissionsPolicyStateCommand,
+    GetPermissionsPolicyStateParams,
+    GetResourceContentCommand,
+    GetResourceContentParams,
+    GetResourceTreeCommand,
+    HandleJavaScriptDialogCommand,
+    HandleJavaScriptDialogParams,
+    NavigateCommand,
+    NavigateParams,
+    NavigateToHistoryEntryCommand,
+    NavigateToHistoryEntryParams,
+    PageMethod,
+    PrintToPDFCommand,
+    PrintToPDFParams,
+    ProduceCompilationCacheCommand,
+    ProduceCompilationCacheParams,
+    ReloadCommand,
+    ReloadParams,
+    RemoveScriptToEvaluateOnNewDocumentCommand,
+    RemoveScriptToEvaluateOnNewDocumentParams,
+    ResetNavigationHistoryCommand,
+    ScreencastFrameAckCommand,
+    ScreencastFrameAckParams,
+    SearchInResourceCommand,
+    SearchInResourceParams,
+    SetAdBlockingEnabledCommand,
+    SetAdBlockingEnabledParams,
+    SetBypassCSPCommand,
+    SetBypassCSPParams,
+    SetDocumentContentCommand,
+    SetDocumentContentParams,
+    SetFontFamiliesCommand,
+    SetFontFamiliesParams,
+    SetFontSizesCommand,
+    SetFontSizesParams,
+    SetInterceptFileChooserDialogCommand,
+    SetInterceptFileChooserDialogParams,
+    SetLifecycleEventsEnabledCommand,
+    SetLifecycleEventsEnabledParams,
+    SetPrerenderingAllowedCommand,
+    SetPrerenderingAllowedParams,
+    SetRPHRegistrationModeCommand,
+    SetRPHRegistrationModeParams,
+    SetSPCTransactionModeCommand,
+    SetSPCTransactionModeParams,
+    SetWebLifecycleStateCommand,
+    SetWebLifecycleStateParams,
+    StartScreencastCommand,
+    StartScreencastParams,
+    StopLoadingCommand,
+    StopScreencastCommand,
+    WaitForDebuggerCommand,
+)
+from pydoll.protocol.page.types import (
+    AutoResponseMode,
+    CompilationCacheParams,
+    FontFamilies,
+    FontSizes,
     ReferrerPolicy,
     ScreencastFormat,
     ScreenshotFormat,
+    ScriptFontFamilies,
     TransferMode,
     TransitionType,
+    Viewport,
     WebLifecycleState,
 )
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.page.methods import PageMethod
-from pydoll.protocol.page.params import (
-    AddCompilationCacheParams,
-    AddScriptToEvaluateOnNewDocumentParams,
-    AutoResponseMode,
-    CaptureScreenshotParams,
-    CaptureSnapshotParams,
-    CompilationCacheParams,
-    CreateIsolatedWorldParams,
-    FontFamilies,
-    FontSizes,
-    GenerateTestReportParams,
-    GetAdScriptAncestryIdsParams,
-    GetAppIdParams,
-    GetAppManifestParams,
-    GetOriginTrialsParams,
-    GetPermissionsPolicyStateParams,
-    GetResourceContentParams,
-    HandleJavaScriptDialogParams,
-    NavigateParams,
-    NavigateToHistoryEntryParams,
-    PageEnableParams,
-    PrintToPDFParams,
-    ProduceCompilationCacheParams,
-    ReloadParams,
-    RemoveScriptToEvaluateOnNewDocumentParams,
-    ScreencastFrameAckParams,
-    ScriptFontFamilies,
-    SearchInResourceParams,
-    SetAdBlockingEnabledParams,
-    SetBypassCSPParams,
-    SetDocumentContentParams,
-    SetFontFamiliesParams,
-    SetFontSizesParams,
-    SetInterceptFileChooserDialogParams,
-    SetLifecycleEventsEnabledParams,
-    SetPrerenderingAllowedParams,
-    SetRPHRegistrationModeParams,
-    SetSPCTransactionModeParams,
-    SetWebLifecycleStateParams,
-    StartScreencastParams,
-    Viewport,
-)
-from pydoll.protocol.page.responses import (
-    AddScriptToEvaluateOnNewDocumentResponse,
-    CaptureScreenshotResponse,
-    CaptureSnapshotResponse,
-    CreateIsolatedWorldResponse,
-    GetAdScriptAncestryIdsResponse,
-    GetAppIdResponse,
-    GetAppManifestResponse,
-    GetFrameTreeResponse,
-    GetInstallabilityErrorsResponse,
-    GetLayoutMetricsResponse,
-    GetNavigationHistoryResponse,
-    GetOriginTrialsResponse,
-    GetPermissionsPolicyStateResponse,
-    GetResourceContentResponse,
-    GetResourceTreeResponse,
-    NavigateResponse,
-    PrintToPDFResponse,
-    SearchInResourceResponse,
-)
 
 
-class PageCommands:  # noqa: PLR0904
+class PageCommands:
     """
     This class encapsulates the page commands of the Chrome DevTools Protocol (CDP).
 
@@ -97,7 +125,7 @@ class PageCommands:  # noqa: PLR0904
         world_name: Optional[str] = None,
         include_command_line_api: Optional[bool] = None,
         run_immediately: Optional[bool] = None,
-    ) -> Command[AddScriptToEvaluateOnNewDocumentResponse]:
+    ) -> AddScriptToEvaluateOnNewDocumentCommand:
         """
         Creates a command to add a script that will be evaluated when a new document is created.
 
@@ -109,7 +137,7 @@ class PageCommands:  # noqa: PLR0904
                 existing contexts.
 
         Returns:
-            Command[AddScriptToEvaluateOnNewDocumentResponse]: Command object with the identifier
+            AddScriptToEvaluateOnNewDocumentCommand: Command object with the identifier
                 of the added script.
         """
         params = AddScriptToEvaluateOnNewDocumentParams(source=source)
@@ -123,21 +151,21 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.ADD_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT, params=params)
 
     @staticmethod
-    def bring_to_front() -> Command[Response]:
+    def bring_to_front() -> BringToFrontCommand:
         """
         Brings the page to front.
         """
         return Command(method=PageMethod.BRING_TO_FRONT)
 
     @staticmethod
-    def capture_screenshot(  # noqa: PLR0913, PLR0917
+    def capture_screenshot(
         format: Optional[ScreenshotFormat] = None,
         quality: Optional[int] = None,
         clip: Optional[Viewport] = None,
         from_surface: Optional[bool] = None,
         capture_beyond_viewport: Optional[bool] = None,
         optimize_for_speed: Optional[bool] = None,
-    ) -> Command[CaptureScreenshotResponse]:
+    ) -> CaptureScreenshotCommand:
         """
         Creates a command to capture a screenshot of the current page.
 
@@ -150,7 +178,7 @@ class PageCommands:  # noqa: PLR0904
             optimize_for_speed (Optional[bool]): Optimize for speed, not for size.
 
         Returns:
-            Command[CaptureScreenshotResponse]: Command object with base64-encoded image data.
+            CaptureScreenshotCommand: Command object with base64-encoded image data.
         """
         params = CaptureScreenshotParams()
         if format is not None:
@@ -169,12 +197,12 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.CAPTURE_SCREENSHOT, params=params)
 
     @staticmethod
-    def close() -> Command[Response]:
+    def close() -> CloseCommand:
         """
         Creates a command to close the current page.
 
         Returns:
-            Command[Response]: Command object to close the page.
+            CloseCommand: Command object to close the page.
         """
         return Command(method=PageMethod.CLOSE)
 
@@ -183,7 +211,7 @@ class PageCommands:  # noqa: PLR0904
         frame_id: str,
         world_name: Optional[str] = None,
         grant_universal_access: Optional[bool] = None,
-    ) -> Command[CreateIsolatedWorldResponse]:
+    ) -> CreateIsolatedWorldCommand:
         """
         Creates a command to create an isolated world for the given frame.
 
@@ -193,7 +221,7 @@ class PageCommands:  # noqa: PLR0904
             grant_universal_access (Optional[bool]): Whether to grant universal access.
 
         Returns:
-            Command[CreateIsolatedWorldResponse]: Command object with the execution context ID.
+            CreateIsolatedWorldCommand: Command object with the execution context ID.
         """
         params = CreateIsolatedWorldParams(frameId=frame_id)
         if world_name is not None:
@@ -204,19 +232,19 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.CREATE_ISOLATED_WORLD, params=params)
 
     @staticmethod
-    def disable() -> Command[Response]:
+    def disable() -> DisableCommand:
         """
         Creates a command to disable page domain notifications.
 
         Returns:
-            Command[Response]: Command object to disable the Page domain.
+            DisableCommand: Command object to disable the Page domain.
         """
         return Command(method=PageMethod.DISABLE)
 
     @staticmethod
     def enable(
         enable_file_chooser_opened_event: Optional[bool] = None,
-    ) -> Command[Response]:
+    ) -> EnableCommand:
         """
         Creates a command to enable page domain notifications.
 
@@ -225,9 +253,9 @@ class PageCommands:  # noqa: PLR0904
                 Page.fileChooserOpened event.
 
         Returns:
-            Command[Response]: Command object to enable the Page domain.
+            EnableCommand: Command object to enable the Page domain.
         """
-        params = PageEnableParams()
+        params = EnableParams()
         if enable_file_chooser_opened_event is not None:
             params['enableFileChooserOpenedEvent'] = enable_file_chooser_opened_event
 
@@ -236,12 +264,12 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def get_app_manifest(
         manifest_id: Optional[str] = None,
-    ) -> Command[GetAppManifestResponse]:
+    ) -> GetAppManifestCommand:
         """
         Creates a command to get the manifest for the current document.
 
         Returns:
-            Command[GetAppManifestResponse]: Command object with manifest information.
+            GetAppManifestCommand: Command object with manifest information.
         """
         params = GetAppManifestParams()
         if manifest_id is not None:
@@ -249,39 +277,39 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.GET_APP_MANIFEST, params=params)
 
     @staticmethod
-    def get_frame_tree() -> Command[GetFrameTreeResponse]:
+    def get_frame_tree() -> GetFrameTreeCommand:
         """
         Creates a command to get the frame tree for the current page.
 
         Returns:
-            Command[GetFrameTreeResponse]: Command object with frame tree information.
+            GetFrameTreeCommand: Command object with frame tree information.
         """
         return Command(method=PageMethod.GET_FRAME_TREE)
 
     @staticmethod
-    def get_layout_metrics() -> Command[GetLayoutMetricsResponse]:
+    def get_layout_metrics() -> GetLayoutMetricsCommand:
         """
         Creates a command to get layout metrics for the page.
 
         Returns:
-            Command[GetLayoutMetricsResponse]: Command object with layout metrics.
+            GetLayoutMetricsCommand: Command object with layout metrics.
         """
         return Command(method=PageMethod.GET_LAYOUT_METRICS)
 
     @staticmethod
-    def get_navigation_history() -> Command[GetNavigationHistoryResponse]:
+    def get_navigation_history() -> GetNavigationHistoryCommand:
         """
         Creates a command to get the navigation history for the current page.
 
         Returns:
-            Command[GetNavigationHistoryResponse]: Command object with navigation history.
+            GetNavigationHistoryCommand: Command object with navigation history.
         """
         return Command(method=PageMethod.GET_NAVIGATION_HISTORY)
 
     @staticmethod
     def handle_javascript_dialog(
         accept: bool, prompt_text: Optional[str] = None
-    ) -> Command[Response]:
+    ) -> HandleJavaScriptDialogCommand:
         """
         Creates a command to handle a JavaScript dialog.
 
@@ -290,7 +318,7 @@ class PageCommands:  # noqa: PLR0904
             prompt_text (Optional[str]): Text to enter in prompt dialogs.
 
         Returns:
-            Command[Response]: Command object to handle a JavaScript dialog.
+            HandleJavaScriptDialogCommand: Command object to handle a JavaScript dialog.
         """
         params = HandleJavaScriptDialogParams(accept=accept)
         if prompt_text is not None:
@@ -305,7 +333,7 @@ class PageCommands:  # noqa: PLR0904
         transition_type: Optional[TransitionType] = None,
         frame_id: Optional[str] = None,
         referrer_policy: Optional[ReferrerPolicy] = None,
-    ) -> Command[NavigateResponse]:
+    ) -> NavigateCommand:
         """
         Creates a command to navigate to a specific URL.
 
@@ -317,7 +345,7 @@ class PageCommands:  # noqa: PLR0904
             referrer_policy (Optional[str]): Referrer policy.
 
         Returns:
-            Command[NavigateResponse]: Command object to navigate to a URL.
+            NavigateCommand: Command object to navigate to a URL.
         """
         params = NavigateParams(url=url)
         if referrer is not None:
@@ -332,7 +360,7 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.NAVIGATE, params=params)
 
     @staticmethod
-    def navigate_to_history_entry(entry_id: int) -> Command[Response]:
+    def navigate_to_history_entry(entry_id: int) -> NavigateToHistoryEntryCommand:
         """
         Creates a command to navigate to a specific history entry.
 
@@ -340,7 +368,7 @@ class PageCommands:  # noqa: PLR0904
             entry_id (int): ID of the history entry to navigate to.
 
         Returns:
-            Command[Response]: Command object to navigate to a history entry.
+            NavigateToHistoryEntryCommand: Command object to navigate to a history entry.
         """
         params = NavigateToHistoryEntryParams(entryId=entry_id)
         return Command(method=PageMethod.NAVIGATE_TO_HISTORY_ENTRY, params=params)
@@ -364,7 +392,7 @@ class PageCommands:  # noqa: PLR0904
         transfer_mode: Optional[TransferMode] = None,
         generate_tagged_pdf: Optional[bool] = None,
         generate_document_outline: Optional[bool] = None,
-    ) -> Command[PrintToPDFResponse]:
+    ) -> PrintToPDFCommand:
         """
         Creates a command to print the current page to PDF.
 
@@ -386,7 +414,7 @@ class PageCommands:  # noqa: PLR0904
             transfer_mode (Optional[str]): Transfer mode.
 
         Returns:
-            Command[PrintToPDFResponse]: Command object to print the page to PDF.
+            PrintToPDFCommand: Command object to print the page to PDF.
         """
         params = PrintToPDFParams()
         if landscape is not None:
@@ -431,7 +459,7 @@ class PageCommands:  # noqa: PLR0904
         ignore_cache: Optional[bool] = None,
         script_to_evaluate_on_load: Optional[str] = None,
         loader_id: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> ReloadCommand:
         """
         Creates a command to reload the current page.
 
@@ -440,7 +468,7 @@ class PageCommands:  # noqa: PLR0904
             script_to_evaluate_on_load (Optional[str]): Script to be injected into the page on load.
 
         Returns:
-            Command[Response]: Command object to reload the page.
+            ReloadCommand: Command object to reload the page.
         """
         params = ReloadParams()
         if ignore_cache is not None:
@@ -453,7 +481,7 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.RELOAD, params=params)
 
     @staticmethod
-    def reset_navigation_history() -> Command[Response]:
+    def reset_navigation_history() -> ResetNavigationHistoryCommand:
         """
         Creates a command to reset the navigation history.
         """
@@ -462,7 +490,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def remove_script_to_evaluate_on_new_document(
         identifier: str,
-    ) -> Command[Response]:
+    ) -> RemoveScriptToEvaluateOnNewDocumentCommand:
         """
         Creates a command to remove a script that was added to be evaluated on new documents.
 
@@ -470,13 +498,13 @@ class PageCommands:  # noqa: PLR0904
             identifier (str): Identifier of the script to remove.
 
         Returns:
-            Command[Response]: Command object to remove a script.
+            RemoveScriptToEvaluateOnNewDocumentCommand: Command object to remove a script.
         """
         params = RemoveScriptToEvaluateOnNewDocumentParams(identifier=identifier)
         return Command(method=PageMethod.REMOVE_SCRIPT_TO_EVALUATE_ON_NEW_DOCUMENT, params=params)
 
     @staticmethod
-    def set_bypass_csp(enabled: bool) -> Command[Response]:
+    def set_bypass_csp(enabled: bool) -> SetBypassCSPCommand:
         """
         Creates a command to toggle bypassing page CSP.
 
@@ -484,13 +512,13 @@ class PageCommands:  # noqa: PLR0904
             enabled (bool): Whether to bypass page CSP.
 
         Returns:
-            Command[Response]: Command object to toggle bypassing page CSP.
+            SetBypassCSPCommand: Command object to toggle bypassing page CSP.
         """
         params = SetBypassCSPParams(enabled=enabled)
         return Command(method=PageMethod.SET_BYPASS_CSP, params=params)
 
     @staticmethod
-    def set_document_content(frame_id: str, html: str) -> Command[Response]:
+    def set_document_content(frame_id: str, html: str) -> SetDocumentContentCommand:
         """
         Creates a command to set the document content of a frame.
 
@@ -499,13 +527,13 @@ class PageCommands:  # noqa: PLR0904
             html (str): HTML content to set.
 
         Returns:
-            Command[Response]: Command object to set the document content.
+            SetDocumentContentCommand: Command object to set the document content.
         """
         params = SetDocumentContentParams(frameId=frame_id, html=html)
         return Command(method=PageMethod.SET_DOCUMENT_CONTENT, params=params)
 
     @staticmethod
-    def set_intercept_file_chooser_dialog(enabled: bool) -> Command[Response]:
+    def set_intercept_file_chooser_dialog(enabled: bool) -> SetInterceptFileChooserDialogCommand:
         """
         Creates a command to set whether to intercept file chooser dialogs.
 
@@ -513,13 +541,14 @@ class PageCommands:  # noqa: PLR0904
             enabled (bool): Whether to intercept file chooser dialogs.
 
         Returns:
-            Command[Response]: Command object to set file chooser dialog interception.
+            SetInterceptFileChooserDialogCommand: Command object to set file chooser dialog
+                interception.
         """
         params = SetInterceptFileChooserDialogParams(enabled=enabled)
         return Command(method=PageMethod.SET_INTERCEPT_FILE_CHOOSER_DIALOG, params=params)
 
     @staticmethod
-    def set_lifecycle_events_enabled(enabled: bool) -> Command[Response]:
+    def set_lifecycle_events_enabled(enabled: bool) -> SetLifecycleEventsEnabledCommand:
         """
         Creates a command to enable/disable lifecycle events.
 
@@ -527,23 +556,23 @@ class PageCommands:  # noqa: PLR0904
             enabled (bool): Whether to enable lifecycle events.
 
         Returns:
-            Command[Response]: Command object to enable/disable lifecycle events.
+            SetLifecycleEventsEnabledCommand: Command object to enable/disable lifecycle events.
         """
         params = SetLifecycleEventsEnabledParams(enabled=enabled)
         return Command(method=PageMethod.SET_LIFECYCLE_EVENTS_ENABLED, params=params)
 
     @staticmethod
-    def stop_loading() -> Command[Response]:
+    def stop_loading() -> StopLoadingCommand:
         """
         Creates a command to stop loading the page.
 
         Returns:
-            Command[Response]: Command object to stop loading the page.
+            StopLoadingCommand: Command object to stop loading the page.
         """
         return Command(method=PageMethod.STOP_LOADING)
 
     @staticmethod
-    def add_compilation_cache(url: str, data: str) -> Command[Response]:
+    def add_compilation_cache(url: str, data: str) -> AddCompilationCacheCommand:
         """
         Creates a command to add a compilation cache entry.
 
@@ -554,7 +583,7 @@ class PageCommands:  # noqa: PLR0904
             data (str): Base64-encoded data.
 
         Returns:
-            Command[Response]: Command object to add a compilation cache entry.
+            AddCompilationCacheCommand: Command object to add a compilation cache entry.
         """
         params = AddCompilationCacheParams(url=url, data=data)
         return Command(method=PageMethod.ADD_COMPILATION_CACHE, params=params)
@@ -562,7 +591,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def capture_snapshot(
         format: Literal['mhtml'] = 'mhtml',
-    ) -> Command[CaptureSnapshotResponse]:
+    ) -> CaptureSnapshotCommand:
         """
         Creates a command to capture a snapshot of the page.
 
@@ -572,27 +601,29 @@ class PageCommands:  # noqa: PLR0904
             format (Literal['mhtml']): Format of the snapshot (only 'mhtml' is supported).
 
         Returns:
-            Command[CaptureSnapshotResponse]: Command object to capture a snapshot.
+            CaptureSnapshotCommand: Command object to capture a snapshot.
         """
         params = CaptureSnapshotParams(format=format)
         return Command(method=PageMethod.CAPTURE_SNAPSHOT, params=params)
 
     @staticmethod
-    def clear_compilation_cache() -> Command[Response]:
+    def clear_compilation_cache() -> ClearCompilationCacheCommand:
         """
         Creates a command to clear the compilation cache.
         """
         return Command(method=PageMethod.CLEAR_COMPILATION_CACHE)
 
     @staticmethod
-    def crash() -> Command[Response]:
+    def crash() -> CrashCommand:
         """
         Creates a command to crash the page.
         """
         return Command(method=PageMethod.CRASH)
 
     @staticmethod
-    def generate_test_report(message: str, group: Optional[str] = None) -> Command[Response]:
+    def generate_test_report(
+        message: str, group: Optional[str] = None
+    ) -> GenerateTestReportCommand:
         """
         Creates a command to generate a test report.
 
@@ -603,7 +634,7 @@ class PageCommands:  # noqa: PLR0904
             group (Optional[str]): Group label for the report.
 
         Returns:
-            Command[Response]: Command object to generate a test report.
+            GenerateTestReportCommand: Command object to generate a test report.
         """
         params = GenerateTestReportParams(message=message)
         if group is not None:
@@ -613,7 +644,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def get_ad_script_ancestry_ids(
         frame_id: str,
-    ) -> Command[GetAdScriptAncestryIdsResponse]:
+    ) -> GetAdScriptAncestryIdsCommand:
         """
         Creates a command to get the ad script ancestry IDs for a given frame.
 
@@ -623,7 +654,7 @@ class PageCommands:  # noqa: PLR0904
             frame_id (str): ID of the frame to get ad script ancestry IDs for.
 
         Returns:
-            Command[GetAdScriptAncestryIdsResponse]: Command object to get ad script ancestry IDs.
+            GetAdScriptAncestryIdsCommand: Command object to get ad script ancestry IDs.
         """
         params = GetAdScriptAncestryIdsParams(frameId=frame_id)
         return Command(method=PageMethod.GET_AD_SCRIPT_ANCESTRY_IDS, params=params)
@@ -631,7 +662,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def get_app_id(
         app_id: Optional[str] = None, recommended_id: Optional[str] = None
-    ) -> Command[GetAppIdResponse]:
+    ) -> GetAppIdCommand:
         """
         Creates a command to get the app ID.
 
@@ -642,7 +673,7 @@ class PageCommands:  # noqa: PLR0904
             recommended_id (Optional[str]): Recommended app ID.
 
         Returns:
-            Command[GetAppIdResponse]: Command object to get the app ID.
+            GetAppIdCommand: Command object to get the app ID.
         """
         params = GetAppIdParams()
         if app_id is not None:
@@ -652,14 +683,14 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.GET_APP_ID, params=params)
 
     @staticmethod
-    def get_installability_errors() -> Command[GetInstallabilityErrorsResponse]:
+    def get_installability_errors() -> GetInstallabilityErrorsCommand:
         """
         Creates a command to get the installability errors.
         """
         return Command(method=PageMethod.GET_INSTALLABILITY_ERRORS)
 
     @staticmethod
-    def get_origin_trials(frame_id: str) -> Command[GetOriginTrialsResponse]:
+    def get_origin_trials(frame_id: str) -> GetOriginTrialsCommand:
         """
         Creates a command to get origin trials for a given origin.
 
@@ -669,7 +700,7 @@ class PageCommands:  # noqa: PLR0904
             frame_id (Optional[str]): Frame ID to get trials for.
 
         Returns:
-            Command[GetOriginTrialsResponse]: Command object to get origin trials.
+            GetOriginTrialsCommand: Command object to get origin trials.
         """
         params = GetOriginTrialsParams(frameId=frame_id)
         return Command(method=PageMethod.GET_ORIGIN_TRIALS, params=params)
@@ -677,7 +708,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def get_permissions_policy_state(
         frame_id: str,
-    ) -> Command[GetPermissionsPolicyStateResponse]:
+    ) -> GetPermissionsPolicyStateCommand:
         """
         Creates a command to get the permissions policy state.
         """
@@ -688,7 +719,7 @@ class PageCommands:  # noqa: PLR0904
     def get_resource_content(
         frame_id: str,
         url: str,
-    ) -> Command[GetResourceContentResponse]:
+    ) -> GetResourceContentCommand:
         """
         Creates a command to get the resource content.
         """
@@ -696,7 +727,7 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.GET_RESOURCE_CONTENT, params=params)
 
     @staticmethod
-    def get_resource_tree() -> Command[GetResourceTreeResponse]:
+    def get_resource_tree() -> GetResourceTreeCommand:
         """
         Creates a command to get the resource tree.
         """
@@ -705,7 +736,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def produce_compilation_cache(
         scripts: list[CompilationCacheParams],
-    ) -> Command[Response]:
+    ) -> ProduceCompilationCacheCommand:
         """
         Creates a command to produce a compilation cache entry.
         """
@@ -714,8 +745,8 @@ class PageCommands:  # noqa: PLR0904
 
     @staticmethod
     def screencast_frame_ack(
-        session_id: str,
-    ) -> Command[Response]:
+        session_id: int,
+    ) -> ScreencastFrameAckCommand:
         """
         Creates a command to acknowledge a screencast frame.
         """
@@ -729,7 +760,7 @@ class PageCommands:  # noqa: PLR0904
         query: str,
         case_sensitive: Optional[bool] = None,
         is_regex: Optional[bool] = None,
-    ) -> Command[SearchInResourceResponse]:
+    ) -> SearchInResourceCommand:
         """
         Creates a command to search for a string in a resource.
         """
@@ -743,7 +774,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def set_ad_blocking_enabled(
         enabled: bool,
-    ) -> Command[Response]:
+    ) -> SetAdBlockingEnabledCommand:
         """
         Creates a command to set ad blocking enabled.
         """
@@ -754,7 +785,7 @@ class PageCommands:  # noqa: PLR0904
     def set_font_families(
         font_families: FontFamilies,
         for_scripts: list[ScriptFontFamilies],
-    ) -> Command[Response]:
+    ) -> SetFontFamiliesCommand:
         """
         Creates a command to set font families.
         """
@@ -764,7 +795,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def set_font_sizes(
         font_sizes: FontSizes,
-    ) -> Command[Response]:
+    ) -> SetFontSizesCommand:
         """
         Creates a command to set font sizes.
         """
@@ -773,18 +804,18 @@ class PageCommands:  # noqa: PLR0904
 
     @staticmethod
     def set_prerendering_allowed(
-        allowed: bool,
-    ) -> Command[Response]:
+        is_allowed: bool,
+    ) -> SetPrerenderingAllowedCommand:
         """
         Creates a command to set prerendering allowed.
         """
-        params = SetPrerenderingAllowedParams(allowed=allowed)
+        params = SetPrerenderingAllowedParams(isAllowed=is_allowed)
         return Command(method=PageMethod.SET_PRERENDERING_ALLOWED, params=params)
 
     @staticmethod
     def set_rph_registration_mode(
         mode: AutoResponseMode,
-    ) -> Command[Response]:
+    ) -> SetRPHRegistrationModeCommand:
         """
         Creates a command to set the RPH registration mode.
         """
@@ -794,7 +825,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def set_spc_transaction_mode(
         mode: AutoResponseMode,
-    ) -> Command[Response]:
+    ) -> SetSPCTransactionModeCommand:
         """
         Creates a command to set the SPC transaction mode.
         """
@@ -804,7 +835,7 @@ class PageCommands:  # noqa: PLR0904
     @staticmethod
     def set_web_lifecycle_state(
         state: WebLifecycleState,
-    ) -> Command[Response]:
+    ) -> SetWebLifecycleStateCommand:
         """
         Creates a command to set the web lifecycle state.
         """
@@ -818,7 +849,7 @@ class PageCommands:  # noqa: PLR0904
         max_width: Optional[int] = None,
         max_height: Optional[int] = None,
         every_nth_frame: Optional[int] = None,
-    ) -> Command[Response]:
+    ) -> StartScreencastCommand:
         """
         Creates a command to start a screencast.
         """
@@ -834,14 +865,14 @@ class PageCommands:  # noqa: PLR0904
         return Command(method=PageMethod.START_SCREENCAST, params=params)
 
     @staticmethod
-    def stop_screencast() -> Command[Response]:
+    def stop_screencast() -> StopScreencastCommand:
         """
         Creates a command to stop a screencast.
         """
         return Command(method=PageMethod.STOP_SCREENCAST)
 
     @staticmethod
-    def wait_for_debugger() -> Command[Response]:
+    def wait_for_debugger() -> WaitForDebuggerCommand:
         """
         Creates a command to wait for a debugger.
         """
