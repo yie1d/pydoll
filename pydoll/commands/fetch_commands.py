@@ -1,14 +1,8 @@
 from typing import Optional
 
-from pydoll.constants import (
-    AuthChallengeResponseValues,
-    NetworkErrorReason,
-    RequestMethod,
-    RequestStage,
-    ResourceType,
-)
 from pydoll.protocol.base import Command
 from pydoll.protocol.fetch.methods import (
+    AuthChallengeResponse,
     ContinueRequestCommand,
     ContinueRequestParams,
     ContinueResponseCommand,
@@ -17,9 +11,9 @@ from pydoll.protocol.fetch.methods import (
     ContinueWithAuthParams,
     DisableCommand,
     EnableCommand,
+    EnableParams,
     FailRequestCommand,
     FailRequestParams,
-    FetchEnableParams,
     FetchMethod,
     FulfillRequestCommand,
     FulfillRequestParams,
@@ -27,12 +21,15 @@ from pydoll.protocol.fetch.methods import (
     GetResponseBodyParams,
     TakeResponseBodyAsStreamCommand,
     TakeResponseBodyAsStreamParams,
-    AuthChallengeResponse
 )
 from pydoll.protocol.fetch.types import (
+    AuthChallengeResponseType,
     HeaderEntry,
     RequestPattern,
+    RequestStage,
+    ResourceType,
 )
+from pydoll.protocol.network.types import ErrorReason, RequestMethod
 
 
 class FetchCommands:
@@ -99,7 +96,7 @@ class FetchCommands:
     @staticmethod
     def continue_request_with_auth(
         request_id: str,
-        auth_challenge_response: AuthChallengeResponseValues,
+        auth_challenge_response: AuthChallengeResponseType,
         proxy_username: Optional[str] = None,
         proxy_password: Optional[str] = None,
     ) -> ContinueWithAuthCommand:
@@ -112,7 +109,7 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to continue.
-            auth_challenge_response (AuthChallengeResponseValues): The authentication
+            auth_challenge_response (AuthChallengeResponseType): The authentication
                 challenge response type.
             proxy_username (Optional[str]): The username for proxy authentication.
                 Defaults to None.
@@ -179,13 +176,11 @@ class FetchCommands:
         if request_stage is not None:
             request_pattern['requestStage'] = request_stage
 
-        params = FetchEnableParams(
-            patterns=[request_pattern], handleAuthRequests=handle_auth_requests
-        )
+        params = EnableParams(patterns=[request_pattern], handleAuthRequests=handle_auth_requests)
         return Command(method=FetchMethod.ENABLE, params=params)
 
     @staticmethod
-    def fail_request(request_id: str, error_reason: NetworkErrorReason) -> FailRequestCommand:
+    def fail_request(request_id: str, error_reason: ErrorReason) -> FailRequestCommand:
         """
         Creates a command to simulate a failure in a fetch request.
 
@@ -194,7 +189,7 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to fail.
-            error_reason (NetworkErrorReason): The reason for the failure.
+            error_reason (ErrorReason): The reason for the failure.
 
         Returns:
             Command[Response]: A command for failing the fetch request.
