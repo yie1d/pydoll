@@ -1,6 +1,6 @@
 from enum import Enum
 
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 
 BrowserContextID = str
 WindowID = int
@@ -138,14 +138,3 @@ class PrivacySandboxAPI(Enum):
 
     BIDDING_AND_AUCTION_SERVICES = 'BiddingAndAuctionServices'
     TRUSTED_KEY_VALUE = 'TrustedKeyValue'
-
-
-# Legacy compatibility
-class WindowBoundsDict(TypedDict):
-    """Structure for window bounds parameters."""
-
-    windowState: WindowState
-    width: NotRequired[int]
-    height: NotRequired[int]
-    x: NotRequired[int]
-    y: NotRequired[int]
