@@ -856,7 +856,6 @@ class ReportingApiEndpointsChangedForOriginEventParams(TypedDict):
     endpoints: list[ReportingApiEndpoint]
 
 
-# Event Type Aliases using CDPEvent generic
 DataReceivedEvent = CDPEvent[DataReceivedEventParams]
 EventSourceMessageReceivedEvent = CDPEvent[EventSourceMessageReceivedEventParams]
 LoadingFailedEvent = CDPEvent[LoadingFailedEventParams]

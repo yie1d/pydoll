@@ -10,14 +10,14 @@ from pydoll.constants import (
     CookieSourceScheme,
 )
 from pydoll.protocol.base import Command, EmptyParams, EmptyResponse, Response
+from pydoll.protocol.debugger.types import SearchMatch
+from pydoll.protocol.emulation.types import UserAgentMetadata
 from pydoll.protocol.fetch.types import HeaderEntry, RequestPattern
 from pydoll.protocol.network.types import (
     Cookie,
     CookiePartitionKey,
     LoadNetworkResourceOptions,
-    SearchMatch,
     SecurityIsolationStatus,
-    UserAgentMetadata,
 )
 
 
