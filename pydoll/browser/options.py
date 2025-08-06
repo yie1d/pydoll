@@ -106,7 +106,7 @@ class ChromiumOptions(Options):
     @browser_preferences.setter
     def browser_preferences(self, preferences: dict):
         if not isinstance(preferences, dict):
-            raise ValueError("The experimental options value must be a dict.")
+            raise ValueError('The experimental options value must be a dict.')
 
         if preferences.get('prefs'):
             raise WrongPrefsDict
@@ -245,9 +245,11 @@ class ChromiumOptions(Options):
     @property
     def allow_automatic_downloads(self) -> bool:
         return (
-            self._get_pref_path(
-                ['profile', 'default_content_setting_values', 'automatic_downloads']
-            )
+            self._get_pref_path([
+                'profile',
+                'default_content_setting_values',
+                'automatic_downloads',
+            ])
             == 1
         )
 

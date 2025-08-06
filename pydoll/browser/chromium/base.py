@@ -214,7 +214,8 @@ class Browser(ABC):  # noqa: PLR0904
         )
         target_id = response['result']['targetId']
         tab = Tab(self, self._connection_port, target_id, browser_context_id)
-        if url: await tab.go_to(url)
+        if url:
+            await tab.go_to(url)
         return tab
 
     async def get_targets(self) -> list[TargetInfo]:

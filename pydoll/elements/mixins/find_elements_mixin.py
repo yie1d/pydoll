@@ -1,5 +1,5 @@
 import asyncio
-from typing import TYPE_CHECKING, Literal, Optional, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 from pydoll.commands import (
     DomCommands,
@@ -43,6 +43,7 @@ class FindElementsMixin:
     Classes using this mixin gain powerful element discovery without implementing
     complex location logic themselves.
     """
+
     @overload
     async def find(
         self,
