@@ -313,7 +313,7 @@ class NetworkCommands:
         return Command(method=NetworkMethod.SET_CACHE_DISABLED, params=params)
 
     @staticmethod
-    def set_cookie(  # noqa: PLR0913, PLR0917
+    def set_cookie(
         name: str,
         value: str,
         url: Optional[str] = None,

@@ -374,7 +374,7 @@ class PageCommands:
         return Command(method=PageMethod.NAVIGATE_TO_HISTORY_ENTRY, params=params)
 
     @staticmethod
-    def print_to_pdf(  # noqa: PLR0912, PLR0917, PLR0913
+    def print_to_pdf(  # noqa: PLR0912
         landscape: Optional[bool] = None,
         display_header_footer: Optional[bool] = None,
         print_background: Optional[bool] = None,

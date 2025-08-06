@@ -429,7 +429,7 @@ class Browser(ABC):  # noqa: PLR0904
         """Disable runtime events."""
         return await self._connection_handler.execute_command(RuntimeCommands.disable())
 
-    async def continue_request(  # noqa: PLR0913, PLR0917
+    async def continue_request(
         self,
         request_id: str,
         url: Optional[str] = None,
