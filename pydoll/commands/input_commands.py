@@ -1,6 +1,37 @@
 from typing import Optional
 
-from pydoll.constants import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.input.methods import (
+    CancelDraggingCommand,
+    DispatchDragEventCommand,
+    DispatchDragEventParams,
+    DispatchKeyEventCommand,
+    DispatchKeyEventParams,
+    DispatchMouseEventCommand,
+    DispatchMouseEventParams,
+    DispatchTouchEventCommand,
+    DispatchTouchEventParams,
+    DragData,
+    EmulateTouchFromMouseEventCommand,
+    EmulateTouchFromMouseEventParams,
+    ImeSetCompositionCommand,
+    ImeSetCompositionParams,
+    InputMethod,
+    InsertTextCommand,
+    InsertTextParams,
+    SetIgnoreInputEventsCommand,
+    SetIgnoreInputEventsParams,
+    SetInterceptDragsCommand,
+    SetInterceptDragsParams,
+    SynthesizePinchGestureCommand,
+    SynthesizePinchGestureParams,
+    SynthesizeScrollGestureCommand,
+    SynthesizeScrollGestureParams,
+    SynthesizeTapGestureCommand,
+    SynthesizeTapGestureParams,
+    TouchPoint,
+)
+from pydoll.protocol.input.types import (
     DragEventType,
     GestureSourceType,
     KeyEventType,
@@ -10,24 +41,6 @@ from pydoll.constants import (
     MouseEventType,
     PointerType,
     TouchEventType,
-)
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.input.methods import InputMethod
-from pydoll.protocol.input.params import (
-    DispatchDragEventParams,
-    DispatchKeyEventParams,
-    DispatchMouseEventParams,
-    DispatchTouchEventParams,
-    DragData,
-    EmulateTouchFromMouseEventParams,
-    ImeSetCompositionParams,
-    InsertTextParams,
-    SetIgnoreInputEventsParams,
-    SetInterceptDragsParams,
-    SynthesizePinchGestureParams,
-    SynthesizeScrollGestureParams,
-    SynthesizeTapGestureParams,
-    TouchPoint,
 )
 
 
@@ -47,7 +60,7 @@ class InputCommands:
     """
 
     @staticmethod
-    def cancel_dragging() -> Command[Response]:
+    def cancel_dragging() -> CancelDraggingCommand:
         """
         Generates a command to cancel any active dragging in the page.
 
@@ -60,7 +73,7 @@ class InputCommands:
         return Command(method=InputMethod.CANCEL_DRAGGING)
 
     @staticmethod
-    def dispatch_key_event(  # noqa: PLR0913, PLR0917, PLR0912
+    def dispatch_key_event(  # noqa: PLR0912
         type: KeyEventType,
         modifiers: Optional[KeyModifier] = None,
         timestamp: Optional[float] = None,
@@ -76,7 +89,7 @@ class InputCommands:
         is_system_key: Optional[bool] = None,
         location: Optional[KeyLocation] = None,
         commands: Optional[list[str]] = None,
-    ) -> Command[Response]:
+    ) -> DispatchKeyEventCommand:
         """
         Generates a command to dispatch a key event to the page.
 
@@ -149,7 +162,7 @@ class InputCommands:
         return Command(method=InputMethod.DISPATCH_KEY_EVENT, params=params)
 
     @staticmethod
-    def dispatch_mouse_event(  # noqa: PLR0913, PLR0917
+    def dispatch_mouse_event(
         type: MouseEventType,
         x: int,
         y: int,
@@ -165,7 +178,7 @@ class InputCommands:
         delta_x: Optional[float] = None,
         delta_y: Optional[float] = None,
         pointer_type: Optional[PointerType] = None,
-    ) -> Command[Response]:
+    ) -> DispatchMouseEventCommand:
         """
         Generates a command to dispatch a mouse event to the page.
 
@@ -239,10 +252,10 @@ class InputCommands:
     @staticmethod
     def dispatch_touch_event(
         type: TouchEventType,
-        touch_points: Optional[list[TouchPoint]] = None,
+        touch_points: list[TouchPoint],
         modifiers: Optional[KeyModifier] = None,
         timestamp: Optional[float] = None,
-    ) -> Command[Response]:
+    ) -> DispatchTouchEventCommand:
         """
         Generates a command to dispatch a touch event to the page.
 
@@ -268,9 +281,7 @@ class InputCommands:
         Returns:
             Command: The CDP command to dispatch the touch event.
         """
-        params = DispatchTouchEventParams(type=type)
-        if touch_points is not None:
-            params['touchPoints'] = touch_points
+        params = DispatchTouchEventParams(type=type, touchPoints=touch_points)
         if modifiers is not None:
             params['modifiers'] = modifiers
         if timestamp is not None:
@@ -278,21 +289,21 @@ class InputCommands:
         return Command(method=InputMethod.DISPATCH_TOUCH_EVENT, params=params)
 
     @staticmethod
-    def set_ignore_input_events(enabled: bool) -> Command[Response]:
+    def set_ignore_input_events(ignore: bool) -> SetIgnoreInputEventsCommand:
         """
         Generates a command to ignore input events (useful while auditing page).
 
-        When enabled, all input events will be ignored, which can be useful
+        When ignore is true, all input events will be ignored, which can be useful
         during automated tests or when you want to prevent user interaction
         while performing certain operations.
 
         Args:
-            enabled: If true, input events processing will be ignored.
+            ignore: If true, input events processing will be ignored.
 
         Returns:
             Command: The CDP command to set ignore input events.
         """
-        params = SetIgnoreInputEventsParams(enabled=enabled)
+        params = SetIgnoreInputEventsParams(ignore=ignore)
         return Command(method=InputMethod.SET_IGNORE_INPUT_EVENTS, params=params)
 
     @staticmethod
@@ -300,9 +311,9 @@ class InputCommands:
         type: DragEventType,
         x: int,
         y: int,
-        data: Optional[DragData] = None,
+        data: DragData,
         modifiers: Optional[KeyModifier] = None,
-    ) -> Command[Response]:
+    ) -> DispatchDragEventCommand:
         """
         Generates a command to dispatch a drag event into the page.
 
@@ -325,9 +336,7 @@ class InputCommands:
         Returns:
             Command: The CDP command to dispatch the drag event.
         """
-        params = DispatchDragEventParams(type=type, x=x, y=y)
-        if data is not None:
-            params['data'] = data
+        params = DispatchDragEventParams(type=type, data=data, x=x, y=y)
         if modifiers is not None:
             params['modifiers'] = modifiers
         return Command(method=InputMethod.DISPATCH_DRAG_EVENT, params=params)
@@ -343,7 +352,7 @@ class InputCommands:
         delta_y: Optional[float] = None,
         modifiers: Optional[KeyModifier] = None,
         click_count: Optional[int] = None,
-    ) -> Command[Response]:
+    ) -> EmulateTouchFromMouseEventCommand:
         """
         Generates a command to emulate touch event from the mouse event parameters.
 
@@ -391,7 +400,7 @@ class InputCommands:
         selection_end: int,
         replacement_start: Optional[int] = None,
         replacement_end: Optional[int] = None,
-    ) -> Command[Response]:
+    ) -> ImeSetCompositionCommand:
         """
         Generates a command to set the current candidate text for IME.
 
@@ -428,7 +437,7 @@ class InputCommands:
     @staticmethod
     def insert_text(
         text: str,
-    ) -> Command[Response]:
+    ) -> InsertTextCommand:
         """
         Generates a command to emulate inserting text that doesn't come from a key press.
 
@@ -446,7 +455,7 @@ class InputCommands:
         return Command(method=InputMethod.INSERT_TEXT, params=params)
 
     @staticmethod
-    def set_intercept_drags(enabled: bool) -> Command[Response]:
+    def set_intercept_drags(enabled: bool) -> SetInterceptDragsCommand:
         """
         Generates a command to control interception of drag and drop events.
 
@@ -472,9 +481,9 @@ class InputCommands:
         x: int,
         y: int,
         scale_factor: float,
-        relative_speed: Optional[float] = None,
+        relative_speed: Optional[int] = None,
         gesture_source_type: Optional[GestureSourceType] = None,
-    ) -> Command[Response]:
+    ) -> SynthesizePinchGestureCommand:
         """
         Generates a command to synthesize a pinch gesture over a time period.
 
@@ -506,7 +515,7 @@ class InputCommands:
         return Command(method=InputMethod.SYNTHESIZE_PINCH_GESTURE, params=params)
 
     @staticmethod
-    def synthesize_scroll_gesture(  # noqa: PLR0913, PLR0917
+    def synthesize_scroll_gesture(
         x: int,
         y: int,
         x_distance: Optional[float] = None,
@@ -519,7 +528,7 @@ class InputCommands:
         repeat_count: Optional[int] = None,
         repeat_delay_ms: Optional[int] = None,
         interaction_marker_name: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> SynthesizeScrollGestureCommand:
         """
         Generates a command to synthesize a scroll gesture over a time period.
 
@@ -583,7 +592,7 @@ class InputCommands:
         duration: Optional[int] = None,
         tap_count: Optional[int] = None,
         gesture_source_type: Optional[GestureSourceType] = None,
-    ) -> Command[Response]:
+    ) -> SynthesizeTapGestureCommand:
         """
         Generates a command to synthesize a tap gesture over a time period.
 
