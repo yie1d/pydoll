@@ -1,5 +1,5 @@
 import asyncio
-from typing import TYPE_CHECKING, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from pydoll.commands import (
     DomCommands,
@@ -7,19 +7,19 @@ from pydoll.commands import (
 )
 from pydoll.constants import By, Scripts
 from pydoll.exceptions import ElementNotFound, WaitElementTimeout
-from pydoll.protocol.base import Command
-from pydoll.protocol.dom.responses import DescribeNodeResponse
+from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
+from pydoll.protocol.dom.methods import DescribeNodeResponse
 from pydoll.protocol.dom.types import Node
-from pydoll.protocol.runtime.responses import (
+from pydoll.protocol.runtime.methods import (
+    CallFunctionOnParams,
     CallFunctionOnResponse,
+    EvaluateParams,
     EvaluateResponse,
     GetPropertiesResponse,
 )
 
 if TYPE_CHECKING:
     from pydoll.elements.web_element import WebElement
-
-T = TypeVar('T')
 
 
 def create_web_element(*args, **kwargs):
@@ -253,7 +253,7 @@ class FindElementsMixin:
         query_response: GetPropertiesResponse = await self._execute_command(
             RuntimeCommands.get_properties(object_id=object_id)
         )
-        response = []
+        response: list[str] = []
         for query in query_response['result']['result']:
             query_value = query.get('value', {})
             if query_value and query_value['type'] == 'object':
@@ -375,7 +375,9 @@ class FindElementsMixin:
         )
         return response['result']['node']
 
-    async def _execute_command(self, command: Command[T]) -> T:
+    async def _execute_command(
+        self, command: Command[T_CommandParams, T_CommandResponse]
+    ) -> T_CommandResponse:
         """Execute CDP command via connection handler (60s timeout)."""
         return await self._connection_handler.execute_command(command, timeout=60)  # type: ignore
 
@@ -390,6 +392,10 @@ class FindElementsMixin:
         - NAME: converts to XPath expression
         """
         escaped_value = value.replace('"', '\\"')
+        command: Union[
+            Command[CallFunctionOnParams, CallFunctionOnResponse],
+            Command[EvaluateParams, EvaluateResponse],
+        ]
         match by:
             case By.CLASS_NAME:
                 selector = f'.{escaped_value}'
@@ -424,6 +430,10 @@ class FindElementsMixin:
         Handles same special cases and selector type conversions.
         """
         escaped_value = value.replace('"', '\\"')
+        command: Union[
+            Command[CallFunctionOnParams, CallFunctionOnResponse],
+            Command[EvaluateParams, EvaluateResponse],
+        ]
         match by:
             case By.CLASS_NAME:
                 selector = f'.{escaped_value}'
@@ -453,6 +463,10 @@ class FindElementsMixin:
         XPath requires special handling vs CSS selectors. Ensures relative
         XPath for context-based searches.
         """
+        command: Union[
+            Command[CallFunctionOnParams, CallFunctionOnResponse],
+            Command[EvaluateParams, EvaluateResponse],
+        ]
         escaped_value = xpath.replace('"', '\\"')
         if object_id:
             escaped_value = self._ensure_relative_xpath(escaped_value)
@@ -475,6 +489,10 @@ class FindElementsMixin:
         XPath for context-based searches.
         """
         escaped_value = xpath.replace('"', '\\"')
+        command: Union[
+            Command[CallFunctionOnParams, CallFunctionOnResponse],
+            Command[EvaluateParams, EvaluateResponse],
+        ]
         if object_id:
             escaped_value = self._ensure_relative_xpath(escaped_value)
             script = Scripts.FIND_RELATIVE_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
