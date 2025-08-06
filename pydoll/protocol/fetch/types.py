@@ -42,26 +42,17 @@ class HeaderEntry(TypedDict):
     value: str
 
 
-class AuthChallenge(TypedDict, total=False):
+class AuthChallenge(TypedDict):
     """Authorization challenge for HTTP status code 401 or 407."""
 
-    source: AuthChallengeSource
+    source: NotRequired[AuthChallengeSource]
     origin: str
     scheme: str  # e.g. basic, digest
     realm: str
 
 
-class AuthChallengeResponse(TypedDict, total=False):
+class AuthChallengeResponse(TypedDict):
     """Response to an AuthChallenge."""
-
-    response: AuthChallengeResponseType
-    username: str  # Only when response is ProvideCredentials
-    password: str  # Only when response is ProvideCredentials
-
-
-# Legacy compatibility
-class AuthChallengeResponseDict(TypedDict):
-    """Legacy auth challenge response structure."""
 
     response: AuthChallengeResponseType
     username: NotRequired[str]

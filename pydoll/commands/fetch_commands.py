@@ -27,9 +27,9 @@ from pydoll.protocol.fetch.methods import (
     GetResponseBodyParams,
     TakeResponseBodyAsStreamCommand,
     TakeResponseBodyAsStreamParams,
+    AuthChallengeResponse
 )
 from pydoll.protocol.fetch.types import (
-    AuthChallengeResponseDict,
     HeaderEntry,
     RequestPattern,
 )
@@ -123,7 +123,7 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch request with
                 authentication.
         """
-        auth_challenge_response_dict = AuthChallengeResponseDict(response=auth_challenge_response)
+        auth_challenge_response_dict = AuthChallengeResponse(response=auth_challenge_response)
         if proxy_username is not None:
             auth_challenge_response_dict['username'] = proxy_username
         if proxy_password is not None:
