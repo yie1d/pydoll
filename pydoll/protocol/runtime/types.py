@@ -1,21 +1,193 @@
-from typing import Any, Union
+from enum import Enum
+from typing import Any
 
 from typing_extensions import NotRequired, TypedDict
 
-from pydoll.constants import (
-    DeepSerializedValueType,
-    ObjectPreviewSubtype,
-    ObjectPreviewType,
-    PropertyPreviewSubtype,
-    PropertyPreviewType,
-    RemoteObjectSubtype,
-    RemoteObjectType,
-    SerializationValue,
-    UnserializableEnum,
-)
+ScriptId = str
+RemoteObjectId = str
+UnserializableValue = str
+ExecutionContextId = int
+Timestamp = float
+TimeDelta = float
+UniqueDebuggerId = str
+
+
+class SerializationType(Enum):
+    """Serialization types."""
+
+    DEEP = 'deep'
+    JSON = 'json'
+    ID_ONLY = 'idOnly'
+
+
+class DeepSerializedValueType(Enum):
+    """Deep serialized value types."""
+
+    UNDEFINED = 'undefined'
+    NULL = 'null'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    BIGINT = 'bigint'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    SYMBOL = 'symbol'
+    ARRAY = 'array'
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    NODE = 'node'
+    WINDOW = 'window'
+    GENERATOR = 'generator'
+
+
+class RemoteObjectType(Enum):
+    """Remote object types."""
+
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    BIGINT = 'bigint'
+
+
+class RemoteObjectSubtype(Enum):
+    """Remote object subtypes."""
+
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    DATAVIEW = 'dataview'
+    WEBASSEMBLYMEMORY = 'webassemblymemory'
+    WASMVALUE = 'wasmvalue'
+
+
+class ObjectPreviewType(Enum):
+    """Object preview types."""
+
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    BIGINT = 'bigint'
+
+
+class ObjectPreviewSubtype(Enum):
+    """Object preview subtypes."""
+
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    DATAVIEW = 'dataview'
+    WEBASSEMBLYMEMORY = 'webassemblymemory'
+    WASMVALUE = 'wasmvalue'
+
+
+class PropertyPreviewType(Enum):
+    """Property preview types."""
+
+    OBJECT = 'object'
+    FUNCTION = 'function'
+    UNDEFINED = 'undefined'
+    STRING = 'string'
+    NUMBER = 'number'
+    BOOLEAN = 'boolean'
+    SYMBOL = 'symbol'
+    ACCESSOR = 'accessor'
+    BIGINT = 'bigint'
+
+
+class PropertyPreviewSubtype(Enum):
+    """Property preview subtypes."""
+
+    ARRAY = 'array'
+    NULL = 'null'
+    NODE = 'node'
+    REGEXP = 'regexp'
+    DATE = 'date'
+    MAP = 'map'
+    SET = 'set'
+    WEAKMAP = 'weakmap'
+    WEAKSET = 'weakset'
+    ITERATOR = 'iterator'
+    GENERATOR = 'generator'
+    ERROR = 'error'
+    PROXY = 'proxy'
+    PROMISE = 'promise'
+    TYPEDARRAY = 'typedarray'
+    ARRAYBUFFER = 'arraybuffer'
+    DATAVIEW = 'dataview'
+    WEBASSEMBLYMEMORY = 'webassemblymemory'
+    WASMVALUE = 'wasmvalue'
+
+
+class SerializationOptions(TypedDict):
+    """Represents options for serialization."""
+
+    serialization: SerializationType
+    maxDepth: NotRequired[int]
+    additionalParameters: NotRequired[dict[str, Any]]
+
+
+class DeepSerializedValue(TypedDict):
+    """Represents deep serialized value."""
+
+    type: DeepSerializedValueType
+    value: NotRequired[Any]
+    objectId: NotRequired[str]
+    weakLocalObjectReference: NotRequired[int]
+
+
+class CustomPreview(TypedDict):
+    """Custom preview for objects."""
+
+    header: str
+    bodyGetterId: NotRequired[RemoteObjectId]
 
 
 class PropertyPreview(TypedDict):
+    """Property preview for objects."""
+
     name: str
     type: PropertyPreviewType
     value: NotRequired[str]
@@ -24,109 +196,123 @@ class PropertyPreview(TypedDict):
 
 
 class EntryPreview(TypedDict):
-    key: 'ObjectPreview'
+    """Entry preview for collections."""
+
     value: 'ObjectPreview'
-
-
-class DeepSerializedValue(TypedDict):
-    type: DeepSerializedValueType
-    value: NotRequired[Any]
-    objectId: NotRequired[str]
-    weakLocalObjectReference: NotRequired[int]
+    key: NotRequired['ObjectPreview']
 
 
 class ObjectPreview(TypedDict):
+    """Object containing abbreviated remote object value."""
+
     type: ObjectPreviewType
-    subtype: NotRequired[ObjectPreviewSubtype]
-    description: NotRequired[str]
     overflow: bool
     properties: list[PropertyPreview]
+    subtype: NotRequired[ObjectPreviewSubtype]
+    description: NotRequired[str]
     entries: NotRequired[list[EntryPreview]]
 
 
-class CustomPreview(TypedDict):
-    header: str
-    bodyGetterId: NotRequired[str]
-
-
 class RemoteObject(TypedDict):
+    """Mirror object referencing original JavaScript object."""
+
     type: RemoteObjectType
     subtype: NotRequired[RemoteObjectSubtype]
     className: NotRequired[str]
     value: NotRequired[Any]
-    unserializableValue: NotRequired[Union[UnserializableEnum, str]]
+    unserializableValue: NotRequired[UnserializableValue]
     description: NotRequired[str]
     deepSerializedValue: NotRequired[DeepSerializedValue]
-    objectId: NotRequired[str]
+    objectId: NotRequired[RemoteObjectId]
     preview: NotRequired[ObjectPreview]
     customPreview: NotRequired[CustomPreview]
 
 
-class CallFrame(TypedDict):
-    functionName: str
-    scriptId: str
-    url: str
-    lineNumber: int
-    columnNumber: int
-
-
-class StackTraceId(TypedDict):
-    id: str
-    debuggerId: str
-
-
-class StackTrace(TypedDict):
-    description: NotRequired[str]
-    callFrames: list[CallFrame]
-    parent: NotRequired['StackTrace']
-    parentId: NotRequired[StackTraceId]
-
-
-class ExceptionDetails(TypedDict):
-    exceptionId: int
-    text: str
-    lineNumber: int
-    columnNumber: int
-    scriptId: NotRequired[str]
-    url: NotRequired[str]
-    stackTrace: NotRequired[StackTrace]
-    exception: NotRequired[RemoteObject]
-    executionContextId: NotRequired[int]
-    exceptionMetaData: NotRequired[dict]
-
-
 class PropertyDescriptor(TypedDict):
+    """Object property descriptor."""
+
     name: str
-    value: NotRequired[RemoteObject]
-    writable: bool
-    get: NotRequired[RemoteObject]
-    set: NotRequired[RemoteObject]
     configurable: bool
     enumerable: bool
+    value: NotRequired[RemoteObject]
+    writable: NotRequired[bool]
+    get: NotRequired[RemoteObject]
+    set: NotRequired[RemoteObject]
     wasThrown: NotRequired[bool]
     isOwn: NotRequired[bool]
     symbol: NotRequired[RemoteObject]
 
 
 class InternalPropertyDescriptor(TypedDict):
+    """Object internal property descriptor."""
+
     name: str
     value: NotRequired[RemoteObject]
 
 
 class PrivatePropertyDescriptor(TypedDict):
+    """Object private field descriptor."""
+
     name: str
     value: NotRequired[RemoteObject]
     get: NotRequired[RemoteObject]
     set: NotRequired[RemoteObject]
 
 
-class CallArgument(TypedDict):
-    value: NotRequired[str]
-    unserializableValue: NotRequired[Union[UnserializableEnum, str]]
-    objectId: NotRequired[str]
+class CallArgument(TypedDict, total=False):
+    """Represents function call argument."""
+
+    value: Any
+    unserializableValue: UnserializableValue
+    objectId: RemoteObjectId
 
 
-class SerializationOptions(TypedDict):
-    serialization: SerializationValue
-    maxDepth: NotRequired[int]
-    additionalParameters: NotRequired[dict]
+class ExecutionContextDescription(TypedDict):
+    """Description of an isolated world."""
+
+    id: ExecutionContextId
+    origin: str
+    name: str
+    uniqueId: str
+    auxData: NotRequired[dict[str, Any]]
+
+
+class ExceptionDetails(TypedDict):
+    """Detailed information about exception."""
+
+    exceptionId: int
+    text: str
+    lineNumber: int
+    columnNumber: int
+    scriptId: NotRequired[ScriptId]
+    url: NotRequired[str]
+    stackTrace: NotRequired['StackTrace']
+    exception: NotRequired[RemoteObject]
+    executionContextId: NotRequired[ExecutionContextId]
+    exceptionMetaData: NotRequired[dict[str, Any]]
+
+
+class CallFrame(TypedDict):
+    """Stack entry for runtime errors and assertions."""
+
+    functionName: str
+    scriptId: ScriptId
+    url: str
+    lineNumber: int
+    columnNumber: int
+
+
+class StackTraceId(TypedDict):
+    """Stack trace identifier."""
+
+    id: str
+    debuggerId: NotRequired[UniqueDebuggerId]
+
+
+class StackTrace(TypedDict):
+    """Call frames for assertions or error messages."""
+
+    callFrames: list[CallFrame]
+    description: NotRequired[str]
+    parent: NotRequired['StackTrace']
+    parentId: NotRequired[StackTraceId]

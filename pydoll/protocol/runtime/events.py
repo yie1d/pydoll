@@ -1,4 +1,15 @@
 from enum import Enum
+from typing import Any, NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.runtime.types import (
+    ExceptionDetails,
+    ExecutionContextDescription,
+    ExecutionContextId,
+    RemoteObject,
+    StackTrace,
+    Timestamp,
+)
 
 
 class RuntimeEvent(str, Enum):
@@ -91,3 +102,97 @@ class RuntimeEvent(str, Enum):
         payload (str): Payload of the binding.
         executionContextId (ExecutionContextId): Identifier of the context where the call was made.
     """
+
+
+class ConsoleAPICallType(str, Enum):
+    """Console API call types."""
+
+    LOG = 'log'
+    DEBUG = 'debug'
+    INFO = 'info'
+    ERROR = 'error'
+    WARNING = 'warning'
+    DIR = 'dir'
+    DIRXML = 'dirxml'
+    TABLE = 'table'
+    TRACE = 'trace'
+    CLEAR = 'clear'
+    START_GROUP = 'startGroup'
+    START_GROUP_COLLAPSED = 'startGroupCollapsed'
+    END_GROUP = 'endGroup'
+    ASSERT = 'assert'
+    PROFILE = 'profile'
+    PROFILE_END = 'profileEnd'
+    COUNT = 'count'
+    TIME_END = 'timeEnd'
+
+
+class BindingCalledEventParams(TypedDict):
+    """Parameters for bindingCalled event."""
+
+    name: str
+    payload: str
+    executionContextId: ExecutionContextId
+
+
+class ConsoleAPICalledEventParams(TypedDict):
+    """Parameters for consoleAPICalled event."""
+
+    type: ConsoleAPICallType
+    args: list[RemoteObject]
+    executionContextId: ExecutionContextId
+    timestamp: Timestamp
+    stackTrace: NotRequired[StackTrace]
+    context: NotRequired[str]
+
+
+class ExceptionRevokedEventParams(TypedDict):
+    """Parameters for exceptionRevoked event."""
+
+    reason: str
+    exceptionId: int
+
+
+class ExceptionThrownEventParams(TypedDict):
+    """Parameters for exceptionThrown event."""
+
+    timestamp: Timestamp
+    exceptionDetails: ExceptionDetails
+
+
+class ExecutionContextCreatedEventParams(TypedDict):
+    """Parameters for executionContextCreated event."""
+
+    context: ExecutionContextDescription
+
+
+class ExecutionContextDestroyedEventParams(TypedDict):
+    """Parameters for executionContextDestroyed event."""
+
+    executionContextId: ExecutionContextId
+    executionContextUniqueId: str
+
+
+class ExecutionContextsClearedEventParams(TypedDict):
+    """Parameters for executionContextsCleared event."""
+
+    pass
+
+
+class InspectRequestedEventParams(TypedDict):
+    """Parameters for inspectRequested event."""
+
+    object: RemoteObject
+    hints: dict[str, Any]
+    executionContextId: NotRequired[ExecutionContextId]
+
+
+# Event type aliases
+BindingCalledEvent = CDPEvent[BindingCalledEventParams]
+ConsoleAPICalledEvent = CDPEvent[ConsoleAPICalledEventParams]
+ExceptionRevokedEvent = CDPEvent[ExceptionRevokedEventParams]
+ExceptionThrownEvent = CDPEvent[ExceptionThrownEventParams]
+ExecutionContextCreatedEvent = CDPEvent[ExecutionContextCreatedEventParams]
+ExecutionContextDestroyedEvent = CDPEvent[ExecutionContextDestroyedEventParams]
+ExecutionContextsClearedEvent = CDPEvent[ExecutionContextsClearedEventParams]
+InspectRequestedEvent = CDPEvent[InspectRequestedEventParams]
