@@ -20,8 +20,9 @@ from pydoll.commands import (
 )
 from pydoll.protocol.fetch.events import FetchEvent
 from pydoll.connection.connection_handler import ConnectionHandler
-from pydoll.constants import DownloadBehavior, PermissionType, NetworkErrorReason, RequestMethod
 
+from pydoll.protocol.network.types import RequestMethod, ErrorReason
+from pydoll.protocol.browser.types import DownloadBehavior, PermissionType
 
 class ConcreteBrowser(Browser):
     def _get_default_binary_location(self) -> str:
@@ -488,7 +489,7 @@ async def test_set_download_behavior(mock_browser):
 @pytest.mark.asyncio
 async def test_set_download_path(mock_browser):
     mock_browser._execute_command = AsyncMock()
-    await mock_browser.set_download_path('/downloads')
+    await mock_browser.set_download_path(path='/downloads')
     
     mock_browser._execute_command.assert_called_with(
         BrowserCommands.set_download_behavior(
@@ -716,7 +717,7 @@ async def test_continue_request_with_all_params(mock_browser):
 async def test_fail_request(mock_browser):
     """Test fail_request."""
     request_id = 'test_request_123'
-    error_reason = NetworkErrorReason.FAILED
+    error_reason = ErrorReason.FAILED
     
     await mock_browser.fail_request(request_id, error_reason)
     

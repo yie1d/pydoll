@@ -227,15 +227,8 @@ def test_get_interest_group_details():
 
 def test_get_related_website_sets():
     """Test get_related_website_sets method."""
-    sets = [
-        {
-            'primarySites': ['https://primary.com'],
-            'associatedSites': ['https://associated.com']
-        }
-    ]
-    result = StorageCommands.get_related_website_sets(sets=sets)
+    result = StorageCommands.get_related_website_sets()
     assert result['method'] == StorageMethod.GET_RELATED_WEBSITE_SETS
-    assert result['params']['sets'] == sets
 
 
 def test_get_shared_storage_entries():
@@ -300,9 +293,9 @@ def test_send_pending_attribution_reports():
 
 def test_set_attribution_reporting_local_testing_mode():
     """Test set_attribution_reporting_local_testing_mode method."""
-    result = StorageCommands.set_attribution_reporting_local_testing_mode(enable=True)
+    result = StorageCommands.set_attribution_reporting_local_testing_mode(enabled=True)
     assert result['method'] == StorageMethod.SET_ATTRIBUTION_REPORTING_LOCAL_TESTING_MODE
-    assert result['params']['enable'] is True
+    assert result['params']['enabled'] is True
 
 
 def test_set_attribution_reporting_tracking():

@@ -6,13 +6,7 @@ verifying that they generate the correct CDP commands with proper parameters.
 """
 
 from pydoll.commands.network_commands import NetworkCommands
-from pydoll.constants import (
-    ConnectionType,
-    ContentEncoding,
-    CookiePriority,
-    CookieSameSite,
-    CookieSourceScheme,
-)
+from pydoll.protocol.network.types import ConnectionType, ContentEncoding, CookiePriority, CookieSameSite, CookieSourceScheme
 from pydoll.protocol.network.methods import NetworkMethod
 
 

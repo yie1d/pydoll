@@ -1,12 +1,7 @@
 import pytest
 from pydoll.commands.fetch_commands import FetchCommands
-from pydoll.constants import (
-    AuthChallengeResponseValues,
-    NetworkErrorReason,
-    RequestMethod,
-    RequestStage,
-    ResourceType,
-)
+from pydoll.protocol.fetch.types import AuthChallengeResponseType, RequestStage
+from pydoll.protocol.network.types import RequestMethod, ErrorReason, ResourceType
 from pydoll.protocol.fetch.methods import FetchMethod
 
 
@@ -103,7 +98,7 @@ class TestFetchCommands:
     def test_continue_request_with_auth_minimal(self):
         """Test continue_request_with_auth command with minimal parameters."""
         request_id = 'req123'
-        auth_response = AuthChallengeResponseValues.PROVIDE_CREDENTIALS
+        auth_response = AuthChallengeResponseType.PROVIDE_CREDENTIALS
         result = FetchCommands.continue_request_with_auth(
             request_id=request_id,
             auth_challenge_response=auth_response
@@ -116,7 +111,7 @@ class TestFetchCommands:
     def test_continue_request_with_auth_credentials(self):
         """Test continue_request_with_auth command with credentials."""
         request_id = 'req123'
-        auth_response = AuthChallengeResponseValues.PROVIDE_CREDENTIALS
+        auth_response = AuthChallengeResponseType.PROVIDE_CREDENTIALS
         username = 'testuser'
         password = 'testpass'
         
@@ -136,7 +131,7 @@ class TestFetchCommands:
     def test_continue_request_with_auth_cancel(self):
         """Test continue_request_with_auth command with cancel response."""
         request_id = 'req123'
-        auth_response = AuthChallengeResponseValues.CANCEL_AUTH
+        auth_response = AuthChallengeResponseType.CANCEL_AUTH
         
         result = FetchCommands.continue_request_with_auth(
             request_id=request_id,
@@ -225,7 +220,7 @@ class TestFetchCommands:
     def test_fail_request(self):
         """Test fail_request command."""
         request_id = 'req123'
-        error_reason = NetworkErrorReason.FAILED
+        error_reason = ErrorReason.FAILED
         result = FetchCommands.fail_request(
             request_id=request_id,
             error_reason=error_reason
@@ -238,7 +233,7 @@ class TestFetchCommands:
     def test_fail_request_with_different_error(self):
         """Test fail_request command with different error reason."""
         request_id = 'req123'
-        error_reason = NetworkErrorReason.TIMED_OUT
+        error_reason = ErrorReason.TIMED_OUT
         result = FetchCommands.fail_request(
             request_id=request_id,
             error_reason=error_reason

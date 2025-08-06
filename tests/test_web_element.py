@@ -17,16 +17,9 @@ from pydoll.commands import (
     PageCommands,
     RuntimeCommands,
 )
-from pydoll.constants import (
-    By,
-    Key,
-    KeyEventType,
-    KeyModifier,
-    MouseButton,
-    MouseEventType,
-    ScreenshotFormat,
-    Scripts,
-)
+from pydoll.constants import Key
+from pydoll.protocol.input.types import KeyModifier
+
 
 from pydoll.elements.web_element import WebElement
 

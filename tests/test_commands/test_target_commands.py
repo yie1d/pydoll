@@ -6,7 +6,7 @@ verifying that they generate the correct CDP commands with proper parameters.
 """
 
 from pydoll.commands.target_commands import TargetCommands
-from pydoll.constants import WindowState
+from pydoll.protocol.browser.types import WindowState
 from pydoll.protocol.target.methods import TargetMethod
 
 

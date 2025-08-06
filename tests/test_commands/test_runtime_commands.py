@@ -110,9 +110,10 @@ def test_call_function_on_with_all_params():
 
 def test_compile_script_minimal():
     """Test compile_script with minimal parameters."""
-    result = RuntimeCommands.compile_script(expression='2 + 2')
+    result = RuntimeCommands.compile_script(expression='2 + 2', source_url='https://example.com/script.js')
     assert result['method'] == RuntimeMethod.COMPILE_SCRIPT
     assert result['params']['expression'] == '2 + 2'
+    assert result['params']['sourceURL'] == 'https://example.com/script.js'
 
 
 def test_compile_script_with_all_params():
