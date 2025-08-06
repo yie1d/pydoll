@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import NotRequired, TypedDict
+
+from typing_extensions import NotRequired, TypedDict
 
 
 class ScreenOrientationType(str, Enum):
