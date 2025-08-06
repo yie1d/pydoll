@@ -394,9 +394,7 @@ class BackForwardCacheNotUsedEventParams(TypedDict):
     loaderId: LoaderId
     frameId: FrameId
     notRestoredExplanations: list[BackForwardCacheNotRestoredExplanation]
-    notRestoredExplanationsTree: NotRequired[
-        BackForwardCacheNotRestoredExplanationTree
-    ]
+    notRestoredExplanationsTree: NotRequired[BackForwardCacheNotRestoredExplanationTree]
 
 
 class LoadEventFiredEventParams(TypedDict):
