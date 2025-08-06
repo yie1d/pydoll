@@ -397,7 +397,7 @@ class BrowserCommands:
             params['browserContextId'] = browser_context_id
         if download_path is not None:
             params['downloadPath'] = download_path
-        if events_enabled:
+        if events_enabled is not None:
             params['eventsEnabled'] = events_enabled
         return Command(method=BrowserMethod.SET_DOWNLOAD_BEHAVIOR, params=params)
 
