@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import shutil
+import warnings
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from functools import partial
@@ -110,7 +111,7 @@ class Browser(ABC):  # noqa: PLR0904
         Start browser process and establish CDP connection.
 
         Args:
-            headless: Run without UI.
+            headless: Deprecated. Use `options.headless = True` instead.
 
         Returns:
             Initial tab for interaction.
@@ -118,12 +119,16 @@ class Browser(ABC):  # noqa: PLR0904
         Raises:
             FailedToStartBrowser: If the browser fails to start or connect.
         """
-        binary_location = self.options.binary_location or self._get_default_binary_location()
-
         if headless:
-            headless_arg = '--headless'
-            if headless_arg not in self.options.arguments:
-                self.options.add_argument(headless_arg)
+            warnings.warn(
+                "The 'headless' parameter is deprecated and will be removed in a future version. "
+                "Use `options.headless = True` instead.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.options.headless = headless
+
+        binary_location = self.options.binary_location or self._get_default_binary_location()
 
         self._setup_user_dir()
         proxy_config = self._proxy_manager.get_proxy_credentials()

@@ -26,6 +26,16 @@ class Options(ABC):
     def browser_preferences(self) -> dict:
         pass
 
+    @property
+    @abstractmethod
+    def headless(self) -> bool:
+        pass
+
+    @headless.setter
+    @abstractmethod
+    def headless(self, headless: bool):
+        pass
+
 
 class BrowserOptionsManager(ABC):
     @abstractmethod

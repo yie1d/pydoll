@@ -8,7 +8,12 @@ import pytest_asyncio
 from pydoll import exceptions
 from pydoll.browser.chromium.chrome import Chrome
 from pydoll.browser.chromium.base import Browser
-from pydoll.browser.managers import ProxyManager, ChromiumOptionsManager, BrowserProcessManager, TempDirectoryManager
+from pydoll.browser.managers import (
+    ProxyManager,
+    ChromiumOptionsManager,
+    BrowserProcessManager,
+    TempDirectoryManager,
+)
 from pydoll.browser.options import ChromiumOptions as Options
 from pydoll.browser.tab import Tab
 from pydoll.commands import (
@@ -33,9 +38,7 @@ async def mock_browser():
     with (
         patch.multiple(
             Browser,
-            _get_default_binary_location=MagicMock(
-                return_value='/fake/path/to/browser'
-            ),
+            _get_default_binary_location=MagicMock(return_value='/fake/path/to/browser'),
         ),
         patch(
             'pydoll.browser.managers.browser_process_manager.BrowserProcessManager',
@@ -66,9 +69,7 @@ async def mock_browser():
         browser._connection_handler.execute_command = AsyncMock()
         browser._connection_handler.register_callback = AsyncMock()
 
-        mock_temp_dir_manager.return_value.create_temp_dir.return_value = (
-            MagicMock(name='temp_dir')
-        )
+        mock_temp_dir_manager.return_value.create_temp_dir.return_value = MagicMock(name='temp_dir')
 
         yield browser
 
@@ -97,10 +98,9 @@ async def test_start_browser_success(mock_browser):
         mock_browser.options.arguments,
     )
 
-    assert '--user-data-dir=' in str(mock_browser.options.arguments), (
-        'Temporary directory not configured'
-    )
-
+    assert '--user-data-dir=' in str(
+        mock_browser.options.arguments
+    ), 'Temporary directory not configured'
 
 
 @pytest.mark.asyncio
@@ -111,9 +111,10 @@ async def test_start_browser_failure(mock_browser):
         with pytest.raises(exceptions.FailedToStartBrowser):
             await mock_browser.start()
 
-@pytest.mark.asyncio 
+
+@pytest.mark.asyncio
 async def test_start_browser_failure_with_start_timeout(mock_browser):
-    browser_launched = False 
+    browser_launched = False
 
     async def launch_browser_later():
         nonlocal browser_launched
@@ -126,18 +127,21 @@ async def test_start_browser_failure_with_start_timeout(mock_browser):
     async def ping_side_effect():
         nonlocal browser_launched
         return browser_launched
-    
+
     mock_browser.options.start_timeout = 1
     mock_browser._get_valid_tab_id = AsyncMock(return_value='page1')
-    mock_browser._browser_process_manager.start_browser_process.side_effect = start_browser_process_side_effect
-    mock_browser._connection_handler.ping =  AsyncMock(side_effect=ping_side_effect)
+    mock_browser._browser_process_manager.start_browser_process.side_effect = (
+        start_browser_process_side_effect
+    )
+    mock_browser._connection_handler.ping = AsyncMock(side_effect=ping_side_effect)
 
     with pytest.raises(exceptions.FailedToStartBrowser):
         await mock_browser.start()
 
-@pytest.mark.asyncio 
+
+@pytest.mark.asyncio
 async def test_start_browser_success_with_start_timeout(mock_browser):
-    browser_launched = False 
+    browser_launched = False
 
     async def launch_browser_later():
         nonlocal browser_launched
@@ -150,13 +154,16 @@ async def test_start_browser_success_with_start_timeout(mock_browser):
     async def ping_side_effect():
         nonlocal browser_launched
         return browser_launched
-    
+
     mock_browser.options.start_timeout = 3
     mock_browser._get_valid_tab_id = AsyncMock(return_value='page1')
-    mock_browser._browser_process_manager.start_browser_process.side_effect = start_browser_process_side_effect
-    mock_browser._connection_handler.ping =  AsyncMock(side_effect=ping_side_effect)
+    mock_browser._browser_process_manager.start_browser_process.side_effect = (
+        start_browser_process_side_effect
+    )
+    mock_browser._connection_handler.ping = AsyncMock(side_effect=ping_side_effect)
 
     await mock_browser.start()
+
 
 @pytest.mark.asyncio
 async def test_proxy_configuration(mock_browser):
@@ -178,6 +185,7 @@ async def test_proxy_configuration(mock_browser):
         True,
     )
 
+
 @pytest.mark.asyncio
 async def test_new_tab(mock_browser):
     mock_browser._connection_handler.execute_command.return_value = {
@@ -196,9 +204,7 @@ async def test_cookie_management(mock_browser):
         StorageCommands.set_cookies(cookies=cookies, browser_context_id=None), timeout=10
     )
 
-    mock_browser._connection_handler.execute_command.return_value = {
-        'result': {'cookies': cookies}
-    }
+    mock_browser._connection_handler.execute_command.return_value = {'result': {'cookies': cookies}}
     result = await mock_browser.get_cookies()
     assert result == cookies
 
@@ -216,9 +222,7 @@ async def test_event_registration(mock_browser):
     callback_id = await mock_browser.on('test_event', callback, temporary=True)
     assert callback_id == 123
 
-    mock_browser._connection_handler.register_callback.assert_called_with(
-        'test_event', ANY, True
-    )
+    mock_browser._connection_handler.register_callback.assert_called_with('test_event', ANY, True)
 
 
 @pytest.mark.asyncio
@@ -243,6 +247,7 @@ async def test_window_management(mock_browser):
     mock_browser._connection_handler.execute_command.assert_any_await(
         BrowserCommands.set_window_minimized('window1'), timeout=10
     )
+
 
 @pytest.mark.asyncio
 async def test_get_window_id_for_target(mock_browser):
@@ -271,6 +276,7 @@ async def test_get_window_id(mock_browser):
     mock_browser._connection_handler.execute_command.assert_called_with(
         BrowserCommands.get_window_for_target('target1'), timeout=10
     )
+
 
 @pytest.mark.asyncio
 async def test_stop_browser(mock_browser):
@@ -302,9 +308,7 @@ async def test_context_manager(mock_browser):
 
 @pytest.mark.asyncio
 async def test_enable_events(mock_browser):
-    await mock_browser.enable_fetch_events(
-        handle_auth_requests=True, resource_type='XHR'
-    )
+    await mock_browser.enable_fetch_events(handle_auth_requests=True, resource_type='XHR')
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.enable(handle_auth_requests=True, resource_type='XHR')
     )
@@ -313,9 +317,7 @@ async def test_enable_events(mock_browser):
 @pytest.mark.asyncio
 async def test_disable_events(mock_browser):
     await mock_browser.disable_fetch_events()
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        FetchCommands.disable()
-    )
+    mock_browser._connection_handler.execute_command.assert_called_with(FetchCommands.disable())
 
 
 @pytest.mark.asyncio
@@ -339,24 +341,26 @@ async def test__continue_request_auth_required_callback(mock_browser):
         timeout=10,
     )
 
-    mock_browser._connection_handler.execute_command.assert_any_call(
-        FetchCommands.disable()
-    )
+    mock_browser._connection_handler.execute_command.assert_any_call(FetchCommands.disable())
 
 
 def test__is_valid_tab(mock_browser):
-    result = mock_browser._is_valid_tab({
-        'type': 'page',
-        'url': 'chrome://newtab/',
-    })
+    result = mock_browser._is_valid_tab(
+        {
+            'type': 'page',
+            'url': 'chrome://newtab/',
+        }
+    )
     assert result is True
 
 
 def test__is_valid_tab_not_a_tab(mock_browser):
-    result = mock_browser._is_valid_tab({
-        'type': 'tab',
-        'url': 'chrome://newtab/',
-    })
+    result = mock_browser._is_valid_tab(
+        {
+            'type': 'tab',
+            'url': 'chrome://newtab/',
+        }
+    )
     assert result is False
 
 
@@ -415,30 +419,22 @@ def test__get_default_binary_location_throws_exception_if_os_not_supported(
 @pytest.mark.asyncio
 async def test_create_browser_context(mock_browser):
     mock_browser._execute_command = AsyncMock()
-    mock_browser._execute_command.return_value = {
-        'result': {'browserContextId': 'context1'}
-    }
-    
+    mock_browser._execute_command.return_value = {'result': {'browserContextId': 'context1'}}
+
     context_id = await mock_browser.create_browser_context()
     assert context_id == 'context1'
 
-    mock_browser._execute_command.assert_called_with(
-        TargetCommands.create_browser_context()
-    )
-    
+    mock_browser._execute_command.assert_called_with(TargetCommands.create_browser_context())
+
     # Test with proxy
-    mock_browser._execute_command.return_value = {
-        'result': {'browserContextId': 'context2'}
-    }
+    mock_browser._execute_command.return_value = {'result': {'browserContextId': 'context2'}}
     context_id = await mock_browser.create_browser_context(
-        proxy_server='http://proxy.example.com:8080',
-        proxy_bypass_list='localhost'
+        proxy_server='http://proxy.example.com:8080', proxy_bypass_list='localhost'
     )
     assert context_id == 'context2'
     mock_browser._execute_command.assert_called_with(
         TargetCommands.create_browser_context(
-            proxy_server='http://proxy.example.com:8080',
-            proxy_bypass_list='localhost'
+            proxy_server='http://proxy.example.com:8080', proxy_bypass_list='localhost'
         )
     )
 
@@ -458,30 +454,26 @@ async def test_get_browser_contexts(mock_browser):
     mock_browser._execute_command.return_value = {
         'result': {'browserContextIds': ['context1', 'context2']}
     }
-    
+
     contexts = await mock_browser.get_browser_contexts()
     assert contexts == ['context1', 'context2']
-    mock_browser._execute_command.assert_called_with(
-        TargetCommands.get_browser_contexts()
-    )
+    mock_browser._execute_command.assert_called_with(TargetCommands.get_browser_contexts())
 
 
 @pytest.mark.asyncio
 async def test_set_download_behavior(mock_browser):
     await mock_browser.set_download_behavior(
-        behavior=DownloadBehavior.ALLOW,
-        download_path='/downloads',
-        events_enabled=True
+        behavior=DownloadBehavior.ALLOW, download_path='/downloads', events_enabled=True
     )
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         BrowserCommands.set_download_behavior(
             behavior=DownloadBehavior.ALLOW,
             download_path='/downloads',
             browser_context_id=None,
-            events_enabled=True
+            events_enabled=True,
         ),
-        timeout=10
+        timeout=10,
     )
 
 
@@ -489,7 +481,7 @@ async def test_set_download_behavior(mock_browser):
 async def test_set_download_path(mock_browser):
     mock_browser._execute_command = AsyncMock()
     await mock_browser.set_download_path('/downloads')
-    
+
     mock_browser._execute_command.assert_called_with(
         BrowserCommands.set_download_behavior(
             behavior=DownloadBehavior.ALLOW,
@@ -502,29 +494,23 @@ async def test_set_download_path(mock_browser):
 @pytest.mark.asyncio
 async def test_grant_permissions(mock_browser):
     permissions = [PermissionType.GEOLOCATION, PermissionType.NOTIFICATIONS]
-    
-    await mock_browser.grant_permissions(
-        permissions=permissions,
-        origin='https://example.com'
-    )
-    
+
+    await mock_browser.grant_permissions(permissions=permissions, origin='https://example.com')
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         BrowserCommands.grant_permissions(
-            permissions=permissions,
-            origin='https://example.com',
-            browser_context_id=None
+            permissions=permissions, origin='https://example.com', browser_context_id=None
         ),
-        timeout=10
+        timeout=10,
     )
 
 
 @pytest.mark.asyncio
 async def test_reset_permissions(mock_browser):
     await mock_browser.reset_permissions()
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
-        BrowserCommands.reset_permissions(browser_context_id=None),
-        timeout=10
+        BrowserCommands.reset_permissions(browser_context_id=None), timeout=10
     )
 
 
@@ -536,17 +522,16 @@ async def test_get_version(mock_browser):
             'product': 'Chrome/90.0.4430.93',
             'revision': '@abcdef',
             'userAgent': 'Mozilla/5.0...',
-            'jsVersion': '9.0'
+            'jsVersion': '9.0',
         }
     }
-    
+
     version = await mock_browser.get_version()
     assert version['protocolVersion'] == '1.3'
     assert version['product'] == 'Chrome/90.0.4430.93'
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
-        BrowserCommands.get_version(),
-        timeout=10
+        BrowserCommands.get_version(), timeout=10
     )
 
 
@@ -554,9 +539,9 @@ async def test_get_version(mock_browser):
 async def test_headless_mode(mock_browser):
     mock_browser._connection_handler.ping.return_value = True
     mock_browser._get_valid_tab_id = AsyncMock(return_value='page1')
-    
+
     await mock_browser.start(headless=True)
-    
+
     assert '--headless' in mock_browser.options.arguments
     mock_browser._browser_process_manager.start_browser_process.assert_called_once()
 
@@ -568,13 +553,13 @@ async def test_multiple_tab_handling(mock_browser):
         {'result': {'targetId': 'tab1'}},
         {'result': {'targetId': 'tab2'}},
     ]
-    
+
     tab1 = await mock_browser.new_tab()
     tab2 = await mock_browser.new_tab()
-    
+
     assert tab1._target_id == 'tab1'
     assert tab2._target_id == 'tab2'
-    
+
     # Verify that correct calls were made
     calls = mock_browser._connection_handler.execute_command.call_args_list
     assert len(calls) == 2
@@ -587,9 +572,9 @@ async def test_get_valid_tab_id_success():
     targets = [
         {'type': 'page', 'url': 'https://example.com', 'targetId': 'valid_tab_1'},
         {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'},
-        {'type': 'page', 'url': 'chrome://newtab/', 'targetId': 'valid_tab_2'}
+        {'type': 'page', 'url': 'chrome://newtab/', 'targetId': 'valid_tab_2'},
     ]
-    
+
     result = await Browser._get_valid_tab_id(targets)
     assert result == 'valid_tab_1'
 
@@ -599,9 +584,9 @@ async def test_get_valid_tab_id_no_valid_tabs():
     """Test _get_valid_tab_id when there are no valid tabs."""
     targets = [
         {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'},
-        {'type': 'background_page', 'url': 'chrome://background', 'targetId': 'bg_1'}
+        {'type': 'background_page', 'url': 'chrome://background', 'targetId': 'bg_1'},
     ]
-    
+
     with pytest.raises(exceptions.NoValidTabFound):
         await Browser._get_valid_tab_id(targets)
 
@@ -610,7 +595,7 @@ async def test_get_valid_tab_id_no_valid_tabs():
 async def test_get_valid_tab_id_empty_targets():
     """Test _get_valid_tab_id with empty targets list."""
     targets = []
-    
+
     with pytest.raises(exceptions.NoValidTabFound):
         await Browser._get_valid_tab_id(targets)
 
@@ -620,9 +605,9 @@ async def test_get_valid_tab_id_missing_target_id():
     """Test _get_valid_tab_id when valid tab has no targetId."""
     targets = [
         {'type': 'page', 'url': 'https://example.com'},  # No targetId
-        {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'}
+        {'type': 'extension', 'url': 'chrome-extension://abc123', 'targetId': 'ext_1'},
     ]
-    
+
     with pytest.raises(exceptions.NoValidTabFound, match='Tab missing targetId'):
         await Browser._get_valid_tab_id(targets)
 
@@ -632,9 +617,9 @@ async def test_get_valid_tab_id_filters_extensions():
     """Test if _get_valid_tab_id correctly filters extensions."""
     targets = [
         {'type': 'page', 'url': 'chrome-extension://abc123/popup.html', 'targetId': 'ext_page'},
-        {'type': 'page', 'url': 'https://example.com', 'targetId': 'valid_tab'}
+        {'type': 'page', 'url': 'https://example.com', 'targetId': 'valid_tab'},
     ]
-    
+
     result = await Browser._get_valid_tab_id(targets)
     assert result == 'valid_tab'
 
@@ -644,20 +629,16 @@ async def test_get_valid_tab_id_filters_extensions():
 async def test_enable_runtime_events(mock_browser):
     """Test enable_runtime_events."""
     await mock_browser.enable_runtime_events()
-    
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        RuntimeCommands.enable()
-    )
+
+    mock_browser._connection_handler.execute_command.assert_called_with(RuntimeCommands.enable())
 
 
 @pytest.mark.asyncio
 async def test_disable_runtime_events(mock_browser):
     """Test disable_runtime_events."""
     await mock_browser.disable_runtime_events()
-    
-    mock_browser._connection_handler.execute_command.assert_called_with(
-        RuntimeCommands.disable()
-    )
+
+    mock_browser._connection_handler.execute_command.assert_called_with(RuntimeCommands.disable())
 
 
 # Tests for continue_request, fail_request and fulfill_request
@@ -665,9 +646,9 @@ async def test_disable_runtime_events(mock_browser):
 async def test_continue_request(mock_browser):
     """Test continue_request with minimal parameters."""
     request_id = 'test_request_123'
-    
+
     await mock_browser.continue_request(request_id)
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.continue_request(
             request_id=request_id,
@@ -676,7 +657,8 @@ async def test_continue_request(mock_browser):
             post_data=None,
             headers=None,
             intercept_response=None,
-        ), timeout=10
+        ),
+        timeout=10,
     )
 
 
@@ -689,7 +671,7 @@ async def test_continue_request_with_all_params(mock_browser):
     post_data = 'modified_data=test'
     headers = [{'name': 'Authorization', 'value': 'Bearer token123'}]
     intercept_response = True
-    
+
     await mock_browser.continue_request(
         request_id=request_id,
         url=url,
@@ -698,7 +680,7 @@ async def test_continue_request_with_all_params(mock_browser):
         headers=headers,
         intercept_response=intercept_response,
     )
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.continue_request(
             request_id=request_id,
@@ -707,7 +689,8 @@ async def test_continue_request_with_all_params(mock_browser):
             post_data=post_data,
             headers=headers,
             intercept_response=intercept_response,
-        ), timeout=10
+        ),
+        timeout=10,
     )
 
 
@@ -716,9 +699,9 @@ async def test_fail_request(mock_browser):
     """Test fail_request."""
     request_id = 'test_request_123'
     error_reason = NetworkErrorReason.FAILED
-    
+
     await mock_browser.fail_request(request_id, error_reason)
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.fail_request(request_id, error_reason), timeout=10
     )
@@ -729,9 +712,9 @@ async def test_fulfill_request(mock_browser):
     """Test fulfill_request with minimal parameters."""
     request_id = 'test_request_123'
     response_code = 200
-    
+
     await mock_browser.fulfill_request(request_id, response_code)
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.fulfill_request(
             request_id=request_id,
@@ -739,7 +722,8 @@ async def test_fulfill_request(mock_browser):
             response_headers=None,
             body=None,
             response_phrase=None,
-        ), timeout=10
+        ),
+        timeout=10,
     )
 
 
@@ -752,7 +736,7 @@ async def test_fulfill_request_with_all_params(mock_browser):
     json_response = '{"status": "success", "data": "test"}'
     body = base64.b64encode(json_response.encode('utf-8')).decode('utf-8')
     response_phrase = 'OK'
-    
+
     await mock_browser.fulfill_request(
         request_id=request_id,
         response_code=response_code,
@@ -760,7 +744,7 @@ async def test_fulfill_request_with_all_params(mock_browser):
         body=body,
         response_phrase=response_phrase,
     )
-    
+
     mock_browser._connection_handler.execute_command.assert_called_with(
         FetchCommands.fulfill_request(
             request_id=request_id,
@@ -768,7 +752,8 @@ async def test_fulfill_request_with_all_params(mock_browser):
             response_headers=response_headers,
             body=body,
             response_phrase=response_phrase,
-        ), timeout=10
+        ),
+        timeout=10,
     )
 
 
@@ -777,22 +762,22 @@ async def test_fulfill_request_with_all_params(mock_browser):
 async def test_event_registration_with_async_callback(mock_browser):
     """Test async callback registration."""
     mock_browser._connection_handler.register_callback.return_value = 456
-    
+
     async def async_test_callback(event):
         """Test async callback."""
         return f"Processed event: {event}"
-    
+
     callback_id = await mock_browser.on('test_async_event', async_test_callback, temporary=False)
     assert callback_id == 456
-    
+
     mock_browser._connection_handler.register_callback.assert_called_with(
         'test_async_event', ANY, False
     )
-    
+
     # Verify that callback was registered correctly
     call_args = mock_browser._connection_handler.register_callback.call_args
     registered_callback = call_args[0][1]  # Second argument (callback)
-    
+
     # The registered callback should be a function
     assert callable(registered_callback)
 
@@ -801,14 +786,14 @@ async def test_event_registration_with_async_callback(mock_browser):
 async def test_event_registration_sync_callback(mock_browser):
     """Test sync callback registration."""
     mock_browser._connection_handler.register_callback.return_value = 789
-    
+
     def sync_test_callback(event):
         """Test sync callback."""
         return f"Processed sync event: {event}"
-    
+
     callback_id = await mock_browser.on('test_sync_event', sync_test_callback, temporary=True)
     assert callback_id == 789
-    
+
     mock_browser._connection_handler.register_callback.assert_called_with(
         'test_sync_event', ANY, True
     )
@@ -820,57 +805,42 @@ async def test_get_opened_tabs_success(mock_browser):
     """Test get_opened_tabs with multiple valid tabs."""
     # Mock get_targets to return various target types
     mock_targets = [
-        {
-            'targetId': 'tab1',
-            'type': 'page',
-            'url': 'https://example.com',
-            'title': 'Example Site'
-        },
+        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
         {
             'targetId': 'ext1',
             'type': 'page',
             'url': 'chrome-extension://abc123/popup.html',
-            'title': 'Extension Popup'
+            'title': 'Extension Popup',
         },
-        {
-            'targetId': 'tab2',
-            'type': 'page',
-            'url': 'https://google.com',
-            'title': 'Google'
-        },
+        {'targetId': 'tab2', 'type': 'page', 'url': 'https://google.com', 'title': 'Google'},
         {
             'targetId': 'bg1',
             'type': 'background_page',
             'url': 'chrome://background',
-            'title': 'Background Page'
+            'title': 'Background Page',
         },
-        {
-            'targetId': 'tab3',
-            'type': 'page',
-            'url': 'chrome://newtab/',
-            'title': 'New Tab'
-        }
+        {'targetId': 'tab3', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry to avoid conflicts
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return 3 tabs (excluding extension and background_page)
     assert len(tabs) == 3
-    
+
     # Verify all returned objects are Tab instances
     for tab in tabs:
         assert isinstance(tab, Tab)
-    
+
     # Verify target IDs are correct (should be in reversed order)
     expected_target_ids = ['tab3', 'tab2', 'tab1']  # reversed order
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
-    
+
     # Verify get_targets was called
     mock_browser.get_targets.assert_called_once()
 
@@ -884,33 +854,33 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
             'targetId': 'ext1',
             'type': 'page',
             'url': 'chrome-extension://abc123/popup.html',
-            'title': 'Extension Popup'
+            'title': 'Extension Popup',
         },
         {
             'targetId': 'bg1',
             'type': 'background_page',
             'url': 'chrome://background',
-            'title': 'Background Page'
+            'title': 'Background Page',
         },
         {
             'targetId': 'worker1',
             'type': 'service_worker',
             'url': 'https://example.com/sw.js',
-            'title': 'Service Worker'
-        }
+            'title': 'Service Worker',
+        },
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return empty list
     assert len(tabs) == 0
     assert tabs == []
-    
+
     mock_browser.get_targets.assert_called_once()
 
 
@@ -918,15 +888,15 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
 async def test_get_opened_tabs_empty_targets(mock_browser):
     """Test get_opened_tabs when no targets exist."""
     mock_browser.get_targets = AsyncMock(return_value=[])
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     assert len(tabs) == 0
     assert tabs == []
-    
+
     mock_browser.get_targets.assert_called_once()
 
 
@@ -934,46 +904,36 @@ async def test_get_opened_tabs_empty_targets(mock_browser):
 async def test_get_opened_tabs_filters_extensions(mock_browser):
     """Test that get_opened_tabs correctly filters out extension pages."""
     mock_targets = [
-        {
-            'targetId': 'tab1',
-            'type': 'page',
-            'url': 'https://example.com',
-            'title': 'Example Site'
-        },
+        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
         {
             'targetId': 'ext1',
             'type': 'page',
             'url': 'chrome-extension://abc123/popup.html',
-            'title': 'Extension Popup'
+            'title': 'Extension Popup',
         },
         {
             'targetId': 'ext2',
             'type': 'page',
             'url': 'moz-extension://def456/options.html',
-            'title': 'Extension Options'
+            'title': 'Extension Options',
         },
-        {
-            'targetId': 'tab2',
-            'type': 'page',
-            'url': 'https://github.com',
-            'title': 'GitHub'
-        }
+        {'targetId': 'tab2', 'type': 'page', 'url': 'https://github.com', 'title': 'GitHub'},
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return only 2 tabs (excluding extensions)
     assert len(tabs) == 2
-    
+
     # Verify no extension URLs in results
     for tab in tabs:
         assert 'extension' not in tab._target_id
-    
+
     # Verify correct target IDs (reversed order)
     expected_target_ids = ['tab2', 'tab1']
     actual_target_ids = [tab._target_id for tab in tabs]
@@ -984,52 +944,37 @@ async def test_get_opened_tabs_filters_extensions(mock_browser):
 async def test_get_opened_tabs_filters_non_page_types(mock_browser):
     """Test that get_opened_tabs only returns 'page' type targets."""
     mock_targets = [
-        {
-            'targetId': 'tab1',
-            'type': 'page',
-            'url': 'https://example.com',
-            'title': 'Example Site'
-        },
+        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
         {
             'targetId': 'worker1',
             'type': 'service_worker',
             'url': 'https://example.com/sw.js',
-            'title': 'Service Worker'
+            'title': 'Service Worker',
         },
         {
             'targetId': 'shared1',
             'type': 'shared_worker',
             'url': 'https://example.com/shared.js',
-            'title': 'Shared Worker'
+            'title': 'Shared Worker',
         },
-        {
-            'targetId': 'browser1',
-            'type': 'browser',
-            'url': '',
-            'title': 'Browser Process'
-        },
-        {
-            'targetId': 'tab2',
-            'type': 'page',
-            'url': 'https://google.com',
-            'title': 'Google'
-        }
+        {'targetId': 'browser1', 'type': 'browser', 'url': '', 'title': 'Browser Process'},
+        {'targetId': 'tab2', 'type': 'page', 'url': 'https://google.com', 'title': 'Google'},
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return only 2 tabs (only 'page' type)
     assert len(tabs) == 2
-    
+
     # Verify all are Tab instances
     for tab in tabs:
         assert isinstance(tab, Tab)
-    
+
     # Verify correct target IDs (reversed order)
     expected_target_ids = ['tab2', 'tab1']
     actual_target_ids = [tab._target_id for tab in tabs]
@@ -1040,34 +985,24 @@ async def test_get_opened_tabs_filters_non_page_types(mock_browser):
 async def test_get_opened_tabs_singleton_behavior(mock_browser):
     """Test that get_opened_tabs respects Tab singleton pattern."""
     mock_targets = [
-        {
-            'targetId': 'tab1',
-            'type': 'page',
-            'url': 'https://example.com',
-            'title': 'Example Site'
-        },
-        {
-            'targetId': 'tab2',
-            'type': 'page',
-            'url': 'https://google.com',
-            'title': 'Google'
-        }
+        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
+        {'targetId': 'tab2', 'type': 'page', 'url': 'https://google.com', 'title': 'Google'},
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     # First call
     tabs1 = await mock_browser.get_opened_tabs()
-    
+
     # Second call with same targets
     tabs2 = await mock_browser.get_opened_tabs()
-    
+
     # Should return same instances due to singleton pattern
     assert len(tabs1) == len(tabs2) == 2
-    
+
     # Verify singleton behavior - same target_id should return same instance
     for tab1, tab2 in zip(tabs1, tabs2):
         if tab1._target_id == tab2._target_id:
@@ -1082,33 +1017,33 @@ async def test_get_opened_tabs_order_is_reversed(mock_browser):
             'targetId': 'oldest_tab',
             'type': 'page',
             'url': 'https://first.com',
-            'title': 'First Tab'
+            'title': 'First Tab',
         },
         {
             'targetId': 'middle_tab',
             'type': 'page',
             'url': 'https://second.com',
-            'title': 'Second Tab'
+            'title': 'Second Tab',
         },
         {
             'targetId': 'newest_tab',
             'type': 'page',
             'url': 'https://third.com',
-            'title': 'Third Tab'
-        }
+            'title': 'Third Tab',
+        },
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return in reversed order (newest first)
     expected_order = ['newest_tab', 'middle_tab', 'oldest_tab']
     actual_order = [tab._target_id for tab in tabs]
-    
+
     assert actual_order == expected_order
 
 
@@ -1120,55 +1055,50 @@ async def test_get_opened_tabs_with_mixed_valid_invalid_targets(mock_browser):
             'targetId': 'valid_tab1',
             'type': 'page',
             'url': 'https://example.com',
-            'title': 'Valid Tab 1'
+            'title': 'Valid Tab 1',
         },
         {
             'targetId': 'extension_page',
             'type': 'page',
             'url': 'chrome-extension://abc123/popup.html',
-            'title': 'Extension Page'
+            'title': 'Extension Page',
         },
         {
             'targetId': 'service_worker',
             'type': 'service_worker',
             'url': 'https://example.com/sw.js',
-            'title': 'Service Worker'
+            'title': 'Service Worker',
         },
         {
             'targetId': 'valid_tab2',
             'type': 'page',
             'url': 'https://github.com',
-            'title': 'Valid Tab 2'
+            'title': 'Valid Tab 2',
         },
         {
             'targetId': 'background_page',
             'type': 'background_page',
             'url': 'chrome://background',
-            'title': 'Background'
+            'title': 'Background',
         },
-        {
-            'targetId': 'valid_tab3',
-            'type': 'page',
-            'url': 'chrome://newtab/',
-            'title': 'New Tab'
-        }
+        {'targetId': 'valid_tab3', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
     ]
-    
+
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     tabs = await mock_browser.get_opened_tabs()
-    
+
     # Should return only 3 valid tabs
     assert len(tabs) == 3
-    
+
     # Verify correct filtering and order
     expected_target_ids = ['valid_tab3', 'valid_tab2', 'valid_tab1']
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
-    
+
     # Verify all are Tab instances
     for tab in tabs:
         assert isinstance(tab, Tab)
@@ -1179,37 +1109,54 @@ async def test_get_opened_tabs_integration_with_new_tab(mock_browser):
     """Test get_opened_tabs integration with new_tab method."""
     # Mock initial targets (empty)
     mock_browser.get_targets = AsyncMock(return_value=[])
-    
+
     # Clear Tab singleton registry
     Tab._instances.clear()
-    
+
     # Initially no tabs
     tabs = await mock_browser.get_opened_tabs()
     assert len(tabs) == 0
-    
+
     # Mock new_tab creation
     mock_browser._connection_handler.execute_command.return_value = {
         'result': {'targetId': 'new_tab_1'}
     }
-    
+
     # Create a new tab
     new_tab = await mock_browser.new_tab()
     assert new_tab._target_id == 'new_tab_1'
-    
+
     # Mock updated targets after tab creation
-    mock_browser.get_targets = AsyncMock(return_value=[
-        {
-            'targetId': 'new_tab_1',
-            'type': 'page',
-            'url': 'https://example.com',
-            'title': 'Example'
-        }
-    ])
-    
+    mock_browser.get_targets = AsyncMock(
+        return_value=[
+            {
+                'targetId': 'new_tab_1',
+                'type': 'page',
+                'url': 'https://example.com',
+                'title': 'Example',
+            }
+        ]
+    )
+
     # Now get_opened_tabs should return the new tab
     tabs = await mock_browser.get_opened_tabs()
     assert len(tabs) == 1
     assert tabs[0]._target_id == 'new_tab_1'
-    
+
     # Due to singleton pattern, should be the same instance
     assert tabs[0] is new_tab
+
+
+@pytest.mark.asyncio
+async def test_headless_parameter_deprecation_warning(mock_browser):
+    mock_browser._connection_handler.ping.return_value = True
+    mock_browser._get_valid_tab_id = AsyncMock(return_value='page1')
+    
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'headless' parameter is deprecated and will be removed in a future version"
+    ):
+        await mock_browser.start(headless=True)
+    
+    assert mock_browser.options.headless is True
+    assert '--headless' in mock_browser.options.arguments
