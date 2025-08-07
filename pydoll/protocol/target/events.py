@@ -1,5 +1,10 @@
 from enum import Enum
 
+from typing_extensions import NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.target.types import SessionID, TargetID, TargetInfo
+
 
 class TargetEvent(str, Enum):
     """
@@ -75,3 +80,61 @@ class TargetEvent(str, Enum):
         sessionId (SessionID): Detached session identifier.
         targetId (TargetID): Deprecated.
     """
+
+
+class AttachedToTargetParams(TypedDict):
+    """Parameters for the `attachedToTarget` event."""
+
+    sessionId: SessionID
+    targetInfo: TargetInfo
+    waitingForDebugger: bool
+
+
+class DetachedFromTargetParams(TypedDict):
+    """Parameters for the `detachedFromTarget` event."""
+
+    sessionId: SessionID
+    targetId: NotRequired[TargetID]
+
+
+class ReceivedMessageFromTargetParams(TypedDict):
+    """Parameters for the `receivedMessageFromTarget` event."""
+
+    sessionId: SessionID
+    message: str
+    targetId: NotRequired[TargetID]
+
+
+class TargetCreatedParams(TypedDict):
+    """Parameters for the `targetCreated` event."""
+
+    targetInfo: TargetInfo
+
+
+class TargetDestroyedParams(TypedDict):
+    """Parameters for the `targetDestroyed` event."""
+
+    targetId: TargetID
+
+
+class TargetCrashedParams(TypedDict):
+    """Parameters for the `targetCrashed` event."""
+
+    targetId: TargetID
+    status: str
+    errorCode: int
+
+
+class TargetInfoChangedParams(TypedDict):
+    """Parameters for the `targetInfoChanged` event."""
+
+    targetInfo: TargetInfo
+
+
+AttachedToTargetEvent = CDPEvent[AttachedToTargetParams]
+DetachedFromTargetEvent = CDPEvent[DetachedFromTargetParams]
+ReceivedMessageFromTargetEvent = CDPEvent[ReceivedMessageFromTargetParams]
+TargetCreatedEvent = CDPEvent[TargetCreatedParams]
+TargetDestroyedEvent = CDPEvent[TargetDestroyedParams]
+TargetCrashedEvent = CDPEvent[TargetCrashedParams]
+TargetInfoChangedEvent = CDPEvent[TargetInfoChangedParams]

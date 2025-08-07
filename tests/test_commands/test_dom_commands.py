@@ -1,7 +1,6 @@
 from pydoll.commands.dom_commands import DomCommands
-from pydoll.constants import ElementRelation, IncludeWhitespace, LogicalAxes, PhysicalAxes
 from pydoll.protocol.dom.methods import DomMethod
-
+from pydoll.protocol.dom.types import IncludeWhitespace, LogicalAxes, PhysicalAxes, RelationType
 
 class TestDomCommands:
     """Tests for the DomCommands class."""
@@ -527,12 +526,12 @@ class TestDomCommands:
         """Test get_element_by_relation command."""
         result = DomCommands.get_element_by_relation(
             node_id=123, 
-            relation=ElementRelation.INTEREST_TARGET
+            relation=RelationType.INTEREST_TARGET
         )
         
         assert result['method'] == DomMethod.GET_ELEMENT_BY_RELATION
         assert result['params']['nodeId'] == 123
-        assert result['params']['relation'] == ElementRelation.INTEREST_TARGET
+        assert result['params']['relation'] == RelationType.INTEREST_TARGET
 
     def test_get_file_info(self):
         """Test get_file_info command."""

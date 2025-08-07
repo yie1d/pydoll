@@ -1,17 +1,26 @@
 from typing import Generic, TypeVar
 
+# TODO: typeddict comes from typing_extensions
 from typing_extensions import NotRequired, TypedDict
 
+T_CommandParams = TypeVar('T_CommandParams')
 T_CommandResponse = TypeVar('T_CommandResponse')
+T_EventParams = TypeVar('T_EventParams')
 
 
-class CommandParams(TypedDict, total=False):
-    """Base structure for all command parameters."""
+class EmptyParams(TypedDict):
+    """Empty parameters for commands."""
 
     pass
 
 
-class Command(TypedDict, Generic[T_CommandResponse]):
+class EmptyResponse(TypedDict):
+    """Empty response for commands."""
+
+    pass
+
+
+class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
     """Base structure for all commands.
 
     Attributes:
@@ -21,16 +30,10 @@ class Command(TypedDict, Generic[T_CommandResponse]):
 
     id: NotRequired[int]
     method: str
-    params: NotRequired[CommandParams]
+    params: NotRequired[T_CommandParams]
 
 
-class ResponseResult(TypedDict, total=False):
-    """Base structure for all response results."""
-
-    pass
-
-
-class Response(TypedDict):
+class Response(TypedDict, Generic[T_CommandResponse]):
     """Base structure for all responses.
 
     Attributes:
@@ -39,11 +42,11 @@ class Response(TypedDict):
     """
 
     id: int
-    result: ResponseResult
+    result: T_CommandResponse
 
 
-class Event(TypedDict):
+class CDPEvent(TypedDict, Generic[T_EventParams]):
     """Base structure for all events."""
 
     method: str
-    params: NotRequired[dict[str, str]]
+    params: NotRequired[T_EventParams]

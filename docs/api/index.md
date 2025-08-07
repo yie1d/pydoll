@@ -13,6 +13,7 @@ The browser module contains classes for managing browser instances and their lif
 - **[Edge](browser/edge.md)** - Microsoft Edge browser automation  
 - **[Options](browser/options.md)** - Browser configuration options
 - **[Tab](browser/tab.md)** - Tab management and interaction
+- **[Requests](browser/requests.md)** - HTTP requests within browser context
 - **[Managers](browser/managers.md)** - Browser lifecycle managers
 
 ### Elements Module

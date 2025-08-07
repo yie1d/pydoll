@@ -1,35 +1,42 @@
 from typing import Optional
 
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.runtime.methods import RuntimeMethod
-from pydoll.protocol.runtime.params import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.runtime.methods import (
+    AddBindingCommand,
     AddBindingParams,
+    AwaitPromiseCommand,
     AwaitPromiseParams,
     CallArgument,
+    CallFunctionOnCommand,
     CallFunctionOnParams,
+    CompileScriptCommand,
     CompileScriptParams,
+    DisableCommand,
+    EnableCommand,
+    EvaluateCommand,
     EvaluateParams,
+    GetPropertiesCommand,
     GetPropertiesParams,
+    GlobalLexicalScopeNamesCommand,
     GlobalLexicalScopeNamesParams,
+    QueryObjectsCommand,
     QueryObjectsParams,
+    ReleaseObjectCommand,
+    ReleaseObjectGroupCommand,
     ReleaseObjectGroupParams,
     ReleaseObjectParams,
+    RemoveBindingCommand,
     RemoveBindingParams,
+    RunScriptCommand,
     RunScriptParams,
+    RuntimeMethod,
     SerializationOptions,
+    SetAsyncCallStackDepthCommand,
     SetAsyncCallStackDepthParams,
+    SetCustomObjectFormatterEnabledCommand,
     SetCustomObjectFormatterEnabledParams,
+    SetMaxCallStackSizeToCaptureCommand,
     SetMaxCallStackSizeToCaptureParams,
-)
-from pydoll.protocol.runtime.responses import (
-    AwaitPromiseResponse,
-    CallFunctionOnResponse,
-    CompileScriptResponse,
-    EvaluateResponse,
-    GetPropertiesResponse,
-    GlobalLexicalScopeNamesResponse,
-    QueryObjectsResponse,
-    RunScriptResponse,
 )
 
 
@@ -50,7 +57,7 @@ class RuntimeCommands:
     """
 
     @staticmethod
-    def add_binding(name: str, execution_context_name: Optional[str] = None) -> Command[Response]:
+    def add_binding(name: str, execution_context_name: Optional[str] = None) -> AddBindingCommand:
         """
         Creates a command to add a JavaScript binding.
 
@@ -59,7 +66,7 @@ class RuntimeCommands:
             execution_context_name (Optional[str]): Name of the execution context to bind to.
 
         Returns:
-            Command[Response]: Command object to add a JavaScript binding.
+            AddBindingCommand: Command object to add a JavaScript binding.
         """
         params = AddBindingParams(name=name)
         if execution_context_name is not None:
@@ -72,7 +79,7 @@ class RuntimeCommands:
         promise_object_id: str,
         return_by_value: Optional[bool] = None,
         generate_preview: Optional[bool] = None,
-    ) -> Command[AwaitPromiseResponse]:
+    ) -> AwaitPromiseCommand:
         """
         Creates a command to await a JavaScript promise and return its result.
 
@@ -83,7 +90,7 @@ class RuntimeCommands:
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
 
         Returns:
-            Command[AwaitPromiseResponse]: Command object to await a promise.
+            AwaitPromiseCommand: Command object to await a promise.
         """
         params = AwaitPromiseParams(promiseObjectId=promise_object_id)
         if return_by_value is not None:
@@ -94,7 +101,7 @@ class RuntimeCommands:
         return Command(method=RuntimeMethod.AWAIT_PROMISE, params=params)
 
     @staticmethod
-    def call_function_on(  # noqa: PLR0913, PLR0917
+    def call_function_on(
         function_declaration: str,
         object_id: Optional[str] = None,
         arguments: Optional[list[CallArgument]] = None,
@@ -103,12 +110,12 @@ class RuntimeCommands:
         generate_preview: Optional[bool] = None,
         user_gesture: Optional[bool] = None,
         await_promise: Optional[bool] = None,
-        execution_context_id: Optional[str] = None,
+        execution_context_id: Optional[int] = None,
         object_group: Optional[str] = None,
         throw_on_side_effect: Optional[bool] = None,
         unique_context_id: Optional[str] = None,
         serialization_options: Optional[SerializationOptions] = None,
-    ) -> Command[CallFunctionOnResponse]:
+    ) -> CallFunctionOnCommand:
         """
         Creates a command to call a function with a given declaration on a specific object.
 
@@ -122,7 +129,7 @@ class RuntimeCommands:
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
             user_gesture (Optional[bool]): Whether to treat the call as initiated by user gesture.
             await_promise (Optional[bool]): Whether to await promise result.
-            execution_context_id (Optional[str]): ID of the execution context to call the
+            execution_context_id (Optional[int]): ID of the execution context to call the
                 function in.
             object_group (Optional[str]): Symbolic group name for the result.
             throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
@@ -132,7 +139,7 @@ class RuntimeCommands:
                 the result.
 
         Returns:
-            Command[CallFunctionOnResponse]: Command object to call a function on an object.
+            CallFunctionOnCommand: Command object to call a function on an object.
         """
         params = CallFunctionOnParams(functionDeclaration=function_declaration)
         if object_id is not None:
@@ -165,60 +172,58 @@ class RuntimeCommands:
     @staticmethod
     def compile_script(
         expression: str,
-        source_url: Optional[str] = None,
-        persist_script: Optional[bool] = None,
-        execution_context_id: Optional[str] = None,
-    ) -> Command[CompileScriptResponse]:
+        source_url: str,
+        persist_script: bool = False,
+        execution_context_id: Optional[int] = None,
+    ) -> CompileScriptCommand:
         """
         Creates a command to compile a JavaScript expression.
 
         Args:
             expression (str): JavaScript expression to compile.
-            source_url (Optional[str]): URL of the source file for the script.
-            persist_script (Optional[bool]): Whether to persist the compiled script.
-            execution_context_id (Optional[str]): ID of the execution context to compile
+            source_url (str): URL of the source file for the script.
+            persist_script (bool): Whether to persist the compiled script.
+            execution_context_id (Optional[int]): ID of the execution context to compile
                 the script in.
 
         Returns:
-            Command[CompileScriptResponse]: Command object to compile a script.
+            CompileScriptCommand: Command object to compile a script.
         """
-        params = CompileScriptParams(expression=expression)
-        if source_url is not None:
-            params['sourceURL'] = source_url
-        if persist_script is not None:
-            params['persistScript'] = persist_script
+        params = CompileScriptParams(
+            expression=expression, sourceURL=source_url, persistScript=persist_script
+        )
         if execution_context_id is not None:
             params['executionContextId'] = execution_context_id
 
         return Command(method=RuntimeMethod.COMPILE_SCRIPT, params=params)
 
     @staticmethod
-    def disable() -> Command[Response]:
+    def disable() -> DisableCommand:
         """
         Disables the runtime domain.
 
         Returns:
-            Command[Response]: Command object to disable the runtime domain.
+            DisableCommand: Command object to disable the runtime domain.
         """
         return Command(method=RuntimeMethod.DISABLE)
 
     @staticmethod
-    def enable() -> Command[Response]:
+    def enable() -> EnableCommand:
         """
         Enables the runtime domain.
 
         Returns:
-            Command[Response]: Command object to enable the runtime domain.
+            EnableCommand: Command object to enable the runtime domain.
         """
         return Command(method=RuntimeMethod.ENABLE)
 
     @staticmethod
-    def evaluate(  # noqa: PLR0913, PLR0917, PLR0912
+    def evaluate(  # noqa: PLR0912
         expression: str,
         object_group: Optional[str] = None,
         include_command_line_api: Optional[bool] = None,
         silent: Optional[bool] = None,
-        context_id: Optional[str] = None,
+        context_id: Optional[int] = None,
         return_by_value: Optional[bool] = None,
         generate_preview: Optional[bool] = None,
         user_gesture: Optional[bool] = None,
@@ -230,7 +235,7 @@ class RuntimeCommands:
         allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
         unique_context_id: Optional[str] = None,
         serialization_options: Optional[SerializationOptions] = None,
-    ) -> Command[EvaluateResponse]:
+    ) -> EvaluateCommand:
         """
         Creates a command to evaluate a JavaScript expression in the global context.
 
@@ -239,7 +244,7 @@ class RuntimeCommands:
             object_group (Optional[str]): Symbolic group name for the result.
             include_command_line_api (Optional[bool]): Whether to include command line API.
             silent (Optional[bool]): Whether to silence exceptions.
-            context_id (Optional[str]): ID of the execution context to evaluate in.
+            context_id (Optional[int]): ID of the execution context to evaluate in.
             return_by_value (Optional[bool]): Whether to return the result by value instead
                 of reference.
             generate_preview (Optional[bool]): Whether to generate a preview for the result.
@@ -256,7 +261,7 @@ class RuntimeCommands:
                 for the result.
 
         Returns:
-            Command[EvaluateResponse]: Command object to evaluate JavaScript.
+            EvaluateCommand: Command object to evaluate JavaScript.
         """
         params = EvaluateParams(expression=expression)
         if object_group is not None:
@@ -299,7 +304,7 @@ class RuntimeCommands:
         accessor_properties_only: Optional[bool] = None,
         generate_preview: Optional[bool] = None,
         non_indexed_properties_only: Optional[bool] = None,
-    ) -> Command[GetPropertiesResponse]:
+    ) -> GetPropertiesCommand:
         """
         Creates a command to get properties of a JavaScript object.
 
@@ -312,7 +317,7 @@ class RuntimeCommands:
                 properties.
 
         Returns:
-            Command[GetPropertiesResponse]: Command object to get object properties.
+            GetPropertiesCommand: Command object to get object properties.
         """
         params = GetPropertiesParams(objectId=object_id)
         if own_properties is not None:
@@ -328,17 +333,17 @@ class RuntimeCommands:
 
     @staticmethod
     def global_lexical_scope_names(
-        execution_context_id: Optional[str] = None,
-    ) -> Command[GlobalLexicalScopeNamesResponse]:
+        execution_context_id: Optional[int] = None,
+    ) -> GlobalLexicalScopeNamesCommand:
         """
         Creates a command to retrieve names of variables from global lexical scope.
 
         Args:
-            execution_context_id (Optional[str]): ID of the execution context to get scope
+            execution_context_id (Optional[int]): ID of the execution context to get scope
                 names from.
 
         Returns:
-            Command[GlobalLexicalScopeNamesResponse]: Command object to get global lexical
+            GlobalLexicalScopeNamesCommand: Command object to get global lexical
                 scope names.
         """
         params = GlobalLexicalScopeNamesParams()
@@ -351,7 +356,7 @@ class RuntimeCommands:
     def query_objects(
         prototype_object_id: str,
         object_group: Optional[str] = None,
-    ) -> Command[QueryObjectsResponse]:
+    ) -> QueryObjectsCommand:
         """
         Creates a command to query objects with a given prototype.
 
@@ -360,7 +365,7 @@ class RuntimeCommands:
             object_group (Optional[str]): Symbolic group name for the results.
 
         Returns:
-            Command[QueryObjectsResponse]: Command object to query objects.
+            QueryObjectsCommand: Command object to query objects.
         """
         params = QueryObjectsParams(prototypeObjectId=prototype_object_id)
         if object_group is not None:
@@ -371,7 +376,7 @@ class RuntimeCommands:
     @staticmethod
     def release_object(
         object_id: str,
-    ) -> Command[Response]:
+    ) -> ReleaseObjectCommand:
         """
         Creates a command to release a JavaScript object.
 
@@ -379,7 +384,7 @@ class RuntimeCommands:
             object_id (str): ID of the object to release.
 
         Returns:
-            Command[Response]: Command object to release an object.
+            ReleaseObjectCommand: Command object to release an object.
         """
         params = ReleaseObjectParams(objectId=object_id)
 
@@ -388,7 +393,7 @@ class RuntimeCommands:
     @staticmethod
     def release_object_group(
         object_group: str,
-    ) -> Command[Response]:
+    ) -> ReleaseObjectGroupCommand:
         """
         Creates a command to release all objects in a group.
 
@@ -396,7 +401,7 @@ class RuntimeCommands:
             object_group (str): Name of the object group to release.
 
         Returns:
-            Command[Response]: Command object to release an object group.
+            ReleaseObjectGroupCommand: Command object to release an object group.
         """
         params = ReleaseObjectGroupParams(objectGroup=object_group)
         return Command(method=RuntimeMethod.RELEASE_OBJECT_GROUP, params=params)
@@ -404,7 +409,7 @@ class RuntimeCommands:
     @staticmethod
     def remove_binding(
         name: str,
-    ) -> Command[Response]:
+    ) -> RemoveBindingCommand:
         """
         Creates a command to remove a JavaScript binding.
 
@@ -412,28 +417,28 @@ class RuntimeCommands:
             name (str): Name of the binding to remove.
 
         Returns:
-            Command[Response]: Command object to remove a JavaScript binding.
+            RemoveBindingCommand: Command object to remove a JavaScript binding.
         """
         params = RemoveBindingParams(name=name)
         return Command(method=RuntimeMethod.REMOVE_BINDING, params=params)
 
     @staticmethod
-    def run_script(  # noqa: PLR0913, PLR0917
+    def run_script(
         script_id: str,
-        execution_context_id: Optional[str] = None,
+        execution_context_id: Optional[int] = None,
         object_group: Optional[str] = None,
         silent: Optional[bool] = None,
         include_command_line_api: Optional[bool] = None,
         return_by_value: Optional[bool] = None,
         generate_preview: Optional[bool] = None,
         await_promise: Optional[bool] = None,
-    ) -> Command[RunScriptResponse]:
+    ) -> RunScriptCommand:
         """
         Creates a command to run a compiled script.
 
         Args:
             script_id (str): ID of the compiled script to run.
-            execution_context_id (Optional[str]): ID of the execution context to run the script in.
+            execution_context_id (Optional[int]): ID of the execution context to run the script in.
             object_group (Optional[str]): Symbolic group name for the result.
             silent (Optional[bool]): Whether to silence exceptions.
             include_command_line_api (Optional[bool]): Whether to include command line API.
@@ -443,7 +448,7 @@ class RuntimeCommands:
             await_promise (Optional[bool]): Whether to await promise result.
 
         Returns:
-            Command[RunScriptResponse]: Command object to run a script.
+            RunScriptCommand: Command object to run a script.
         """
         params = RunScriptParams(scriptId=script_id)
         if execution_context_id is not None:
@@ -466,7 +471,7 @@ class RuntimeCommands:
     @staticmethod
     def set_async_call_stack_depth(
         max_depth: int,
-    ) -> Command[Response]:
+    ) -> SetAsyncCallStackDepthCommand:
         """
         Creates a command to set the async call stack depth.
 
@@ -474,7 +479,7 @@ class RuntimeCommands:
             max_depth (int): Maximum depth of async call stacks.
 
         Returns:
-            Command[Response]: Command object to set async call stack depth.
+            SetAsyncCallStackDepthCommand: Command object to set async call stack depth.
         """
         params = SetAsyncCallStackDepthParams(maxDepth=max_depth)
         return Command(method=RuntimeMethod.SET_ASYNC_CALL_STACK_DEPTH, params=params)
@@ -482,7 +487,7 @@ class RuntimeCommands:
     @staticmethod
     def set_custom_object_formatter_enabled(
         enabled: bool,
-    ) -> Command[Response]:
+    ) -> SetCustomObjectFormatterEnabledCommand:
         """
         Creates a command to enable or disable custom object formatters.
 
@@ -490,7 +495,8 @@ class RuntimeCommands:
             enabled (bool): Whether to enable custom object formatters.
 
         Returns:
-            Command[Response]: Command object to enable/disable custom object formatters.
+            SetCustomObjectFormatterEnabledCommand: Command object to enable/disable custom
+                object formatters.
         """
         params = SetCustomObjectFormatterEnabledParams(enabled=enabled)
         return Command(method=RuntimeMethod.SET_CUSTOM_OBJECT_FORMATTER_ENABLED, params=params)
@@ -498,7 +504,7 @@ class RuntimeCommands:
     @staticmethod
     def set_max_call_stack_size_to_capture(
         size: int,
-    ) -> Command[Response]:
+    ) -> SetMaxCallStackSizeToCaptureCommand:
         """
         Creates a command to set the maximum call stack size to capture.
 
@@ -506,7 +512,7 @@ class RuntimeCommands:
             size (int): Maximum call stack size to capture.
 
         Returns:
-            Command[Response]: Command object to set max call stack size.
+            SetMaxCallStackSizeToCaptureCommand: Command object to set max call stack size.
         """
         params = SetMaxCallStackSizeToCaptureParams(size=size)
         return Command(method=RuntimeMethod.SET_MAX_CALL_STACK_SIZE_TO_CAPTURE, params=params)

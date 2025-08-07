@@ -1,89 +1,108 @@
 from typing import Optional
 
-from pydoll.constants import ElementRelation, IncludeWhitespace, LogicalAxes, PhysicalAxes
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.dom.methods import DomMethod
-from pydoll.protocol.dom.params import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.dom.methods import (
+    CollectClassNamesFromSubtreeCommand,
     CollectClassNamesFromSubtreeParams,
+    CopyToCommand,
     CopyToParams,
     CSSComputedStyleProperty,
+    DescribeNodeCommand,
     DescribeNodeParams,
+    DisableCommand,
+    DiscardSearchResultsCommand,
     DiscardSearchResultsParams,
-    DomEnableParams,
-    DomFocusParams,
+    DomMethod,
+    EnableCommand,
+    EnableParams,
+    FocusCommand,
+    FocusParams,
+    GetAnchorElementCommand,
     GetAnchorElementParams,
+    GetAttributesCommand,
     GetAttributesParams,
+    GetBoxModelCommand,
     GetBoxModelParams,
+    GetContainerForNodeCommand,
     GetContainerForNodeParams,
+    GetContentQuadsCommand,
     GetContentQuadsParams,
+    GetDetachedDomNodesCommand,
+    GetDocumentCommand,
     GetDocumentParams,
+    GetElementByRelationCommand,
     GetElementByRelationParams,
+    GetFileInfoCommand,
     GetFileInfoParams,
+    GetFrameOwnerCommand,
     GetFrameOwnerParams,
+    GetNodeForLocationCommand,
     GetNodeForLocationParams,
+    GetNodesForSubtreeByStyleCommand,
     GetNodesForSubtreeByStyleParams,
+    GetNodeStackTracesCommand,
     GetNodeStackTracesParams,
+    GetOuterHTMLCommand,
     GetOuterHTMLParams,
-    GetQueryingDescendantForContainerParams,
+    GetQueryingDescendantsForContainerCommand,
+    GetQueryingDescendantsForContainerParams,
+    GetRelayoutBoundaryCommand,
     GetRelayoutBoundaryParams,
+    GetSearchResultsCommand,
     GetSearchResultsParams,
+    GetTopLayerElementsCommand,
+    HideHighlightCommand,
+    HighlightNodeCommand,
+    HighlightRectCommand,
+    MarkUndoableStateCommand,
+    MoveToCommand,
     MoveToParams,
+    PerformSearchCommand,
     PerformSearchParams,
+    PushNodeByPathToFrontendCommand,
     PushNodeByPathToFrontendParams,
+    PushNodesByBackendIdsToFrontendCommand,
     PushNodesByBackendIdsToFrontendParams,
+    QuerySelectorAllCommand,
     QuerySelectorAllParams,
+    QuerySelectorCommand,
     QuerySelectorParams,
     Rect,
+    RedoCommand,
+    RemoveAttributeCommand,
     RemoveAttributeParams,
+    RemoveNodeCommand,
     RemoveNodeParams,
+    RequestChildNodesCommand,
     RequestChildNodesParams,
+    RequestNodeCommand,
     RequestNodeParams,
+    ResolveNodeCommand,
     ResolveNodeParams,
+    ScrollIntoViewIfNeededCommand,
     ScrollIntoViewIfNeededParams,
-    SetAttributeAsTextParams,
+    SetAttributesAsTextCommand,
+    SetAttributesAsTextParams,
+    SetAttributeValueCommand,
     SetAttributeValueParams,
+    SetFileInputFilesCommand,
     SetFileInputFilesParams,
+    SetInspectedNodeCommand,
     SetInspectedNodeParams,
+    SetNodeNameCommand,
     SetNodeNameParams,
+    SetNodeStackTracesEnabledCommand,
     SetNodeStackTracesEnabledParams,
+    SetNodeValueCommand,
     SetNodeValueParams,
+    SetOuterHTMLCommand,
     SetOuterHTMLParams,
+    UndoCommand,
 )
-from pydoll.protocol.dom.responses import (
-    CollectClassNamesFromSubtreeResponse,
-    CopyToResponse,
-    DescribeNodeResponse,
-    GetAnchorElementResponse,
-    GetAttributesResponse,
-    GetBoxModelResponse,
-    GetContainerForNodeResponse,
-    GetContentQuadsResponse,
-    GetDetachedDomNodesResponse,
-    GetDocumentResponse,
-    GetElementByRelationResponse,
-    GetFileInfoResponse,
-    GetFrameOwnerResponse,
-    GetNodeForLocationResponse,
-    GetNodesForSubtreeByStyleResponse,
-    GetNodeStackTracesResponse,
-    GetOuterHTMLResponse,
-    GetQueryingDescendantForContainerResponse,
-    GetRelayoutBoundaryResponse,
-    GetSearchResultsResponse,
-    GetTopLayerElementsResponse,
-    MoveToResponse,
-    PerformSearchResponse,
-    PushNodeByPathToFrontendResponse,
-    PushNodesByBackendIdsToFrontendResponse,
-    QuerySelectorAllResponse,
-    QuerySelectorResponse,
-    RequestNodeResponse,
-    ResolveNodeResponse,
-    SetNodeNameResponse,
-)
+from pydoll.protocol.dom.types import IncludeWhitespace, LogicalAxes, PhysicalAxes, RelationType
 
 
-class DomCommands:  # noqa
+class DomCommands:
     """
     Implementation of Chrome DevTools Protocol for the DOM domain.
 
@@ -104,7 +123,7 @@ class DomCommands:  # noqa
         object_id: Optional[str] = None,
         depth: Optional[int] = None,
         pierce: Optional[bool] = None,
-    ) -> Command[DescribeNodeResponse]:
+    ) -> DescribeNodeCommand:
         """
         Describes a DOM node identified by its ID without requiring domain to be enabled.
 
@@ -138,7 +157,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.DESCRIBE_NODE, params=params)
 
     @staticmethod
-    def disable() -> Command[Response]:
+    def disable() -> DisableCommand:
         """
         Disables DOM agent for the current page.
 
@@ -153,7 +172,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.DISABLE)
 
     @staticmethod
-    def enable(include_whitespace: Optional[IncludeWhitespace] = None) -> Command[Response]:
+    def enable(include_whitespace: Optional[IncludeWhitespace] = None) -> EnableCommand:
         """
         Enables DOM agent for the current page.
 
@@ -169,7 +188,7 @@ class DomCommands:  # noqa
         Returns:
             Command: CDP command to enable the DOM domain.
         """
-        params = DomEnableParams()
+        params = EnableParams()
         if include_whitespace:
             params['includeWhitespace'] = include_whitespace
         return Command(method=DomMethod.ENABLE, params=params)
@@ -179,7 +198,7 @@ class DomCommands:  # noqa
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> FocusCommand:
         """
         Focuses the given element.
 
@@ -195,7 +214,7 @@ class DomCommands:  # noqa
         Returns:
             Command: CDP command to focus on the specified element.
         """
-        params = DomFocusParams()
+        params = FocusParams()
         if node_id:
             params['nodeId'] = node_id
         if backend_node_id:
@@ -205,7 +224,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.FOCUS, params=params)
 
     @staticmethod
-    def get_attributes(node_id: int) -> Command[GetAttributesResponse]:
+    def get_attributes(node_id: int) -> GetAttributesCommand:
         """
         Returns attributes for the specified node.
 
@@ -229,7 +248,7 @@ class DomCommands:  # noqa
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
-    ) -> Command[GetBoxModelResponse]:
+    ) -> GetBoxModelCommand:
         """
         Returns box model information for the specified node.
 
@@ -259,7 +278,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_document(
         depth: Optional[int] = None, pierce: Optional[bool] = None
-    ) -> Command[GetDocumentResponse]:
+    ) -> GetDocumentCommand:
         """
         Returns the root DOM node (and optionally the subtree) to the caller.
 
@@ -290,7 +309,7 @@ class DomCommands:  # noqa
         y: int,
         include_user_agent_shadow_dom: Optional[bool] = None,
         ignore_pointer_events_none: Optional[bool] = None,
-    ) -> Command[GetNodeForLocationResponse]:
+    ) -> GetNodeForLocationCommand:
         """
         Returns node id at given location on the page.
 
@@ -322,7 +341,7 @@ class DomCommands:  # noqa
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
-    ) -> Command[GetOuterHTMLResponse]:
+    ) -> GetOuterHTMLCommand:
         """
         Returns node's HTML markup, including the node itself and all its children.
 
@@ -349,7 +368,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.GET_OUTER_HTML, params=params)
 
     @staticmethod
-    def hide_highlight() -> Command[Response]:
+    def hide_highlight() -> HideHighlightCommand:
         """
         Hides any DOM element highlight.
 
@@ -363,7 +382,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.HIDE_HIGHLIGHT)
 
     @staticmethod
-    def highlight_node() -> Command[Response]:
+    def highlight_node() -> HighlightNodeCommand:
         """
         Highlights DOM node.
 
@@ -376,7 +395,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.HIGHLIGHT_NODE)
 
     @staticmethod
-    def highlight_rect() -> Command[Response]:
+    def highlight_rect() -> HighlightRectCommand:
         """
         Highlights given rectangle.
 
@@ -394,7 +413,7 @@ class DomCommands:  # noqa
         node_id: int,
         target_node_id: int,
         insert_before_node_id: Optional[int] = None,
-    ) -> Command[MoveToResponse]:
+    ) -> MoveToCommand:
         """
         Moves node into the new container, placing it before the given anchor.
 
@@ -420,7 +439,7 @@ class DomCommands:  # noqa
     def query_selector(
         node_id: int,
         selector: str,
-    ) -> Command[QuerySelectorResponse]:
+    ) -> QuerySelectorCommand:
         """
         Executes querySelector on a given node.
 
@@ -443,7 +462,7 @@ class DomCommands:  # noqa
     def query_selector_all(
         node_id: int,
         selector: str,
-    ) -> Command[QuerySelectorAllResponse]:
+    ) -> QuerySelectorAllCommand:
         """
         Executes querySelectorAll on a given node.
 
@@ -466,7 +485,7 @@ class DomCommands:  # noqa
     def remove_attribute(
         node_id: int,
         name: str,
-    ) -> Command[Response]:
+    ) -> RemoveAttributeCommand:
         """
         Removes attribute with given name from an element with given id.
 
@@ -485,7 +504,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.REMOVE_ATTRIBUTE, params=params)
 
     @staticmethod
-    def remove_node(node_id: int) -> Command[Response]:
+    def remove_node(node_id: int) -> RemoveNodeCommand:
         """
         Removes node with given id.
 
@@ -507,7 +526,7 @@ class DomCommands:  # noqa
         node_id: int,
         depth: Optional[int] = None,
         pierce: Optional[bool] = None,
-    ) -> Command[Response]:
+    ) -> RequestChildNodesCommand:
         """
         Requests that children of the node with given id are returned to the caller.
 
@@ -534,7 +553,7 @@ class DomCommands:  # noqa
     @staticmethod
     def request_node(
         object_id: str,
-    ) -> Command[RequestNodeResponse]:
+    ) -> RequestNodeCommand:
         """
         Requests that the node is sent to the caller given the JavaScript node object reference.
 
@@ -557,7 +576,7 @@ class DomCommands:  # noqa
         backend_node_id: Optional[int] = None,
         object_group: Optional[str] = None,
         execution_context_id: Optional[int] = None,
-    ) -> Command[ResolveNodeResponse]:
+    ) -> ResolveNodeCommand:
         """
         Resolves the JavaScript node object for a given NodeId or BackendNodeId.
 
@@ -591,7 +610,7 @@ class DomCommands:  # noqa
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
         rect: Optional[Rect] = None,
-    ) -> Command[Response]:
+    ) -> ScrollIntoViewIfNeededCommand:
         """
         Scrolls the specified node into view if not already visible.
 
@@ -625,7 +644,7 @@ class DomCommands:  # noqa
         node_id: int,
         text: str,
         name: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> SetAttributesAsTextCommand:
         """
         Sets attribute for an element with given id, using text representation.
 
@@ -642,7 +661,7 @@ class DomCommands:  # noqa
         Returns:
             Command: CDP command to set an attribute as text.
         """
-        params = SetAttributeAsTextParams(nodeId=node_id, text=text)
+        params = SetAttributesAsTextParams(nodeId=node_id, text=text)
         if name is not None:
             params['name'] = name
         return Command(method=DomMethod.SET_ATTRIBUTES_AS_TEXT, params=params)
@@ -652,7 +671,7 @@ class DomCommands:  # noqa
         node_id: int,
         name: str,
         value: str,
-    ) -> Command[Response]:
+    ) -> SetAttributeValueCommand:
         """
         Sets attribute for element with given id.
 
@@ -677,7 +696,7 @@ class DomCommands:  # noqa
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> SetFileInputFilesCommand:
         """
         Sets files for the given file input element.
 
@@ -707,7 +726,7 @@ class DomCommands:  # noqa
     def set_node_name(
         node_id: int,
         name: str,
-    ) -> Command[SetNodeNameResponse]:
+    ) -> SetNodeNameCommand:
         """
         Sets node name for a node with given id.
 
@@ -729,7 +748,7 @@ class DomCommands:  # noqa
     def set_node_value(
         node_id: int,
         value: str,
-    ) -> Command[Response]:
+    ) -> SetNodeValueCommand:
         """
         Sets node value for a node with given id.
 
@@ -751,7 +770,7 @@ class DomCommands:  # noqa
     def set_outer_html(
         node_id: int,
         outer_html: str,
-    ) -> Command[Response]:
+    ) -> SetOuterHTMLCommand:
         """
         Sets node HTML markup, replacing existing one.
 
@@ -773,7 +792,7 @@ class DomCommands:  # noqa
     @staticmethod
     def collect_class_names_from_subtree(
         node_id: int,
-    ) -> Command[CollectClassNamesFromSubtreeResponse]:
+    ) -> CollectClassNamesFromSubtreeCommand:
         """
         Collects class names for the node with given id and all of its children.
 
@@ -795,7 +814,7 @@ class DomCommands:  # noqa
         node_id: int,
         target_node_id: int,
         insert_before_node_id: Optional[int] = None,
-    ) -> Command[CopyToResponse]:
+    ) -> CopyToCommand:
         """
         Creates a deep copy of the specified node and places it into the target container.
 
@@ -820,7 +839,7 @@ class DomCommands:  # noqa
     @staticmethod
     def discard_search_results(
         search_id: str,
-    ) -> Command[Response]:
+    ) -> DiscardSearchResultsCommand:
         """
         Discards search results from the session with the given id.
 
@@ -840,7 +859,7 @@ class DomCommands:  # noqa
     def get_anchor_element(
         node_id: int,
         anchor_specifier: Optional[str] = None,
-    ) -> Command[GetAnchorElementResponse]:
+    ) -> GetAnchorElementCommand:
         """
         Finds the closest ancestor node that is an anchor element for the given node.
 
@@ -867,7 +886,7 @@ class DomCommands:  # noqa
         physical_axes: Optional[PhysicalAxes] = None,
         logical_axes: Optional[LogicalAxes] = None,
         queries_scroll_state: Optional[bool] = None,
-    ) -> Command[GetContainerForNodeResponse]:
+    ) -> GetContainerForNodeCommand:
         """
         Finds a containing element for the given node based on specified parameters.
 
@@ -901,7 +920,7 @@ class DomCommands:  # noqa
         node_id: Optional[int] = None,
         backend_node_id: Optional[int] = None,
         object_id: Optional[str] = None,
-    ) -> Command[GetContentQuadsResponse]:
+    ) -> GetContentQuadsCommand:
         """
         Returns quads that describe node position on the page.
 
@@ -927,7 +946,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.GET_CONTENT_QUADS, params=params)
 
     @staticmethod
-    def get_detached_dom_nodes() -> Command[GetDetachedDomNodesResponse]:
+    def get_detached_dom_nodes() -> GetDetachedDomNodesCommand:
         """
         Returns information about detached DOM tree elements.
 
@@ -943,8 +962,8 @@ class DomCommands:  # noqa
     @staticmethod
     def get_element_by_relation(
         node_id: int,
-        relation: ElementRelation,
-    ) -> Command[GetElementByRelationResponse]:
+        relation: RelationType,
+    ) -> GetElementByRelationCommand:
         """
         Retrieves an element related to the given one in a specified way.
 
@@ -965,7 +984,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_file_info(
         object_id: str,
-    ) -> Command[GetFileInfoResponse]:
+    ) -> GetFileInfoCommand:
         """
         Returns file information for the given File object.
 
@@ -985,7 +1004,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_frame_owner(
         frame_id: str,
-    ) -> Command[GetFrameOwnerResponse]:
+    ) -> GetFrameOwnerCommand:
         """
         Returns iframe element that owns the given frame.
 
@@ -1007,7 +1026,7 @@ class DomCommands:  # noqa
         node_id: int,
         computed_styles: list[CSSComputedStyleProperty],
         pierce: Optional[bool] = None,
-    ) -> Command[GetNodesForSubtreeByStyleResponse]:
+    ) -> GetNodesForSubtreeByStyleCommand:
         """
         Finds nodes with a given computed style in a subtree.
 
@@ -1031,7 +1050,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_node_stack_traces(
         node_id: int,
-    ) -> Command[GetNodeStackTracesResponse]:
+    ) -> GetNodeStackTracesCommand:
         """
         Gets stack traces associated with a specific node.
 
@@ -1051,7 +1070,7 @@ class DomCommands:  # noqa
     @staticmethod
     def get_querying_descendants_for_container(
         node_id: int,
-    ) -> Command[GetQueryingDescendantForContainerResponse]:
+    ) -> GetQueryingDescendantsForContainerCommand:
         """
         Returns the querying descendants for container.
 
@@ -1065,13 +1084,13 @@ class DomCommands:  # noqa
         Returns:
             Command: CDP command that returns querying descendant information.
         """
-        params = GetQueryingDescendantForContainerParams(nodeId=node_id)
+        params = GetQueryingDescendantsForContainerParams(nodeId=node_id)
         return Command(method=DomMethod.GET_QUERYING_DESCENDANTS_FOR_CONTAINER, params=params)
 
     @staticmethod
     def get_relayout_boundary(
         node_id: int,
-    ) -> Command[GetRelayoutBoundaryResponse]:
+    ) -> GetRelayoutBoundaryCommand:
         """
         Returns the root of the relayout boundary for the given node.
 
@@ -1093,7 +1112,7 @@ class DomCommands:  # noqa
         search_id: str,
         from_index: int,
         to_index: int,
-    ) -> Command[GetSearchResultsResponse]:
+    ) -> GetSearchResultsCommand:
         """
         Returns search results from given `fromIndex` to given `toIndex` from a search.
 
@@ -1113,7 +1132,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.GET_SEARCH_RESULTS, params=params)
 
     @staticmethod
-    def get_top_layer_elements() -> Command[GetTopLayerElementsResponse]:
+    def get_top_layer_elements() -> GetTopLayerElementsCommand:
         """
         Returns all top layer elements in the document.
 
@@ -1127,7 +1146,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.GET_TOP_LAYER_ELEMENTS)
 
     @staticmethod
-    def mark_undoable_state() -> Command[Response]:
+    def mark_undoable_state() -> MarkUndoableStateCommand:
         """
         Marks last undoable state.
 
@@ -1144,7 +1163,7 @@ class DomCommands:  # noqa
     def perform_search(
         query: str,
         include_user_agent_shadow_dom: Optional[bool] = None,
-    ) -> Command[PerformSearchResponse]:
+    ) -> PerformSearchCommand:
         """
         Searches for a given string in the DOM tree.
 
@@ -1167,7 +1186,7 @@ class DomCommands:  # noqa
     @staticmethod
     def push_node_by_path_to_frontend(
         path: str,
-    ) -> Command[PushNodeByPathToFrontendResponse]:
+    ) -> PushNodeByPathToFrontendCommand:
         """
         Requests that the node is sent to the caller given its path.
 
@@ -1187,7 +1206,7 @@ class DomCommands:  # noqa
     @staticmethod
     def push_nodes_by_backend_ids_to_frontend(
         backend_node_ids: list[int],
-    ) -> Command[PushNodesByBackendIdsToFrontendResponse]:
+    ) -> PushNodesByBackendIdsToFrontendCommand:
         """
         Requests that a batch of nodes is sent to the caller given their backend node ids.
 
@@ -1204,7 +1223,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.PUSH_NODES_BY_BACKEND_IDS_TO_FRONTEND, params=params)
 
     @staticmethod
-    def redo() -> Command[Response]:
+    def redo() -> RedoCommand:
         """
         Re-does the last undone action.
 
@@ -1220,7 +1239,7 @@ class DomCommands:  # noqa
     @staticmethod
     def set_inspected_node(
         node_id: int,
-    ) -> Command[Response]:
+    ) -> SetInspectedNodeCommand:
         """
         Enables console to refer to the node with given id via $x command line API.
 
@@ -1240,7 +1259,7 @@ class DomCommands:  # noqa
     @staticmethod
     def set_node_stack_traces_enabled(
         enable: bool,
-    ) -> Command[Response]:
+    ) -> SetNodeStackTracesEnabledCommand:
         """
         Sets if stack traces should be captured for Nodes.
 
@@ -1258,7 +1277,7 @@ class DomCommands:  # noqa
         return Command(method=DomMethod.SET_NODE_STACK_TRACES_ENABLED, params=params)
 
     @staticmethod
-    def undo() -> Command[Response]:
+    def undo() -> UndoCommand:
         """
         Undoes the last performed action.
 

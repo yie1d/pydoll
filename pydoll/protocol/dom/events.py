@@ -1,5 +1,10 @@
 from enum import Enum
 
+from typing_extensions import TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.dom.types import BackendNode, Node, NodeId
+
 
 class DomEvent(str, Enum):
     """
@@ -66,21 +71,6 @@ class DomEvent(str, Enum):
         nodeId (NodeId): Id of the node that has been removed.
     """
 
-    DOCUMENT_UPDATED = 'DOM.documentUpdated'
-    """
-    Fired when Document has been totally updated. Node ids are no longer valid.
-    """
-
-    SET_CHILD_NODES = 'DOM.setChildNodes'
-    """
-    Fired when backend wants to provide client with the missing DOM structure.
-    This happens upon most of the calls requesting node ids.
-
-    Args:
-        parentId (NodeId): Parent node id to populate with children.
-        nodes (array[Node]): Child nodes array.
-    """
-
     DISTRIBUTED_NODES_UPDATED = 'DOM.distributedNodesUpdated'
     """
     Called when distribution is changed.
@@ -88,6 +78,11 @@ class DomEvent(str, Enum):
     Args:
         insertionPointId (NodeId): Insertion point where distributed nodes were updated.
         distributedNodes (array[BackendNode]): Distributed nodes for given insertion point.
+    """
+
+    DOCUMENT_UPDATED = 'DOM.documentUpdated'
+    """
+    Fired when Document has been totally updated. Node ids are no longer valid.
     """
 
     INLINE_STYLE_INVALIDATED = 'DOM.inlineStyleInvalidated'
@@ -143,7 +138,148 @@ class DomEvent(str, Enum):
         root (Node): Shadow root.
     """
 
+    SET_CHILD_NODES = 'DOM.setChildNodes'
+    """
+    Fired when backend wants to provide client with the missing DOM structure.
+    This happens upon most of the calls requesting node ids.
+
+    Args:
+        parentId (NodeId): Parent node id to populate with children.
+        nodes (array[Node]): Child nodes array.
+    """
+
     TOP_LAYER_ELEMENTS_UPDATED = 'DOM.topLayerElementsUpdated'
     """
     Called when top layer elements are changed.
     """
+
+
+# Event parameter types
+class AttributeModifiedEventParams(TypedDict):
+    """Parameters for attributeModified event."""
+
+    nodeId: NodeId
+    name: str
+    value: str
+
+
+class AttributeRemovedEventParams(TypedDict):
+    """Parameters for attributeRemoved event."""
+
+    nodeId: NodeId
+    name: str
+
+
+class CharacterDataModifiedEventParams(TypedDict):
+    """Parameters for characterDataModified event."""
+
+    nodeId: NodeId
+    characterData: str
+
+
+class ChildNodeCountUpdatedEventParams(TypedDict):
+    """Parameters for childNodeCountUpdated event."""
+
+    nodeId: NodeId
+    childNodeCount: int
+
+
+class ChildNodeInsertedEventParams(TypedDict):
+    """Parameters for childNodeInserted event."""
+
+    parentNodeId: NodeId
+    previousNodeId: NodeId
+    node: Node
+
+
+class ChildNodeRemovedEventParams(TypedDict):
+    """Parameters for childNodeRemoved event."""
+
+    parentNodeId: NodeId
+    nodeId: NodeId
+
+
+class DistributedNodesUpdatedEventParams(TypedDict):
+    """Parameters for distributedNodesUpdated event."""
+
+    insertionPointId: NodeId
+    distributedNodes: list[BackendNode]
+
+
+class DocumentUpdatedEventParams(TypedDict):
+    """Parameters for documentUpdated event."""
+
+    pass
+
+
+class InlineStyleInvalidatedEventParams(TypedDict):
+    """Parameters for inlineStyleInvalidated event."""
+
+    nodeIds: list[NodeId]
+
+
+class PseudoElementAddedEventParams(TypedDict):
+    """Parameters for pseudoElementAdded event."""
+
+    parentId: NodeId
+    pseudoElement: Node
+
+
+class PseudoElementRemovedEventParams(TypedDict):
+    """Parameters for pseudoElementRemoved event."""
+
+    parentId: NodeId
+    pseudoElementId: NodeId
+
+
+class ScrollableFlagUpdatedEventParams(TypedDict):
+    """Parameters for scrollableFlagUpdated event."""
+
+    nodeId: NodeId
+    isScrollable: bool
+
+
+class ShadowRootPoppedEventParams(TypedDict):
+    """Parameters for shadowRootPopped event."""
+
+    hostId: NodeId
+    rootId: NodeId
+
+
+class ShadowRootPushedEventParams(TypedDict):
+    """Parameters for shadowRootPushed event."""
+
+    hostId: NodeId
+    root: Node
+
+
+class SetChildNodesEventParams(TypedDict):
+    """Parameters for setChildNodes event."""
+
+    parentId: NodeId
+    nodes: list[Node]
+
+
+class TopLayerElementsUpdatedEventParams(TypedDict):
+    """Parameters for topLayerElementsUpdated event."""
+
+    pass
+
+
+# Event types
+AttributeModifiedEvent = CDPEvent[AttributeModifiedEventParams]
+AttributeRemovedEvent = CDPEvent[AttributeRemovedEventParams]
+CharacterDataModifiedEvent = CDPEvent[CharacterDataModifiedEventParams]
+ChildNodeCountUpdatedEvent = CDPEvent[ChildNodeCountUpdatedEventParams]
+ChildNodeInsertedEvent = CDPEvent[ChildNodeInsertedEventParams]
+ChildNodeRemovedEvent = CDPEvent[ChildNodeRemovedEventParams]
+DistributedNodesUpdatedEvent = CDPEvent[DistributedNodesUpdatedEventParams]
+DocumentUpdatedEvent = CDPEvent[DocumentUpdatedEventParams]
+InlineStyleInvalidatedEvent = CDPEvent[InlineStyleInvalidatedEventParams]
+PseudoElementAddedEvent = CDPEvent[PseudoElementAddedEventParams]
+PseudoElementRemovedEvent = CDPEvent[PseudoElementRemovedEventParams]
+ScrollableFlagUpdatedEvent = CDPEvent[ScrollableFlagUpdatedEventParams]
+ShadowRootPoppedEvent = CDPEvent[ShadowRootPoppedEventParams]
+ShadowRootPushedEvent = CDPEvent[ShadowRootPushedEventParams]
+SetChildNodesEvent = CDPEvent[SetChildNodesEventParams]
+TopLayerElementsUpdatedEvent = CDPEvent[TopLayerElementsUpdatedEventParams]

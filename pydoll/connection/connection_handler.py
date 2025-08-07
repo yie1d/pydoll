@@ -9,7 +9,6 @@ from typing import (
     Callable,
     Coroutine,
     Optional,
-    TypeVar,
     Union,
     cast,
 )
@@ -24,13 +23,11 @@ from pydoll.exceptions import (
     CommandExecutionTimeout,
     WebSocketConnectionClosed,
 )
-from pydoll.protocol.base import Command, Event, Response
+from pydoll.protocol.base import CDPEvent, Command, Response, T_CommandParams, T_CommandResponse
 from pydoll.utils import get_browser_ws_address
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-T = TypeVar('T')
 
 
 class ConnectionHandler:
@@ -85,7 +82,9 @@ class ConnectionHandler:
             return True
         return False
 
-    async def execute_command(self, command: Command[T], timeout: int = 10) -> T:
+    async def execute_command(
+        self, command: Command[T_CommandParams, T_CommandResponse], timeout: int = 10
+    ) -> T_CommandResponse:
         """
         Send CDP command and await response.
 
@@ -217,11 +216,11 @@ class ConnectionHandler:
             message = cast(Response, message)
             await self._handle_command_message(message)
         else:
-            message = cast(Event, message)
+            message = cast(CDPEvent, message)
             await self._handle_event_message(message)
 
     @staticmethod
-    def _parse_message(raw_message: str) -> Union[Event, Response, None]:
+    def _parse_message(raw_message: str) -> Union[CDPEvent, Response, None]:
         """Parse raw message string into JSON object."""
         try:
             return json.loads(raw_message)
@@ -230,7 +229,7 @@ class ConnectionHandler:
             return None
 
     @staticmethod
-    def _is_command_response(message: Union[Event, Response]) -> bool:
+    def _is_command_response(message: Union[CDPEvent, Response]) -> bool:
         """Determine if message is command response or event notification."""
         return 'id' in message and isinstance(message.get('id'), int)
 
@@ -239,7 +238,7 @@ class ConnectionHandler:
         logger.debug(f'Processing command response: {message.get("id")}')
         self._command_manager.resolve_command(message['id'], json.dumps(message))
 
-    async def _handle_event_message(self, message: Event):
+    async def _handle_event_message(self, message: CDPEvent):
         """Process event notification messages."""
         event_type = message.get('method', 'unknown-event')
         logger.debug(f'Processing {event_type} event')

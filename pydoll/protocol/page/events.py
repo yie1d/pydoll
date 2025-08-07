@@ -1,5 +1,23 @@
 from enum import Enum
 
+from typing_extensions import NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.dom.types import BackendNodeId
+from pydoll.protocol.network.types import LoaderId, MonotonicTime
+from pydoll.protocol.page.types import (
+    BackForwardCacheNotRestoredExplanation,
+    BackForwardCacheNotRestoredExplanationTree,
+    ClientNavigationDisposition,
+    ClientNavigationReason,
+    DialogType,
+    Frame,
+    FrameId,
+    NavigationType,
+    ScreencastFrameMetadata,
+)
+from pydoll.protocol.runtime.types import StackTrace
+
 
 class PageEvent(str, Enum):
     """
@@ -255,3 +273,187 @@ class PageEvent(str, Enum):
     Args:
         visible (bool): True if the page is visible.
     """
+
+
+class DomContentEventFiredEventParams(TypedDict):
+    timestamp: MonotonicTime
+
+
+class FileChooserOpenedEventParams(TypedDict):
+    frameId: FrameId
+    mode: str
+    backendNodeId: NotRequired[BackendNodeId]
+
+
+class FrameAttachedEventParams(TypedDict):
+    frameId: FrameId
+    parentFrameId: FrameId
+    stack: NotRequired[StackTrace]
+
+
+class FrameClearedScheduledNavigationEventParams(TypedDict):
+    frameId: FrameId
+
+
+class FrameDetachedEventParams(TypedDict):
+    frameId: FrameId
+    reason: str
+
+
+class FrameSubtreeWillBeDetachedEventParams(TypedDict):
+    frameId: FrameId
+
+
+class FrameNavigatedEventParams(TypedDict):
+    frame: Frame
+    type: NavigationType
+
+
+class DocumentOpenedEventParams(TypedDict):
+    frame: Frame
+
+
+class FrameResizedEventParams(TypedDict):
+    pass
+
+
+class FrameStartedNavigatingEventParams(TypedDict):
+    frameId: FrameId
+    url: str
+    loaderId: LoaderId
+    navigationType: str
+
+
+class FrameRequestedNavigationEventParams(TypedDict):
+    frameId: FrameId
+    reason: ClientNavigationReason
+    url: str
+    disposition: ClientNavigationDisposition
+
+
+class FrameScheduledNavigationEventParams(TypedDict):
+    frameId: FrameId
+    delay: float
+    reason: ClientNavigationReason
+    url: str
+
+
+class FrameStartedLoadingEventParams(TypedDict):
+    frameId: FrameId
+
+
+class FrameStoppedLoadingEventParams(TypedDict):
+    frameId: FrameId
+
+
+class DownloadWillBeginEventParams(TypedDict):
+    frameId: FrameId
+    guid: str
+    url: str
+    suggestedFilename: str
+
+
+class DownloadProgressEventParams(TypedDict):
+    guid: str
+    totalBytes: float
+    receivedBytes: float
+    state: str
+
+
+class InterstitialHiddenEventParams(TypedDict):
+    pass
+
+
+class InterstitialShownEventParams(TypedDict):
+    pass
+
+
+class JavascriptDialogClosedEventParams(TypedDict):
+    frameId: FrameId
+    result: bool
+    userInput: str
+
+
+class JavascriptDialogOpeningEventParams(TypedDict):
+    url: str
+    frameId: FrameId
+    message: str
+    type: DialogType
+    hasBrowserHandler: bool
+    defaultPrompt: NotRequired[str]
+
+
+class LifecycleEventEventParams(TypedDict):
+    frameId: FrameId
+    loaderId: LoaderId
+    name: str
+    timestamp: MonotonicTime
+
+
+class BackForwardCacheNotUsedEventParams(TypedDict):
+    loaderId: LoaderId
+    frameId: FrameId
+    notRestoredExplanations: list[BackForwardCacheNotRestoredExplanation]
+    notRestoredExplanationsTree: NotRequired[BackForwardCacheNotRestoredExplanationTree]
+
+
+class LoadEventFiredEventParams(TypedDict):
+    timestamp: MonotonicTime
+
+
+class NavigatedWithinDocumentEventParams(TypedDict):
+    frameId: FrameId
+    url: str
+    navigationType: str
+
+
+class ScreencastFrameEventParams(TypedDict):
+    data: str
+    metadata: ScreencastFrameMetadata
+    sessionId: int
+
+
+class ScreencastVisibilityChangedEventParams(TypedDict):
+    visible: bool
+
+
+class WindowOpenEventParams(TypedDict):
+    url: str
+    windowName: str
+    windowFeatures: list[str]
+    userGesture: bool
+
+
+class CompilationCacheProducedEventParams(TypedDict):
+    url: str
+    data: str
+
+
+DomContentEventFiredEvent = CDPEvent[DomContentEventFiredEventParams]
+FileChooserOpenedEvent = CDPEvent[FileChooserOpenedEventParams]
+FrameAttachedEvent = CDPEvent[FrameAttachedEventParams]
+FrameClearedScheduledNavigationEvent = CDPEvent[FrameClearedScheduledNavigationEventParams]
+FrameDetachedEvent = CDPEvent[FrameDetachedEventParams]
+FrameSubtreeWillBeDetachedEvent = CDPEvent[FrameSubtreeWillBeDetachedEventParams]
+FrameNavigatedEvent = CDPEvent[FrameNavigatedEventParams]
+DocumentOpenedEvent = CDPEvent[DocumentOpenedEventParams]
+FrameResizedEvent = CDPEvent[FrameResizedEventParams]
+FrameStartedNavigatingEvent = CDPEvent[FrameStartedNavigatingEventParams]
+FrameRequestedNavigationEvent = CDPEvent[FrameRequestedNavigationEventParams]
+FrameScheduledNavigationEvent = CDPEvent[FrameScheduledNavigationEventParams]
+FrameStartedLoadingEvent = CDPEvent[FrameStartedLoadingEventParams]
+FrameStoppedLoadingEvent = CDPEvent[FrameStoppedLoadingEventParams]
+DownloadWillBeginEvent = CDPEvent[DownloadWillBeginEventParams]
+DownloadProgressEvent = CDPEvent[DownloadProgressEventParams]
+InterstitialHiddenEvent = CDPEvent[InterstitialHiddenEventParams]
+InterstitialShownEvent = CDPEvent[InterstitialShownEventParams]
+JavascriptDialogClosedEvent = CDPEvent[JavascriptDialogClosedEventParams]
+JavascriptDialogOpeningEvent = CDPEvent[JavascriptDialogOpeningEventParams]
+LifecycleEventEvent = CDPEvent[LifecycleEventEventParams]
+BackForwardCacheNotUsedEvent = CDPEvent[BackForwardCacheNotUsedEventParams]
+LoadEventFiredEvent = CDPEvent[LoadEventFiredEventParams]
+NavigatedWithinDocumentEvent = CDPEvent[NavigatedWithinDocumentEventParams]
+ScreencastFrameEvent = CDPEvent[ScreencastFrameEventParams]
+ScreencastVisibilityChangedEvent = CDPEvent[ScreencastVisibilityChangedEventParams]
+WindowOpenEvent = CDPEvent[WindowOpenEventParams]
+CompilationCacheProducedEvent = CDPEvent[CompilationCacheProducedEventParams]

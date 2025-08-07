@@ -662,54 +662,369 @@ These network analysis capabilities make Pydoll ideal for:
 - **Debugging**: Identify failed requests and network issues
 - **Security Testing**: Analyze request/response patterns
 
+## Browser-Context HTTP Requests
+
+Pydoll introduces a powerful `requests`-like interface through the `tab.request` property, enabling HTTP requests that execute within the browser's JavaScript context. This hybrid approach combines the familiarity of the Python `requests` library with the benefits of browser-context execution.
+
+### Key Advantages
+
+- **Inherits browser session state**: Cookies, authentication, and session data are automatically included
+- **CORS compliance**: Requests originate from the browser context, avoiding cross-origin restrictions  
+- **Perfect for SPAs**: Ideal for Single Page Applications that rely heavily on JavaScript and dynamic authentication
+- **No session juggling**: Eliminates the complexity of transferring cookies and auth tokens between automation and API clients
+
+### Basic HTTP Methods
+
+All standard HTTP methods are supported with a familiar interface:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def browser_requests_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Navigate to establish session context
+        await tab.go_to('https://api.example.com')
+        
+        # GET request
+        response = await tab.request.get('https://api.example.com/users')
+        print(f"Status: {response.status_code}")
+        print(f"Data: {response.json()}")
+        
+        # POST request with JSON data
+        user_data = {"name": "John Doe", "email": "john@example.com"}
+        response = await tab.request.post(
+            'https://api.example.com/users',
+            json=user_data
+        )
+        
+        # PUT request with custom headers
+        response = await tab.request.put(
+            'https://api.example.com/users/123',
+            json=user_data,
+            headers={'X-Custom-Header': 'value'}
+        )
+        
+        # DELETE request
+        response = await tab.request.delete('https://api.example.com/users/123')
+
+asyncio.run(browser_requests_example())
+```
+
+### Response Object Interface
+
+The response object provides the same interface as Python's `requests` library:
+
+```python
+async def response_handling_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://api.example.com')
+        
+        response = await tab.request.get('https://api.example.com/data')
+        
+        # Status information
+        print(f"Status Code: {response.status_code}")
+        print(f"OK: {response.ok}")  # True for 2xx/3xx status codes
+        
+        # Response content
+        print(f"Raw content: {response.content}")     # bytes
+        print(f"Text content: {response.text}")       # str
+        print(f"JSON data: {response.json()}")        # dict/list
+        
+        # Headers access
+        print(f"Response headers: {response.headers}")
+        print(f"Content-Type: {response.headers.get('content-type')}")
+        
+        # Request headers that were sent
+        print(f"Request headers: {response.request_headers}")
+        
+        # Cookies set by the response
+        for cookie in response.cookies:
+            print(f"Cookie: {cookie.name}={cookie.value}")
+        
+        # URL after redirects
+        print(f"Final URL: {response.url}")
+        
+        # Raise exception for HTTP errors
+        response.raise_for_status()  # Raises HTTPError for 4xx/5xx
+
+asyncio.run(response_handling_example())
+```
+
+### Advanced Request Configuration
+
+Configure requests with the full range of HTTP options:
+
+```python
+async def advanced_requests_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://api.example.com')
+        
+        # Complex POST with all options
+        response = await tab.request.post(
+            'https://api.example.com/submit',
+            json={
+                "user": "test",
+                "action": "create"
+            },
+            headers={
+                'Authorization': 'Bearer token-123',
+                'X-API-Version': '2.0',
+                'Content-Language': 'en-US'
+            },
+            params={
+                'format': 'json',
+                'version': '2'
+            }
+        )
+        
+        # Form data submission
+        form_response = await tab.request.post(
+            'https://api.example.com/form',
+            data={
+                'username': 'testuser',
+                'password': 'secret123'
+            },
+            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+        
+        # File upload simulation
+        file_response = await tab.request.post(
+            'https://api.example.com/upload',
+            data={'file_content': 'base64-encoded-data'},
+            headers={'Content-Type': 'multipart/form-data'}
+        )
+
+asyncio.run(advanced_requests_example())
+```
+
+### Hybrid Automation Workflow
+
+Combine UI automation with direct API calls for maximum efficiency:
+
+```python
+async def hybrid_automation_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        
+        # Step 1: Perform UI-based login (handles complex auth flows)
+        await tab.go_to('https://app.example.com/login')
+        
+        username_field = await tab.find(id='username')
+        password_field = await tab.find(id='password')
+        login_button = await tab.find(id='login-btn')
+        
+        await username_field.type_text('admin@example.com')
+        await password_field.type_text('secure_password')
+        await login_button.click()
+        
+        # Wait for login redirect
+        await asyncio.sleep(3)
+        
+        # Step 2: Now use API calls with inherited authentication
+        # No need to extract tokens or manage sessions manually
+        
+        # Get user dashboard data via API
+        dashboard_response = await tab.request.get('https://app.example.com/api/dashboard')
+        dashboard_data = dashboard_response.json()
+        
+        # Perform bulk operations via API (much faster than UI)
+        for item_id in dashboard_data.get('item_ids', []):
+            # Update each item via API instead of clicking through UI
+            update_response = await tab.request.put(
+                f'https://app.example.com/api/items/{item_id}',
+                json={'status': 'processed', 'updated_by': 'automation'}
+            )
+            print(f"Updated item {item_id}: {update_response.status_code}")
+        
+        # Step 3: Return to UI for verification
+        await tab.go_to('https://app.example.com/dashboard')
+        
+        # Verify the changes are reflected in the UI
+        updated_items = await tab.find(class_name='item-status', find_all=True)
+        for item in updated_items:
+            status = await item.text
+            print(f"UI shows item status: {status}")
+
+asyncio.run(hybrid_automation_example())
+```
+
+This browser-context HTTP interface makes Pydoll uniquely powerful for modern web automation, eliminating the traditional boundary between UI automation and API interaction.
+
 ## Custom Browser Preferences
 
-Pydoll now supports advanced browser customization through the `ChromiumOptions.browser_preferences` property. This allows you to set any Chromium browser preference for your automation session.
+Pydoll provides direct access to Chromium's internal preference system through `ChromiumOptions.browser_preferences`. Configure any browser setting that's available in Chromium's source code for maximum control over browser behavior.
 
-### What You Can Customize
-- Download directory and prompt behavior
-- Accepted languages
-- Notification blocking
-- PDF handling
-- Any other Chromium-supported preference
+### How It Works
 
-### Example: Setting Preferences
+Chromium preferences use dot-notation keys that map to nested Python dictionaries. Each `.` in the preference name becomes a dictionary level.
+
+**Source Reference**: [chromium's pref_names.cc](https://chromium.googlesource.com/chromium/src/+/4aaa9f29d8fe5eac55b8632fa8fcb05a68d9005b/chrome/common/pref_names.cc)
+
+### Building Preferences from Source Code
+
+Here's how to convert Chromium preference constants to Python dictionaries:
+
+```cpp
+// From Chromium source code (pref_names.cc):
+const char kDownloadDefaultDirectory[] = "download.default_directory";
+const char kPromptForDownload[] = "download.prompt_for_download";
+const char kSearchSuggestEnabled[] = "search.suggest_enabled";
+const char kSiteEngagementLastUpdateTime[] = "profile.last_engagement_time";
+const char kNewTabPageLocationOverride[] = "newtab_page_location_override";
+```
+
+Converts to Python dictionary:
+```python
+options.browser_preferences = {
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False
+    },
+    'search': {
+        'suggest_enabled': False
+    },
+    'profile': {
+        'last_engagement_time': 1640995200  # timestamp
+    },
+    'newtab_page_location_override': 'https://www.google.com'
+}
+```
+
+### Essential Configuration Examples
+
+#### Performance Optimization
 ```python
 from pydoll.browser.chromium import Chrome
 from pydoll.browser.options import ChromiumOptions
 
 options = ChromiumOptions()
 options.browser_preferences = {
-    'download': {
-        'default_directory': '/tmp/downloads',
-        'prompt_for_download': False
+    # Disable network predictions and prefetching
+    'net': {
+        'network_prediction_options': 2  # Never predict
     },
-    'intl': {
-        'accept_languages': 'en-US,en,pt-BR'
-    },
-    'profile': {
-        'default_content_setting_values': {
-            'notifications': 2  # Block notifications
+    # Disable image loading for speed
+    'webkit': {
+        'webprefs': {
+            'loads_images_automatically': False,
+            'plugins_enabled': False
         }
+    },
+    # Disable error page suggestions
+    'alternate_error_pages': {
+        'enabled': False
     }
 }
-
-# Helper methods for common preferences
-options.set_default_download_directory('/tmp/downloads')
-options.set_accept_languages('en-US,en,pt-BR')
-options.prompt_for_download = False
-
-browser = Chrome(options=options)
 ```
 
-You can call `browser_preferences` multiple times—new keys will be merged, not replaced.
+#### Stealth Automation
+```python
+import time
 
-### Why is this useful?
-- Fine-grained control for scraping, testing, or automation
-- Avoid popups or unwanted prompts
-- Match user locale or automate downloads
+options = ChromiumOptions()
+fake_timestamp = int(time.time()) - (90 * 24 * 60 * 60)  # 90 days ago
 
----
+options.browser_preferences = {
+    # Simulate realistic browser usage history
+    'profile': {
+        'last_engagement_time': fake_timestamp,
+        'exited_cleanly': True,
+        'exit_type': 'Normal'
+    },
+    # Override new tab page
+    'newtab_page_location_override': 'https://www.google.com',
+    # Disable telemetry
+    'user_experience_metrics': {
+        'reporting_enabled': False
+    }
+}
+```
+
+#### Privacy & Security
+```python
+options.browser_preferences = {
+    # Privacy settings
+    'enable_do_not_track': True,
+    'enable_referrers': False,
+    'safebrowsing': {
+        'enabled': False
+    },
+    # Disable data collection
+    'profile': {
+        'password_manager_enabled': False
+    },
+    'autofill': {
+        'enabled': False
+    },
+    'search': {
+        'suggest_enabled': False
+    }
+}
+```
+
+#### Downloads & UI
+```python
+options.browser_preferences = {
+    # Silent downloads
+    'download': {
+        'default_directory': '/tmp/automation-downloads',
+        'prompt_for_download': False
+    },
+    # Session behavior
+    'session': {
+        'restore_on_startup': 5,  # Open New Tab Page
+        'startup_urls': ['about:blank']
+    },
+    # Homepage
+    'homepage': 'https://www.google.com',
+    'homepage_is_newtabpage': False
+}
+```
+
+### Helper Methods
+
+For common scenarios, use convenience methods alongside direct preferences:
+
+```python
+options = ChromiumOptions()
+
+# Download management
+options.set_default_download_directory('/tmp/downloads')
+options.prompt_for_download = False
+options.allow_automatic_downloads = True
+
+# Content blocking and privacy
+options.block_notifications = True
+options.block_popups = True
+options.password_manager_enabled = False
+
+# Internationalization
+options.set_accept_languages('pt-BR,en-US')
+# PDF and file handling
+options.open_pdf_externally = True
+
+# Direct preferences for advanced settings
+options.browser_preferences = {
+    'net': {'network_prediction_options': 2},
+    'enable_do_not_track': True
+}
+```
+
+### Impact and Benefits
+
+- **Performance**: 3-5x faster page loads by disabling images, predictions, and unnecessary features
+- **Stealth**: Create realistic browser fingerprints that bypass automation detection
+- **Privacy**: Complete control over data collection, tracking, and telemetry
+- **Automation**: Eliminate popups, prompts, and user interactions that break automation flows
+- **Enterprise**: Configure hundreds of settings previously only available through Group Policy
+
+This direct access to Chromium's preference system gives you the same level of control as enterprise administrators and extension developers, making sophisticated browser customization possible within your automation scripts.
+
 
 ## File Upload Support
 

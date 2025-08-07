@@ -1,5 +1,10 @@
 from enum import Enum
 
+from typing_extensions import NotRequired, TypedDict
+
+from pydoll.protocol.base import CDPEvent
+from pydoll.protocol.browser.types import DownloadProgressState
+
 
 class BrowserEvent(str, Enum):
     """
@@ -33,3 +38,22 @@ class BrowserEvent(str, Enum):
         suggestedFilename (str): Suggested file name of the resource
             (the actual name of the file saved on disk may differ).
     """
+
+
+class DownloadProgressEventParams(TypedDict):
+    guid: str
+    totalBytes: float
+    receivedBytes: float
+    state: DownloadProgressState
+    filePath: NotRequired[str]
+
+
+class DownloadWillBeginEventParams(TypedDict):
+    frameId: str
+    guid: str
+    url: str
+    suggestedFilename: str
+
+
+DownloadProgressEvent = CDPEvent[DownloadProgressEventParams]
+DownloadWillBeginEvent = CDPEvent[DownloadWillBeginEventParams]

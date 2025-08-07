@@ -1,31 +1,35 @@
 from typing import Optional
 
-from pydoll.constants import (
-    AuthChallengeResponseValues,
-    NetworkErrorReason,
-    RequestMethod,
+from pydoll.protocol.base import Command
+from pydoll.protocol.fetch.methods import (
+    AuthChallengeResponse,
+    ContinueRequestCommand,
+    ContinueRequestParams,
+    ContinueResponseCommand,
+    ContinueResponseParams,
+    ContinueWithAuthCommand,
+    ContinueWithAuthParams,
+    DisableCommand,
+    EnableCommand,
+    EnableParams,
+    FailRequestCommand,
+    FailRequestParams,
+    FetchMethod,
+    FulfillRequestCommand,
+    FulfillRequestParams,
+    GetResponseBodyCommand,
+    GetResponseBodyParams,
+    TakeResponseBodyAsStreamCommand,
+    TakeResponseBodyAsStreamParams,
+)
+from pydoll.protocol.fetch.types import (
+    AuthChallengeResponseType,
+    HeaderEntry,
+    RequestPattern,
     RequestStage,
     ResourceType,
 )
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.fetch.methods import FetchMethod
-from pydoll.protocol.fetch.params import (
-    AuthChallengeResponseDict,
-    ContinueRequestParams,
-    ContinueResponseParams,
-    ContinueWithAuthParams,
-    FailRequestParams,
-    FetchEnableParams,
-    FulfillRequestParams,
-    GetResponseBodyParams,
-    HeaderEntry,
-    RequestPattern,
-    TakeResponseBodyAsStreamParams,
-)
-from pydoll.protocol.fetch.responses import (
-    GetResponseBodyResponse,
-    TakeResponseBodyAsStreamResponse,
-)
+from pydoll.protocol.network.types import ErrorReason, RequestMethod
 
 
 class FetchCommands:
@@ -46,14 +50,14 @@ class FetchCommands:
     """
 
     @staticmethod
-    def continue_request(  # noqa: PLR0913, PLR0917
+    def continue_request(
         request_id: str,
         url: Optional[str] = None,
         method: Optional[RequestMethod] = None,
         post_data: Optional[str] = None,
         headers: Optional[list[HeaderEntry]] = None,
         intercept_response: Optional[bool] = None,
-    ) -> Command[Response]:
+    ) -> ContinueRequestCommand:
         """
         Creates a command to continue a paused fetch request.
 
@@ -92,10 +96,10 @@ class FetchCommands:
     @staticmethod
     def continue_request_with_auth(
         request_id: str,
-        auth_challenge_response: AuthChallengeResponseValues,
+        auth_challenge_response: AuthChallengeResponseType,
         proxy_username: Optional[str] = None,
         proxy_password: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> ContinueWithAuthCommand:
         """
         Creates a command to continue a paused fetch request with
         authentication.
@@ -105,7 +109,7 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to continue.
-            auth_challenge_response (AuthChallengeResponseValues): The authentication
+            auth_challenge_response (AuthChallengeResponseType): The authentication
                 challenge response type.
             proxy_username (Optional[str]): The username for proxy authentication.
                 Defaults to None.
@@ -116,7 +120,7 @@ class FetchCommands:
             Command[Response]: A command for continuing the fetch request with
                 authentication.
         """
-        auth_challenge_response_dict = AuthChallengeResponseDict(response=auth_challenge_response)
+        auth_challenge_response_dict = AuthChallengeResponse(response=auth_challenge_response)
         if proxy_username is not None:
             auth_challenge_response_dict['username'] = proxy_username
         if proxy_password is not None:
@@ -129,7 +133,7 @@ class FetchCommands:
         return Command(method=FetchMethod.CONTINUE_WITH_AUTH, params=params)
 
     @staticmethod
-    def disable() -> Command[Response]:
+    def disable() -> DisableCommand:
         """
         Creates a command to disable fetch interception.
 
@@ -146,7 +150,7 @@ class FetchCommands:
         url_pattern: str = '*',
         resource_type: Optional[ResourceType] = None,
         request_stage: Optional[RequestStage] = None,
-    ) -> Command[Response]:
+    ) -> EnableCommand:
         """
         Creates a command to enable fetch interception.
 
@@ -172,13 +176,11 @@ class FetchCommands:
         if request_stage is not None:
             request_pattern['requestStage'] = request_stage
 
-        params = FetchEnableParams(
-            patterns=[request_pattern], handleAuthRequests=handle_auth_requests
-        )
+        params = EnableParams(patterns=[request_pattern], handleAuthRequests=handle_auth_requests)
         return Command(method=FetchMethod.ENABLE, params=params)
 
     @staticmethod
-    def fail_request(request_id: str, error_reason: NetworkErrorReason) -> Command[Response]:
+    def fail_request(request_id: str, error_reason: ErrorReason) -> FailRequestCommand:
         """
         Creates a command to simulate a failure in a fetch request.
 
@@ -187,7 +189,7 @@ class FetchCommands:
 
         Args:
             request_id (str): The ID of the fetch request to fail.
-            error_reason (NetworkErrorReason): The reason for the failure.
+            error_reason (ErrorReason): The reason for the failure.
 
         Returns:
             Command[Response]: A command for failing the fetch request.
@@ -196,13 +198,13 @@ class FetchCommands:
         return Command(method=FetchMethod.FAIL_REQUEST, params=params)
 
     @staticmethod
-    def fulfill_request(  # noqa: PLR0913, PLR0917
+    def fulfill_request(
         request_id: str,
         response_code: int,
         response_headers: Optional[list[HeaderEntry]] = None,
         body: Optional[str] = None,
         response_phrase: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> FulfillRequestCommand:
         """
         Creates a command to fulfill a fetch request with a custom response.
 
@@ -234,7 +236,7 @@ class FetchCommands:
         return Command(method=FetchMethod.FULFILL_REQUEST, params=params)
 
     @staticmethod
-    def get_response_body(request_id: str) -> Command[GetResponseBodyResponse]:
+    def get_response_body(request_id: str) -> GetResponseBodyCommand:
         """
         Creates a command to retrieve the response body of a fetch request.
 
@@ -257,7 +259,7 @@ class FetchCommands:
         response_code: Optional[int] = None,
         response_headers: Optional[list[HeaderEntry]] = None,
         response_phrase: Optional[str] = None,
-    ) -> Command[Response]:
+    ) -> ContinueResponseCommand:
         """
         Creates a command to continue a fetch response for an intercepted
         request.
@@ -291,7 +293,7 @@ class FetchCommands:
     @staticmethod
     def take_response_body_as_stream(
         request_id: str,
-    ) -> Command[TakeResponseBodyAsStreamResponse]:
+    ) -> TakeResponseBodyAsStreamCommand:
         """
         Creates a command to take the response body as a stream.
 

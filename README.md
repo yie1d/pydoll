@@ -18,10 +18,10 @@
 
 <p align="center">
   📖 <a href="https://autoscrape-labs.github.io/pydoll/">Documentation</a> •
-  🚀 <a href="#getting-started">Getting Started</a> •
-  ⚡ <a href="#advanced-features">Advanced Features</a> •
-  🤝 <a href="#contributing">Contributing</a> •
-  💖 <a href="#support-my-work">Support My Work</a>
+  🚀 <a href="#-getting-started">Getting Started</a> •
+  ⚡ <a href="#-advanced-features">Advanced Features</a> •
+  🤝 <a href="#-contributing">Contributing</a> •
+  💖 <a href="#-support-my-work">Support My Work</a>
 </p>
 
 Imagine the following scenario: you need to automate tasks in your browser. Maybe it's testing a web application, collecting data from a site, or even automating repetitive processes. Normally this involves using external drivers, complex configurations, and many compatibility issues.
@@ -45,43 +45,144 @@ We believe that powerful automation shouldn't require you to become an expert in
 - **Humanized Interactions**: Mimic real user behavior
 - **Simplicity**: With Pydoll, you install and you're ready to automate.
 
-## What's New in 2.4.0
+## What's New
 
-### Advanced browser preferences support (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
-You can now customize Chromium browser preferences through the `browser_preferences` dict in ChromiumOptions.<br><br>
-Set things like download directory, language, notification blocking, PDF handling, and more.
-Helper properties like `set_default_download_directory`, `set_accept_languages`, and `prompt_for_download` were added for convenience.
-Preferences are merged automatically, no need to redefine everything.<br><br>
-Here's an example:
+### Browser-context HTTP requests - game changer for hybrid automation!
+Ever wished you could make HTTP requests that automatically inherit all your browser's session state? **Now you can!**<br>
+The `tab.request` property gives you a beautiful `requests`-like interface that executes HTTP calls directly in the browser's JavaScript context. This means every request automatically gets cookies, authentication headers, CORS policies, and session state, just as if the browser made the request itself.
 
+**Perfect for Hybrid Automation:**
+```python
+# Navigate to a site and login normally with PyDoll
+await tab.go_to('https://example.com/login')
+await (await tab.find(id='username')).type_text('user@example.com')
+await (await tab.find(id='password')).type_text('password')
+await (await tab.find(id='login-btn')).click()
+
+# Now make API calls that inherit the logged-in session!
+response = await tab.request.get('https://example.com/api/user/profile')
+user_data = response.json()
+
+# POST data while staying authenticated
+response = await tab.request.post(
+    'https://example.com/api/settings', 
+    json={'theme': 'dark', 'notifications': True}
+)
+
+# Access response content in different formats
+raw_data = response.content
+text_data = response.text
+json_data = response.json()
+
+# Check cookies that were set
+for cookie in response.cookies:
+    print(f"Cookie: {cookie['name']} = {cookie['value']}")
+
+# Add custom headers to your requests
+headers = [
+    {'name': 'X-Custom-Header', 'value': 'my-value'},
+    {'name': 'X-API-Version', 'value': '2.0'}
+]
+
+await tab.request.get('https://api.example.com/data', headers=headers)
+
+```
+
+**Why this is great:**
+- **No more session juggling** - Requests inherit browser cookies automatically
+- **CORS just works** - Requests respect browser security policies  
+- **Perfect for modern SPAs** - Seamlessly mix UI automation with API calls
+- **Authentication made easy** - Login once via UI, then hammer APIs
+- **Hybrid workflows** - Use the best tool for each step (UI or API)
+
+This opens up incredible possibilities for automation scenarios where you need both browser interaction AND API efficiency!
+
+### Total browser control with custom preferences! (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
+Want to completely customize how Chrome behaves? **Now you can control EVERYTHING!**<br>
+The new `browser_preferences` system gives you access to hundreds of internal Chrome settings that were previously impossible to change programmatically. We're talking about deep browser customization that goes way beyond command-line flags!
+
+**The possibilities are endless:**
 ```python
 options = ChromiumOptions()
-options.browser_preferences = {  # you can set the entire dict
+
+# Create the perfect automation environment
+options.browser_preferences = {
     'download': {
         'default_directory': '/tmp/downloads',
-        'prompt_for_download': False
-    },
-    'intl': {
-        'accept_languages': 'en-US,en,pt-BR'
+        'prompt_for_download': False,
+        'directory_upgrade': True,
+        'extensions_to_open': ''  # Don't auto-open any downloads
     },
     'profile': {
         'default_content_setting_values': {
-            'notifications': 2  # Block notifications
-        }
+            'notifications': 2,        # Block all notifications
+            'geolocation': 2,         # Block location requests
+            'media_stream_camera': 2, # Block camera access
+            'media_stream_mic': 2,    # Block microphone access
+            'popups': 1               # Allow popups (useful for automation)
+        },
+        'password_manager_enabled': False,  # Disable password prompts
+        'exit_type': 'Normal'              # Always exit cleanly
+    },
+    'intl': {
+        'accept_languages': 'en-US,en',
+        'charset_default': 'UTF-8'
+    },
+    'browser': {
+        'check_default_browser': False,    # Don't ask about default browser
+        'show_update_promotion_infobar': False
     }
 }
 
-options.set_default_download_directory('/tmp/downloads')   # or just the individual properties
-options.set_accept_languages('en-US,en,pt-BR')
+# Or use the convenient helper methods
+options.set_default_download_directory('/tmp/downloads')
+options.set_accept_languages('en-US,en,pt-BR')  
 options.prompt_for_download = False
 ```
-See [docs/features.md](docs/features.md#custom-browser-preferences) for more details.
+
+**Real-world power examples:**
+- **Silent downloads** - No prompts, no dialogs, just automated downloads
+- **Block ALL distractions** - Notifications, popups, camera requests, you name it
+- **Perfect for CI/CD** - Disable update checks, default browser prompts, crash reporting
+- **Multi-region testing** - Change languages, timezones, and locale settings instantly
+- **Security hardening** - Lock down permissions and disable unnecessary features
+- **Advanced fingerprinting control** - Modify browser install dates, engagement history, and behavioral patterns
+
+**Fingerprint customization for stealth automation:**
+```python
+import time
+
+# Simulate a browser that's been around for months
+fake_engagement_time = int(time.time()) - (7 * 24 * 60 * 60)  # 7 days ago
+
+options.browser_preferences = {
+    'settings': {
+        'touchpad': {
+            'natural_scroll': True,
+        }
+    },
+    'profile': {
+        'last_engagement_time': fake_engagement_time,
+        'exit_type': 'Normal',
+        'exited_cleanly': True
+    },
+    'newtab_page_location_override': 'https://www.google.com',
+    'session': {
+        'restore_on_startup': 1,  # Restore last session
+        'startup_urls': ['https://www.google.com']
+    }
+}
+```
+
+This level of control was previously only available to Chrome extension developers - now it's in your automation toolkit!
+
+Check the [documentation](https://autoscrape-labs.github.io/pydoll/features/custom-browser-preferences/) for more details.
 
 ### New `get_parent_element()` method
 Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
 ```python
 element = await tab.find(id='button')
-parent = await element.get_parent_parent()
+parent = await element.get_parent_element()
 ```
 ### New start_timeout option (thanks to [@j0j1j2](https://github.com/j0j1j2))
 Added to ChromiumOptions to control how long the browser can take to start. Useful on slower machines or CI environments.

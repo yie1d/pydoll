@@ -1,24 +1,55 @@
 from typing import Optional
 
-from pydoll.constants import (
-    DownloadBehavior,
-    PermissionType,
-    WindowState,
-)
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.browser.methods import BrowserMethod
-from pydoll.protocol.browser.params import (
+from pydoll.protocol.base import Command
+from pydoll.protocol.browser.methods import (
+    AddPrivacySandboxCoordinatorKeyConfigCommand,
+    AddPrivacySandboxCoordinatorKeyConfigParams,
+    AddPrivacySandboxEnrollmentOverrideCommand,
+    AddPrivacySandboxEnrollmentOverrideParams,
+    BrowserMethod,
+    CancelDownloadCommand,
     CancelDownloadParams,
+    CloseCommand,
+    CrashCommand,
+    CrashGpuProcessCommand,
+    DownloadBehavior,
+    ExecuteBrowserCommandCommand,
+    ExecuteBrowserCommandParams,
+    GetBrowserCommandLineCommand,
+    GetHistogramCommand,
+    GetHistogramParams,
+    GetHistogramsCommand,
+    GetHistogramsParams,
+    GetVersionCommand,
+    GetWindowBoundsCommand,
+    GetWindowBoundsParams,
+    GetWindowForTargetCommand,
     GetWindowForTargetParams,
+    GrantPermissionsCommand,
     GrantPermissionsParams,
+    ResetPermissionsCommand,
     ResetPermissionsParams,
+    SetContentsSizeCommand,
+    SetContentsSizeParams,
+    SetDockTileCommand,
+    SetDockTileParams,
+    SetDownloadBehaviorCommand,
     SetDownloadBehaviorParams,
+    SetPermissionCommand,
+    SetPermissionParams,
+    SetWindowBoundsCommand,
     SetWindowBoundsParams,
-    WindowBoundsDict,
 )
-from pydoll.protocol.browser.responses import (
-    GetVersionResponse,
-    GetWindowForTargetResponse,
+from pydoll.protocol.browser.types import (
+    Bounds,
+    BrowserCommandId,
+    BrowserContextID,
+    PermissionDescriptor,
+    PermissionSetting,
+    PermissionType,
+    PrivacySandboxAPI,
+    WindowID,
+    WindowState,
 )
 
 
@@ -37,29 +68,301 @@ class BrowserCommands:
     """
 
     @staticmethod
-    def get_version() -> Command[GetVersionResponse]:
+    def get_version() -> GetVersionCommand:
         """
         Generates a command to get browser version information.
 
         Returns:
-            Command[GetVersionResponse]: The CDP command that returns browser version details
+            GetVersionCommand: The CDP command that returns browser version details
                 including protocol version, product name, revision, and user agent.
         """
         return Command(method=BrowserMethod.GET_VERSION)
 
     @staticmethod
-    def reset_permissions(
-        browser_context_id: Optional[str] = None,
-    ) -> Command[Response]:
+    def get_browser_command_line() -> GetBrowserCommandLineCommand:
         """
-        Generates a command to reset all permissions.
-
-        Args:
-            browser_context_id (Optional[str]): The browser context to reset permissions for.
-                If not specified, resets permissions for the default context.
+        Returns the command line switches for the browser process.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response.
+            GetBrowserCommandLineCommand: The CDP command that returns command line arguments.
+
+        Note: Only works if --enable-automation is on the command line.
+        """
+        return Command(method=BrowserMethod.GET_BROWSER_COMMAND_LINE)
+
+    @staticmethod
+    def get_histograms(
+        query: Optional[str] = None,
+        delta: bool = False,
+    ) -> GetHistogramsCommand:
+        """
+        Get Chrome histograms.
+
+        Args:
+            query: Requested substring in name. Only histograms which have query as a
+                   substring in their name are extracted. An empty or absent query returns
+                   all histograms.
+            delta: If true, retrieve delta since last delta call.
+
+        Returns:
+            GetHistogramsCommand: The CDP command that returns histogram data.
+        """
+        params = GetHistogramsParams()
+        if query is not None:
+            params['query'] = query
+        if delta:
+            params['delta'] = delta
+        return Command(method=BrowserMethod.GET_HISTOGRAMS, params=params)
+
+    @staticmethod
+    def get_histogram(
+        name: str,
+        delta: bool = False,
+    ) -> GetHistogramCommand:
+        """
+        Get a Chrome histogram by name.
+
+        Args:
+            name: Requested histogram name.
+            delta: If true, retrieve delta since last delta call.
+
+        Returns:
+            GetHistogramCommand: The CDP command that returns histogram data.
+        """
+        params = GetHistogramParams(name=name)
+        if delta:
+            params['delta'] = delta
+        return Command(method=BrowserMethod.GET_HISTOGRAM, params=params)
+
+    @staticmethod
+    def get_window_bounds(window_id: WindowID) -> GetWindowBoundsCommand:
+        """
+        Get position and size of the browser window.
+
+        Args:
+            window_id: Browser window id.
+
+        Returns:
+            GetWindowBoundsCommand: The CDP command that returns window bounds information.
+        """
+        params = GetWindowBoundsParams(windowId=window_id)
+        return Command(method=BrowserMethod.GET_WINDOW_BOUNDS, params=params)
+
+    @staticmethod
+    def get_window_for_target(
+        target_id: Optional[str] = None,
+    ) -> GetWindowForTargetCommand:
+        """
+        Get the browser window that contains the devtools target.
+
+        Args:
+            target_id: Devtools agent host id. If called as a part of the session,
+                      associated targetId is used.
+
+        Returns:
+            GetWindowForTargetCommand: The CDP command that returns window information
+                including windowId and bounds.
+        """
+        params = GetWindowForTargetParams()
+        if target_id is not None:
+            params['targetId'] = target_id
+        return Command(method=BrowserMethod.GET_WINDOW_FOR_TARGET, params=params)
+
+    @staticmethod
+    def set_window_bounds(window_id: WindowID, bounds: Bounds) -> SetWindowBoundsCommand:
+        """
+        Set position and/or size of the browser window.
+
+        Args:
+            window_id: Browser window id.
+            bounds: New window bounds. The 'minimized', 'maximized' and 'fullscreen' states
+                   cannot be combined with 'left', 'top', 'width' or 'height'. Leaves
+                   unspecified fields unchanged.
+
+        Returns:
+            SetWindowBoundsCommand: The CDP command that sets window bounds.
+        """
+        params = SetWindowBoundsParams(windowId=window_id, bounds=bounds)
+        return Command(method=BrowserMethod.SET_WINDOW_BOUNDS, params=params)
+
+    @staticmethod
+    def set_contents_size(
+        window_id: WindowID,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> SetContentsSizeCommand:
+        """
+        Set size of the browser contents resizing browser window as necessary.
+
+        Args:
+            window_id: Browser window id.
+            width: The window contents width in DIP. Assumes current width if omitted.
+                  Must be specified if 'height' is omitted.
+            height: The window contents height in DIP. Assumes current height if omitted.
+                   Must be specified if 'width' is omitted.
+
+        Returns:
+            SetContentsSizeCommand: The CDP command that sets window contents size.
+        """
+        params = SetContentsSizeParams(windowId=window_id)
+        if width is not None:
+            params['width'] = width
+        if height is not None:
+            params['height'] = height
+        return Command(method=BrowserMethod.SET_CONTENTS_SIZE, params=params)
+
+    @staticmethod
+    def set_dock_tile(
+        badge_label: Optional[str] = None,
+        image: Optional[str] = None,
+    ) -> SetDockTileCommand:
+        """
+        Set dock tile details, platform-specific.
+
+        Args:
+            badge_label: Optional badge label.
+            image: Png encoded image (base64 string when passed over JSON).
+
+        Returns:
+            SetDockTileCommand: The CDP command that sets dock tile details.
+        """
+        params = SetDockTileParams()
+        if badge_label is not None:
+            params['badgeLabel'] = badge_label
+        if image is not None:
+            params['image'] = image
+        return Command(method=BrowserMethod.SET_DOCK_TILE, params=params)
+
+    @staticmethod
+    def execute_browser_command(command_id: BrowserCommandId) -> ExecuteBrowserCommandCommand:
+        """
+        Invoke custom browser commands used by telemetry.
+
+        Args:
+            command_id: Browser command identifier.
+
+        Returns:
+            ExecuteBrowserCommandCommand: The CDP command that executes browser command.
+        """
+        params = ExecuteBrowserCommandParams(commandId=command_id)
+        return Command(method=BrowserMethod.EXECUTE_BROWSER_COMMAND, params=params)
+
+    @staticmethod
+    def add_privacy_sandbox_enrollment_override(
+        url: str,
+    ) -> AddPrivacySandboxEnrollmentOverrideCommand:
+        """
+        Allows a site to use privacy sandbox features that require enrollment
+        without the site actually being enrolled. Only supported on page targets.
+
+        Args:
+            url: Site URL.
+
+        Returns:
+            AddPrivacySandboxEnrollmentOverrideCommand: The CDP command that adds enrollment
+            override.
+        """
+        params = AddPrivacySandboxEnrollmentOverrideParams(url=url)
+        return Command(method=BrowserMethod.ADD_PRIVACY_SANDBOX_ENROLLMENT_OVERRIDE, params=params)
+
+    @staticmethod
+    def add_privacy_sandbox_coordinator_key_config(
+        api: PrivacySandboxAPI,
+        coordinator_origin: str,
+        key_config: str,
+        browser_context_id: Optional[BrowserContextID] = None,
+    ) -> AddPrivacySandboxCoordinatorKeyConfigCommand:
+        """
+        Configures encryption keys used with a given privacy sandbox API to talk
+        to a trusted coordinator. Since this is intended for test automation only,
+        coordinatorOrigin must be a .test domain. No existing coordinator
+        configuration for the origin may exist.
+
+        Args:
+            api: Privacy Sandbox API type.
+            coordinator_origin: Coordinator origin (must be .test domain).
+            key_config: Key configuration string.
+            browser_context_id: BrowserContext to perform the action in. When omitted,
+                               default browser context is used.
+
+        Returns:
+            AddPrivacySandboxCoordinatorKeyConfigCommand: The CDP command that adds key config.
+        """
+        params = AddPrivacySandboxCoordinatorKeyConfigParams(
+            api=api,
+            coordinatorOrigin=coordinator_origin,
+            keyConfig=key_config,
+        )
+        if browser_context_id is not None:
+            params['browserContextId'] = browser_context_id
+        return Command(
+            method=BrowserMethod.ADD_PRIVACY_SANDBOX_COORDINATOR_KEY_CONFIG, params=params
+        )
+
+    @staticmethod
+    def set_permission(
+        permission: PermissionDescriptor,
+        setting: PermissionSetting,
+        origin: Optional[str] = None,
+        browser_context_id: Optional[BrowserContextID] = None,
+    ) -> SetPermissionCommand:
+        """
+        Set permission settings for given origin.
+
+        Args:
+            permission: Descriptor of permission to override.
+            setting: Setting of the permission.
+            origin: Origin the permission applies to, all origins if not specified.
+            browser_context_id: Context to override. When omitted, default browser context is used.
+
+        Returns:
+            SetPermissionCommand: The CDP command that sets permission.
+        """
+        params = SetPermissionParams(permission=permission, setting=setting)
+        if origin is not None:
+            params['origin'] = origin
+        if browser_context_id is not None:
+            params['browserContextId'] = browser_context_id
+        return Command(method=BrowserMethod.SET_PERMISSION, params=params)
+
+    @staticmethod
+    def grant_permissions(
+        permissions: list[PermissionType],
+        origin: Optional[str] = None,
+        browser_context_id: Optional[BrowserContextID] = None,
+    ) -> GrantPermissionsCommand:
+        """
+        Grant specific permissions to the given origin and reject all others.
+
+        Args:
+            permissions: List of permissions to grant.
+            origin: Origin the permission applies to, all origins if not specified.
+            browser_context_id: BrowserContext to override permissions. When omitted,
+                               default browser context is used.
+
+        Returns:
+            GrantPermissionsCommand: The CDP command that grants permissions.
+        """
+        params = GrantPermissionsParams(permissions=permissions)
+        if origin is not None:
+            params['origin'] = origin
+        if browser_context_id is not None:
+            params['browserContextId'] = browser_context_id
+        return Command(method=BrowserMethod.GRANT_PERMISSIONS, params=params)
+
+    @staticmethod
+    def reset_permissions(
+        browser_context_id: Optional[BrowserContextID] = None,
+    ) -> ResetPermissionsCommand:
+        """
+        Reset all permission management for all origins.
+
+        Args:
+            browser_context_id: BrowserContext to reset permissions. When omitted,
+                               default browser context is used.
+
+        Returns:
+            ResetPermissionsCommand: The CDP command that resets permissions.
         """
         params = ResetPermissionsParams()
         if browser_context_id is not None:
@@ -67,17 +370,52 @@ class BrowserCommands:
         return Command(method=BrowserMethod.RESET_PERMISSIONS, params=params)
 
     @staticmethod
-    def cancel_download(guid: str, browser_context_id: Optional[str] = None) -> Command[Response]:
+    def set_download_behavior(
+        behavior: DownloadBehavior,
+        browser_context_id: Optional[BrowserContextID] = None,
+        download_path: Optional[str] = None,
+        events_enabled: bool = False,
+    ) -> SetDownloadBehaviorCommand:
         """
-        Generates a command to cancel a download.
+        Set the behavior when downloading a file.
 
         Args:
-            guid (str): Global unique identifier of the download.
-            browser_context_id (Optional[str]): The browser context the download belongs to.
-                If not specified, uses the default context.
+            behavior: Whether to allow all or deny all download requests, or use default
+                     Chrome behavior if available (otherwise deny). allowAndName allows
+                     download and names files according to their download guids.
+            browser_context_id: BrowserContext to set download behavior. When omitted,
+                               default browser context is used.
+            download_path: The default path to save downloaded files to. This is required
+                          if behavior is set to 'allow' or 'allowAndName'.
+            events_enabled: Whether to emit download events (defaults to false).
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response.
+            SetDownloadBehaviorCommand: The CDP command that sets download behavior.
+        """
+        params = SetDownloadBehaviorParams(behavior=behavior)
+        if browser_context_id is not None:
+            params['browserContextId'] = browser_context_id
+        if download_path is not None:
+            params['downloadPath'] = download_path
+        if events_enabled is not None:
+            params['eventsEnabled'] = events_enabled
+        return Command(method=BrowserMethod.SET_DOWNLOAD_BEHAVIOR, params=params)
+
+    @staticmethod
+    def cancel_download(
+        guid: str,
+        browser_context_id: Optional[BrowserContextID] = None,
+    ) -> CancelDownloadCommand:
+        """
+        Cancel a download if in progress.
+
+        Args:
+            guid: Global unique identifier of the download.
+            browser_context_id: BrowserContext to perform the action in. When omitted,
+                               default browser context is used.
+
+        Returns:
+            CancelDownloadCommand: The CDP command that cancels download.
         """
         params = CancelDownloadParams(guid=guid)
         if browser_context_id is not None:
@@ -85,155 +423,88 @@ class BrowserCommands:
         return Command(method=BrowserMethod.CANCEL_DOWNLOAD, params=params)
 
     @staticmethod
-    def crash() -> Command[Response]:
+    def close() -> CloseCommand:
         """
-        Generates a command to crash the browser main process.
+        Close browser gracefully.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                before crashing the browser.
-        """
-        return Command(method=BrowserMethod.CRASH)
-
-    @staticmethod
-    def crash_gpu_process() -> Command[Response]:
-        """
-        Generates a command to crash the browser GPU process.
-
-        Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                before crashing the GPU process.
-        """
-        return Command(method=BrowserMethod.CRASH_GPU_PROCESS)
-
-    @staticmethod
-    def set_download_behavior(
-        behavior: DownloadBehavior,
-        download_path: Optional[str] = None,
-        browser_context_id: Optional[str] = None,
-        events_enabled: bool = True,
-    ) -> Command[Response]:
-        """
-        Generates a command to set the download behavior for the browser.
-
-        Args:
-            behavior (DownloadBehavior): The behavior to set for downloads.
-            download_path (Optional[str]): The path to set for downloads.
-
-        Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                after setting the download path.
-        """
-        params = SetDownloadBehaviorParams(behavior=behavior)
-        if download_path is not None:
-            params['downloadPath'] = download_path
-        if browser_context_id is not None:
-            params['browserContextId'] = browser_context_id
-        params['eventsEnabled'] = events_enabled
-        return Command(method=BrowserMethod.SET_DOWNLOAD_BEHAVIOR, params=params)
-
-    @staticmethod
-    def close() -> Command[Response]:
-        """
-        Generates a command to close the browser.
-
-        Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                before closing the browser.
+            CloseCommand: The CDP command that closes the browser.
         """
         return Command(method=BrowserMethod.CLOSE)
 
     @staticmethod
-    def get_window_for_target(
-        target_id: str,
-    ) -> Command[GetWindowForTargetResponse]:
+    def crash() -> CrashCommand:
         """
-        Generates a command to get the window for a given target ID.
-
-        Args:
-            target_id (str): The target_id to get the window for.
+        Crashes browser on the main thread.
 
         Returns:
-            Command[GetWindowForTargetResponse]: The CDP command that returns window
-                information including windowId and bounds.
+            CrashCommand: The CDP command that crashes the browser.
         """
-        params = GetWindowForTargetParams(targetId=target_id)
-        return Command(method=BrowserMethod.GET_WINDOW_FOR_TARGET, params=params)
+        return Command(method=BrowserMethod.CRASH)
 
     @staticmethod
-    def set_window_bounds(window_id: int, bounds: WindowBoundsDict) -> Command[Response]:
+    def crash_gpu_process() -> CrashGpuProcessCommand:
         """
-        Generates a command to set the bounds of a window.
-
-        Args:
-            window_id (int): The ID of the window to set the bounds for.
-            bounds (WindowBoundsDict): The bounds to set for the window,
-                which should include windowState and optionally width, height,
-                x, and y coordinates.
+        Crashes GPU process.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                after setting the window bounds.
+            CrashGpuProcessCommand: The CDP command that crashes the GPU process.
         """
-        params = SetWindowBoundsParams(windowId=window_id, bounds=bounds)
-        return Command(method=BrowserMethod.SET_WINDOW_BOUNDS, params=params)
+        return Command(method=BrowserMethod.CRASH_GPU_PROCESS)
 
+    # Helper methods for common window operations
     @staticmethod
-    def set_window_maximized(window_id: int) -> Command[Response]:
+    def set_window_maximized(window_id: WindowID) -> SetWindowBoundsCommand:
         """
-        Generates a command to maximize a window.
+        Maximize a browser window.
 
         Args:
-            window_id (int): The ID of the window to maximize.
+            window_id: Browser window id.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                after maximizing the window.
+            SetWindowBoundsCommand: The CDP command that maximizes the window.
         """
-        bounds = WindowBoundsDict(windowState=WindowState.MAXIMIZED)
+        bounds = Bounds(windowState=WindowState.MAXIMIZED)
         return BrowserCommands.set_window_bounds(window_id, bounds)
 
     @staticmethod
-    def set_window_minimized(window_id: int) -> Command[Response]:
+    def set_window_minimized(window_id: WindowID) -> SetWindowBoundsCommand:
         """
-        Generates a command to minimize a window.
+        Minimize a browser window.
 
         Args:
-            window_id (int): The ID of the window to minimize.
+            window_id: Browser window id.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                after minimizing the window.
+            SetWindowBoundsCommand: The CDP command that minimizes the window.
         """
-        bounds = WindowBoundsDict(windowState=WindowState.MINIMIZED)
+        bounds = Bounds(windowState=WindowState.MINIMIZED)
         return BrowserCommands.set_window_bounds(window_id, bounds)
 
     @staticmethod
-    def grant_permissions(
-        permissions: list[PermissionType],
-        origin: Optional[str] = None,
-        browser_context_id: Optional[str] = None,
-    ) -> Command[Response]:
+    def set_window_fullscreen(window_id: WindowID) -> SetWindowBoundsCommand:
         """
-        Generates a command to grant specific permissions to the given origin.
+        Set a browser window to fullscreen.
 
         Args:
-            permissions (list[PermissionType]): list of permissions to grant.
-                See PermissionType enum for available permissions.
-            origin (Optional[str]): The origin to grant permissions to.
-                If not specified, grants for all origins.
-            browser_context_id (Optional[str]): The browser context to grant permissions in.
-                If not specified, uses the default context.
+            window_id: Browser window id.
 
         Returns:
-            Command[Response]: The CDP command that returns a basic success response
-                after granting the specified permissions.
+            SetWindowBoundsCommand: The CDP command that sets window to fullscreen.
         """
-        params = GrantPermissionsParams(permissions=permissions)
-        if origin is not None:
-            params['origin'] = origin
+        bounds = Bounds(windowState=WindowState.FULLSCREEN)
+        return BrowserCommands.set_window_bounds(window_id, bounds)
 
-        if browser_context_id is not None:
-            params['browserContextId'] = browser_context_id
+    @staticmethod
+    def set_window_normal(window_id: WindowID) -> SetWindowBoundsCommand:
+        """
+        Set a browser window to normal state.
 
-        return Command(method=BrowserMethod.GRANT_PERMISSIONS, params=params)
+        Args:
+            window_id: Browser window id.
+
+        Returns:
+            SetWindowBoundsCommand: The CDP command that sets window to normal state.
+        """
+        bounds = Bounds(windowState=WindowState.NORMAL)
+        return BrowserCommands.set_window_bounds(window_id, bounds)

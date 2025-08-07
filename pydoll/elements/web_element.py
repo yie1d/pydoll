@@ -13,11 +13,6 @@ from pydoll.commands import (
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
     Key,
-    KeyEventType,
-    KeyModifier,
-    MouseButton,
-    MouseEventType,
-    ScreenshotFormat,
     Scripts,
 )
 from pydoll.elements.mixins import FindElementsMixin
@@ -27,13 +22,19 @@ from pydoll.exceptions import (
     ElementNotInteractable,
     ElementNotVisible,
 )
-from pydoll.protocol.dom.responses import (
+from pydoll.protocol.dom.methods import (
     GetBoxModelResponse,
     GetOuterHTMLResponse,
 )
 from pydoll.protocol.dom.types import Quad
-from pydoll.protocol.page.responses import CaptureScreenshotResponse
-from pydoll.protocol.page.types import Viewport
+from pydoll.protocol.input.types import (
+    KeyEventType,
+    KeyModifier,
+    MouseButton,
+    MouseEventType,
+)
+from pydoll.protocol.page.methods import CaptureScreenshotResponse
+from pydoll.protocol.page.types import ScreenshotFormat, Viewport
 from pydoll.utils import (
     decode_base64_to_bytes,
     extract_text_from_html,

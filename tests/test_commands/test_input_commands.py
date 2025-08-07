@@ -6,7 +6,7 @@ verifying that they generate the correct CDP commands with proper parameters.
 """
 
 from pydoll.commands.input_commands import InputCommands
-from pydoll.constants import (
+from pydoll.protocol.input.types import (
     DragEventType,
     GestureSourceType,
     KeyEventType,
@@ -164,6 +164,7 @@ def test_dispatch_touch_event_minimal():
     """Test dispatch_touch_event with minimal parameters."""
     result = InputCommands.dispatch_touch_event(
         type=TouchEventType.TOUCH_START,
+        touch_points=[],
     )
     assert result['method'] == InputMethod.DISPATCH_TOUCH_EVENT
     assert result['params']['type'] == TouchEventType.TOUCH_START
@@ -196,9 +197,9 @@ def test_dispatch_touch_event_with_touch_points():
 
 def test_set_ignore_input_events():
     """Test set_ignore_input_events"""
-    result = InputCommands.set_ignore_input_events(enabled=True)
+    result = InputCommands.set_ignore_input_events(ignore=True)
     assert result['method'] == InputMethod.SET_IGNORE_INPUT_EVENTS
-    assert result['params']['enabled'] is True
+    assert result['params']['ignore'] is True
 
 
 def test_dispatch_drag_event_minimal():
@@ -207,6 +208,7 @@ def test_dispatch_drag_event_minimal():
         type=DragEventType.DRAG_ENTER,
         x=100,
         y=200,
+        data={},
     )
     assert result['method'] == InputMethod.DISPATCH_DRAG_EVENT
     assert result['params']['type'] == DragEventType.DRAG_ENTER
@@ -512,6 +514,7 @@ def test_drag_event_cancel():
         type=DragEventType.DRAG_CANCEL,
         x=100,
         y=200,
+        data={},
     )
     assert result['method'] == InputMethod.DISPATCH_DRAG_EVENT
     assert result['params']['type'] == DragEventType.DRAG_CANCEL

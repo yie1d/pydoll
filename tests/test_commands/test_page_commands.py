@@ -6,7 +6,7 @@ verifying that they generate the correct CDP commands with proper parameters.
 """
 
 from pydoll.commands.page_commands import PageCommands
-from pydoll.constants import (
+from pydoll.protocol.page.types import (
     ReferrerPolicy,
     ScreencastFormat,
     ScreenshotFormat,
@@ -584,14 +584,14 @@ def test_set_font_sizes():
 
 def test_set_prerendering_allowed():
     """Test set_prerendering_allowed method."""
-    result = PageCommands.set_prerendering_allowed(allowed=True)
+    result = PageCommands.set_prerendering_allowed(is_allowed=True)
     assert result['method'] == PageMethod.SET_PRERENDERING_ALLOWED
-    assert result['params']['allowed'] == True
+    assert result['params']['isAllowed'] == True
 
 
 def test_set_rph_registration_mode():
     """Test set_rph_registration_mode method."""
-    from pydoll.protocol.page.params import AutoResponseMode
+    from pydoll.protocol.page.methods import AutoResponseMode
     result = PageCommands.set_rph_registration_mode(mode=AutoResponseMode.AUTO_ACCEPT)
     assert result['method'] == PageMethod.SET_RPH_REGISTRATION_MODE
     assert result['params']['mode'] == AutoResponseMode.AUTO_ACCEPT
@@ -599,7 +599,7 @@ def test_set_rph_registration_mode():
 
 def test_set_spc_transaction_mode():
     """Test set_spc_transaction_mode method."""
-    from pydoll.protocol.page.params import AutoResponseMode
+    from pydoll.protocol.page.methods import AutoResponseMode
     result = PageCommands.set_spc_transaction_mode(mode=AutoResponseMode.AUTO_REJECT)
     assert result['method'] == PageMethod.SET_SPC_TRANSACTION_MODE
     assert result['params']['mode'] == AutoResponseMode.AUTO_REJECT

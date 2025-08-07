@@ -8,7 +8,7 @@ from contextlib import suppress
 from functools import partial
 from random import randint
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional
 
 from pydoll.browser.interfaces import BrowserOptionsManager
 from pydoll.browser.managers import (
@@ -25,35 +25,31 @@ from pydoll.commands import (
     TargetCommands,
 )
 from pydoll.connection import ConnectionHandler
-from pydoll.constants import (
-    AuthChallengeResponseValues,
-    DownloadBehavior,
-    NetworkErrorReason,
-    PermissionType,
+from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
+from pydoll.protocol.base import Command, Response, T_CommandParams, T_CommandResponse
+from pydoll.protocol.browser.methods import (
+    GetVersionResponse,
+    GetVersionResult,
+    GetWindowForTargetResponse,
+)
+from pydoll.protocol.browser.types import Bounds, DownloadBehavior, PermissionType
+from pydoll.protocol.fetch.events import FetchEvent, RequestPausedEvent
+from pydoll.protocol.fetch.types import AuthChallengeResponseType, HeaderEntry
+from pydoll.protocol.network.types import (
+    Cookie,
+    CookieParam,
+    ErrorReason,
     RequestMethod,
     ResourceType,
 )
-from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
-from pydoll.protocol.base import Command, Response
-from pydoll.protocol.browser.responses import (
-    GetVersionResponse,
-    GetVersionResultDict,
-    GetWindowForTargetResponse,
-)
-from pydoll.protocol.browser.types import WindowBoundsDict
-from pydoll.protocol.fetch.events import FetchEvent
-from pydoll.protocol.fetch.types import HeaderEntry
-from pydoll.protocol.network.types import Cookie, CookieParam, RequestPausedEvent
-from pydoll.protocol.storage.responses import GetCookiesResponse
-from pydoll.protocol.target.responses import (
+from pydoll.protocol.storage.methods import GetCookiesResponse
+from pydoll.protocol.target.methods import (
     CreateBrowserContextResponse,
     CreateTargetResponse,
     GetBrowserContextsResponse,
     GetTargetsResponse,
 )
 from pydoll.protocol.target.types import TargetInfo
-
-T = TypeVar('T')
 
 
 class Browser(ABC):  # noqa: PLR0904
@@ -223,7 +219,8 @@ class Browser(ABC):  # noqa: PLR0904
         )
         target_id = response['result']['targetId']
         tab = Tab(self, self._connection_port, target_id, browser_context_id)
-        if url: await tab.go_to(url)
+        if url:
+            await tab.go_to(url)
         return tab
 
     async def get_targets(self) -> list[TargetInfo]:
@@ -260,7 +257,11 @@ class Browser(ABC):  # noqa: PLR0904
     async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
         """Set download directory path (convenience method for set_download_behavior)."""
         return await self._execute_command(
-            BrowserCommands.set_download_behavior(DownloadBehavior.ALLOW, path, browser_context_id)
+            BrowserCommands.set_download_behavior(
+                behavior=DownloadBehavior.ALLOW,
+                download_path=path,
+                browser_context_id=browser_context_id,
+            )
         )
 
     async def set_download_behavior(
@@ -281,7 +282,10 @@ class Browser(ABC):  # noqa: PLR0904
         """
         return await self._execute_command(
             BrowserCommands.set_download_behavior(
-                behavior, download_path, browser_context_id, events_enabled
+                behavior=behavior,
+                download_path=download_path,
+                browser_context_id=browser_context_id,
+                events_enabled=events_enabled,
             )
         )
 
@@ -302,7 +306,7 @@ class Browser(ABC):  # noqa: PLR0904
         )
         return response['result']['cookies']
 
-    async def get_version(self) -> GetVersionResultDict:
+    async def get_version(self) -> GetVersionResult:
         """Get browser version and CDP protocol information."""
         response: GetVersionResponse = await self._execute_command(BrowserCommands.get_version())
         return response['result']
@@ -339,7 +343,7 @@ class Browser(ABC):  # noqa: PLR0904
         window_id = await self.get_window_id()
         return await self._execute_command(BrowserCommands.set_window_minimized(window_id))
 
-    async def set_window_bounds(self, bounds: WindowBoundsDict):
+    async def set_window_bounds(self, bounds: Bounds):
         """
         Set window position and/or size.
 
@@ -442,7 +446,7 @@ class Browser(ABC):  # noqa: PLR0904
         """Disable runtime events."""
         return await self._connection_handler.execute_command(RuntimeCommands.disable())
 
-    async def continue_request(  # noqa: PLR0913, PLR0917
+    async def continue_request(
         self,
         request_id: str,
         url: Optional[str] = None,
@@ -465,7 +469,7 @@ class Browser(ABC):  # noqa: PLR0904
             )
         )
 
-    async def fail_request(self, request_id: str, error_reason: NetworkErrorReason):
+    async def fail_request(self, request_id: str, error_reason: ErrorReason):
         """Fail request with error code."""
         return await self._execute_command(FetchCommands.fail_request(request_id, error_reason))
 
@@ -510,7 +514,7 @@ class Browser(ABC):  # noqa: PLR0904
         response: Response = await self._execute_command(
             FetchCommands.continue_request_with_auth(
                 request_id,
-                auth_challenge_response=AuthChallengeResponseValues.PROVIDE_CREDENTIALS,
+                auth_challenge_response=AuthChallengeResponseType.PROVIDE_CREDENTIALS,
                 proxy_username=proxy_username,
                 proxy_password=proxy_password,
             )
@@ -589,7 +593,9 @@ class Browser(ABC):  # noqa: PLR0904
 
         return False
 
-    async def _execute_command(self, command: Command[T], timeout: int = 10) -> T:
+    async def _execute_command(
+        self, command: Command[T_CommandParams, T_CommandResponse], timeout: int = 10
+    ) -> T_CommandResponse:
         """Execute CDP command and return result (core method for browser communication)."""
         return await self._connection_handler.execute_command(command, timeout=timeout)
 
