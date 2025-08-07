@@ -604,19 +604,23 @@ class Request:
         """Parse a single cookie line to extract name and value.
 
         Extracts only the cookie name and value, ignoring all cookie attributes
-        like Path, Domain, Secure, HttpOnly, etc.
+        like Path, Domain, Secure, HttpOnly, etc. Rejects cookies with empty names.
 
         Args:
             line: Single line from Set-Cookie header.
 
         Returns:
-            CookieParam object with name and value, or None if parsing fails.
+            CookieParam object with name and value, or None if parsing fails or name is empty.
         """
         if '=' not in line:
             return None
 
         name = line.split('=', 1)[0].strip()
         value = line.split('=', 1)[1].split(';', 1)[0].strip()
+
+        # Reject cookies with empty names
+        if not name:
+            return None
 
         return CookieParam(name=name, value=value)
 
