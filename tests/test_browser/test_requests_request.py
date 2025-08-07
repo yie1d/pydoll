@@ -531,3 +531,940 @@ class TestRequestEdgeCases:
         """Test converting empty dictionary to header entries."""
         result = request_instance._convert_dict_to_header_entries({})
         assert result == []
+
+
+class TestRequestHeaderExtraction:
+    """Test header extraction methods from network events."""
+
+    def test_extract_received_headers(self, request_instance):
+        """Test _extract_received_headers method."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock network events with response headers
+        mock_response_event = {
+            'method': NetworkEvent.RESPONSE_RECEIVED,
+            'params': {
+                'response': {
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Content-Length': '100',
+                        'Server': 'nginx/1.18.0'
+                    }
+                }
+            }
+        }
+        
+        mock_response_extra_event = {
+            'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+            'params': {
+                'blockedCookies': [],
+                'headers': {
+                    'Set-Cookie': 'session=abc123; Path=/',
+                    'X-Custom-Header': 'custom-value'
+                }
+            }
+        }
+        
+        # Set up mock events
+        request_instance._requests_received = [mock_response_event, mock_response_extra_event]
+        
+        # Extract headers
+        headers = request_instance._extract_received_headers()
+        
+        # Verify headers were extracted
+        assert len(headers) >= 3  # At least Content-Type, Content-Length, Server
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert 'Content-Type' in header_dict
+        assert header_dict['Content-Type'] == 'application/json'
+        assert 'Content-Length' in header_dict
+        assert header_dict['Content-Length'] == '100'
+        assert 'Server' in header_dict
+        assert header_dict['Server'] == 'nginx/1.18.0'
+
+    def test_extract_sent_headers(self, request_instance):
+        """Test _extract_sent_headers method."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock network events with request headers
+        mock_request_event = {
+            'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+            'params': {
+                'request': {
+                    'headers': {
+                        'User-Agent': 'PyDoll/1.0',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer token123'
+                    }
+                }
+            }
+        }
+        
+        mock_request_extra_event = {
+            'method': NetworkEvent.REQUEST_WILL_BE_SENT_EXTRA_INFO,
+            'params': {
+                'associatedCookies': [],
+                'headers': {
+                    'X-Forwarded-For': '192.168.1.1',
+                    'X-Custom-Request': 'test-value'
+                }
+            }
+        }
+        
+        # Set up mock events
+        request_instance._requests_sent = [mock_request_event, mock_request_extra_event]
+        
+        # Extract headers
+        headers = request_instance._extract_sent_headers()
+        
+        # Verify headers were extracted
+        assert len(headers) >= 3  # At least User-Agent, Accept, Authorization
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert 'User-Agent' in header_dict
+        assert header_dict['User-Agent'] == 'PyDoll/1.0'
+        assert 'Accept' in header_dict
+        assert header_dict['Accept'] == 'application/json'
+        assert 'Authorization' in header_dict
+        assert header_dict['Authorization'] == 'Bearer token123'
+
+    def test_extract_headers_from_events_with_response_events(self, request_instance):
+        """Test _extract_headers_from_events with response events."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock response events
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {
+                    'response': {
+                        'headers': {
+                            'Content-Type': 'text/html',
+                            'Cache-Control': 'no-cache'
+                        }
+                    }
+                }
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'blockedCookies': [],
+                    'headers': {
+                        'X-Frame-Options': 'DENY',
+                        'Strict-Transport-Security': 'max-age=31536000'
+                    }
+                }
+            }
+        ]
+        
+        # Define extractors for response events
+        event_extractors = {
+            'response': request_instance._extract_response_received_headers,
+            'blockedCookies': request_instance._extract_response_received_extra_info_headers,
+        }
+        
+        # Extract headers from events
+        headers = request_instance._extract_headers_from_events(events, event_extractors)
+        
+        # Verify headers were extracted and deduplicated
+        assert len(headers) == 4  # Content-Type, Cache-Control, X-Frame-Options, Strict-Transport-Security
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['Content-Type'] == 'text/html'
+        assert header_dict['Cache-Control'] == 'no-cache'
+        assert header_dict['X-Frame-Options'] == 'DENY'
+        assert header_dict['Strict-Transport-Security'] == 'max-age=31536000'
+
+    def test_extract_headers_from_events_with_request_events(self, request_instance):
+        """Test _extract_headers_from_events with request events."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock request events
+        events = [
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+                'params': {
+                    'request': {
+                        'headers': {
+                            'Host': 'api.example.com',
+                            'Connection': 'keep-alive'
+                        }
+                    }
+                }
+            },
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT_EXTRA_INFO,
+                'params': {
+                    'associatedCookies': [],
+                    'headers': {
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Accept-Language': 'en-US,en;q=0.9'
+                    }
+                }
+            }
+        ]
+        
+        # Define extractors for request events
+        event_extractors = {
+            'request': request_instance._extract_request_sent_headers,
+            'associatedCookies': request_instance._extract_request_sent_extra_info_headers,
+        }
+        
+        # Extract headers from events
+        headers = request_instance._extract_headers_from_events(events, event_extractors)
+        
+        # Verify headers were extracted
+        assert len(headers) == 4  # Host, Connection, Accept-Encoding, Accept-Language
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['Host'] == 'api.example.com'
+        assert header_dict['Connection'] == 'keep-alive'
+        assert header_dict['Accept-Encoding'] == 'gzip, deflate'
+        assert header_dict['Accept-Language'] == 'en-US,en;q=0.9'
+
+    def test_extract_headers_from_events_deduplication(self, request_instance):
+        """Test that _extract_headers_from_events deduplicates headers correctly."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events with duplicate headers
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {
+                    'response': {
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Server': 'nginx'
+                        }
+                    }
+                }
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'blockedCookies': [],
+                    'headers': {
+                        'Content-Type': 'application/json',  # Duplicate
+                        'X-Custom': 'value'
+                    }
+                }
+            }
+        ]
+        
+        event_extractors = {
+            'response': request_instance._extract_response_received_headers,
+            'blockedCookies': request_instance._extract_response_received_extra_info_headers,
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_headers_from_events(events, event_extractors)
+        
+        # Verify deduplication - Content-Type should appear only once
+        header_names = [h['name'] for h in headers]
+        assert header_names.count('Content-Type') == 1
+        assert len(headers) == 3  # Content-Type (deduplicated), Server, X-Custom
+
+    def test_extract_headers_from_events_empty_events(self, request_instance):
+        """Test _extract_headers_from_events with empty events list."""
+        event_extractors = {
+            'response': request_instance._extract_response_received_headers,
+        }
+        
+        # Extract headers from empty events
+        headers = request_instance._extract_headers_from_events([], event_extractors)
+        
+        # Should return empty list
+        assert headers == []
+
+    def test_extract_headers_from_events_no_matching_keys(self, request_instance):
+        """Test _extract_headers_from_events when no event keys match extractors."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with keys that don't match extractors
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {
+                    'someOtherKey': {
+                        'headers': {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                }
+            }
+        ]
+        
+        event_extractors = {
+            'response': request_instance._extract_response_received_headers,
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_headers_from_events(events, event_extractors)
+        
+        # Should return empty list since no keys match
+        assert headers == []
+
+    def test_extract_request_sent_headers(self, request_instance):
+        """Test _extract_request_sent_headers method."""
+        # Mock request params
+        params = {
+            'request': {
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0',
+                    'Accept': '*/*',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer secret-token'
+                }
+            },
+            'otherData': 'should be ignored'
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_request_sent_headers(params)
+        
+        # Verify headers were extracted correctly
+        assert len(headers) == 4
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['User-Agent'] == 'Mozilla/5.0'
+        assert header_dict['Accept'] == '*/*'
+        assert header_dict['Content-Type'] == 'application/json'
+        assert header_dict['Authorization'] == 'Bearer secret-token'
+
+    def test_extract_request_sent_headers_empty_headers(self, request_instance):
+        """Test _extract_request_sent_headers with empty headers."""
+        params = {
+            'request': {
+                'headers': {}
+            }
+        }
+        
+        headers = request_instance._extract_request_sent_headers(params)
+        assert headers == []
+
+    def test_extract_request_sent_headers_missing_headers_key(self, request_instance):
+        """Test _extract_request_sent_headers when headers key is missing."""
+        params = {
+            'request': {
+                'url': 'https://example.com',
+                'method': 'GET'
+            }
+        }
+        
+        headers = request_instance._extract_request_sent_headers(params)
+        assert headers == []
+
+    def test_extract_request_sent_extra_info_headers(self, request_instance):
+        """Test _extract_request_sent_extra_info_headers method."""
+        # Mock extra info params
+        params = {
+            'headers': {
+                'X-Forwarded-For': '10.0.0.1',
+                'X-Real-IP': '192.168.1.100',
+                'X-Custom-Header': 'extra-info-value'
+            },
+            'associatedCookies': [],
+            'otherData': 'should be ignored'
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_request_sent_extra_info_headers(params)
+        
+        # Verify headers were extracted correctly
+        assert len(headers) == 3
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['X-Forwarded-For'] == '10.0.0.1'
+        assert header_dict['X-Real-IP'] == '192.168.1.100'
+        assert header_dict['X-Custom-Header'] == 'extra-info-value'
+
+    def test_extract_request_sent_extra_info_headers_empty(self, request_instance):
+        """Test _extract_request_sent_extra_info_headers with empty headers."""
+        params = {
+            'headers': {},
+            'associatedCookies': []
+        }
+        
+        headers = request_instance._extract_request_sent_extra_info_headers(params)
+        assert headers == []
+
+    def test_extract_request_sent_extra_info_headers_missing_headers(self, request_instance):
+        """Test _extract_request_sent_extra_info_headers when headers key is missing."""
+        params = {
+            'associatedCookies': [],
+            'otherData': 'value'
+        }
+        
+        headers = request_instance._extract_request_sent_extra_info_headers(params)
+        assert headers == []
+
+    def test_extract_response_received_headers(self, request_instance):
+        """Test _extract_response_received_headers method."""
+        # Mock response params
+        params = {
+            'response': {
+                'headers': {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Content-Length': '1024',
+                    'Last-Modified': 'Wed, 21 Oct 2015 07:28:00 GMT',
+                    'ETag': '"33a64df551425fcc55e4d42a148795d9f25f89d4"'
+                }
+            },
+            'otherData': 'should be ignored'
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_response_received_headers(params)
+        
+        # Verify headers were extracted correctly
+        assert len(headers) == 4
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['Content-Type'] == 'text/html; charset=utf-8'
+        assert header_dict['Content-Length'] == '1024'
+        assert header_dict['Last-Modified'] == 'Wed, 21 Oct 2015 07:28:00 GMT'
+        assert header_dict['ETag'] == '"33a64df551425fcc55e4d42a148795d9f25f89d4"'
+
+    def test_extract_response_received_extra_info_headers(self, request_instance):
+        """Test _extract_response_received_extra_info_headers method."""
+        # Mock response extra info params
+        params = {
+            'headers': {
+                'Set-Cookie': 'sessionid=abc123; HttpOnly; Secure',
+                'X-Content-Type-Options': 'nosniff',
+                'X-XSS-Protection': '1; mode=block',
+                'Referrer-Policy': 'strict-origin-when-cross-origin'
+            },
+            'blockedCookies': [],
+            'otherData': 'should be ignored'
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_response_received_extra_info_headers(params)
+        
+        # Verify headers were extracted correctly
+        assert len(headers) == 4
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert header_dict['Set-Cookie'] == 'sessionid=abc123; HttpOnly; Secure'
+        assert header_dict['X-Content-Type-Options'] == 'nosniff'
+        assert header_dict['X-XSS-Protection'] == '1; mode=block'
+        assert header_dict['Referrer-Policy'] == 'strict-origin-when-cross-origin'
+
+    def test_header_extraction_with_complex_values(self, request_instance):
+        """Test header extraction with complex header values."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with complex header values
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {
+                    'response': {
+                        'headers': {
+                            'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+                            'Link': '</css/style.css>; rel=preload; as=style, </js/app.js>; rel=preload; as=script',
+                            'Cache-Control': 'public, max-age=3600, s-maxage=7200, must-revalidate',
+                        }
+                    }
+                }
+            }
+        ]
+        
+        event_extractors = {
+            'response': request_instance._extract_response_received_headers,
+        }
+        
+        # Extract headers
+        headers = request_instance._extract_headers_from_events(events, event_extractors)
+        
+        # Verify complex values are preserved
+        header_dict = {h['name']: h['value'] for h in headers}
+        
+        assert 'Content-Security-Policy' in header_dict
+        assert "default-src 'self'" in header_dict['Content-Security-Policy']
+        assert 'Link' in header_dict
+        assert 'rel=preload' in header_dict['Link']
+        assert 'Cache-Control' in header_dict
+        assert 'must-revalidate' in header_dict['Cache-Control']
+
+    def test_header_extraction_integration_flow(self, request_instance):
+        """Test complete header extraction flow for both sent and received headers."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Set up complete request/response flow
+        request_instance._requests_sent = [
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+                'params': {
+                    'request': {
+                        'headers': {
+                            'Host': 'api.example.com',
+                            'User-Agent': 'PyDoll/1.0',
+                            'Accept': 'application/json'
+                        }
+                    }
+                }
+            }
+        ]
+        
+        request_instance._requests_received = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {
+                    'response': {
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Server': 'nginx/1.18.0',
+                            'Content-Length': '256'
+                        }
+                    }
+                }
+            }
+        ]
+        
+        # Extract both sent and received headers
+        sent_headers = request_instance._extract_sent_headers()
+        received_headers = request_instance._extract_received_headers()
+        
+        # Verify sent headers
+        sent_dict = {h['name']: h['value'] for h in sent_headers}
+        assert sent_dict['Host'] == 'api.example.com'
+        assert sent_dict['User-Agent'] == 'PyDoll/1.0'
+        assert sent_dict['Accept'] == 'application/json'
+        
+        # Verify received headers
+        received_dict = {h['name']: h['value'] for h in received_headers}
+        assert received_dict['Content-Type'] == 'application/json'
+        assert received_dict['Server'] == 'nginx/1.18.0'
+        assert received_dict['Content-Length'] == '256'
+        
+        # Verify they are separate
+        assert len(sent_headers) == 3
+        assert len(received_headers) == 3
+        assert sent_headers != received_headers
+
+    def test_filter_response_extra_info_events(self, request_instance):
+        """Test _filter_response_extra_info_events method."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events with different types
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {'response': {'headers': {}}}
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {'Set-Cookie': 'session=abc123; Path=/'},
+                    'blockedCookies': []
+                }
+            },
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+                'params': {'request': {'headers': {}}}
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {'Set-Cookie': 'token=xyz789; Secure'},
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        # Set up mock requests_received with the events
+        request_instance._requests_received = events
+        
+        # Filter for response extra info events
+        filtered_events = request_instance._filter_response_extra_info_events()
+        
+        # Should only return RESPONSE_RECEIVED_EXTRA_INFO events
+        assert len(filtered_events) == 2
+        
+        for event in filtered_events:
+            assert event['method'] == NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO
+            assert 'headers' in event['params']
+            assert 'Set-Cookie' in event['params']['headers']
+
+    def test_filter_response_extra_info_events_empty(self, request_instance):
+        """Test _filter_response_extra_info_events with no matching events."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events without RESPONSE_RECEIVED_EXTRA_INFO
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {'response': {'headers': {}}}
+            },
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+                'params': {'request': {'headers': {}}}
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Filter for response extra info events
+        filtered_events = request_instance._filter_response_extra_info_events()
+        
+        # Should return empty list
+        assert filtered_events == []
+
+    def test_filter_response_extra_info_events_no_events(self, request_instance):
+        """Test _filter_response_extra_info_events with empty events list."""
+        request_instance._requests_received = []
+        
+        # Filter for response extra info events
+        filtered_events = request_instance._filter_response_extra_info_events()
+        
+        # Should return empty list
+        assert filtered_events == []
+
+    def test_extract_set_cookies_basic(self, request_instance):
+        """Test _extract_set_cookies method with basic cookies."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events with Set-Cookie headers
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'sessionid=abc123; Path=/; HttpOnly',
+                        'Content-Type': 'application/json'
+                    },
+                    'blockedCookies': []
+                }
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'userid=456; Domain=.example.com; Secure',
+                        'X-Custom': 'value'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 2 cookies
+        assert len(cookies) == 2
+        
+        # Check first cookie (only name and value are extracted)
+        cookie1 = next(c for c in cookies if c['name'] == 'sessionid')
+        assert cookie1['value'] == 'abc123'
+        
+        # Check second cookie (only name and value are extracted)
+        cookie2 = next(c for c in cookies if c['name'] == 'userid')
+        assert cookie2['value'] == '456'
+
+    def test_extract_set_cookies_multiple_cookies_same_header(self, request_instance):
+        """Test _extract_set_cookies with multiple cookies in same Set-Cookie header."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with multiple cookies in one header (newline-separated, not comma)
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'cookie1=value1; Path=/\ncookie2=value2; HttpOnly\ncookie3=value3; Secure'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 3 cookies (split by newline)
+        assert len(cookies) == 3
+        
+        cookie_names = [c['name'] for c in cookies]
+        assert 'cookie1' in cookie_names
+        assert 'cookie2' in cookie_names
+        assert 'cookie3' in cookie_names
+        
+        # Check values (attributes are ignored)
+        cookie1 = next(c for c in cookies if c['name'] == 'cookie1')
+        assert cookie1['value'] == 'value1'
+        
+        cookie2 = next(c for c in cookies if c['name'] == 'cookie2')
+        assert cookie2['value'] == 'value2'
+        
+        cookie3 = next(c for c in cookies if c['name'] == 'cookie3')
+        assert cookie3['value'] == 'value3'
+
+    def test_extract_set_cookies_duplicate_names(self, request_instance):
+        """Test _extract_set_cookies with duplicate cookie names (should be deduplicated)."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events with duplicate cookie names
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'sessionid=first_value; Path=/admin'
+                    },
+                    'blockedCookies': []
+                }
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'sessionid=second_value; Path=/user'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 2 cookies (different values, so not deduplicated by object equality)
+        assert len(cookies) == 2
+        cookie_names = [c['name'] for c in cookies]
+        assert cookie_names.count('sessionid') == 2
+        
+        # Both cookies should be present with different values
+        values = [c['value'] for c in cookies if c['name'] == 'sessionid']
+        assert 'first_value' in values
+        assert 'second_value' in values
+
+    def test_extract_set_cookies_complex_values(self, request_instance):
+        """Test _extract_set_cookies with complex cookie values and attributes."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with complex cookie attributes
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9; Domain=api.example.com; Path=/api; Secure; HttpOnly; SameSite=Strict; Max-Age=3600'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 1 cookie (only name and value extracted)
+        assert len(cookies) == 1
+        cookie = cookies[0]
+        
+        assert cookie['name'] == 'auth_token'
+        assert cookie['value'] == 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+        # Attributes like domain, path, secure, etc. are ignored by the implementation
+
+    def test_extract_set_cookies_no_set_cookie_headers(self, request_instance):
+        """Test _extract_set_cookies when no Set-Cookie headers are present."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock events without Set-Cookie headers
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'X-Custom-Header': 'value'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should return empty list
+        assert cookies == []
+
+    def test_extract_set_cookies_empty_events(self, request_instance):
+        """Test _extract_set_cookies with empty events list."""
+        request_instance._requests_received = []
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should return empty list
+        assert cookies == []
+
+    def test_extract_set_cookies_malformed_cookies(self, request_instance):
+        """Test _extract_set_cookies with malformed cookie strings."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with malformed cookies (newline-separated to match implementation)
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'valid_cookie=value123; Path=/\nmalformed_cookie_no_value\n=empty_name_cookie; HttpOnly\nanother_valid=test'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should only extract valid cookies (2 valid ones - those with non-empty names)
+        # The implementation rejects cookies with empty names
+        assert len(cookies) == 2
+        
+        cookie_names = [c['name'] for c in cookies]
+        assert 'valid_cookie' in cookie_names
+        assert 'another_valid' in cookie_names
+        
+        # Verify values
+        valid_cookie = next(c for c in cookies if c['name'] == 'valid_cookie')
+        assert valid_cookie['value'] == 'value123'
+        
+        another_valid = next(c for c in cookies if c['name'] == 'another_valid')
+        assert another_valid['value'] == 'test'
+
+    def test_extract_set_cookies_edge_case_attributes(self, request_instance):
+        """Test _extract_set_cookies with edge case cookie attributes."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with edge case attributes
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'test_cookie=value; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Max-Age=0; SameSite=None; Priority=High'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 1 cookie (only name and value extracted)
+        assert len(cookies) == 1
+        cookie = cookies[0]
+        
+        assert cookie['name'] == 'test_cookie'
+        assert cookie['value'] == 'value'
+        # All attributes like expires, maxAge, sameSite, etc. are ignored by the implementation
+
+    def test_extract_set_cookies_integration_with_filter(self, request_instance):
+        """Test integration between _extract_set_cookies and _filter_response_extra_info_events."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock mixed events (some relevant, some not)
+        events = [
+            {
+                'method': NetworkEvent.REQUEST_WILL_BE_SENT,
+                'params': {'request': {'headers': {}}}
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {'Set-Cookie': 'filtered_cookie=should_be_extracted; Path=/'},
+                    'blockedCookies': []
+                }
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED,
+                'params': {'response': {'headers': {}}}
+            },
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {'Set-Cookie': 'another_cookie=also_extracted; HttpOnly'},
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies (should use filtering internally)
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should have 2 cookies from the 2 RESPONSE_RECEIVED_EXTRA_INFO events
+        assert len(cookies) == 2
+        
+        cookie_names = [c['name'] for c in cookies]
+        assert 'filtered_cookie' in cookie_names
+        assert 'another_cookie' in cookie_names
+
+    def test_extract_set_cookies_empty_name_rejection(self, request_instance):
+        """Test that _extract_set_cookies rejects cookies with empty names."""
+        from pydoll.protocol.network.events import NetworkEvent
+        
+        # Mock event with various invalid cookie formats
+        events = [
+            {
+                'method': NetworkEvent.RESPONSE_RECEIVED_EXTRA_INFO,
+                'params': {
+                    'headers': {
+                        'Set-Cookie': 'valid_cookie=value\n=empty_name_value\n =space_only_name_value\n\t=tab_only_name_value'
+                    },
+                    'blockedCookies': []
+                }
+            }
+        ]
+        
+        request_instance._requests_received = events
+        
+        # Extract cookies
+        cookies = request_instance._extract_set_cookies()
+        
+        # Should only extract the valid cookie, rejecting all empty/whitespace-only names
+        assert len(cookies) == 1
+        assert cookies[0]['name'] == 'valid_cookie'
+        assert cookies[0]['value'] == 'value'
+
+    def test_parse_cookie_line_empty_name_validation(self, request_instance):
+        """Test _parse_cookie_line directly with empty names."""
+        # Test various forms of empty names
+        assert request_instance._parse_cookie_line('=value') is None
+        assert request_instance._parse_cookie_line(' =value') is None
+        assert request_instance._parse_cookie_line('\t=value') is None
+        assert request_instance._parse_cookie_line('  \t  =value') is None
+        
+        # Test valid names
+        result = request_instance._parse_cookie_line('name=value')
+        assert result is not None
+        assert result['name'] == 'name'
+        assert result['value'] == 'value'
+        
+        # Test whitespace around valid names (should be trimmed)
+        result = request_instance._parse_cookie_line('  name  =  value  ')
+        assert result is not None
+        assert result['name'] == 'name'
+        assert result['value'] == 'value'
