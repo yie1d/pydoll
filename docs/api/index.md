@@ -36,8 +36,16 @@ The commands module provides low-level Chrome DevTools Protocol command implemen
 ### Protocol Module
 The protocol module implements the Chrome DevTools Protocol commands and events.
 
-- **[Commands](protocol/commands.md)** - CDP command implementations
-- **[Events](protocol/events.md)** - CDP event handling
+- **[Base Types](protocol/base.md)** - Base types for Chrome DevTools Protocol
+- **[Browser](protocol/browser.md)** - Browser domain commands and events
+- **[DOM](protocol/dom.md)** - DOM domain commands and events
+- **[Fetch](protocol/fetch.md)** - Fetch domain commands and events
+- **[Input](protocol/input.md)** - Input domain commands and events
+- **[Network](protocol/network.md)** - Network domain commands and events
+- **[Page](protocol/page.md)** - Page domain commands and events
+- **[Runtime](protocol/runtime.md)** - Runtime domain commands and events
+- **[Storage](protocol/storage.md)** - Storage domain commands and events
+- **[Target](protocol/target.md)** - Target domain commands and events
 
 ### Core Module
 The core module contains fundamental utilities, constants, and exceptions.

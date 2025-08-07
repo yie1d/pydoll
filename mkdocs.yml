@@ -45,8 +45,16 @@ nav:
           - Target: api/commands/target.md
           - Fetch: api/commands/fetch.md
       - Protocol:
-          - Commands: api/protocol/commands.md
-          - Events: api/protocol/events.md
+          - Base Types: api/protocol/base.md
+          - Browser: api/protocol/browser.md
+          - DOM: api/protocol/dom.md
+          - Fetch: api/protocol/fetch.md
+          - Input: api/protocol/input.md
+          - Network: api/protocol/network.md
+          - Page: api/protocol/page.md
+          - Runtime: api/protocol/runtime.md
+          - Storage: api/protocol/storage.md
+          - Target: api/protocol/target.md
       - Core:
           - Constants: api/core/constants.md
           - Exceptions: api/core/exceptions.md
@@ -145,7 +153,18 @@ plugins:
             Target: 目标
             Fetch: 获取
             Protocol: 协议
+            Base Types: 基础类型
+            Overview: 概述
             Events: 事件
+            Browser: 浏览器
+            DOM: DOM
+            Fetch: 获取
+            Input: 输入
+            Network: 网络
+            Page: 页面
+            Runtime: 运行时
+            Storage: 存储
+            Target: 目标
             Core: 核心
             Constants: 常量
             Exceptions: 异常

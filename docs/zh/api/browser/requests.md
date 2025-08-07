@@ -22,6 +22,8 @@
       heading_level: 3
       group_by_category: true
       members_order: source
+      filters:
+        - "!^__"
 
 ## Response 类
 
@@ -34,6 +36,8 @@
       heading_level: 3
       group_by_category: true
       members_order: source
+      filters:
+        - "!^__"
 
 ## 使用示例
 

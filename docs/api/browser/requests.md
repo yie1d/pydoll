@@ -22,6 +22,8 @@ The main interface for making HTTP requests within the browser context.
       heading_level: 3
       group_by_category: true
       members_order: source
+      filters:
+        - "!^__"
 
 ## Response Class
 
@@ -34,6 +36,8 @@ Represents the response from HTTP requests, providing a familiar interface simil
       heading_level: 3
       group_by_category: true
       members_order: source
+      filters:
+        - "!^__"
 
 ## Usage Examples
 
