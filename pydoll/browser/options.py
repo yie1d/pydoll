@@ -1,7 +1,11 @@
 from contextlib import suppress
 
 from pydoll.browser.interfaces import Options
-from pydoll.exceptions import ArgumentAlreadyExistsInOptions, WrongPrefsDict
+from pydoll.exceptions import (
+    ArgumentAlreadyExistsInOptions,
+    ArgumentNotFoundInOptions,
+    WrongPrefsDict,
+)
 
 
 class ChromiumOptions(Options):
@@ -23,6 +27,7 @@ class ChromiumOptions(Options):
         self._binary_location = ''
         self._start_timeout = 10
         self._browser_preferences = {}
+        self._headless = False
 
     @property
     def arguments(self) -> list[str]:
@@ -98,6 +103,20 @@ class ChromiumOptions(Options):
             self._arguments.append(argument)
         else:
             raise ArgumentAlreadyExistsInOptions(f'Argument already exists: {argument}')
+
+    def remove_argument(self, argument: str):
+        """
+        Removes a command-line argument from the options.
+
+        Args:
+            argument (str): The command-line argument to be removed.
+
+        Raises:
+            ArgumentNotFoundInOptions: If the argument is not in the list of arguments.
+        """
+        if argument not in self._arguments:
+            raise ArgumentNotFoundInOptions(f'Argument not found: {argument}')
+        self._arguments.remove(argument)
 
     @property
     def browser_preferences(self) -> dict:
@@ -284,3 +303,19 @@ class ChromiumOptions(Options):
             block -- If True, location access is blocked (value = 2); otherwise allowed (value = 1).
         """
         self._set_pref_path(['plugins', 'always_open_pdf_externally'], enabled)
+
+    @property
+    def headless(self) -> bool:
+        return self._headless
+
+    @headless.setter
+    def headless(self, headless: bool):
+        self._headless = headless
+        has_argument = '--headless' in self.arguments
+        methods_map = {
+            True: self.add_argument,
+            False: self.remove_argument
+        }
+        if headless == has_argument:
+            return
+        methods_map[headless]('--headless')
