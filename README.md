@@ -176,7 +176,7 @@ options.browser_preferences = {
 
 This level of control was previously only available to Chrome extension developers - now it's in your automation toolkit!
 
-Check the [documentation](https://autoscrape-labs.github.io/pydoll/features/custom-browser-preferences/) for more details.
+Check the [documentation](https://autoscrape-labs.github.io/pydoll/features/#custom-browser-preferences/) for more details.
 
 ### New `get_parent_element()` method
 Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
