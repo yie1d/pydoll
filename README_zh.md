@@ -4,6 +4,7 @@
 <h1 align="center">Pydoll: Automate the Web, Naturally</h1>
 
 <p align="center">
+    <a href="https://github.com/autoscrape-labs/pydoll/stargazers"><img src="https://img.shields.io/github/stars/autoscrape-labs/pydoll?style=social"></a>
     <a href="https://codecov.io/gh/autoscrape-labs/pydoll" >
         <img src="https://codecov.io/gh/autoscrape-labs/pydoll/graph/badge.svg?token=40I938OGM9"/>
     </a>
@@ -17,10 +18,10 @@
 
 <p align="center">
   📖 <a href="https://autoscrape-labs.github.io/pydoll/">文档</a> •
-  🚀 <a href="#getting-started">快速上手</a> •
-  ⚡ <a href="#advanced-features">高级特性</a> •
-  🤝 <a href="#contributing">贡献</a> •
-  💖 <a href="#support-my-work">赞助我</a>
+  🚀 <a href="#-getting-started">快速上手</a> •
+  ⚡ <a href="#-advanced-features">高级特性</a> •
+  🤝 <a href="#-contributing">贡献</a> •
+  💖 <a href="#-support-my-work">赞助我</a>
 </p>
 
 - [English](README.md)
@@ -33,16 +34,168 @@ Pydoll 采用全新设计理念，从零构建，直接对接 Chrome DevTools Pr
 
 我们坚信，真正强大的自动化工具，不应让用户困于繁琐的配置学习，也不该让用户疲于应对反爬系统的风控。使用Pydoll，你只需专注核心业务逻辑——让自动化回归本质，而非纠缠于底层技术细节或防护机制。
 
+<div>
+  <h4>做一个好人，给我们一个星星 ⭐</h4> 
+    没有星星，就没有Bug修复。开玩笑的（也许）
+</div>
 
 ## 🌟 Pydoll 的核心优势
+
 - **零 WebDriver 依赖**：彻底告别驱动兼容性烦恼
-- **原生验证码绕过**：轻松应对 Cloudflare Turnstile 和 reCAPTCHA v3*
+- **类人交互引擎**：能够通过行为验证码如 reCAPTCHA v3 或 Turnstile，取决于 IP 声誉和交互模式
 - **异步高性能**：支持高速自动化与多任务并行处理
 - **拟真交互体验**：完美复刻真实用户行为模式
 - **极简部署**：安装即用，开箱即自动化
->⚠️ *验证码绕过效果受IP纯净度等因素影响。Pydoll可实现接近真实用户的评分，但无法突破严格防护策略或IP风控。
 
-## 安装
+## 最新功能
+
+### 浏览器上下文 HTTP 请求 - 混合自动化的游戏规则改变者！
+你是否曾经希望能够发出自动继承浏览器所有会话状态的 HTTP 请求？**现在你可以了！**<br>
+`tab.request` 属性为你提供了一个美观的 `requests` 风格接口，可在浏览器的 JavaScript 上下文中直接执行 HTTP 调用。这意味着每个请求都会自动获得 cookies、身份验证标头、CORS 策略和会话状态，就像浏览器本身发出请求一样。
+
+**混合自动化的完美选择：**
+```python
+# 使用 PyDoll 正常导航到网站并登录
+await tab.go_to('https://example.com/login')
+await (await tab.find(id='username')).type_text('user@example.com')
+await (await tab.find(id='password')).type_text('password')
+await (await tab.find(id='login-btn')).click()
+
+# 现在发出继承已登录会话的 API 调用！
+response = await tab.request.get('https://example.com/api/user/profile')
+user_data = response.json()
+
+# 在保持身份验证的同时 POST 数据
+response = await tab.request.post(
+    'https://example.com/api/settings', 
+    json={'theme': 'dark', 'notifications': True}
+)
+
+# 以不同格式访问响应内容
+raw_data = response.content
+text_data = response.text
+json_data = response.json()
+
+# 检查设置的 cookies
+for cookie in response.cookies:
+    print(f"Cookie: {cookie['name']} = {cookie['value']}")
+
+# 向你的请求添加自定义标头
+headers = [
+    {'name': 'X-Custom-Header', 'value': 'my-value'},
+    {'name': 'X-API-Version', 'value': '2.0'}
+]
+
+await tab.request.get('https://api.example.com/data', headers=headers)
+
+```
+
+**为什么这很棒：**
+- **无需会话切换** - 请求自动继承浏览器 cookies
+- **CORS 无缝工作** - 请求遵循浏览器安全策略  
+- **现代 SPA 的完美选择** - 无缝混合 UI 自动化与 API 调用
+- **身份验证变得简单** - 通过 UI 登录一次，然后调用 API
+- **混合工作流** - 为每个步骤使用最佳工具（UI 或 API）
+
+这为需要浏览器交互和 API 效率的自动化场景开启了令人难以置信的可能性！
+
+### 使用自定义首选项完全控制浏览器！(感谢 [@LucasAlvws](https://github.com/LucasAlvws))
+想要完全自定义 Chrome 的行为？**现在你可以控制一切！**<br>
+新的 `browser_preferences` 系统让你可以访问数百个之前无法通过编程方式更改的内部 Chrome 设置。我们说的是远超命令行标志的深度浏览器自定义！
+
+**可能性是无限的：**
+```python
+options = ChromiumOptions()
+
+# 创建完美的自动化环境
+options.browser_preferences = {
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False,
+        'directory_upgrade': True,
+        'extensions_to_open': ''  # 不自动打开任何下载
+    },
+    'profile': {
+        'default_content_setting_values': {
+            'notifications': 2,        # 阻止所有通知
+            'geolocation': 2,         # 阻止位置请求
+            'media_stream_camera': 2, # 阻止摄像头访问
+            'media_stream_mic': 2,    # 阻止麦克风访问
+            'popups': 1               # 允许弹窗（对自动化有用）
+        },
+        'password_manager_enabled': False,  # 禁用密码提示
+        'exit_type': 'Normal'              # 始终正常退出
+    },
+    'intl': {
+        'accept_languages': 'zh-CN,zh,en-US,en',
+        'charset_default': 'UTF-8'
+    },
+    'browser': {
+        'check_default_browser': False,    # 不询问默认浏览器
+        'show_update_promotion_infobar': False
+    }
+}
+
+# 或使用便捷的辅助方法
+options.set_default_download_directory('/tmp/downloads')
+options.set_accept_languages('zh-CN,zh,en-US,en')  
+options.prompt_for_download = False
+```
+
+**实际应用的强大示例：**
+- **静默下载** - 无提示、无对话框，只有自动化下载
+- **阻止所有干扰** - 通知、弹窗、摄像头请求，应有尽有
+- **CI/CD 的完美选择** - 禁用更新检查、默认浏览器提示、崩溃报告
+- **多区域测试** - 即时更改语言、时区和区域设置
+- **安全加固** - 锁定权限并禁用不必要的功能
+- **高级指纹控制** - 修改浏览器安装日期、参与历史和行为模式
+
+**用于隐蔽自动化的指纹自定义：**
+```python
+import time
+
+# 模拟一个已经存在几个月的浏览器
+fake_engagement_time = int(time.time()) - (7 * 24 * 60 * 60)  # 7天前
+
+options.browser_preferences = {
+    'settings': {
+        'touchpad': {
+            'natural_scroll': True,
+        }
+    },
+    'profile': {
+        'last_engagement_time': fake_engagement_time,
+        'exit_type': 'Normal',
+        'exited_cleanly': True
+    },
+    'newtab_page_location_override': 'https://www.google.com',
+    'session': {
+        'restore_on_startup': 1,  # 恢复上次会话
+        'startup_urls': ['https://www.google.com']
+    }
+}
+```
+
+这种控制级别以前只有 Chrome 扩展开发者才能使用 - 现在它在你的自动化工具包中！
+
+查看[文档](https://autoscrape-labs.github.io/pydoll/features/custom-browser-preferences/)了解更多详情。
+
+### 新的 `get_parent_element()` 方法
+检索任何 WebElement 的父元素，使导航 DOM 结构更加容易：
+```python
+element = await tab.find(id='button')
+parent = await element.get_parent_element()
+```
+
+### 新的 start_timeout 选项 (感谢 [@j0j1j2](https://github.com/j0j1j2))
+添加到 ChromiumOptions 来控制浏览器启动可以花费多长时间。在较慢的机器或 CI 环境中很有用。
+
+```python
+options = ChromiumOptions()
+options.start_timeout = 20  # 等待 20 秒
+```
+
+## 📦 安装
 
 ```bash
 pip install pydoll-python
@@ -188,6 +341,7 @@ async def custom_automation():
     options.add_argument('--proxy-server=username:password@ip:port')
     options.add_argument('--window-size=1920,1080')
     options.binary_location = '/path/to/your/browser'
+    options.start_timeout = 20
 
     async with Chrome(options=options) as browser:
         tab = await browser.start()
@@ -200,8 +354,7 @@ asyncio.run(custom_automation())
 
 本示例中，我们配置浏览器使用代理服务器，并设置窗口分辨率为1920x1080。此外，还指定了Chrome二进制文件的自定义路径——适用于您的安装位置与常规默认路径不同的情况。
 
-## ⚡ 
-高级功能
+## ⚡ 高级功能
 
 Pydoll提供了一系列高级特性满足高端玩家的需求。
 
@@ -292,9 +445,9 @@ asyncio.run(concurrent_scraping())
 这个例子,我们成功实现了同时对两个页面的数据提取.
 还有更多强大功能！响应式自动化的事件系统、请求拦截与修改等等。赶快查阅文档!
 
-## 🔧 常用问题
+## 🔧 快速问题排查
 
-**找不到浏览器?**
+**找不到浏览器？**
 ```python
 from pydoll.browser import Chrome
 from pydoll.browser.options import ChromiumOptions
@@ -304,12 +457,23 @@ options.binary_location = '/path/to/your/chrome'
 browser = Chrome(options=options)
 ```
 
-**需要代理?**
+**浏览器在 FailedToStartBrowser 错误后启动？**
+```python
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions
+
+options = ChromiumOptions()
+options.start_timeout = 20  # 默认是 10 秒
+
+browser = Chrome(options=options)
+```
+
+**需要代理？**
 ```python
 options.add_argument('--proxy-server=your-proxy:port')
 ```
 
-**在docker中运行?**
+**在 Docker 中运行？**
 ```python
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
@@ -320,38 +484,43 @@ options.add_argument('--disable-dev-shm-usage')
 Pydoll 的完整文档、详细示例以及对所有功能的深入探讨可以通过以下链接访问： [官方文档](https://autoscrape-labs.github.io/pydoll/).
 
 文档包含以下部分:
-- **快速上手** - 手把手带你上手Pydoll
-- **API参考** - 完整的方法文档说明  
-- **高级技巧** - 网络请求拦截、事件处理、性能优化  
+- **快速上手指南** - 分步教程
+- **API 参考** - 完整的方法文档
+- **高级技巧** - 网络拦截、事件处理、性能优化
+
+>此 README 的中文版本在[这里](README_zh.md)。
 
 ## 🤝 贡献
 
-我们诚挚邀请您参与改进Pydoll！请查阅我们的贡献指南了解如何开始贡献。无论是修复bug、添加新功能还是完善文档——所有贡献都备受欢迎！
+我们很乐意看到您的帮助让 Pydoll 变得更好！查看我们的[贡献指南](CONTRIBUTING.md)开始贡献。无论是修复错误、添加功能还是改进文档 - 所有贡献都受欢迎！
 
-请务必注意：
+请确保：
+- 为新功能或错误修复编写测试
+- 遵循代码风格和约定
+- 对拉取请求使用约定式提交
+- 在提交前运行 lint 检查和测试
 
-- 为新功能或bug修复编写测试用例
-- 遵循代码风格和规范
-- 使用约定式提交规范提交Pull Request
-- 在提交前运行lint检查和测试
+## 💖 支持我的工作
 
-## 💖 赞助我们
+如果您发现 Pydoll 有用，请考虑[在 GitHub 上支持我](https://github.com/sponsors/thalissonvs)。  
+您将获得独家优惠，如优先支持、自定义功能等等！
 
-如果你觉得本项目对你有帮助，可以考虑[赞助我们](https://github.com/sponsors/thalissonvs).  
-您将获取独家优先支持,定制需求以及更多的福利!
+现在无法赞助？没问题，您仍然可以通过以下方式提供很大帮助：
+- 为仓库加星
+- 在社交媒体上分享
+- 撰写文章或教程
+- 提供反馈或报告问题
 
-现在不能赞助?无妨,你可以通过以下方式支持我们:
-- ⭐ Star 本项目
-- 📢 社交平台分享
-- ✍️ 撰写教程或博文
-- 🐛 反馈建议或提交issues
+每一点支持都很重要/
 
-点滴相助，铭记于心——诚谢！  
+## 💬 传播消息
 
-## 许可
+如果 Pydoll 为您节省了时间、心理健康或者拯救了一个键盘免于被砸，请给它一个 ⭐，分享它，或者告诉您奇怪的开发者朋友。
 
-Pydoll是在 [MIT License](LICENSE) 许可下许可的开源软件。  
+## 📄 许可证
+
+Pydoll 在 [MIT 许可证](LICENSE) 下获得许可。
 
 <p align="center">
-  <b>Pydoll</b> — Making browser automation magical!
+  <b>Pydoll</b> — 让浏览器自动化变得神奇！
 </p>

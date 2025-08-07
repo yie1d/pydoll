@@ -13,6 +13,7 @@ Pydoll 几个关键模块组成，每个模块在浏览器自动化中都有特�
 - **[Edge](browser/edge.md)** - Microsoft Edge 浏览器自动化  
 - **[Options](browser/options.md)** - 浏览器配置选项  
 - **[Tab](browser/tab.md)** - 页面标签和交互  
+- **[Requests](browser/requests.md)** - 浏览器上下文中的 HTTP 请求
 - **[Managers](browser/managers.md)** - 浏览器生命周期管理器  
 
 ### 元素模块
