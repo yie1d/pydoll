@@ -25,6 +25,7 @@ nav:
           - Edge: api/browser/edge.md
           - Options: api/browser/options.md
           - Tab: api/browser/tab.md
+          - Requests: api/browser/requests.md
           - Managers: api/browser/managers.md
       - Elements:
           - WebElement: api/elements/web_element.md
@@ -127,6 +128,7 @@ plugins:
             Edge: Edge
             Options: 选项
             Tab: 标签页
+            Requests: 请求
             Managers: 管理器
             Elements: 元素
             WebElement: Web元素
