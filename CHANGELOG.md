@@ -1,3 +1,55 @@
+## 2.5.0 (2025-08-07)
+
+### Feat
+
+- add HTTP client functionality using the browser's fetch API
+- add HTTP response object for browser-based fetch requests
+- implement Request class for HTTP requests using fetch API
+- add Request handling and improve network log retrieval methods
+
+### Fix
+
+- reject cookies with empty names during parsing in Request class
+- refactor imports to include NotRequired and TypedDict from typing_extensions
+- update imports to use typing_extensions for compatibility reasons
+- check for None in events_enabled before updating params
+- remove unused event type aliases and clean up imports
+
+### Refactor
+
+- depreciating headless argument in start method and adding it in to browser options properties
+- add asynchronous function for makeRequest in JavaScript
+- refactor imports for cleaner organization and improved clarity
+- refactor type hints in FindElementsMixin for clarity and type safety
+- refactor type hints and improve command method signatures
+- refactor event handling to use specific event types for clarity
+- refactor connection handler to use CDPEvent and typed commands
+- refactor storage command methods to return specific command types
+- refactor target command methods to use specific command types
+- refactor command return types to specific command classes
+- refactor page commands to use specific command types directly
+- refactor network commands to use specific command types
+- refactor input command methods to return specific command types
+- refactor fetch_commands to use updated type definitions
+- refactor enums to inherit from str for better compatibility
+- refactor DOM command types for improved code clarity and structure
+- refactor command and event parameter types for better typing
+- refactor command responses to use EmptyResponse where applicable
+- improve protocol types for target domain
+- improve protocol types for storage domain
+- refactor command response types for improved readability and consistency
+- improve protocol types for page domain
+- add IncludeWhitespace and RelationType enums to DOM types
+- improve protocol types for input domain
+- refactor AuthChallengeResponse and remove legacy definitions
+- remove legacy WindowBoundsDict for cleaner type definitions
+- add new TypedDicts and enums for runtime event parameters
+- refactor DOM event types and methods for better clarity and structure
+- refactor fetch command return types for better clarity and structure
+- enhance browser command functionality with new methods and types
+- add TypedDict and Enum definitions for emulation and debugging
+- improve protocol types for network domain
+
 ## 2.4.0 (2025-08-01)
 
 ### Feat
