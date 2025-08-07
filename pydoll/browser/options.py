@@ -171,7 +171,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'download.default_directory' preference for Chrome.
 
         Arguments:
-            path -- Absolute path to the download destination folder.
+            path: Absolute path to the download destination folder.
         """
         self._set_pref_path(['download', 'default_directory'], path)
 
@@ -182,7 +182,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'intl.accept_languages' preference.
 
         Arguments:
-            languages -- A comma-separated string of language codes (e.g., 'pt-BR,pt,en-US,en').
+            languages: A comma-separated string of language codes (e.g., 'pt-BR,pt,en-US,en').
         """
         self._set_pref_path(['intl', 'accept_languages'], languages)
 
@@ -198,7 +198,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'download.prompt_for_download' preference.
 
         Arguments:
-            enabled -- If True, Chrome will ask for confirmation before downloading.
+            enabled: If True, Chrome will ask for confirmation before downloading.
         """
         self._set_pref_path(['download', 'prompt_for_download'], enabled)
 
@@ -214,7 +214,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.default_content_setting_values.popups' preference.
 
         Arguments:
-            block -- If True, pop-ups will be blocked (value = 0); otherwise allowed (value = 1).
+            block: If True, pop-ups will be blocked (value = 0); otherwise allowed (value = 1).
         """
         self._set_pref_path(
             ['profile', 'default_content_setting_values', 'popups'], 0 if block else 1
@@ -232,7 +232,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.password_manager_enabled' preference.
 
         Arguments:
-            enabled -- If True, the password manager is active.
+            enabled: If True, the password manager is active.
         """
         self._set_pref_path(['profile', 'password_manager_enabled'], enabled)
         self._set_pref_path(['credentials_enable_service'], enabled)
@@ -253,7 +253,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.default_content_setting_values.notifications' preference.
 
         Arguments:
-            block -- If True, notifications will be blocked (value = 2);
+            block: If True, notifications will be blocked (value = 2);
             otherwise allowed (value = 1).
         """
         self._set_pref_path(
@@ -280,7 +280,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.default_content_setting_values.automatic_downloads' preference.
 
         Arguments:
-            allow -- If True, automatic downloads are allowed (value = 1);
+            allow: If True, automatic downloads are allowed (value = 1);
             otherwise blocked (value = 2).
         """
         self._set_pref_path(
@@ -300,7 +300,7 @@ class ChromiumOptions(Options):
         Usage: Sets the 'profile.managed_default_content_settings.geolocation' preference.
 
         Arguments:
-            block -- If True, location access is blocked (value = 2); otherwise allowed (value = 1).
+            block: If True, location access is blocked (value = 2); otherwise allowed (value = 1).
         """
         self._set_pref_path(['plugins', 'always_open_pdf_externally'], enabled)
 

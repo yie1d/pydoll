@@ -528,9 +528,6 @@ class StorageCommands:  # noqa: PLR0904
         Related Website Sets are an API that allows sites under the same entity
         to share some data, despite third-party cookie restrictions.
 
-        Args:
-            sets: list of RelatedWebsiteSet objects.
-
         Returns:
             GetRelatedWebsiteSetsCommand: The CDP command to get related website sets.
         """
@@ -657,7 +654,7 @@ class StorageCommands:  # noqa: PLR0904
         by removing restrictions like delays and rate limits that would normally apply.
 
         Args:
-            enable: True to enable local testing mode, False to disable it.
+            enabled: True to enable local testing mode, False to disable it.
 
         Returns:
             SetAttributionReportingLocalTestingModeCommand: The CDP command to set Attribution
