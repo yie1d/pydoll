@@ -194,19 +194,22 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             ValueError: If neither ``is_visible`` nor ``is_interactable`` is True.
             WaitElementTimeout: If the condition is not met within ``timeout``.
         """
-        checks_map = {
-            'visible': (is_visible, self._is_element_visible),
-            'interactable': (is_interactable, self._is_element_interactable),
-        }
-        checks = [func for flag, func in checks_map.values() if flag]
+        checks_map = [
+            (is_visible, self._is_element_visible),
+            (is_interactable, self._is_element_interactable),
+        ]
+        checks = [func for flag, func in checks_map if flag]
         if not checks:
             raise ValueError(
                 'At least one of is_visible or is_interactable must be True'
             )
 
-        condition_msg = ' and '.join(
-            name for name, (flag, _) in checks_map.items() if flag
-        )
+        condition_parts = []
+        if is_visible:
+            condition_parts.append('visible')
+        if is_interactable:
+            condition_parts.append('interactable')
+        condition_msg = ' and '.join(condition_parts)
 
         loop = asyncio.get_event_loop()
         start_time = loop.time()
