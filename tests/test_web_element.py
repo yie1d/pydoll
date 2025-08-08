@@ -763,14 +763,16 @@ class TestWebElementWaitUntil:
 
     @pytest.mark.asyncio
     async def test_wait_until_visible_timeout(self, web_element):
-        """Test wait_until raises ElementNotVisible when condition not met."""
+        """Test wait_until raises WaitElementTimeout when visibility not met."""
         web_element._is_element_visible = AsyncMock(return_value=False)
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
             mock_loop.return_value.time.side_effect = [0, 0.5, 1.0, 1.5, 2.1]
 
-            with pytest.raises(ElementNotVisible):
+            with pytest.raises(
+                WaitElementTimeout, match='element to become visible'
+            ):
                 await web_element.wait_until(is_visible=True, timeout=2)
 
         assert mock_sleep.call_count == 3
@@ -786,14 +788,16 @@ class TestWebElementWaitUntil:
 
     @pytest.mark.asyncio
     async def test_wait_until_interactable_timeout(self, web_element):
-        """Test wait_until raises ElementNotInteractable when not interactable."""
+        """Test wait_until raises WaitElementTimeout when not interactable."""
         web_element._is_element_interactable = AsyncMock(return_value=False)
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
             mock_loop.return_value.time.side_effect = [0, 0.5, 1.1]
 
-            with pytest.raises(ElementNotInteractable):
+            with pytest.raises(
+                WaitElementTimeout, match='element to become interactable'
+            ):
                 await web_element.wait_until(is_interactable=True, timeout=1)
 
         mock_sleep.assert_called_once_with(0.5)

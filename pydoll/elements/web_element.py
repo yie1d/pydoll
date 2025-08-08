@@ -21,6 +21,7 @@ from pydoll.exceptions import (
     ElementNotFound,
     ElementNotInteractable,
     ElementNotVisible,
+    WaitElementTimeout,
 )
 from pydoll.protocol.dom.methods import (
     GetBoxModelResponse,
@@ -187,7 +188,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         is_interactable: bool = False,
         timeout: int = 0,
     ):
-        """Wait for element to meet specified conditions."""
+        """Wait for element to meet specified conditions.
+
+        Raises:
+            ValueError: If neither ``is_visible`` nor ``is_interactable`` is True.
+            WaitElementTimeout: If the condition is not met within ``timeout``.
+        """
         if not any([is_visible, is_interactable]):
             raise ValueError(
                 'At least one of is_visible or is_interactable must be True'
@@ -202,10 +208,13 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 if await self._is_element_visible():
                     return
 
-            if not timeout or asyncio.get_event_loop().time() - start_time > timeout:
-                if is_interactable:
-                    raise ElementNotInteractable()
-                raise ElementNotVisible()
+            if timeout and asyncio.get_event_loop().time() - start_time > timeout:
+                condition = (
+                    'element to become interactable'
+                    if is_interactable
+                    else 'element to become visible'
+                )
+                raise WaitElementTimeout(f'Timed out waiting for {condition}')
 
             await asyncio.sleep(0.5)
 

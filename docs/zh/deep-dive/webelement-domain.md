@@ -382,6 +382,8 @@ is_interactable = await element._is_element_interactable()
 
 # Wait until the element is ready for interaction
 await element.wait_until(is_visible=True, is_interactable=True, timeout=5)
+
+# 未在限定时间内满足条件时会抛出 ``WaitElementTimeout``。
 ```
 
 这些验证对于实现可靠的自动化至关重要，可在尝试操作前确保元素可被交互。
