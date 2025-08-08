@@ -180,6 +180,35 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         command = DomCommands.scroll_into_view_if_needed(object_id=self._object_id)
         await self._execute_command(command)
 
+    async def wait_until(
+        self,
+        *,
+        is_visible: bool = False,
+        is_interactable: bool = False,
+        timeout: int = 0,
+    ):
+        """Wait for element to meet specified conditions."""
+        if not any([is_visible, is_interactable]):
+            raise ValueError(
+                'At least one of is_visible or is_interactable must be True'
+            )
+
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            if is_interactable:
+                if await self._is_element_interactable():
+                    return
+            elif is_visible:
+                if await self._is_element_visible():
+                    return
+
+            if not timeout or asyncio.get_event_loop().time() - start_time > timeout:
+                if is_interactable:
+                    raise ElementNotInteractable()
+                raise ElementNotVisible()
+
+            await asyncio.sleep(0.5)
+
     async def click_using_js(self):
         """
         Click element using JavaScript click() method.
@@ -373,6 +402,13 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def _is_element_on_top(self):
         """Check if element is topmost at its center point (not covered by overlays)."""
         result = await self._execute_script(Scripts.ELEMENT_ON_TOP, return_by_value=True)
+        return result['result']['result']['value']
+
+    async def _is_element_interactable(self):
+        """Check if element is interactable based on visibility and position."""
+        result = await self._execute_script(
+            Scripts.ELEMENT_INTERACTIVE, return_by_value=True
+        )
         return result['result']['result']['value']
 
     async def _execute_script(self, script: str, return_by_value: bool = False):
