@@ -803,6 +803,24 @@ class TestWebElementWaitUntil:
         mock_sleep.assert_called_once_with(0.5)
 
     @pytest.mark.asyncio
+    async def test_wait_until_visible_and_interactable(self, web_element):
+        """Test wait_until requires both conditions when both are True."""
+        web_element._is_element_visible = AsyncMock(side_effect=[False, True])
+        web_element._is_element_interactable = AsyncMock(side_effect=[False, True])
+
+        with patch('asyncio.sleep') as mock_sleep, \
+             patch('asyncio.get_event_loop') as mock_loop:
+            mock_loop.return_value.time.side_effect = [0, 0.5, 1.0]
+
+            await web_element.wait_until(
+                is_visible=True, is_interactable=True, timeout=2
+            )
+
+        assert web_element._is_element_visible.call_count == 2
+        assert web_element._is_element_interactable.call_count == 2
+        mock_sleep.assert_called_once_with(0.5)
+
+    @pytest.mark.asyncio
     async def test_wait_until_no_conditions(self, web_element):
         """Test wait_until raises ValueError when no condition specified."""
         with pytest.raises(ValueError):

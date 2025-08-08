@@ -384,6 +384,9 @@ await element.wait_until(is_visible=True, is_interactable=True, timeout=5)
 # Raises ``WaitElementTimeout`` if the conditions aren't met in time.
 ```
 
+If both ``is_visible`` and ``is_interactable`` are set to ``True``, the element
+must satisfy **both** conditions to proceed.
+
 These verifications are crucial for reliable automation, ensuring that elements can be interacted with before attempting operations.
 
 ## Position and Scrolling

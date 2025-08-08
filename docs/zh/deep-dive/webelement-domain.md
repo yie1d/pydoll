@@ -386,6 +386,8 @@ await element.wait_until(is_visible=True, is_interactable=True, timeout=5)
 # 未在限定时间内满足条件时会抛出 ``WaitElementTimeout``。
 ```
 
+如果同时传入 ``is_visible`` 和 ``is_interactable``，必须同时满足这两个条件。
+
 这些验证对于实现可靠的自动化至关重要，可在尝试操作前确保元素可被交互。
 
 ## 位置与滚动
