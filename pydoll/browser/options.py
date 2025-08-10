@@ -312,10 +312,7 @@ class ChromiumOptions(Options):
     def headless(self, headless: bool):
         self._headless = headless
         has_argument = '--headless' in self.arguments
-        methods_map = {
-            True: self.add_argument,
-            False: self.remove_argument
-        }
+        methods_map = {True: self.add_argument, False: self.remove_argument}
         if headless == has_argument:
             return
         methods_map[headless]('--headless')
