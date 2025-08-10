@@ -212,6 +212,61 @@ asyncio.run(background_bypass_example())
 
 无需使用第三方验证码服务，即可访问屏蔽自动化工具的网站。
 
+## 可靠的下载处理：expect_download
+
+`tab.expect_download()` 提供稳健的、基于事件的文件下载捕获方式。
+
+- 自动为您配置浏览器下载行为
+- 支持持久化目录（`keep_file_at`），或使用临时目录并在退出上下文后自动清理
+- 提供 `_DownloadHandle` 便捷接口
+- 内置超时保护，避免无限等待
+
+### API 概览
+
+```python
+async with tab.expect_download(
+    keep_file_at: Optional[str | Path] = None,
+    timeout: Optional[float] = None,
+) as handle:
+    ... # 在页面中触发下载
+```
+
+- `keep_file_at`：指定持久化目录。若为 `None`，则使用临时目录并在退出上下文后自动清理。
+- `timeout`：完成等待的最大秒数（未提供时默认 60）。
+
+`handle` 提供：
+
+- `handle.file_path: Optional[str]` — 完成后解析出的最终文件路径
+- `await handle.read_bytes() -> bytes`
+- `await handle.read_base64() -> str`
+- `await handle.wait_started(timeout: Optional[float] = None) -> None`
+- `await handle.wait_finished(timeout: Optional[float] = None) -> None`
+
+### 使用示例
+
+在指定目录中持久化下载文件：
+
+```python
+async with tab.expect_download(keep_file_at='/tmp/dl', timeout=15) as dl:
+    await (await tab.find(text='Export CSV')).click()
+    data = await dl.read_bytes()
+    print('Saved at:', dl.file_path)
+```
+
+用于测试的临时目录（自动清理）：
+
+```python
+async with tab.expect_download() as dl:
+    await (await tab.find(text='Download PDF')).click()
+    pdf_b64 = await dl.read_base64()
+    # 退出上下文后临时目录会被自动清理
+```
+
+注意：
+
+- 如果在配置的 `timeout` 内页面未发出完成事件，将抛出 `DownloadTimeout` 异常。
+- 如果浏览器未提供 `filePath`，管理器将回退到使用建议文件名并写入选定目录。
+
 ## 多标签页管理
 
 Pydoll 采用单例模式提供完善的标签页管理功能，确保资源高效利用，并防止同一浏览器标签页出现重复的标签页实例。
