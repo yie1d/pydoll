@@ -29,6 +29,7 @@ jobs:
       - name: Prepare final site
         run: |
           mkdir -p site/docs
+          mkdir -p site/images
           cp -r temp_docs/* site/docs/
           cp -r docs/landing/* site/
           cp -r docs/images/* site/images/
