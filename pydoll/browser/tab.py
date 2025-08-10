@@ -1,12 +1,16 @@
 import asyncio
+import base64 as _b64
 import logging
+import shutil
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
+from tempfile import mkdtemp
 from typing import (
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
+    Awaitable,
     Callable,
     Optional,
     TypeAlias,
@@ -27,12 +31,11 @@ from pydoll.commands import (
     StorageCommands,
 )
 from pydoll.connection import ConnectionHandler
-from pydoll.constants import (
-    By,
-)
+from pydoll.constants import By
 from pydoll.elements.mixins import FindElementsMixin
 from pydoll.elements.web_element import WebElement
 from pydoll.exceptions import (
+    DownloadTimeout,
     IFrameNotFound,
     InvalidFileExtension,
     InvalidIFrame,
@@ -43,10 +46,15 @@ from pydoll.exceptions import (
     PageLoadTimeout,
     WaitElementTimeout,
 )
-from pydoll.protocol.base import Response
+from pydoll.protocol.base import EmptyResponse
+from pydoll.protocol.browser.events import (
+    BrowserEvent,
+    DownloadProgressEvent,
+    DownloadWillBeginEvent,
+)
+from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
 from pydoll.protocol.fetch.types import HeaderEntry, RequestStage
 from pydoll.protocol.network.events import RequestWillBeSentEvent
-from pydoll.protocol.network.methods import GetResponseBodyResponse
 from pydoll.protocol.network.types import (
     Cookie,
     CookieParam,
@@ -67,6 +75,7 @@ from pydoll.utils import (
 
 if TYPE_CHECKING:
     from pydoll.browser.chromium.base import Browser
+    from pydoll.protocol.network.methods import GetResponseBodyResponse
 
 logger = logging.getLogger(__name__)
 
@@ -273,7 +282,7 @@ class Tab(FindElementsMixin):
         Note:
             Intercepted requests must be explicitly continued or timeout.
         """
-        response: Response = await self._execute_command(
+        response: EmptyResponse = await self._execute_command(
             FetchCommands.enable(
                 handle_auth_requests=handle_auth,
                 resource_type=resource_type,
@@ -438,7 +447,7 @@ class Tab(FindElementsMixin):
         if not self.network_events_enabled:
             raise NetworkEventsNotEnabled('Network events must be enabled to get response body')
 
-        response: GetResponseBodyResponse = await self._execute_command(
+        response: 'GetResponseBodyResponse' = await self._execute_command(
             NetworkCommands.get_response_body(request_id)
         )
         return response['result']['body']
@@ -825,11 +834,131 @@ class Tab(FindElementsMixin):
             if not _before_page_events_enabled:
                 await self.disable_page_events()
 
+    @asynccontextmanager
+    async def expect_download(
+        self,
+        keep_file_at: Optional[Union[str, Path]] = None,
+        timeout: Optional[float] = None,
+    ) -> AsyncGenerator['_DownloadHandle', None]:
+        """
+        Context manager for handling a file download triggered inside the block.
+
+        Behavior:
+        - If keep_file_at is provided, configure browser to save into that directory and keep file.
+        - Otherwise, a temporary directory is used and cleaned up after the context.
+
+        Args:
+            keep_file_at: Directory to persist the file. If None, uses a temporary
+                directory and cleans it up afterwards.
+            timeout: Max seconds to wait for download completion. Defaults to 60.
+
+        Yields:
+            _DownloadHandle: Handle to read the downloaded file (bytes/base64) and check its path.
+        """
+        download_timeout = 60.0 if timeout is None else float(timeout)
+
+        cleanup_dir = False
+        if keep_file_at is None:
+            download_dir = mkdtemp(prefix='pydoll-download-')
+            cleanup_dir = True
+        else:
+            download_dir = str(Path(keep_file_at))
+            Path(download_dir).mkdir(parents=True, exist_ok=True)
+
+        await self._browser.set_download_behavior(
+            behavior=DownloadBehavior.ALLOW,
+            download_path=download_dir,
+            browser_context_id=self._browser_context_id,
+            events_enabled=True,
+        )
+
+        loop = asyncio.get_event_loop()
+        will_begin: asyncio.Future[bool] = loop.create_future()
+        done: asyncio.Future[bool] = loop.create_future()
+        state: dict[str, Any] = {
+            'guid': None,
+            'url': None,
+            'suggestedFilename': None,
+            'filePath': None,
+            'dir': download_dir,
+        }
+
+        async def on_will_begin(event: DownloadWillBeginEvent):
+            params = event['params']
+            state['guid'] = params['guid']
+            state['url'] = params['url']
+            state['suggestedFilename'] = params['suggestedFilename']
+            if not will_begin.done():
+                will_begin.set_result(True)
+
+        async def on_progress(event: DownloadProgressEvent):
+            params = event['params']
+            guid = params['guid']
+            if (
+                state.get('guid')
+                and guid != state['guid']
+                or params['state'] != DownloadProgressState.COMPLETED
+            ):
+                return
+            file_path = params.get('filePath')
+            if not file_path:
+                file_path = str(Path(download_dir) / state['suggestedFilename'])
+            state['filePath'] = file_path
+            if not done.done():
+                done.set_result(True)
+
+        cb_id_will_begin = await self.on(
+            BrowserEvent.DOWNLOAD_WILL_BEGIN,
+            cast(Callable[[dict], Awaitable[Any]], on_will_begin),
+            True,
+        )
+        cb_id_progress = await self.on(
+            BrowserEvent.DOWNLOAD_PROGRESS,
+            cast(Callable[[dict], Awaitable[Any]], on_progress),
+            False,
+        )
+
+        handle = _DownloadHandle(
+            state=state,
+            will_begin_future=will_begin,
+            done_future=done,
+            timeout=download_timeout,
+        )
+
+        try:
+            yield handle
+            try:
+                await asyncio.wait_for(done, timeout=download_timeout)
+            except asyncio.TimeoutError as exc:
+                raise DownloadTimeout() from exc
+        finally:
+            await self.remove_callback(cb_id_progress)
+            await self.remove_callback(cb_id_will_begin)
+            await self._browser.set_download_behavior(
+                behavior=DownloadBehavior.DEFAULT,
+                browser_context_id=self._browser_context_id,
+            )
+
+            if cleanup_dir:
+                file_path = state['filePath']
+                if not file_path:
+                    return
+                Path(file_path).unlink(missing_ok=True)
+                shutil.rmtree(download_dir, ignore_errors=True)
+
+    @overload
+    async def on(
+        self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
+    ) -> int: ...
+    @overload
+    async def on(
+        self, event_name: str, callback: Callable[[dict], Awaitable[Any]], temporary: bool = False
+    ) -> int: ...
     async def on(
         self,
-        event_name: str,
-        callback: Callable[[dict], Any],
-        temporary: bool = False,
+        event_name,
+        callback,
+        temporary=False,
     ) -> int:
         """
         Register CDP event listener.
@@ -859,6 +988,10 @@ class Tab(FindElementsMixin):
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
+
+    async def remove_callback(self, callback_id: int):
+        """Remove callback from tab."""
+        return await self._connection_handler.remove_callback(callback_id)
 
     async def clear_callbacks(self):
         """Clear all registered event callbacks."""
@@ -951,3 +1084,40 @@ class Tab(FindElementsMixin):
                 await element.click()
         except Exception as exc:
             logger.error(f'Error in cloudflare bypass: {exc}')
+
+
+class _DownloadHandle:
+    """Handle returned by expect_download to access the downloaded file."""
+
+    def __init__(
+        self,
+        state: dict[str, Any],
+        will_begin_future: asyncio.Future[bool],
+        done_future: asyncio.Future[bool],
+        timeout: float,
+    ) -> None:
+        self._state = state
+        self._will_begin_future = will_begin_future
+        self._done_future = done_future
+        self._timeout = timeout
+
+    @property
+    def file_path(self) -> Optional[str]:
+        return self._state.get('filePath')
+
+    async def wait_started(self, timeout: Optional[float] = None) -> None:
+        await asyncio.wait_for(self._will_begin_future, timeout=timeout or self._timeout)
+
+    async def wait_finished(self, timeout: Optional[float] = None) -> None:
+        await asyncio.wait_for(self._done_future, timeout=timeout or self._timeout)
+
+    async def read_bytes(self) -> bytes:
+        await self.wait_finished()
+        if not self.file_path:
+            raise FileNotFoundError('Download file path not available')
+        async with aiofiles.open(self.file_path, 'rb') as f:  # type: ignore[arg-type]
+            return await f.read()
+
+    async def read_base64(self) -> str:
+        data = await self.read_bytes()
+        return _b64.b64encode(data).decode('ascii')
