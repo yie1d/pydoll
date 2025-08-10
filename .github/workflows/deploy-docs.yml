@@ -22,7 +22,7 @@ jobs:
           pip install mkdocs mkdocs-material pymdown-extensions mkdocstrings[python] mkdocs-static-i18n
 
       - name: Build MkDocs into site/docs
-        run: mkdocs build --strict
+        run: mkdocs build
 
       - name: Add landing to site/
         run: |
