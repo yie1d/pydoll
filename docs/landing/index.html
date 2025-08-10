@@ -4,25 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1220" />
-    <title>Pydoll — Automate the Web, naturally</title>
+    <title>Pydoll - Automate the Web, naturally</title>
     <meta name="description" content="Pydoll is a Python browser automation (CDP) library for web scraping, captcha bypass (Cloudflare, reCAPTCHA), human-like interactions, and browser-context requests." />
     <meta name="keywords" content="pydoll, browser automation, web automation, web scraping, scraping, data scraping, data extraction, crawler, crawling, headless browser, headless chrome, chrome devtools protocol, devtools protocol, cdp, python cdp, chrome cdp, playwright, puppeteer, selenium, selenium alternative, pyppeteer, undetected chromedriver, stealth, antibot, anti bot, bot detection, fingerprinting, captcha bypass, bypass cloudflare, cloudflare turnstile, recaptcha, hcaptcha, captcha solver, automation python, async python, asyncio, network interception, request interception, browser context requests, http requests browser context, humanized interactions, human-like interactions, automation library, scraping framework, scrapy, beautifulsoup, bs4, requests, aiohttp, automação de navegador, automação web, raspagem de dados, coleta de dados, robô, bot, detecção de bot, interações humanizadas, assíncrono, concorrência, múltiplas abas, preferências do navegador, downloads silenciosos" />
     <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://github.com/autoscrape-labs/pydoll" />
+    <link rel="canonical" href="https://pydoll.tech/" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Pydoll — Automate the Web, naturally" />
+    <meta property="og:title" content="Pydoll - Automate the Web, naturally" />
     <meta property="og:description" content="Browser automation for web scraping with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA)." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" />
-    <meta property="og:url" content="https://github.com/autoscrape-labs/pydoll" />
+    <meta property="og:url" content="https://pydoll.tech/" />
     <meta property="og:site_name" content="Pydoll" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="pt_BR" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pydoll — Automate the Web, naturally" />
+    <meta name="twitter:title" content="Pydoll - Automate the Web, naturally" />
     <meta name="twitter:description" content="Browser automation for web scraping, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA)." />
     <meta name="twitter:image" content="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" />
 
@@ -30,162 +30,132 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://github.com" crossorigin />
-    <link rel="preconnect" href="https://autoscrape-labs.github.io" />
+    <link rel="preconnect" href="https://pydoll.tech/" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="../images/favicon.png" />
+    <link rel="icon" type="image/png" href="./docs/images/favicon.png" />
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Schema.org: SoftwareApplication / SoftwareSourceCode -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Pydoll",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Windows, macOS, Linux",
-      "programmingLanguage": "Python",
-      "url": "https://github.com/autoscrape-labs/pydoll",
-      "image": "https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d",
-      "description": "Browser automation (CDP) for web scraping with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA).",
-      "keywords": [
-        "pydoll",
-        "browser automation",
-        "web automation",
-        "web scraping",
-        "scraping",
-        "data scraping",
-        "data extraction",
-        "crawler",
-        "crawling",
-        "headless browser",
-        "headless chrome",
-        "chrome devtools protocol",
-        "devtools protocol",
-        "cdp",
-        "python cdp",
-        "chrome cdp",
-        "playwright",
-        "puppeteer",
-        "selenium",
-        "selenium alternative",
-        "pyppeteer",
-        "undetected chromedriver",
-        "stealth",
-        "antibot",
-        "anti bot",
-        "bot detection",
-        "fingerprinting",
-        "captcha bypass",
-        "bypass cloudflare",
-        "cloudflare turnstile",
-        "recaptcha",
-        "hcaptcha",
-        "captcha solver",
-        "automation python",
-        "async python",
-        "asyncio",
-        "network interception",
-        "request interception",
-        "browser context requests",
-        "http requests browser context",
-        "humanized interactions",
-        "human-like interactions",
-        "automation library",
-        "scraping framework",
-        "scrapy",
-        "beautifulsoup",
-        "bs4",
-        "requests",
-        "aiohttp",
-        "automação de navegador",
-        "automação web",
-        "raspagem de dados",
-        "coleta de dados",
-        "robô",
-        "bot",
-        "detecção de bot",
-        "interações humanizadas",
-        "assíncrono",
-        "concorrência",
-        "múltiplas abas",
-        "preferências do navegador",
-        "downloads silenciosos"
-      ],
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://pydoll.tech/#website",
+            "name": "Pydoll",
+            "url": "https://pydoll.tech/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://pydoll.tech/docs/search/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://pydoll.tech/#webpage",
+            "url": "https://pydoll.tech/",
+            "name": "Pydoll - Async Web Automation Library",
+            "isPartOf": { "@id": "https://pydoll.tech/#website" },
+            "description": "Browser automation (CDP) for web scraping with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA)."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://pydoll.tech/#software",
+            "name": "Pydoll",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Windows, macOS, Linux",
+            "programmingLanguage": "Python",
+            "url": "https://github.com/autoscrape-labs/pydoll",
+            "image": "https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d",
+            "description": "Browser automation (CDP) for web scraping with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA).",
+            "keywords": [
+              "pydoll",
+              "browser automation",
+              "web automation",
+              "web scraping",
+              "data extraction",
+              "crawler",
+              "headless browser",
+              "chrome devtools protocol",
+              "python cdp",
+              "playwright",
+              "puppeteer",
+              "selenium alternative",
+              "antibot",
+              "captcha bypass",
+              "cloudflare turnstile",
+              "recaptcha",
+              "async python",
+              "automation library",
+              "scraping framework"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "name": "Pydoll",
+            "codeRepository": "https://github.com/autoscrape-labs/pydoll",
+            "programmingLanguage": "Python",
+            "license": "https://github.com/autoscrape-labs/pydoll/blob/main/LICENSE",
+            "description": "Python library for browser automation via Chrome DevTools Protocol (CDP), with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA).",
+            "keywords": [
+              "pydoll",
+              "browser automation",
+              "web scraping",
+              "chrome devtools protocol",
+              "async python",
+              "captcha bypass"
+            ],
+            "url": "https://pydoll.tech/"
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Pydoll and why doesn't it use WebDriver?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Pydoll is a Python library that controls the browser via the Chrome DevTools Protocol (CDP), eliminating WebDrivers. This reduces layers, improves reliability and gives direct access to page events, network interception and JavaScript execution in the real tab context."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can Pydoll handle CAPTCHAs like Cloudflare Turnstile or reCAPTCHA v3?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "It provides human-like interactions (movement, click, typing) and a helper to attempt Turnstile bypass. Effectiveness depends on IP reputation and interaction pattern. Combine with quality proxies and good navigation practices."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are browser-context requests and when to use them?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "With tab.request you perform HTTP in the same tab context: cookies, session and CORS are automatically inherited. Ideal for hybrid automation — log in via UI and then call authenticated application APIs."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are the practical differentiators: concurrency, events and preferences?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Concurrency with asyncio.gather, reactive events (Page/Network/Runtime) for responsive automations and browser preferences control for silent downloads, languages and more."
+                }
+              }
+            ]
+          }
+        ]
       }
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is Pydoll and why doesn't it use WebDriver?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Pydoll is a Python library that controls the browser via the Chrome DevTools Protocol (CDP), eliminating WebDrivers. This reduces layers, improves reliability and gives direct access to page events, network interception and JavaScript execution in the real tab context."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can Pydoll handle CAPTCHAs like Cloudflare Turnstile or reCAPTCHA v3?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "It provides human-like interactions (movement, click, typing) and a helper to attempt Turnstile bypass. Effectiveness depends on IP reputation and interaction pattern. Combine with quality proxies and good navigation practices."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What are browser-context requests and when to use them?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "With tab.request you perform HTTP in the same tab context: cookies, session and CORS are automatically inherited. Ideal for hybrid automation — log in via UI and then call authenticated application APIs."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What are the practical differentiators: concurrency, events and preferences?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Concurrency with asyncio.gather, reactive events (Page/Network/Runtime) for responsive automations and browser preferences control for silent downloads, languages and more."
-          }
-        }
-      ]
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareSourceCode",
-      "name": "Pydoll",
-      "codeRepository": "https://github.com/autoscrape-labs/pydoll",
-      "programmingLanguage": "Python",
-      "license": "https://github.com/autoscrape-labs/pydoll/blob/main/LICENSE",
-      "description": "Python library for browser automation via Chrome DevTools Protocol (CDP), with human-like interactions, browser-context requests and captcha bypass (Cloudflare, reCAPTCHA).",
-      "keywords": "pydoll, browser automation, web automation, web scraping, scraping, data scraping, data extraction, crawler, crawling, headless browser, headless chrome, chrome devtools protocol, devtools protocol, cdp, python cdp, chrome cdp, playwright, puppeteer, selenium, selenium alternative, pyppeteer, undetected chromedriver, stealth, antibot, anti bot, bot detection, fingerprinting, captcha bypass, bypass cloudflare, cloudflare turnstile, recaptcha, hcaptcha, captcha solver, automation python, async python, asyncio, network interception, request interception, browser context requests, http requests browser context, humanized interactions, human-like interactions, automation library, scraping framework, scrapy, beautifulsoup, bs4, requests, aiohttp, automação de navegador, automação web, raspagem de dados, coleta de dados, robô, bot, detecção de bot, interações humanizadas, assíncrono, concorrência, múltiplas abas, preferências do navegador, downloads silenciosos",
-      "url": "https://github.com/autoscrape-labs/pydoll"
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Pydoll",
-      "url": "https://autoscrape-labs.github.io/pydoll/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://autoscrape-labs.github.io/pydoll/search/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
+      </script>
+      
     <script>
       tailwind.config = {
         theme: {
@@ -281,7 +251,7 @@
         </div>
         <div class="mt-12 w-full lg:mt-0 lg:max-w-xl lg:flex-none reveal">
           <div class="tilt-card relative overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 p-2 shadow-xl">
-            <img src="../images/cloudflare-example.gif" alt="Bypass Cloudflare com Pydoll" class="w-full rounded-lg ring-1 ring-white/10" decoding="async" />
+            <img src="./docs/images/cloudflare-example.gif" alt="Bypass Cloudflare com Pydoll" class="w-full rounded-lg ring-1 ring-white/10" decoding="async" />
           </div>
           <p class="mt-4 text-center text-xs text-slate-400">Cloudflare captcha bypass example</p>
         </div>
@@ -397,7 +367,7 @@ asyncio.run(main())
               <span class="ml-3 text-[10px] font-medium tracking-wide text-slate-400">terminal</span>
             </div>
             <div class="relative h-64 sm:h-72 md:h-80 lg:h-80">
-              <img src="../images/google-search-example.gif" alt="Pydoll automation example" class="absolute inset-0 h-full w-full object-contain" loading="lazy" decoding="async" />
+              <img src="./docs/images/google-search-example.gif" alt="Pydoll automation example" class="absolute inset-0 h-full w-full object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>

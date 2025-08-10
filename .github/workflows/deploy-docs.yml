@@ -30,7 +30,10 @@ jobs:
         run: |
           mkdir -p site/docs
           cp -r temp_docs/* site/docs/
-          cp -r landing/* site/
+          cp -r docs/landing/* site/
+          cp docs/sitemap.xml site/
+          cp docs/landing-sitemap.xml site/
+          cp docs/robots.txt site/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

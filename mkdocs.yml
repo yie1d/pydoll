@@ -1,5 +1,5 @@
 site_name: Pydoll - Async Web Automation Library
-site_url: https://pydoll.tech
+site_url: https://pydoll.tech/docs/
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
 use_directory_urls: true
@@ -105,7 +105,7 @@ plugins:
   - i18n:
       docs_structure: folder
       fallback_to_default: true
-      reconfigure_material: true
+      reconfigure_material: false
       reconfigure_search: true
       languages:
         - locale: en
@@ -190,7 +190,14 @@ plugins:
             show_bases: true
             heading_level: 1
 
-extra: {}
+extra:   
+  alternate:
+    - name: English
+      link: /docs/
+      lang: en
+    - name: 中文
+      link: /docs/zh/
+      lang: zh
 
 extra_css:
   - stylesheets/termynal.css
