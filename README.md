@@ -97,6 +97,39 @@ await tab.request.get('https://api.example.com/data', headers=headers)
 
 This opens up incredible possibilities for automation scenarios where you need both browser interaction AND API efficiency!
 
+### New expect_download() context manager — robust file downloads made easy!
+Tired of fighting with flaky download flows, missing files, or racy event listeners? Meet `tab.expect_download()`, a delightful, reliable way to handle file downloads.
+
+- Automatically sets the browser’s download behavior
+- Works with your own directory or a temporary folder (auto-cleaned!)
+- Waits for completion with a timeout (so your tests don’t hang)
+- Gives you a handy handle to read bytes/base64 or check `file_path`
+
+Tiny example that just works:
+
+```python
+import asyncio
+from pathlib import Path
+from pydoll.browser import Chrome
+
+async def download_report():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/reports')
+
+        target_dir = Path('/tmp/my-downloads')
+        async with tab.expect_download(keep_file_at=target_dir, timeout=10) as download:
+            # Trigger the download in the page (button/link/etc.)
+            await (await tab.find(text='Download latest report')).click()
+            # Wait until finished and read the content
+            data = await download.read_bytes()
+            print(f"Downloaded {len(data)} bytes to: {download.file_path}")
+
+asyncio.run(download_report())
+```
+
+Want zero-hassle cleanup? Omit `keep_file_at` and we’ll create a temp folder and remove it automatically after the context exits. Perfect for tests.
+
 ### Total browser control with custom preferences! (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
 Want to completely customize how Chrome behaves? **Now you can control EVERYTHING!**<br>
 The new `browser_preferences` system gives you access to hundreds of internal Chrome settings that were previously impossible to change programmatically. We're talking about deep browser customization that goes way beyond command-line flags!

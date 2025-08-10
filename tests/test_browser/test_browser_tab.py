@@ -1,4 +1,5 @@
 import base64
+import asyncio
 import pytest
 import pytest_asyncio
 import uuid
@@ -9,6 +10,9 @@ from pydoll.protocol.network.types import ResourceType, RequestMethod
 from pydoll.protocol.fetch.types import RequestStage
 from pydoll.constants import By
 from pydoll.browser.tab import Tab
+from pydoll.protocol.browser.events import BrowserEvent
+from pydoll.protocol.browser.types import DownloadBehavior
+from pydoll.exceptions import DownloadTimeout
 from pydoll.exceptions import (
     NoDialogPresent,
     PageLoadTimeout,
@@ -725,6 +729,26 @@ class TestTabEventCallbacks:
         )
         assert tab._connection_handler.register_callback.call_count >= 1
 
+    @pytest.mark.asyncio
+    async def test_remove_callback_success(self, tab):
+        """Tab.remove_callback should forward to connection handler and return True."""
+        tab._connection_handler.remove_callback.return_value = True
+
+        result = await tab.remove_callback(123)
+
+        tab._connection_handler.remove_callback.assert_called_with(123)
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_remove_callback_false(self, tab):
+        """Tab.remove_callback should return False when handler returns False."""
+        tab._connection_handler.remove_callback.return_value = False
+
+        result = await tab.remove_callback(999)
+
+        tab._connection_handler.remove_callback.assert_called_with(999)
+        assert result is False
+
 
 class TestTabFileChooser:
     """Test Tab file chooser functionality."""
@@ -1009,6 +1033,125 @@ class TestTabCloudflareBypass:
         mock_enable_page_events.assert_called_once()
         assert_mock_called_at_least_once(tab._connection_handler, 'register_callback')
         assert tab._cloudflare_captcha_callback_id == callback_id
+
+
+class TestTabDownload:
+    """Tests for Tab.expect_download context manager."""
+
+    @pytest.mark.asyncio
+    async def test_expect_download_keeps_file_when_path_provided(self, tab, tmp_path):
+        target_dir = tmp_path / "dl"
+        tab._browser.set_download_behavior = AsyncMock()
+
+        # Prepare to capture callbacks and trigger them
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 100 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 101
+
+        with patch.object(tab, 'on', fake_on):
+            async with tab.expect_download(keep_file_at=str(target_dir)) as download:
+                # Simulate willBegin
+                await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                    'params': {
+                        'frameId': 'frame-1',
+                        'guid': 'guid-1',
+                        'url': 'https://example.com/file.txt',
+                        'suggestedFilename': 'file.txt',
+                    }
+                })
+                # Simulate progress Completed without filePath (fallback to suggested)
+                await handlers[BrowserEvent.DOWNLOAD_PROGRESS]({
+                    'method': BrowserEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'guid-1',
+                        'totalBytes': 10,
+                        'receivedBytes': 10,
+                        'state': 'completed',
+                    }
+                })
+
+                # Create the expected file to allow read
+                expected_path = target_dir / 'file.txt'
+                expected_path.parent.mkdir(parents=True, exist_ok=True)
+                expected_path.write_bytes(b'content')
+
+                data = await download.read_bytes()
+                assert data == b'content'
+                assert str(download.file_path).endswith('file.txt')
+
+        # Ensure behavior reset called
+        tab._browser.set_download_behavior.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_expect_download_timeout_raises(self, tab, tmp_path):
+        tab._browser.set_download_behavior = AsyncMock()
+
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 200 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 201
+
+        with patch.object(tab, 'on', fake_on):
+            with pytest.raises(DownloadTimeout):
+                async with tab.expect_download(keep_file_at=str(tmp_path), timeout=0.01):
+                    # Trigger will begin but never complete
+                    await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
+                        'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                        'params': {
+                            'frameId': 'frame-1',
+                            'guid': 'guid-2',
+                            'url': 'https://example.com/slow.bin',
+                            'suggestedFilename': 'slow.bin',
+                        }
+                    })
+                    # Do not trigger completed
+                    await asyncio.sleep(0.02)
+
+    @pytest.mark.asyncio
+    async def test_expect_download_cleans_temp_directory(self, tab, tmp_path):
+        tab._browser.set_download_behavior = AsyncMock()
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 300 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 301
+
+        with patch.object(tab, 'on', fake_on):
+            # Use None to create temp dir and ensure cleanup occurs
+            async with tab.expect_download(keep_file_at=None) as download:
+                await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                    'params': {
+                        'frameId': 'frame-1',
+                        'guid': 'guid-3',
+                        'url': 'https://example.com/tmp.txt',
+                        'suggestedFilename': 'tmp.txt',
+                    }
+                })
+                await handlers[BrowserEvent.DOWNLOAD_PROGRESS]({
+                    'method': BrowserEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'guid-3',
+                        'totalBytes': 3,
+                        'receivedBytes': 3,
+                        'state': 'completed',
+                    }
+                })
+
+                # Create the expected file inside the dynamically chosen dir
+                assert download.file_path is not None
+                file_path = Path(download.file_path)
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                file_path.write_bytes(b'abc')
+                assert (await download.read_base64()) == base64.b64encode(b'abc').decode('ascii')
+
+            # After context, temp dir should be removed
+            # We cannot know the exact temp dir path (random), but ensure file is gone
+            assert not file_path.exists()
 
     @pytest.mark.asyncio
     async def test_disable_auto_solve_cloudflare_captcha(self, tab):

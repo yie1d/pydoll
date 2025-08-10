@@ -209,6 +209,61 @@ asyncio.run(background_bypass_example())
 
 Access websites that actively block automation tools without using third-party captcha solving services. This native captcha handling makes Pydoll suitable for automating previously inaccessible websites.
 
+## Reliable Download Handling with expect_download
+
+The `tab.expect_download()` context manager provides a robust, event-driven way to capture file downloads.
+
+- Configures browser download behavior for you
+- Supports persistent target directory (`keep_file_at`) or temporary directory with auto-cleanup
+- Exposes a `_DownloadHandle` with convenience methods
+- Includes timeout protection to avoid indefinite waits
+
+### API Overview
+
+```python
+async with tab.expect_download(
+    keep_file_at: Optional[str | Path] = None,
+    timeout: Optional[float] = None,
+) as handle:
+    ... # trigger download action in page
+```
+
+- `keep_file_at`: Target directory to keep the downloaded file. If `None`, a temporary directory is created and removed automatically when the context exits.
+- `timeout`: Maximum seconds to wait for completion (defaults to 60 if not provided).
+
+`handle` exposes:
+
+- `handle.file_path: Optional[str]` — final resolved path after completion
+- `await handle.read_bytes() -> bytes`
+- `await handle.read_base64() -> str`
+- `await handle.wait_started(timeout: Optional[float] = None) -> None`
+- `await handle.wait_finished(timeout: Optional[float] = None) -> None`
+
+### Usage Examples
+
+Persist file in a specific directory:
+
+```python
+async with tab.expect_download(keep_file_at='/tmp/dl', timeout=15) as dl:
+    await (await tab.find(text='Export CSV')).click()
+    data = await dl.read_bytes()
+    print('Saved at:', dl.file_path)
+```
+
+Use a temporary directory (auto-cleanup) for tests:
+
+```python
+async with tab.expect_download() as dl:
+    await (await tab.find(text='Download PDF')).click()
+    pdf_b64 = await dl.read_base64()
+    # temp directory is cleaned automatically when leaving the context
+```
+
+Notes:
+
+- When the page emits no completion event within the configured `timeout`, a `DownloadTimeout` exception is raised.
+- If the browser does not provide a `filePath`, the manager falls back to the suggested filename in the chosen directory.
+
 ## Multi-Tab Management
 
 Pydoll provides sophisticated tab management capabilities with a singleton pattern that ensures efficient resource usage and prevents duplicate Tab instances for the same browser tab.
