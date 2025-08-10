@@ -175,6 +175,12 @@ class WaitElementTimeout(TimeoutException):
     message = 'Timed out waiting for element to appear'
 
 
+class DownloadTimeout(TimeoutException):
+    """Raised when waiting for a file download to complete times out."""
+
+    message = 'Timed out waiting for download to complete'
+
+
 class ConfigurationException(PydollException):
     """Base class for exceptions related to configuration and options."""
 
