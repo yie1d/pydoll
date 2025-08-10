@@ -31,6 +31,7 @@ jobs:
           mkdir -p site/docs
           cp -r temp_docs/* site/docs/
           cp -r docs/landing/* site/
+          cp -r docs/images/* site/images/
           cp docs/sitemap.xml site/
           cp docs/landing-sitemap.xml site/
           cp docs/robots.txt site/
