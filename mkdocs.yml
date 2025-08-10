@@ -1,5 +1,5 @@
 site_name: Pydoll - Async Web Automation Library
-site_url: https://autoscrape-labs.github.io/pydoll/
+site_url: https://pydoll.tech
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
 use_directory_urls: true

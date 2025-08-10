@@ -21,17 +21,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install mkdocs mkdocs-material pymdown-extensions mkdocstrings[python] mkdocs-static-i18n
 
-      - name: Build MkDocs into site/docs
-        run: mkdocs build
+      # Build MkDocs em pasta temporária
+      - name: Build MkDocs into temp folder
+        run: mkdocs build --site-dir temp_docs
 
-      - name: Add landing to site/
+      # Criar estrutura final do site
+      - name: Prepare final site
         run: |
-          mkdir -p site
-          cp -r docs/landing/* site/
+          mkdir -p site/docs
+          cp -r temp_docs/* site/docs/
+          cp -r landing/* site/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
-          cname: pydoll.tech
+          cname: pydoll.dev
