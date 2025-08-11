@@ -981,7 +981,7 @@ class TestWebElementGetChildren:
         """Test get_children_elements with basic depth using real HTML."""
 
         # Get the path to our test HTML file
-        test_file = Path(__file__).parent / 'test_data' / 'test_children.html'
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
         file_url = f'file://{test_file.absolute()}'
         options = Options()
         options.headless = True
@@ -1033,7 +1033,7 @@ class TestWebElementGetChildren:
         """Test get_children_elements with tag filter using real HTML."""
 
         # Get the path to our test HTML file
-        test_file = Path(__file__).parent / 'test_data' / 'test_children.html'
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
         file_url = f'file://{test_file.absolute()}'
         options = Options()
         options.headless = True
@@ -1076,7 +1076,7 @@ class TestWebElementGetChildren:
         """Test get_children_elements with depth limit."""
 
         # Get the path to our test HTML file
-        test_file = Path(__file__).parent / 'test_data' / 'test_children.html'
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
         file_url = f'file://{test_file.absolute()}'
         options = Options()
         options.headless = True
@@ -1115,7 +1115,7 @@ class TestWebElementGetChildren:
         """Test get_children_elements on element with no children."""
 
         # Get the path to our test HTML file
-        test_file = Path(__file__).parent / 'test_data' / 'test_children.html'
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
         file_url = f'file://{test_file.absolute()}'
         options = Options()
         options.headless = True
@@ -1132,3 +1132,27 @@ class TestWebElementGetChildren:
             # Should return empty list
             assert isinstance(nodes, list)
             assert len(nodes) == 0
+
+    @pytest.mark.asyncio
+    async def test_get_children_elements_element_not_found_exception(self):
+        """Test get_children_elements raises ElementNotFound when script fails."""
+        # Create a mock element that will fail the script execution
+        mock_connection_handler = AsyncMock()
+        
+        # Mock script result without objectId (simulates script failure)
+        mock_connection_handler.execute_command.return_value = {
+            'result': {
+                'result': {}  # No objectId key
+            }
+        }
+        
+        # Create a WebElement with the mock connection
+        element = WebElement(
+            object_id='test-element-id',
+            connection_handler=mock_connection_handler,
+            attributes_list=['id', 'test-element', 'tag_name', 'div']
+        )
+        
+        # Should raise ElementNotFound when script returns no objectId
+        with pytest.raises(ElementNotFound, match='Child element not found for element'):
+            await element.get_children_elements(1)
