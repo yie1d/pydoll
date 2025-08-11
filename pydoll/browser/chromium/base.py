@@ -118,9 +118,9 @@ class Browser(ABC):  # noqa: PLR0904
         if headless:
             warnings.warn(
                 "The 'headless' parameter is deprecated and will be removed in a future version. "
-                "Use `options.headless = True` instead.",
+                'Use `options.headless = True` instead.',
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             self.options.headless = headless
 
