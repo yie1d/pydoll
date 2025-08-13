@@ -3,6 +3,7 @@ site_url: https://pydoll.tech/docs/
 repo_url: https://github.com/autoscrape-labs/pydoll
 repo_name: autoscrape-labs/pydoll
 use_directory_urls: true
+docs_dir: public/docs
 
 # Configuração da navegação
 nav:
@@ -84,7 +85,7 @@ theme:
   icon:
     repo: fontawesome/brands/github
     logo: material/lightning-bolt
-  favicon: images/favicon.png
+  favicon: ./images/favicon.png
   features:
     - navigation.tabs
     - navigation.tabs.sticky
