@@ -159,7 +159,8 @@ class Scripts:
                 const siblings = Array.from(parent.children);
                 let filtered = tagFilter.length === 0
                     ? siblings.filter(child => child !== element)
-                : siblings.filter(child => tagFilter.includes(child.tagName.toLowerCase()) && child !== element);
+                : siblings.filter(child =>
+                    tagFilter.includes(child.tagName.toLowerCase()) && child !== element);
 
                 let allDescendants = [...filtered];
 
