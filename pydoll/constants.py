@@ -151,6 +151,25 @@ class Scripts:
         }}
     """
 
+    GET_SIBLINGS_NODE = """
+        function() {{
+            function getSiblingsUntilDepth(element, tagFilter = [])
+            {{
+                const parent = element.parentElement;
+                const siblings = Array.from(parent.children);
+                let filtered = tagFilter.length === 0
+                    ? siblings.filter(child => child !== element)
+                : siblings.filter(child => tagFilter.includes(child.tagName.toLowerCase()) && child !== element);
+
+                let allDescendants = [...filtered];
+
+                return allDescendants;
+            }}
+
+            return getSiblingsUntilDepth(this, {tag_filter});
+        }}
+    """
+
     MAKE_REQUEST = """
 (async function() {{
     async function makeRequest(url, options) {{

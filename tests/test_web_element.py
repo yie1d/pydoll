@@ -1156,3 +1156,142 @@ class TestWebElementGetChildren:
         # Should raise ElementNotFound when script returns no objectId
         with pytest.raises(ElementNotFound, match='Child element not found for element'):
             await element.get_children_elements(1)
+
+    @pytest.mark.asyncio
+    async def test_get_siblings_elements_basic(self):
+        """Test get_siblings_elements with basic functionality using real HTML."""
+
+        # Get the path to our test HTML file
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
+        file_url = f'file://{test_file.absolute()}'
+        options = Options()
+        options.headless = True
+        
+        async with Chrome(options=options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+
+            # Find one of the child elements to get its siblings
+            child_element = await tab.find(id='child2')
+
+            # Test get_siblings_elements
+            siblings = await child_element.get_siblings_elements()
+
+            # Verify results - should get all sibling elements
+            assert len(siblings) > 0
+            assert all(isinstance(sibling, WebElement) for sibling in siblings)
+
+            # Check that we have the expected siblings
+            sibling_ids = []
+            for sibling in siblings:
+                sibling_id = sibling.get_attribute('id')
+                if sibling_id:
+                    sibling_ids.append(sibling_id)
+
+            # Should include all siblings of child2 (child1, child3, link1, link2, nested-parent)
+            # but NOT child2 itself
+            expected_siblings = ['child1', 'child3', 'link1', 'link2', 'nested-parent']
+            for expected_id in expected_siblings:
+                assert (
+                    expected_id in sibling_ids
+                ), f"Expected sibling {expected_id} not found in {sibling_ids}"
+
+            # Should NOT include the element itself
+            assert 'child2' not in sibling_ids, "Element should not include itself in siblings"
+
+    @pytest.mark.asyncio
+    async def test_get_siblings_elements_with_tag_filter(self):
+        """Test get_siblings_elements with tag filter."""
+
+        # Get the path to our test HTML file
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
+        file_url = f'file://{test_file.absolute()}'
+        options = Options()
+        options.headless = True
+        
+        async with Chrome(options=options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+
+            # Find one of the child elements to get its siblings
+            child_element = await tab.find(id='child1')
+
+            # Test get_siblings_elements with tag filter for 'a' tags only
+            siblings_filter = await child_element.get_siblings_elements(tag_filter=['a'])
+
+            # Get IDs of filtered siblings
+            sibling_ids = []
+            for sibling in siblings_filter:
+                sibling_id = sibling.get_attribute('id')
+                if sibling_id:
+                    sibling_ids.append(sibling_id)
+
+            # Should include only anchor tag siblings
+            expected_links = ['link1', 'link2']
+            for expected_id in expected_links:
+                assert (
+                    expected_id in sibling_ids
+                ), f"Expected link sibling {expected_id} not found in {sibling_ids}"
+
+            # Should NOT include non-anchor siblings
+            unexpected_siblings = ['child2', 'child3', 'nested-parent']
+            for unexpected_id in unexpected_siblings:
+                assert (
+                    unexpected_id not in sibling_ids
+                ), f"Unexpected non-anchor sibling {unexpected_id} found with tag filter"
+
+    @pytest.mark.asyncio
+    async def test_get_siblings_elements_empty_result(self):
+        """Test get_siblings_elements on element with no siblings."""
+
+        # Get the path to our test HTML file
+        test_file = Path(__file__).parent / 'pages' / 'test_children.html'
+        file_url = f'file://{test_file.absolute()}'
+        options = Options()
+        options.headless = True
+        
+        async with Chrome(options=options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+
+            # Find the parent element which should have no siblings at its level
+            parent_element = await tab.find(id='parent-element')
+
+            # Test get_siblings_elements on element with no siblings
+            siblings = await parent_element.get_siblings_elements()
+
+            # Should return list with only the other parent element as sibling
+            assert isinstance(siblings, list)
+            # Should have at least one sibling (another-parent)
+            sibling_ids = []
+            for sibling in siblings:
+                sibling_id = sibling.get_attribute('id')
+                if sibling_id:
+                    sibling_ids.append(sibling_id)
+            
+            # Should include the other parent element
+            assert 'another-parent' in sibling_ids
+
+    @pytest.mark.asyncio
+    async def test_get_siblings_elements_element_not_found_exception(self):
+        """Test get_siblings_elements raises ElementNotFound when script fails."""
+        # Create a mock element that will fail the script execution
+        mock_connection_handler = AsyncMock()
+        
+        # Mock script result without objectId (simulates script failure)
+        mock_connection_handler.execute_command.return_value = {
+            'result': {
+                'result': {}  # No objectId key
+            }
+        }
+        
+        # Create a WebElement with the mock connection
+        element = WebElement(
+            object_id='test-element-id',
+            connection_handler=mock_connection_handler,
+            attributes_list=['id', 'test-element', 'tag_name', 'div']
+        )
+        
+        # Should raise ElementNotFound when script returns no objectId
+        with pytest.raises(ElementNotFound, match='Sibling element not found for element'):
+            await element.get_siblings_elements()

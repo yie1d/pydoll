@@ -173,6 +173,32 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         return children_elements
 
+    async def get_siblings_elements(self, tag_filter: list[str] = []) -> list['WebElement']:
+        """Element's siblings elements."""
+        result = await self._execute_script(Scripts.GET_SIBLINGS_NODE.format(tag_filter=tag_filter))
+        if not self._has_object_id_key(result):
+            raise ElementNotFound(f'Sibling element not found for element: {self}')
+
+        array_object_id = result['result']['result']['objectId']
+
+        get_properties_command = RuntimeCommands.get_properties(object_id=array_object_id)
+        properties_response: GetPropertiesResponse = await self._execute_command(
+            get_properties_command
+        )
+
+        siblings_elements: list['WebElement'] = []
+        for prop in properties_response['result']['result']:
+            if prop['name'].isdigit() and 'objectId' in prop['value']:
+                child_object_id = prop['value']['objectId']
+                attributes = await self._get_object_attributes(object_id=child_object_id)
+                siblings_elements.append(
+                    WebElement(
+                        child_object_id, self._connection_handler, attributes_list=attributes
+                    )
+                )
+
+        return siblings_elements
+
     async def take_screenshot(self, path: str, quality: int = 100):
         """
         Capture screenshot of this element only.
