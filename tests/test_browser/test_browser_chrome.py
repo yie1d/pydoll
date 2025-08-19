@@ -131,7 +131,7 @@ class TestChromeDefaultBinaryLocation:
             ),
             (
                 'Linux',
-                ['/usr/bin/google-chrome']
+                ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable']
             ),
             (
                 'Darwin',
