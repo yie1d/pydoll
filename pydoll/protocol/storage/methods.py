@@ -271,31 +271,41 @@ GetAffectedUrlsForThirdPartyCookieMetadataResponse = Response[
 
 
 GetStorageKeyForFrameCommand = Command[GetStorageKeyForFrameParams, GetStorageKeyForFrameResponse]
-ClearDataForOriginCommand = Command[ClearDataForOriginParams, EmptyResponse]
-ClearDataForStorageKeyCommand = Command[ClearDataForStorageKeyParams, EmptyResponse]
+ClearDataForOriginCommand = Command[ClearDataForOriginParams, Response[EmptyResponse]]
+ClearDataForStorageKeyCommand = Command[ClearDataForStorageKeyParams, Response[EmptyResponse]]
 GetCookiesCommand = Command[GetCookiesParams, GetCookiesResponse]
-SetCookiesCommand = Command[SetCookiesParams, EmptyResponse]
-ClearCookiesCommand = Command[ClearCookiesParams, EmptyResponse]
+SetCookiesCommand = Command[SetCookiesParams, Response[EmptyResponse]]
+ClearCookiesCommand = Command[ClearCookiesParams, Response[EmptyResponse]]
 GetUsageAndQuotaCommand = Command[GetUsageAndQuotaParams, GetUsageAndQuotaResponse]
-OverrideQuotaForOriginCommand = Command[OverrideQuotaForOriginParams, EmptyResponse]
-TrackCacheStorageForOriginCommand = Command[TrackCacheStorageForOriginParams, EmptyResponse]
-TrackCacheStorageForStorageKeyCommand = Command[TrackCacheStorageForStorageKeyParams, EmptyResponse]
-TrackIndexedDBForOriginCommand = Command[TrackIndexedDBForOriginParams, EmptyResponse]
-TrackIndexedDBForStorageKeyCommand = Command[TrackIndexedDBForStorageKeyParams, EmptyResponse]
-UntrackCacheStorageForOriginCommand = Command[UntrackCacheStorageForOriginParams, EmptyResponse]
-UntrackCacheStorageForStorageKeyCommand = Command[
-    UntrackCacheStorageForStorageKeyParams, EmptyResponse
+OverrideQuotaForOriginCommand = Command[OverrideQuotaForOriginParams, Response[EmptyResponse]]
+TrackCacheStorageForOriginCommand = Command[
+    TrackCacheStorageForOriginParams, Response[EmptyResponse]
 ]
-UntrackIndexedDBForOriginCommand = Command[UntrackIndexedDBForOriginParams, EmptyResponse]
-UntrackIndexedDBForStorageKeyCommand = Command[UntrackIndexedDBForStorageKeyParams, EmptyResponse]
+TrackCacheStorageForStorageKeyCommand = Command[
+    TrackCacheStorageForStorageKeyParams, Response[EmptyResponse]
+]
+TrackIndexedDBForOriginCommand = Command[TrackIndexedDBForOriginParams, Response[EmptyResponse]]
+TrackIndexedDBForStorageKeyCommand = Command[
+    TrackIndexedDBForStorageKeyParams, Response[EmptyResponse]
+]
+UntrackCacheStorageForOriginCommand = Command[
+    UntrackCacheStorageForOriginParams, Response[EmptyResponse]
+]
+UntrackCacheStorageForStorageKeyCommand = Command[
+    UntrackCacheStorageForStorageKeyParams, Response[EmptyResponse]
+]
+UntrackIndexedDBForOriginCommand = Command[UntrackIndexedDBForOriginParams, Response[EmptyResponse]]
+UntrackIndexedDBForStorageKeyCommand = Command[
+    UntrackIndexedDBForStorageKeyParams, Response[EmptyResponse]
+]
 GetTrustTokensCommand = Command[EmptyParams, GetTrustTokensResponse]
-ClearTrustTokensCommand = Command[ClearTrustTokensParams, EmptyResponse]
+ClearTrustTokensCommand = Command[ClearTrustTokensParams, Response[EmptyResponse]]
 GetInterestGroupDetailsCommand = Command[
     GetInterestGroupDetailsParams, GetInterestGroupDetailsResponse
 ]
-SetInterestGroupTrackingCommand = Command[SetInterestGroupTrackingParams, EmptyResponse]
+SetInterestGroupTrackingCommand = Command[SetInterestGroupTrackingParams, Response[EmptyResponse]]
 SetInterestGroupAuctionTrackingCommand = Command[
-    SetInterestGroupAuctionTrackingParams, EmptyResponse
+    SetInterestGroupAuctionTrackingParams, Response[EmptyResponse]
 ]
 GetSharedStorageMetadataCommand = Command[
     GetSharedStorageMetadataParams, GetSharedStorageMetadataResponse
@@ -303,19 +313,19 @@ GetSharedStorageMetadataCommand = Command[
 GetSharedStorageEntriesCommand = Command[
     GetSharedStorageEntriesParams, GetSharedStorageEntriesResponse
 ]
-SetSharedStorageEntryCommand = Command[SetSharedStorageEntryParams, EmptyResponse]
-DeleteSharedStorageEntryCommand = Command[DeleteSharedStorageEntryParams, EmptyResponse]
-ClearSharedStorageEntriesCommand = Command[ClearSharedStorageEntriesParams, EmptyResponse]
-ResetSharedStorageBudgetCommand = Command[ResetSharedStorageBudgetParams, EmptyResponse]
-SetSharedStorageTrackingCommand = Command[SetSharedStorageTrackingParams, EmptyResponse]
-SetStorageBucketTrackingCommand = Command[SetStorageBucketTrackingParams, EmptyResponse]
-DeleteStorageBucketCommand = Command[DeleteStorageBucketParams, EmptyResponse]
+SetSharedStorageEntryCommand = Command[SetSharedStorageEntryParams, Response[EmptyResponse]]
+DeleteSharedStorageEntryCommand = Command[DeleteSharedStorageEntryParams, Response[EmptyResponse]]
+ClearSharedStorageEntriesCommand = Command[ClearSharedStorageEntriesParams, Response[EmptyResponse]]
+ResetSharedStorageBudgetCommand = Command[ResetSharedStorageBudgetParams, Response[EmptyResponse]]
+SetSharedStorageTrackingCommand = Command[SetSharedStorageTrackingParams, Response[EmptyResponse]]
+SetStorageBucketTrackingCommand = Command[SetStorageBucketTrackingParams, Response[EmptyResponse]]
+DeleteStorageBucketCommand = Command[DeleteStorageBucketParams, Response[EmptyResponse]]
 RunBounceTrackingMitigationsCommand = Command[EmptyParams, RunBounceTrackingMitigationsResponse]
 SetAttributionReportingLocalTestingModeCommand = Command[
-    SetAttributionReportingLocalTestingModeParams, EmptyResponse
+    SetAttributionReportingLocalTestingModeParams, Response[EmptyResponse]
 ]
 SetAttributionReportingTrackingCommand = Command[
-    SetAttributionReportingTrackingParams, EmptyResponse
+    SetAttributionReportingTrackingParams, Response[EmptyResponse]
 ]
 SendPendingAttributionReportsCommand = Command[EmptyParams, SendPendingAttributionReportsResponse]
 GetRelatedWebsiteSetsCommand = Command[EmptyParams, GetRelatedWebsiteSetsResponse]
@@ -323,4 +333,6 @@ GetAffectedUrlsForThirdPartyCookieMetadataCommand = Command[
     GetAffectedUrlsForThirdPartyCookieMetadataParams,
     GetAffectedUrlsForThirdPartyCookieMetadataResponse,
 ]
-SetProtectedAudienceKAnonymityCommand = Command[SetProtectedAudienceKAnonymityParams, EmptyResponse]
+SetProtectedAudienceKAnonymityCommand = Command[
+    SetProtectedAudienceKAnonymityParams, Response[EmptyResponse]
+]
