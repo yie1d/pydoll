@@ -47,6 +47,40 @@ We believe that powerful automation shouldn't require you to become an expert in
 
 ## What's New
 
+### WebElement: state waiting and new public APIs
+
+- New `wait_until(...)` on `WebElement` to await element states with minimal code:
+
+```python
+# Wait until it becomes visible OR the timeout expires
+await element.wait_until(is_visible=True, timeout=5)
+
+# Wait until it becomes interactable (visible, on top, receiving pointer events)
+await element.wait_until(is_interactable=True, timeout=10)
+```
+
+- Methods now public on `WebElement`:
+  - `is_visible()`
+    - Checks that the element has a visible area (> 0), isn’t hidden by CSS and is in the viewport (after `scroll_into_view()` when needed). Useful pre-check before interactions.
+  - `is_interactable()`
+    - “Click-ready” state: combines visibility, enabledness and pointer-event hit testing. Ideal for robust flows that avoid lost clicks.
+  - `is_on_top()`
+    - Verifies the element is the top hit-test target at the intended click point, avoiding overlays.
+  - `execute_script(script: str, return_by_value: bool = False)`
+    - Executes JavaScript in the element’s own context (where `this` is the element). Great for fine-tuning and quick inspections.
+
+```python
+# Visually outline the element via JS
+await element.execute_script("this.style.outline='2px solid #22d3ee'")
+
+# Confirm states
+visible = await element.is_visible()
+interactable = await element.is_interactable()
+on_top = await element.is_on_top()
+```
+
+These additions simplify waiting and state validation before clicking/typing, reducing flakiness and making automations more predictable.
+
 ### Browser-context HTTP requests - game changer for hybrid automation!
 Ever wished you could make HTTP requests that automatically inherit all your browser's session state? **Now you can!**<br>
 The `tab.request` property gives you a beautiful `requests`-like interface that executes HTTP calls directly in the browser's JavaScript context. This means every request automatically gets cookies, authentication headers, CORS policies, and session state, just as if the browser made the request itself.

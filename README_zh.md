@@ -49,6 +49,40 @@ Pydoll 采用全新设计理念，从零构建，直接对接 Chrome DevTools Pr
 
 ## 最新功能
 
+### WebElement：状态等待与新的公共 API
+
+- 新增 `wait_until(...)` 用于等待元素状态，使用更简单：
+
+```python
+# 等待元素变为可见，直到超时
+await element.wait_until(is_visible=True, timeout=5)
+
+# 等待元素变为可交互（可见、位于顶层并可接收事件）
+await element.wait_until(is_interactable=True, timeout=10)
+```
+
+- 以下 `WebElement` 方法现已公开：
+  - `is_visible()`
+    - 判断元素是否具有可见区域、未被 CSS 隐藏，并在需要时滚动进入视口。适用于交互前的快速校验。
+  - `is_interactable()`
+    - “可点击”状态：综合可见性、启用状态与指针事件命中等条件，适合构建更稳健的交互流程。
+  - `is_on_top()`
+    - 检查元素在点击位置是否为顶部命中目标，避免被覆盖导致点击失效。
+  - `execute_script(script: str, return_by_value: bool = False)`
+    - 在元素上下文中执行 JavaScript（this 指向该元素），便于细粒度调整与快速检查。
+
+```python
+# 使用 JS 高亮元素
+await element.execute_script("this.style.outline='2px solid #22d3ee'")
+
+# 校验状态
+visible = await element.is_visible()
+interactable = await element.is_interactable()
+on_top = await element.is_on_top()
+```
+
+以上新增能力能显著简化“等待+验证”场景，降低自动化过程中的不稳定性，使用例更可预测。
+
 ### 浏览器上下文 HTTP 请求 - 混合自动化的游戏规则改变者！
 你是否曾经希望能够发出自动继承浏览器所有会话状态的 HTTP 请求？**现在你可以了！**<br>
 `tab.request` 属性为你提供了一个美观的 `requests` 风格接口，可在浏览器的 JavaScript 上下文中直接执行 HTTP 调用。这意味着每个请求都会自动获得 cookies、身份验证标头、CORS 策略和会话状态，就像浏览器本身发出请求一样。

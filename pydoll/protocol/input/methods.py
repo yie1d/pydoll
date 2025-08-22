@@ -2,7 +2,7 @@ from enum import Enum
 
 from typing_extensions import NotRequired, TypedDict
 
-from pydoll.protocol.base import Command, EmptyParams, EmptyResponse
+from pydoll.protocol.base import Command, EmptyParams, EmptyResponse, Response
 from pydoll.protocol.input.types import (
     DragData,
     DragEventType,
@@ -179,16 +179,18 @@ class SynthesizeTapGestureParams(TypedDict):
 
 
 # Command types
-CancelDraggingCommand = Command[EmptyParams, EmptyResponse]
-DispatchDragEventCommand = Command[DispatchDragEventParams, EmptyResponse]
-DispatchKeyEventCommand = Command[DispatchKeyEventParams, EmptyResponse]
-DispatchMouseEventCommand = Command[DispatchMouseEventParams, EmptyResponse]
-DispatchTouchEventCommand = Command[DispatchTouchEventParams, EmptyResponse]
-EmulateTouchFromMouseEventCommand = Command[EmulateTouchFromMouseEventParams, EmptyResponse]
-ImeSetCompositionCommand = Command[ImeSetCompositionParams, EmptyResponse]
-InsertTextCommand = Command[InsertTextParams, EmptyResponse]
-SetIgnoreInputEventsCommand = Command[SetIgnoreInputEventsParams, EmptyResponse]
-SetInterceptDragsCommand = Command[SetInterceptDragsParams, EmptyResponse]
-SynthesizePinchGestureCommand = Command[SynthesizePinchGestureParams, EmptyResponse]
-SynthesizeScrollGestureCommand = Command[SynthesizeScrollGestureParams, EmptyResponse]
-SynthesizeTapGestureCommand = Command[SynthesizeTapGestureParams, EmptyResponse]
+CancelDraggingCommand = Command[EmptyParams, Response[EmptyResponse]]
+DispatchDragEventCommand = Command[DispatchDragEventParams, Response[EmptyResponse]]
+DispatchKeyEventCommand = Command[DispatchKeyEventParams, Response[EmptyResponse]]
+DispatchMouseEventCommand = Command[DispatchMouseEventParams, Response[EmptyResponse]]
+DispatchTouchEventCommand = Command[DispatchTouchEventParams, Response[EmptyResponse]]
+EmulateTouchFromMouseEventCommand = Command[
+    EmulateTouchFromMouseEventParams, Response[EmptyResponse]
+]
+ImeSetCompositionCommand = Command[ImeSetCompositionParams, Response[EmptyResponse]]
+InsertTextCommand = Command[InsertTextParams, Response[EmptyResponse]]
+SetIgnoreInputEventsCommand = Command[SetIgnoreInputEventsParams, Response[EmptyResponse]]
+SetInterceptDragsCommand = Command[SetInterceptDragsParams, Response[EmptyResponse]]
+SynthesizePinchGestureCommand = Command[SynthesizePinchGestureParams, Response[EmptyResponse]]
+SynthesizeScrollGestureCommand = Command[SynthesizeScrollGestureParams, Response[EmptyResponse]]
+SynthesizeTapGestureCommand = Command[SynthesizeTapGestureParams, Response[EmptyResponse]]

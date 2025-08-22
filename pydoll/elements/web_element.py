@@ -130,12 +130,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         Returns coordinates relative to viewport (alternative to bounds property).
         """
-        response = await self._execute_script(Scripts.BOUNDS, return_by_value=True)
+        response = await self.execute_script(Scripts.BOUNDS, return_by_value=True)
         return json.loads(response['result']['result']['value'])
 
     async def get_parent_element(self) -> 'WebElement':
         """Element's parent element."""
-        result = await self._execute_script(Scripts.GET_PARENT_NODE)
+        result = await self.execute_script(Scripts.GET_PARENT_NODE)
         if not self._has_object_id_key(result):
             raise ElementNotFound(f'Parent element not found for element: {self}')
 
@@ -195,14 +195,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             WaitElementTimeout: If the condition is not met within ``timeout``.
         """
         checks_map = [
-            (is_visible, self._is_element_visible),
-            (is_interactable, self._is_element_interactable),
+            (is_visible, self.is_visible),
+            (is_interactable, self.is_interactable),
         ]
         checks = [func for flag, func in checks_map if flag]
         if not checks:
-            raise ValueError(
-                'At least one of is_visible or is_interactable must be True'
-            )
+            raise ValueError('At least one of is_visible or is_interactable must be True')
 
         condition_parts = []
         if is_visible:
@@ -219,9 +217,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 return
 
             if timeout and loop.time() - start_time > timeout:
-                raise WaitElementTimeout(
-                    f'Timed out waiting for element to become {condition_msg}'
-                )
+                raise WaitElementTimeout(f'Timed out waiting for element to become {condition_msg}')
 
             await asyncio.sleep(0.5)
 
@@ -242,10 +238,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         await self.scroll_into_view()
 
-        if not await self._is_element_visible():
+        if not await self.is_visible():
             raise ElementNotVisible()
 
-        result = await self._execute_script(Scripts.CLICK, return_by_value=True)
+        result = await self.execute_script(Scripts.CLICK, return_by_value=True)
         clicked = result['result']['result']['value']
         if not clicked:
             raise ElementNotInteractable()
@@ -274,7 +270,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         if self._is_option_tag():
             return await self._click_option_tag()
 
-        if not await self._is_element_visible():
+        if not await self.is_visible():
             raise ElementNotVisible()
 
         await self.scroll_into_view()
@@ -410,24 +406,22 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             )
         )
 
-    async def _is_element_visible(self):
+    async def is_visible(self):
         """Check if element is visible using comprehensive JavaScript visibility test."""
-        result = await self._execute_script(Scripts.ELEMENT_VISIBLE, return_by_value=True)
+        result = await self.execute_script(Scripts.ELEMENT_VISIBLE, return_by_value=True)
         return result['result']['result']['value']
 
-    async def _is_element_on_top(self):
+    async def is_on_top(self):
         """Check if element is topmost at its center point (not covered by overlays)."""
-        result = await self._execute_script(Scripts.ELEMENT_ON_TOP, return_by_value=True)
+        result = await self.execute_script(Scripts.ELEMENT_ON_TOP, return_by_value=True)
         return result['result']['result']['value']
 
-    async def _is_element_interactable(self):
+    async def is_interactable(self):
         """Check if element is interactable based on visibility and position."""
-        result = await self._execute_script(
-            Scripts.ELEMENT_INTERACTIVE, return_by_value=True
-        )
+        result = await self.execute_script(Scripts.ELEMENT_INTERACTIVE, return_by_value=True)
         return result['result']['result']['value']
 
-    async def _execute_script(self, script: str, return_by_value: bool = False):
+    async def execute_script(self, script: str, return_by_value: bool = False):
         """
         Execute JavaScript in element context.
 
