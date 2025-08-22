@@ -148,7 +148,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self, max_depth: int = 1, tag_filter: list[str] = []
     ) -> list['WebElement']:
         """Element's child elements."""
-        result = await self._execute_script(
+        result = await self.execute_script(
             Scripts.GET_CHILDREN_NODE.format(max_depth=max_depth, tag_filter=tag_filter)
         )
         if not self._has_object_id_key(result):
@@ -176,7 +176,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def get_siblings_elements(self, tag_filter: list[str] = []) -> list['WebElement']:
         """Element's siblings elements."""
-        result = await self._execute_script(Scripts.GET_SIBLINGS_NODE.format(tag_filter=tag_filter))
+        result = await self.execute_script(Scripts.GET_SIBLINGS_NODE.format(tag_filter=tag_filter))
         if not self._has_object_id_key(result):
             raise ElementNotFound(f'Sibling element not found for element: {self}')
 

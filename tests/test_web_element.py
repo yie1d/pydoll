@@ -1,27 +1,24 @@
+import asyncio
+import json
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
-import json
-import asyncio
 
+from pydoll.browser.options import ChromiumOptions as Options
+from pydoll.browser.chromium.chrome import Chrome
+from pydoll.commands import DomCommands, RuntimeCommands
+from pydoll.constants import Key
+from pydoll.elements.web_element import WebElement
 from pydoll.exceptions import (
-    ElementNotVisible,
-    ElementNotInteractable,
-    ElementNotFound,
     ElementNotAFileInput,
+    ElementNotFound,
+    ElementNotInteractable,
+    ElementNotVisible,
     WaitElementTimeout,
 )
-from pydoll.commands import (
-    DomCommands,
-    InputCommands,
-    PageCommands,
-    RuntimeCommands,
-)
-from pydoll.constants import Key
 from pydoll.protocol.input.types import KeyModifier
-
-
-from pydoll.elements.web_element import WebElement
 
 
 @pytest_asyncio.fixture
@@ -133,7 +130,6 @@ def ci_chrome_options():
     options.add_argument('--disable-backgrounding-occluded-windows')
     options.add_argument('--disable-renderer-backgrounding')
     options.add_argument('--disable-default-apps')
-    options.add_argument('--no-default-browser-check')
 
     # Memory optimization
     options.add_argument('--memory-pressure-off')
