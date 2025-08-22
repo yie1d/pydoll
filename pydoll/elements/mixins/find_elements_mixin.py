@@ -5,6 +5,7 @@ from pydoll.commands import (
     DomCommands,
     RuntimeCommands,
 )
+from pydoll.connection.connection_handler import ConnectionHandler
 from pydoll.constants import By, Scripts
 from pydoll.exceptions import ElementNotFound, WaitElementTimeout
 from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
@@ -43,6 +44,9 @@ class FindElementsMixin:
     Classes using this mixin gain powerful element discovery without implementing
     complex location logic themselves.
     """
+
+    if TYPE_CHECKING:
+        _connection_handler: ConnectionHandler
 
     @overload
     async def find(
@@ -327,7 +331,7 @@ class FindElementsMixin:
 
         object_id = response_for_command['result']['result']['objectId']
         attributes = await self._get_object_attributes(object_id=object_id)
-        return create_web_element(object_id, self._connection_handler, by, value, attributes)  # type: ignore
+        return create_web_element(object_id, self._connection_handler, by, value, attributes)
 
     async def _find_elements(
         self, by: By, value: str, raise_exc: bool = True
@@ -386,7 +390,7 @@ class FindElementsMixin:
             attributes.extend(['tag_name', tag_name])
 
             elements.append(
-                create_web_element(object_id, self._connection_handler, by, value, attributes)  # type: ignore
+                create_web_element(object_id, self._connection_handler, by, value, attributes)
             )
         return elements
 
@@ -494,7 +498,7 @@ class FindElementsMixin:
         self, command: Command[T_CommandParams, T_CommandResponse]
     ) -> T_CommandResponse:
         """Execute CDP command via connection handler (60s timeout)."""
-        return await self._connection_handler.execute_command(command, timeout=60)  # type: ignore
+        return await self._connection_handler.execute_command(command, timeout=60)
 
     def _get_find_element_command(self, by: By, value: str, object_id: str = ''):
         """

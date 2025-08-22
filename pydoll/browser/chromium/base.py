@@ -8,7 +8,7 @@ from contextlib import suppress
 from functools import partial
 from random import randint
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Optional
+from typing import Any, Awaitable, Callable, Optional, overload
 
 from pydoll.browser.interfaces import BrowserOptionsManager
 from pydoll.browser.managers import (
@@ -378,9 +378,15 @@ class Browser(ABC):  # noqa: PLR0904
         """Reset all permissions to defaults and restore prompting behavior."""
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
+    @overload
     async def on(
         self, event_name: str, callback: Callable[[Any], Any], temporary: bool = False
-    ) -> int:
+    ) -> int: ...
+    @overload
+    async def on(
+        self, event_name: str, callback: Callable[[Any], Awaitable[Any]], temporary: bool = False
+    ) -> int: ...
+    async def on(self, event_name, callback, temporary: bool = False) -> int:
         """
         Register CDP event listener at browser level.
 
@@ -408,6 +414,10 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
+
+    async def remove_callback(self, callback_id: int):
+        """Remove callback from browser."""
+        return await self._connection_handler.remove_callback(callback_id)
 
     async def enable_fetch_events(
         self,

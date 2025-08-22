@@ -8,16 +8,16 @@
     <a href="https://codecov.io/gh/autoscrape-labs/pydoll" >
         <img src="https://codecov.io/gh/autoscrape-labs/pydoll/graph/badge.svg?token=40I938OGM9"/>
     </a>
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/tests.yml/badge.svg" alt="Tests">
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/ruff-ci.yml/badge.svg" alt="Ruff CI">
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/mypy.yml/badge.svg" alt="MyPy CI">
+    <img src="https://github.com/autoscrape-labs/pydoll/actions/workflows/tests.yml/badge.svg" alt="Tests">
+    <img src="https://github.com/autoscrape-labs/pydoll/actions/workflows/ruff-ci.yml/badge.svg" alt="Ruff CI">
+    <img src="https://github.com/autoscrape-labs/pydoll/actions/workflows/mypy.yml/badge.svg" alt="MyPy CI">
     <img src="https://img.shields.io/badge/python-%3E%3D3.10-blue" alt="Python >= 3.10">
     <a href="https://deepwiki.com/autoscrape-labs/pydoll"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 
 <p align="center">
-  📖 <a href="https://autoscrape-labs.github.io/pydoll/">Documentation</a> •
+  📖 <a href="https://pydoll.tech/">Documentation</a> •
   🚀 <a href="#-getting-started">Getting Started</a> •
   ⚡ <a href="#-advanced-features">Advanced Features</a> •
   🤝 <a href="#-contributing">Contributing</a> •
@@ -96,6 +96,39 @@ await tab.request.get('https://api.example.com/data', headers=headers)
 - **Hybrid workflows** - Use the best tool for each step (UI or API)
 
 This opens up incredible possibilities for automation scenarios where you need both browser interaction AND API efficiency!
+
+### New expect_download() context manager — robust file downloads made easy!
+Tired of fighting with flaky download flows, missing files, or racy event listeners? Meet `tab.expect_download()`, a delightful, reliable way to handle file downloads.
+
+- Automatically sets the browser’s download behavior
+- Works with your own directory or a temporary folder (auto-cleaned!)
+- Waits for completion with a timeout (so your tests don’t hang)
+- Gives you a handy handle to read bytes/base64 or check `file_path`
+
+Tiny example that just works:
+
+```python
+import asyncio
+from pathlib import Path
+from pydoll.browser import Chrome
+
+async def download_report():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/reports')
+
+        target_dir = Path('/tmp/my-downloads')
+        async with tab.expect_download(keep_file_at=target_dir, timeout=10) as download:
+            # Trigger the download in the page (button/link/etc.)
+            await (await tab.find(text='Download latest report')).click()
+            # Wait until finished and read the content
+            data = await download.read_bytes()
+            print(f"Downloaded {len(data)} bytes to: {download.file_path}")
+
+asyncio.run(download_report())
+```
+
+Want zero-hassle cleanup? Omit `keep_file_at` and we’ll create a temp folder and remove it automatically after the context exits. Perfect for tests.
 
 ### Total browser control with custom preferences! (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
 Want to completely customize how Chrome behaves? **Now you can control EVERYTHING!**<br>
@@ -176,7 +209,7 @@ options.browser_preferences = {
 
 This level of control was previously only available to Chrome extension developers - now it's in your automation toolkit!
 
-Check the [documentation](https://autoscrape-labs.github.io/pydoll/features/#custom-browser-preferences/) for more details.
+Check the [documentation](https://pydoll.tech/docs/features/#custom-browser-preferences/) for more details.
 
 ### New `get_parent_element()` method
 Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
@@ -487,7 +520,7 @@ options.add_argument('--disable-dev-shm-usage')
 
 ## 📚 Documentation
 
-For complete documentation, detailed examples and deep dives into all Pydoll functionalities, visit our [official documentation](https://autoscrape-labs.github.io/pydoll/).
+For complete documentation, detailed examples and deep dives into all Pydoll functionalities, visit our [official documentation](https://pydoll.tech/).
 
 The documentation includes:
 - **Getting Started Guide** - Step-by-step tutorials

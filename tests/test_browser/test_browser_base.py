@@ -227,6 +227,28 @@ async def test_event_registration(mock_browser):
 
 
 @pytest.mark.asyncio
+async def test_remove_callback_success(mock_browser):
+    """Browser.remove_callback should forward to connection handler and return True."""
+    mock_browser._connection_handler.remove_callback = AsyncMock(return_value=True)
+
+    result = await mock_browser.remove_callback(42)
+
+    mock_browser._connection_handler.remove_callback.assert_called_with(42)
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_remove_callback_false(mock_browser):
+    """Browser.remove_callback should return False when handler returns False."""
+    mock_browser._connection_handler.remove_callback = AsyncMock(return_value=False)
+
+    result = await mock_browser.remove_callback(77)
+
+    mock_browser._connection_handler.remove_callback.assert_called_with(77)
+    assert result is False
+
+
+@pytest.mark.asyncio
 async def test_window_management(mock_browser):
     mock_browser._connection_handler.execute_command.return_value = {
         'result': {'windowId': 'window1'}

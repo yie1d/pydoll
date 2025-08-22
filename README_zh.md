@@ -195,6 +195,40 @@ options = ChromiumOptions()
 options.start_timeout = 20  # 等待 20 秒
 ```
 
+### 新的 expect_download() 上下文管理器 —— 稳健、优雅的文件下载！
+还在为不稳定的下载流程、丢失的文件或混乱的事件监听而头疼吗？`tab.expect_download()` 来了：一种可靠、简洁的下载方式。
+
+- 自动配置浏览器下载行为
+- 支持自定义下载目录或临时目录（自动清理！）
+- 内置超时等待，防止任务卡住
+- 提供便捷句柄：读取字节/BASE64，获取 `file_path`
+
+一个“开箱即用”的小示例：
+
+```python
+import asyncio
+from pathlib import Path
+from pydoll.browser import Chrome
+
+async def download_report():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/reports')
+
+        target_dir = Path('/tmp/my-downloads')
+        async with tab.expect_download(keep_file_at=target_dir, timeout=10) as dl:
+            # 触发页面上的下载（按钮/链接等）
+            await (await tab.find(text='Download latest report')).click()
+
+            # 等待完成并读取内容
+            data = await dl.read_bytes()
+            print(f"已下载 {len(data)} 字节，保存至: {dl.file_path}")
+
+asyncio.run(download_report())
+```
+
+想要“零成本清理”？不传 `keep_file_at` 即可——我们会创建临时目录，并在上下文退出后自动清理。对测试场景非常友好。
+
 ## 📦 安装
 
 ```bash
