@@ -282,13 +282,13 @@ RunScriptResponse = Response[RunScriptResult]
 
 
 # Command types
-AddBindingCommand = Command[AddBindingParams, EmptyResponse]
+AddBindingCommand = Command[AddBindingParams, Response[EmptyResponse]]
 AwaitPromiseCommand = Command[AwaitPromiseParams, AwaitPromiseResponse]
 CallFunctionOnCommand = Command[CallFunctionOnParams, CallFunctionOnResponse]
 CompileScriptCommand = Command[CompileScriptParams, CompileScriptResponse]
-DisableCommand = Command[EmptyParams, EmptyResponse]
-DiscardConsoleEntriesCommand = Command[EmptyParams, EmptyResponse]
-EnableCommand = Command[EmptyParams, EmptyResponse]
+DisableCommand = Command[EmptyParams, Response[EmptyResponse]]
+DiscardConsoleEntriesCommand = Command[EmptyParams, Response[EmptyResponse]]
+EnableCommand = Command[EmptyParams, Response[EmptyResponse]]
 EvaluateCommand = Command[EvaluateParams, EvaluateResponse]
 GetExceptionDetailsCommand = Command[GetExceptionDetailsParams, GetExceptionDetailsResponse]
 GetHeapUsageCommand = Command[EmptyParams, GetHeapUsageResponse]
@@ -298,14 +298,16 @@ GlobalLexicalScopeNamesCommand = Command[
     GlobalLexicalScopeNamesParams, GlobalLexicalScopeNamesResponse
 ]
 QueryObjectsCommand = Command[QueryObjectsParams, QueryObjectsResponse]
-ReleaseObjectCommand = Command[ReleaseObjectParams, EmptyResponse]
-ReleaseObjectGroupCommand = Command[ReleaseObjectGroupParams, EmptyResponse]
-RemoveBindingCommand = Command[RemoveBindingParams, EmptyResponse]
-RunIfWaitingForDebuggerCommand = Command[EmptyParams, EmptyResponse]
+ReleaseObjectCommand = Command[ReleaseObjectParams, Response[EmptyResponse]]
+ReleaseObjectGroupCommand = Command[ReleaseObjectGroupParams, Response[EmptyResponse]]
+RemoveBindingCommand = Command[RemoveBindingParams, Response[EmptyResponse]]
+RunIfWaitingForDebuggerCommand = Command[EmptyParams, Response[EmptyResponse]]
 RunScriptCommand = Command[RunScriptParams, RunScriptResponse]
-SetAsyncCallStackDepthCommand = Command[SetAsyncCallStackDepthParams, EmptyResponse]
+SetAsyncCallStackDepthCommand = Command[SetAsyncCallStackDepthParams, Response[EmptyResponse]]
 SetCustomObjectFormatterEnabledCommand = Command[
-    SetCustomObjectFormatterEnabledParams, EmptyResponse
+    SetCustomObjectFormatterEnabledParams, Response[EmptyResponse]
 ]
-SetMaxCallStackSizeToCaptureCommand = Command[SetMaxCallStackSizeToCaptureParams, EmptyResponse]
-TerminateExecutionCommand = Command[EmptyParams, EmptyResponse]
+SetMaxCallStackSizeToCaptureCommand = Command[
+    SetMaxCallStackSizeToCaptureParams, Response[EmptyResponse]
+]
+TerminateExecutionCommand = Command[EmptyParams, Response[EmptyResponse]]

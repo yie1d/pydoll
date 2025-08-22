@@ -1,3 +1,23 @@
+## 2.7.0 (2025-08-22)
+
+### Feat
+
+- refactor WebElement methods to use a unified naming convention
+- add Response type and new bring_to_front method to Tab class
+- improve element interactability scripts
+
+### Fix
+
+- **browser**: add google-chrome-stable path for Arch Linux AUR package
+- run actions to fix badges
+- enforce combined condition logic in wait_until
+- **web_element**: raise WaitElementTimeout on wait_until timeout
+
+### Refactor
+
+- update command responses to use Response for empty responses
+- **webelement**: simplify wait_until condition mapping
+
 ## 2.6.0 (2025-08-10)
 
 ### Feat

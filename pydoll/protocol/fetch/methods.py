@@ -115,13 +115,13 @@ TakeResponseBodyAsStreamResponse = Response[TakeResponseBodyAsStreamResult]
 
 
 # Command types
-ContinueRequestCommand = Command[ContinueRequestParams, EmptyResponse]
-ContinueResponseCommand = Command[ContinueResponseParams, EmptyResponse]
-ContinueWithAuthCommand = Command[ContinueWithAuthParams, EmptyResponse]
-DisableCommand = Command[EmptyParams, EmptyResponse]
-EnableCommand = Command[EnableParams, EmptyResponse]
-FailRequestCommand = Command[FailRequestParams, EmptyResponse]
-FulfillRequestCommand = Command[FulfillRequestParams, EmptyResponse]
+ContinueRequestCommand = Command[ContinueRequestParams, Response[EmptyResponse]]
+ContinueResponseCommand = Command[ContinueResponseParams, Response[EmptyResponse]]
+ContinueWithAuthCommand = Command[ContinueWithAuthParams, Response[EmptyResponse]]
+DisableCommand = Command[EmptyParams, Response[EmptyResponse]]
+EnableCommand = Command[EnableParams, Response[EmptyResponse]]
+FailRequestCommand = Command[FailRequestParams, Response[EmptyResponse]]
+FulfillRequestCommand = Command[FulfillRequestParams, Response[EmptyResponse]]
 GetResponseBodyCommand = Command[GetResponseBodyParams, GetResponseBodyResponse]
 TakeResponseBodyAsStreamCommand = Command[
     TakeResponseBodyAsStreamParams, TakeResponseBodyAsStreamResponse
