@@ -46,7 +46,7 @@ from pydoll.exceptions import (
     PageLoadTimeout,
     WaitElementTimeout,
 )
-from pydoll.protocol.base import EmptyResponse
+from pydoll.protocol.base import EmptyResponse, Response
 from pydoll.protocol.browser.events import (
     BrowserEvent,
     DownloadProgressEvent,
@@ -282,7 +282,7 @@ class Tab(FindElementsMixin):
         Note:
             Intercepted requests must be explicitly continued or timeout.
         """
-        response: EmptyResponse = await self._execute_command(
+        response: Response[EmptyResponse] = await self._execute_command(
             FetchCommands.enable(
                 handle_auth_requests=handle_auth,
                 resource_type=resource_type,
@@ -424,6 +424,10 @@ class Tab(FindElementsMixin):
 
         return Tab(self._browser, self._connection_port, iframe_target['targetId'])
 
+    async def bring_to_front(self):
+        """Brings the page to front."""
+        return await self._execute_command(PageCommands.bring_to_front())
+
     async def get_cookies(self) -> list[Cookie]:
         """Get all cookies accessible from current page."""
         response: GetCookiesResponse = await self._execute_command(
@@ -545,6 +549,7 @@ class Tab(FindElementsMixin):
         self,
         path: Optional[str] = None,
         quality: int = 100,
+        beyond_viewport: bool = False,
         as_base64: bool = False,
     ) -> Optional[str]:
         """
@@ -553,6 +558,8 @@ class Tab(FindElementsMixin):
         Args:
             path: File path for screenshot (extension determines format).
             quality: Image quality 0-100 (default 100).
+            beyond_viewport: The page will be scrolled to the bottom and the screenshot will
+                include the entire page
             as_base64: Return as base64 string instead of saving file.
 
         Returns:
@@ -573,6 +580,7 @@ class Tab(FindElementsMixin):
             PageCommands.capture_screenshot(
                 format=ScreenshotFormat.get_value(output_extension),
                 quality=quality,
+                capture_beyond_viewport=beyond_viewport,
             )
         )
         screenshot_data = response['result']['data']
