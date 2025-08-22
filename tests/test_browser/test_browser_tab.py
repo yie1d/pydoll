@@ -407,6 +407,26 @@ class TestTabScreenshotAndPDF:
         assert_mock_called_at_least_once(tab._connection_handler)
 
     @pytest.mark.asyncio
+    async def test_take_screenshot_beyond_viewport(self, tab):
+        """Test capture_beyond_viewport flag is forwarded to command."""
+        screenshot_data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
+
+        with patch.object(tab, '_execute_command', AsyncMock(return_value={
+            'result': {'data': screenshot_data}
+        })) as mock_execute:
+            result = await tab.take_screenshot(
+                path=None,
+                beyond_viewport=True,
+                as_base64=True,
+            )
+
+            mock_execute.assert_called_once()
+            command = mock_execute.call_args[0][0]
+            assert command['method'] == 'Page.captureScreenshot'
+            assert command['params']['captureBeyondViewport'] is True
+            assert result == screenshot_data
+
+    @pytest.mark.asyncio
     async def test_print_to_pdf_to_file(self, tab, tmp_path):
         """Test printing to PDF and saving to file."""
         pdf_data = 'JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwo+PgplbmRvYmoKdHJhaWxlcgo8PAovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKMTgKJSVFT0Y='
@@ -1287,6 +1307,16 @@ class TestTabFrameHandling:
 
 class TestTabUtilityMethods:
     """Test Tab utility and helper methods."""
+
+    @pytest.mark.asyncio
+    async def test_bring_to_front(self, tab):
+        """Test bringing the tab to front sends the correct command."""
+        with patch.object(tab, '_execute_command', AsyncMock()) as mock_execute:
+            await tab.bring_to_front()
+
+            mock_execute.assert_called_once()
+            command = mock_execute.call_args[0][0]
+            assert command['method'] == 'Page.bringToFront'
 
     @pytest.mark.asyncio
     async def test_close(self, tab, mock_browser):

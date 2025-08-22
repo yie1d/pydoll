@@ -494,21 +494,21 @@ class TestWebElementClicking:
     async def test_click_using_js_success(self, web_element):
         """Test successful JavaScript click."""
         # Mock element visibility and click success
-        web_element._is_element_visible = AsyncMock(return_value=True)
+        web_element.is_visible = AsyncMock(return_value=True)
         web_element.scroll_into_view = AsyncMock()
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': True}}}
         )
         
         await web_element.click_using_js()
         
         web_element.scroll_into_view.assert_called_once()
-        web_element._is_element_visible.assert_called_once()
+        web_element.is_visible.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_click_using_js_not_visible(self, web_element):
         """Test JavaScript click when element is not visible."""
-        web_element._is_element_visible = AsyncMock(return_value=False)
+        web_element.is_visible = AsyncMock(return_value=False)
         web_element.scroll_into_view = AsyncMock()
 
         with pytest.raises(ElementNotVisible):
@@ -517,9 +517,9 @@ class TestWebElementClicking:
     @pytest.mark.asyncio
     async def test_click_using_js_not_interactable(self, web_element):
         """Test JavaScript click when element is not interactable."""
-        web_element._is_element_visible = AsyncMock(return_value=True)
+        web_element.is_visible = AsyncMock(return_value=True)
         web_element.scroll_into_view = AsyncMock()
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': False}}}
         )
 
@@ -539,7 +539,7 @@ class TestWebElementClicking:
     async def test_click_success(self, web_element):
         """Test successful mouse click."""
         bounds = [0, 0, 100, 0, 100, 100, 0, 100]  # Rectangle coordinates
-        web_element._is_element_visible = AsyncMock(return_value=True)
+        web_element.is_visible = AsyncMock(return_value=True)
         web_element.scroll_into_view = AsyncMock()
         web_element._connection_handler.execute_command.side_effect = [
             {'result': {'model': {'content': bounds}}},  # bounds
@@ -557,7 +557,7 @@ class TestWebElementClicking:
     @pytest.mark.asyncio
     async def test_click_not_visible(self, web_element):
         """Test click when element is not visible."""
-        web_element._is_element_visible = AsyncMock(return_value=False)
+        web_element.is_visible = AsyncMock(return_value=False)
 
         with pytest.raises(ElementNotVisible):
             await web_element.click()
@@ -574,7 +574,7 @@ class TestWebElementClicking:
     @pytest.mark.asyncio
     async def test_click_bounds_fallback_to_js(self, web_element):
         """Test click falls back to JS bounds when CDP bounds fail."""
-        web_element._is_element_visible = AsyncMock(return_value=True)
+        web_element.is_visible = AsyncMock(return_value=True)
         web_element.scroll_into_view = AsyncMock()
         
         # First call (bounds) raises KeyError, second call (JS bounds) succeeds
@@ -686,61 +686,61 @@ class TestWebElementVisibility:
     @pytest.mark.asyncio
     async def test_is_element_visible_true(self, web_element):
         """Test _is_element_visible returns True."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': True}}}
         )
         
-        result = await web_element._is_element_visible()
+        result = await web_element.is_visible()
         assert result is True
 
     @pytest.mark.asyncio
     async def test_is_element_visible_false(self, web_element):
         """Test _is_element_visible returns False."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': False}}}
         )
         
-        result = await web_element._is_element_visible()
+        result = await web_element.is_visible()
         assert result is False
 
     @pytest.mark.asyncio
     async def test_is_element_on_top_true(self, web_element):
         """Test _is_element_on_top returns True."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': True}}}
         )
         
-        result = await web_element._is_element_on_top()
+        result = await web_element.is_on_top()
         assert result is True
 
     @pytest.mark.asyncio
     async def test_is_element_on_top_false(self, web_element):
         """Test _is_element_on_top returns False."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': False}}}
         )
 
-        result = await web_element._is_element_on_top()
+        result = await web_element.is_on_top()
         assert result is False
 
     @pytest.mark.asyncio
     async def test_is_element_interactable_true(self, web_element):
         """Test _is_element_interactable returns True."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': True}}}
         )
 
-        result = await web_element._is_element_interactable()
+        result = await web_element.is_interactable()
         assert result is True
 
     @pytest.mark.asyncio
     async def test_is_element_interactable_false(self, web_element):
         """Test _is_element_interactable returns False."""
-        web_element._execute_script = AsyncMock(
+        web_element.execute_script = AsyncMock(
             return_value={'result': {'result': {'value': False}}}
         )
 
-        result = await web_element._is_element_interactable()
+        result = await web_element.is_interactable()
         assert result is False
 
 
@@ -750,7 +750,7 @@ class TestWebElementWaitUntil:
     @pytest.mark.asyncio
     async def test_wait_until_visible_success(self, web_element):
         """Test wait_until succeeds when element becomes visible."""
-        web_element._is_element_visible = AsyncMock(side_effect=[False, True])
+        web_element.is_visible = AsyncMock(side_effect=[False, True])
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
@@ -758,13 +758,13 @@ class TestWebElementWaitUntil:
 
             await web_element.wait_until(is_visible=True, timeout=2)
 
-        assert web_element._is_element_visible.call_count == 2
+        assert web_element.is_visible.call_count == 2
         mock_sleep.assert_called_once_with(0.5)
 
     @pytest.mark.asyncio
     async def test_wait_until_visible_timeout(self, web_element):
         """Test wait_until raises WaitElementTimeout when visibility not met."""
-        web_element._is_element_visible = AsyncMock(return_value=False)
+        web_element.is_visible = AsyncMock(return_value=False)
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
@@ -780,16 +780,16 @@ class TestWebElementWaitUntil:
     @pytest.mark.asyncio
     async def test_wait_until_interactable_success(self, web_element):
         """Test wait_until succeeds when element becomes interactable."""
-        web_element._is_element_interactable = AsyncMock(return_value=True)
+        web_element.is_interactable = AsyncMock(return_value=True)
 
         await web_element.wait_until(is_interactable=True, timeout=1)
 
-        web_element._is_element_interactable.assert_called_once()
+        web_element.is_interactable.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_wait_until_interactable_timeout(self, web_element):
         """Test wait_until raises WaitElementTimeout when not interactable."""
-        web_element._is_element_interactable = AsyncMock(return_value=False)
+        web_element.is_interactable = AsyncMock(return_value=False)
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
@@ -805,8 +805,8 @@ class TestWebElementWaitUntil:
     @pytest.mark.asyncio
     async def test_wait_until_visible_and_interactable(self, web_element):
         """Test wait_until requires both conditions when both are True."""
-        web_element._is_element_visible = AsyncMock(side_effect=[False, True])
-        web_element._is_element_interactable = AsyncMock(side_effect=[False, True])
+        web_element.is_visible = AsyncMock(side_effect=[False, True])
+        web_element.is_interactable = AsyncMock(side_effect=[False, True])
 
         with patch('asyncio.sleep') as mock_sleep, \
              patch('asyncio.get_event_loop') as mock_loop:
@@ -816,8 +816,8 @@ class TestWebElementWaitUntil:
                 is_visible=True, is_interactable=True, timeout=2
             )
 
-        assert web_element._is_element_visible.call_count == 2
-        assert web_element._is_element_interactable.call_count == 2
+        assert web_element.is_visible.call_count == 2
+        assert web_element.is_interactable.call_count == 2
         mock_sleep.assert_called_once_with(0.5)
 
     @pytest.mark.asyncio
@@ -880,7 +880,7 @@ class TestWebElementUtilityMethods:
         expected_response = {'result': {'result': {'value': 'DIV'}}}
         web_element._connection_handler.execute_command.return_value = expected_response
         
-        result = await web_element._execute_script(script, return_by_value=True)
+        result = await web_element.execute_script(script, return_by_value=True)
         
         assert result == expected_response
         expected_command = RuntimeCommands.call_function_on(
@@ -1086,7 +1086,7 @@ class TestWebElementEdgeCases:
     async def test_click_with_zero_hold_time(self, web_element):
         """Test click with zero hold time."""
         bounds = [0, 0, 50, 0, 50, 50, 0, 50]
-        web_element._is_element_visible = AsyncMock(return_value=True)
+        web_element.is_visible = AsyncMock(return_value=True)
         web_element.scroll_into_view = AsyncMock()
         web_element._connection_handler.execute_command.side_effect = [
             {'result': {'model': {'content': bounds}}},
