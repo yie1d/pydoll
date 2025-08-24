@@ -81,6 +81,180 @@ on_top = await element.is_on_top()
 
 These additions simplify waiting and state validation before clicking/typing, reducing flakiness and making automations more predictable.
 
+
+## 📦 Installation
+
+```bash
+pip install pydoll-python
+```
+
+And that's it! Just install and start automating.
+
+## 🚀 Getting Started
+
+### Your first automation
+
+Let's start with a real example: an automation that performs a Google search and clicks on the first result. With this example, we can see how the library works and how you can start automating your tasks.
+
+```python
+import asyncio
+
+from pydoll.browser import Chrome
+from pydoll.constants import Key
+
+async def google_search(query: str):
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://www.google.com')
+        search_box = await tab.find(tag_name='textarea', name='q')
+        await search_box.insert_text(query)
+        await search_box.press_keyboard_key(Key.ENTER)
+        await (await tab.find(
+            tag_name='h3',
+            text='autoscrape-labs/pydoll',
+            timeout=10,
+        )).click()
+        await tab.find(id='repository-container-header', timeout=10)
+
+asyncio.run(google_search('pydoll python'))
+```
+
+Without configurations, just a simple script, we can do a complete Google search!
+Okay, now let's see how we can extract data from a page, using the same previous example.
+Let's consider in the code below that we're already on the Pydoll page. We want to extract the following information:
+
+- Project description
+- Number of stars
+- Number of forks
+- Number of issues
+- Number of pull requests
+
+Let's get started! To get the project description, we'll use xpath queries. You can check the documentation on how to build your own queries.
+
+```python
+description = await (await tab.query(
+    '//h2[contains(text(), "About")]/following-sibling::p',
+    timeout=10,
+)).text
+```
+
+And that's it! Let's understand what this query does:
+
+1. `//h2[contains(text(), "About")]` - Selects the first `<h2>` that contains "About"
+2. `/following-sibling::p` - Selects the first `<p>` that comes after the `<h2>`
+
+Now let's get the rest of the data:
+
+```python
+number_of_stars = await (await tab.find(
+    id='repo-stars-counter-star'
+)).text
+
+number_of_forks = await (await tab.find(
+    id='repo-network-counter'
+)).text
+number_of_issues = await (await tab.find(
+    id='issues-repo-tab-count',
+)).text
+number_of_pull_requests = await (await tab.find(
+    id='pull-requests-repo-tab-count',
+)).text
+
+data = {
+    'description': description,
+    'number_of_stars': number_of_stars,
+    'number_of_forks': number_of_forks,
+    'number_of_issues': number_of_issues,
+    'number_of_pull_requests': number_of_pull_requests,
+}
+print(data)
+
+```
+
+We managed to extract all the necessary data!
+
+### Custom Configurations
+
+Sometimes we need more control over the browser. Pydoll offers a flexible way to do this. Let's see the example below:
+
+
+```python
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions as Options
+
+async def custom_automation():
+    # Configure browser options
+    options = Options()
+    options.add_argument('--proxy-server=username:password@ip:port')
+    options.add_argument('--window-size=1920,1080')
+    options.binary_location = '/path/to/your/browser'
+    options.start_timeout = 20
+
+    async with Chrome(options=options) as browser:
+        tab = await browser.start()
+        # Your automation code here
+        await tab.go_to('https://example.com')
+        # The browser is now using your custom settings
+
+asyncio.run(custom_automation())
+```
+
+In this example, we're configuring the browser to use a proxy and a 1920x1080 window, in addition to a custom path for the Chrome binary, in case your installation location is different from the common defaults.
+
+
+## ⚡ Advanced Features
+
+Pydoll offers a series of advanced features to please even the most
+demanding users.
+
+
+
+### Advanced Element Search
+
+We have several ways to find elements on the page. No matter how you prefer, we have a way that makes sense for you:
+
+```python
+import asyncio
+from pydoll.browser import Chrome
+
+async def element_finding_examples():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+
+        # Find by attributes (most intuitive)
+        submit_btn = await tab.find(
+            tag_name='button',
+            class_name='btn-primary',
+            text='Submit'
+        )
+        # Find by ID
+        username_field = await tab.find(id='username')
+        # Find multiple elements
+        all_links = await tab.find(tag_name='a', find_all=True)
+        # CSS selectors and XPath
+        nav_menu = await tab.query('nav.main-menu')
+        specific_item = await tab.query('//div[@data-testid="item-123"]')
+        # With timeout and error handling
+        delayed_element = await tab.find(
+            class_name='dynamic-content',
+            timeout=10,
+            raise_exc=False  # Returns None if not found
+        )
+        # Advanced: Custom attributes
+        custom_element = await tab.find(
+            data_testid='submit-button',
+            aria_label='Submit form'
+        )
+
+asyncio.run(element_finding_examples())
+```
+
+The `find` method is more user-friendly. We can search by common attributes like id, tag_name, class_name, etc., up to custom attributes (e.g. `data-testid`).
+
+If that's not enough, we can use the `query` method to search for elements using CSS selectors, XPath queries, etc. Pydoll automatically takes care of identifying what type of query we're using.
+
+
 ### Browser-context HTTP requests - game changer for hybrid automation!
 Ever wished you could make HTTP requests that automatically inherit all your browser's session state? **Now you can!**<br>
 The `tab.request` property gives you a beautiful `requests`-like interface that executes HTTP calls directly in the browser's JavaScript context. This means every request automatically gets cookies, authentication headers, CORS policies, and session state, just as if the browser made the request itself.
@@ -245,233 +419,6 @@ This level of control was previously only available to Chrome extension develope
 
 Check the [documentation](https://pydoll.tech/docs/features/#custom-browser-preferences/) for more details.
 
-### New `get_parent_element()` method
-Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
-```python
-element = await tab.find(id='button')
-parent = await element.get_parent_element()
-```
-### New start_timeout option (thanks to [@j0j1j2](https://github.com/j0j1j2))
-Added to ChromiumOptions to control how long the browser can take to start. Useful on slower machines or CI environments.
-
-```python
-options = ChromiumOptions()
-options.start_timeout = 20  # wait 20 seconds
-```
-
-## 📦 Installation
-
-```bash
-pip install pydoll-python
-```
-
-And that's it! Just install and start automating.
-
-## 🚀 Getting Started
-
-### Your first automation
-
-Let's start with a real example: an automation that performs a Google search and clicks on the first result. With this example, we can see how the library works and how you can start automating your tasks.
-
-```python
-import asyncio
-
-from pydoll.browser import Chrome
-from pydoll.constants import Key
-
-async def google_search(query: str):
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.go_to('https://www.google.com')
-        search_box = await tab.find(tag_name='textarea', name='q')
-        await search_box.insert_text(query)
-        await search_box.press_keyboard_key(Key.ENTER)
-        await (await tab.find(
-            tag_name='h3',
-            text='autoscrape-labs/pydoll',
-            timeout=10,
-        )).click()
-        await tab.find(id='repository-container-header', timeout=10)
-
-asyncio.run(google_search('pydoll python'))
-```
-
-Without configurations, just a simple script, we can do a complete Google search!
-Okay, now let's see how we can extract data from a page, using the same previous example.
-Let's consider in the code below that we're already on the Pydoll page. We want to extract the following information:
-
-- Project description
-- Number of stars
-- Number of forks
-- Number of issues
-- Number of pull requests
-
-Let's get started! To get the project description, we'll use xpath queries. You can check the documentation on how to build your own queries.
-
-```python
-description = await (await tab.query(
-    '//h2[contains(text(), "About")]/following-sibling::p',
-    timeout=10,
-)).text
-```
-
-And that's it! Let's understand what this query does:
-
-1. `//h2[contains(text(), "About")]` - Selects the first `<h2>` that contains "About"
-2. `/following-sibling::p` - Selects the first `<p>` that comes after the `<h2>`
-
-Now let's get the rest of the data:
-
-```python
-number_of_stars = await (await tab.find(
-    id='repo-stars-counter-star'
-)).text
-
-number_of_forks = await (await tab.find(
-    id='repo-network-counter'
-)).text
-number_of_issues = await (await tab.find(
-    id='issues-repo-tab-count',
-)).text
-number_of_pull_requests = await (await tab.find(
-    id='pull-requests-repo-tab-count',
-)).text
-
-data = {
-    'description': description,
-    'number_of_stars': number_of_stars,
-    'number_of_forks': number_of_forks,
-    'number_of_issues': number_of_issues,
-    'number_of_pull_requests': number_of_pull_requests,
-}
-print(data)
-
-```
-
-In the image below we can see the execution speed and the result of the automation.
-For demonstration purposes, the browser is not displayed.
-
-![google_seach](./docs/images/google-search-example.gif)
-
-
-In just 5 seconds, we managed to extract all the necessary data! This is the 
-speed you can expect from automation with Pydoll.
-
-
-### A more complex example
-
-Let's now move to a case that you've probably encountered many times: a captcha
-like Cloudflare's. Pydoll has a method to try to handle this, although, as mentioned earlier, effectiveness depends on various factors. In the code below, we have a complete example of how to handle a Cloudflare captcha.
-
-```python
-import asyncio
-
-from pydoll.browser import Chrome
-from pydoll.constants import By
-
-async def cloudflare_example():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        async with tab.expect_and_bypass_cloudflare_captcha():
-            await tab.go_to('https://2captcha.com/demo/cloudflare-turnstile')
-        print('Captcha handled, continuing...')
-        await asyncio.sleep(5)  # just to see the result :)
-
-asyncio.run(cloudflare_example())
-
-```
-
-Below we have the result of the execution:
-
-![cloudflare_example](./docs/images/cloudflare-example.gif)
-
-
-With just a few lines of code, we managed to handle one of the most
-difficult captchas to deal with. This is just one of the many functionalities that Pydoll
-offers. But it doesn't stop there!
-
-
-### Custom Configurations
-
-Sometimes we need more control over the browser. Pydoll offers a flexible way to do this. Let's see the example below:
-
-
-```python
-from pydoll.browser import Chrome
-from pydoll.browser.options import ChromiumOptions as Options
-
-async def custom_automation():
-    # Configure browser options
-    options = Options()
-    options.add_argument('--proxy-server=username:password@ip:port')
-    options.add_argument('--window-size=1920,1080')
-    options.binary_location = '/path/to/your/browser'
-    options.start_timeout = 20
-
-    async with Chrome(options=options) as browser:
-        tab = await browser.start()
-        # Your automation code here
-        await tab.go_to('https://example.com')
-        # The browser is now using your custom settings
-
-asyncio.run(custom_automation())
-```
-
-In this example, we're configuring the browser to use a proxy and a 1920x1080 window, in addition to a custom path for the Chrome binary, in case your installation location is different from the common defaults.
-
-
-## ⚡ Advanced Features
-
-Pydoll offers a series of advanced features to please even the most
-demanding users.
-
-
-### Advanced Element Search
-
-We have several ways to find elements on the page. No matter how you prefer, we have a way that makes sense for you:
-
-```python
-import asyncio
-from pydoll.browser import Chrome
-
-async def element_finding_examples():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.go_to('https://example.com')
-
-        # Find by attributes (most intuitive)
-        submit_btn = await tab.find(
-            tag_name='button',
-            class_name='btn-primary',
-            text='Submit'
-        )
-        # Find by ID
-        username_field = await tab.find(id='username')
-        # Find multiple elements
-        all_links = await tab.find(tag_name='a', find_all=True)
-        # CSS selectors and XPath
-        nav_menu = await tab.query('nav.main-menu')
-        specific_item = await tab.query('//div[@data-testid="item-123"]')
-        # With timeout and error handling
-        delayed_element = await tab.find(
-            class_name='dynamic-content',
-            timeout=10,
-            raise_exc=False  # Returns None if not found
-        )
-        # Advanced: Custom attributes
-        custom_element = await tab.find(
-            data_testid='submit-button',
-            aria_label='Submit form'
-        )
-
-asyncio.run(element_finding_examples())
-```
-
-The `find` method is more user-friendly. We can search by common attributes like id, tag_name, class_name, etc., up to custom attributes (e.g. `data-testid`).
-
-If that's not enough, we can use the `query` method to search for elements using CSS selectors, XPath queries, etc. Pydoll automatically takes care of identifying what type of query we're using.
-
-
 ### Concurrent Automation
 
 One of the great advantages of Pydoll is the ability to process multiple tasks simultaneously thanks to its asynchronous implementation. We can automate multiple tabs
@@ -506,13 +453,7 @@ async def concurrent_scraping():
 asyncio.run(concurrent_scraping())
 ```
 
-Below we see the incredible execution speed:
-
-![concurrent_example](./docs/images/concurrent-example.gif)
-
-
-We managed to extract data from two pages at the same time! Tell me if that's not incredible?
-
+We managed to extract data from two pages at the same time!
 
 And there's much, much more! Event system for reactive automations, request interception and modification, and so on. Take a look at the documentation, you won't
 regret it!
