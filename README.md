@@ -171,48 +171,7 @@ print(data)
 
 ```
 
-In the image below we can see the execution speed and the result of the automation.
-For demonstration purposes, the browser is not displayed.
-
-![google_seach](./docs/images/google-search-example.gif)
-
-
-In just 5 seconds, we managed to extract all the necessary data! This is the 
-speed you can expect from automation with Pydoll.
-
-
-### A more complex example
-
-Let's now move to a case that you've probably encountered many times: a captcha
-like Cloudflare's. Pydoll has a method to try to handle this, although, as mentioned earlier, effectiveness depends on various factors. In the code below, we have a complete example of how to handle a Cloudflare captcha.
-
-```python
-import asyncio
-
-from pydoll.browser import Chrome
-from pydoll.constants import By
-
-async def cloudflare_example():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        async with tab.expect_and_bypass_cloudflare_captcha():
-            await tab.go_to('https://2captcha.com/demo/cloudflare-turnstile')
-        print('Captcha handled, continuing...')
-        await asyncio.sleep(5)  # just to see the result :)
-
-asyncio.run(cloudflare_example())
-
-```
-
-Below we have the result of the execution:
-
-![cloudflare_example](./docs/images/cloudflare-example.gif)
-
-
-With just a few lines of code, we managed to handle one of the most
-difficult captchas to deal with. This is just one of the many functionalities that Pydoll
-offers. But it doesn't stop there!
-
+We managed to extract all the necessary data!
 
 ### Custom Configurations
 
@@ -494,13 +453,7 @@ async def concurrent_scraping():
 asyncio.run(concurrent_scraping())
 ```
 
-Below we see the incredible execution speed:
-
-![concurrent_example](./docs/images/concurrent-example.gif)
-
-
-We managed to extract data from two pages at the same time! Tell me if that's not incredible?
-
+We managed to extract data from two pages at the same time!
 
 And there's much, much more! Event system for reactive automations, request interception and modification, and so on. Take a look at the documentation, you won't
 regret it!
