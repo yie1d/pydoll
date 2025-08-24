@@ -81,183 +81,6 @@ on_top = await element.is_on_top()
 
 These additions simplify waiting and state validation before clicking/typing, reducing flakiness and making automations more predictable.
 
-### Browser-context HTTP requests - game changer for hybrid automation!
-Ever wished you could make HTTP requests that automatically inherit all your browser's session state? **Now you can!**<br>
-The `tab.request` property gives you a beautiful `requests`-like interface that executes HTTP calls directly in the browser's JavaScript context. This means every request automatically gets cookies, authentication headers, CORS policies, and session state, just as if the browser made the request itself.
-
-**Perfect for Hybrid Automation:**
-```python
-# Navigate to a site and login normally with PyDoll
-await tab.go_to('https://example.com/login')
-await (await tab.find(id='username')).type_text('user@example.com')
-await (await tab.find(id='password')).type_text('password')
-await (await tab.find(id='login-btn')).click()
-
-# Now make API calls that inherit the logged-in session!
-response = await tab.request.get('https://example.com/api/user/profile')
-user_data = response.json()
-
-# POST data while staying authenticated
-response = await tab.request.post(
-    'https://example.com/api/settings', 
-    json={'theme': 'dark', 'notifications': True}
-)
-
-# Access response content in different formats
-raw_data = response.content
-text_data = response.text
-json_data = response.json()
-
-# Check cookies that were set
-for cookie in response.cookies:
-    print(f"Cookie: {cookie['name']} = {cookie['value']}")
-
-# Add custom headers to your requests
-headers = [
-    {'name': 'X-Custom-Header', 'value': 'my-value'},
-    {'name': 'X-API-Version', 'value': '2.0'}
-]
-
-await tab.request.get('https://api.example.com/data', headers=headers)
-
-```
-
-**Why this is great:**
-- **No more session juggling** - Requests inherit browser cookies automatically
-- **CORS just works** - Requests respect browser security policies  
-- **Perfect for modern SPAs** - Seamlessly mix UI automation with API calls
-- **Authentication made easy** - Login once via UI, then hammer APIs
-- **Hybrid workflows** - Use the best tool for each step (UI or API)
-
-This opens up incredible possibilities for automation scenarios where you need both browser interaction AND API efficiency!
-
-### New expect_download() context manager — robust file downloads made easy!
-Tired of fighting with flaky download flows, missing files, or racy event listeners? Meet `tab.expect_download()`, a delightful, reliable way to handle file downloads.
-
-- Automatically sets the browser’s download behavior
-- Works with your own directory or a temporary folder (auto-cleaned!)
-- Waits for completion with a timeout (so your tests don’t hang)
-- Gives you a handy handle to read bytes/base64 or check `file_path`
-
-Tiny example that just works:
-
-```python
-import asyncio
-from pathlib import Path
-from pydoll.browser import Chrome
-
-async def download_report():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.go_to('https://example.com/reports')
-
-        target_dir = Path('/tmp/my-downloads')
-        async with tab.expect_download(keep_file_at=target_dir, timeout=10) as download:
-            # Trigger the download in the page (button/link/etc.)
-            await (await tab.find(text='Download latest report')).click()
-            # Wait until finished and read the content
-            data = await download.read_bytes()
-            print(f"Downloaded {len(data)} bytes to: {download.file_path}")
-
-asyncio.run(download_report())
-```
-
-Want zero-hassle cleanup? Omit `keep_file_at` and we’ll create a temp folder and remove it automatically after the context exits. Perfect for tests.
-
-### Total browser control with custom preferences! (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
-Want to completely customize how Chrome behaves? **Now you can control EVERYTHING!**<br>
-The new `browser_preferences` system gives you access to hundreds of internal Chrome settings that were previously impossible to change programmatically. We're talking about deep browser customization that goes way beyond command-line flags!
-
-**The possibilities are endless:**
-```python
-options = ChromiumOptions()
-
-# Create the perfect automation environment
-options.browser_preferences = {
-    'download': {
-        'default_directory': '/tmp/downloads',
-        'prompt_for_download': False,
-        'directory_upgrade': True,
-        'extensions_to_open': ''  # Don't auto-open any downloads
-    },
-    'profile': {
-        'default_content_setting_values': {
-            'notifications': 2,        # Block all notifications
-            'geolocation': 2,         # Block location requests
-            'media_stream_camera': 2, # Block camera access
-            'media_stream_mic': 2,    # Block microphone access
-            'popups': 1               # Allow popups (useful for automation)
-        },
-        'password_manager_enabled': False,  # Disable password prompts
-        'exit_type': 'Normal'              # Always exit cleanly
-    },
-    'intl': {
-        'accept_languages': 'en-US,en',
-        'charset_default': 'UTF-8'
-    },
-    'browser': {
-        'check_default_browser': False,    # Don't ask about default browser
-        'show_update_promotion_infobar': False
-    }
-}
-
-# Or use the convenient helper methods
-options.set_default_download_directory('/tmp/downloads')
-options.set_accept_languages('en-US,en,pt-BR')  
-options.prompt_for_download = False
-```
-
-**Real-world power examples:**
-- **Silent downloads** - No prompts, no dialogs, just automated downloads
-- **Block ALL distractions** - Notifications, popups, camera requests, you name it
-- **Perfect for CI/CD** - Disable update checks, default browser prompts, crash reporting
-- **Multi-region testing** - Change languages, timezones, and locale settings instantly
-- **Security hardening** - Lock down permissions and disable unnecessary features
-- **Advanced fingerprinting control** - Modify browser install dates, engagement history, and behavioral patterns
-
-**Fingerprint customization for stealth automation:**
-```python
-import time
-
-# Simulate a browser that's been around for months
-fake_engagement_time = int(time.time()) - (7 * 24 * 60 * 60)  # 7 days ago
-
-options.browser_preferences = {
-    'settings': {
-        'touchpad': {
-            'natural_scroll': True,
-        }
-    },
-    'profile': {
-        'last_engagement_time': fake_engagement_time,
-        'exit_type': 'Normal',
-        'exited_cleanly': True
-    },
-    'newtab_page_location_override': 'https://www.google.com',
-    'session': {
-        'restore_on_startup': 1,  # Restore last session
-        'startup_urls': ['https://www.google.com']
-    }
-}
-```
-
-This level of control was previously only available to Chrome extension developers - now it's in your automation toolkit!
-
-Check the [documentation](https://pydoll.tech/docs/features/#custom-browser-preferences/) for more details.
-
-### New `get_parent_element()` method
-Retrieve the parent of any WebElement, making it easier to navigate the DOM structure:
-```python
-element = await tab.find(id='button')
-parent = await element.get_parent_element()
-```
-### New start_timeout option (thanks to [@j0j1j2](https://github.com/j0j1j2))
-Added to ChromiumOptions to control how long the browser can take to start. Useful on slower machines or CI environments.
-
-```python
-options = ChromiumOptions()
-options.start_timeout = 20  # wait 20 seconds
-```
 
 ## 📦 Installation
 
@@ -426,6 +249,7 @@ Pydoll offers a series of advanced features to please even the most
 demanding users.
 
 
+
 ### Advanced Element Search
 
 We have several ways to find elements on the page. No matter how you prefer, we have a way that makes sense for you:
@@ -471,6 +295,170 @@ The `find` method is more user-friendly. We can search by common attributes like
 
 If that's not enough, we can use the `query` method to search for elements using CSS selectors, XPath queries, etc. Pydoll automatically takes care of identifying what type of query we're using.
 
+
+### Browser-context HTTP requests - game changer for hybrid automation!
+Ever wished you could make HTTP requests that automatically inherit all your browser's session state? **Now you can!**<br>
+The `tab.request` property gives you a beautiful `requests`-like interface that executes HTTP calls directly in the browser's JavaScript context. This means every request automatically gets cookies, authentication headers, CORS policies, and session state, just as if the browser made the request itself.
+
+**Perfect for Hybrid Automation:**
+```python
+# Navigate to a site and login normally with PyDoll
+await tab.go_to('https://example.com/login')
+await (await tab.find(id='username')).type_text('user@example.com')
+await (await tab.find(id='password')).type_text('password')
+await (await tab.find(id='login-btn')).click()
+
+# Now make API calls that inherit the logged-in session!
+response = await tab.request.get('https://example.com/api/user/profile')
+user_data = response.json()
+
+# POST data while staying authenticated
+response = await tab.request.post(
+    'https://example.com/api/settings', 
+    json={'theme': 'dark', 'notifications': True}
+)
+
+# Access response content in different formats
+raw_data = response.content
+text_data = response.text
+json_data = response.json()
+
+# Check cookies that were set
+for cookie in response.cookies:
+    print(f"Cookie: {cookie['name']} = {cookie['value']}")
+
+# Add custom headers to your requests
+headers = [
+    {'name': 'X-Custom-Header', 'value': 'my-value'},
+    {'name': 'X-API-Version', 'value': '2.0'}
+]
+
+await tab.request.get('https://api.example.com/data', headers=headers)
+
+```
+
+**Why this is great:**
+- **No more session juggling** - Requests inherit browser cookies automatically
+- **CORS just works** - Requests respect browser security policies  
+- **Perfect for modern SPAs** - Seamlessly mix UI automation with API calls
+- **Authentication made easy** - Login once via UI, then hammer APIs
+- **Hybrid workflows** - Use the best tool for each step (UI or API)
+
+This opens up incredible possibilities for automation scenarios where you need both browser interaction AND API efficiency!
+
+### New expect_download() context manager — robust file downloads made easy!
+Tired of fighting with flaky download flows, missing files, or racy event listeners? Meet `tab.expect_download()`, a delightful, reliable way to handle file downloads.
+
+- Automatically sets the browser’s download behavior
+- Works with your own directory or a temporary folder (auto-cleaned!)
+- Waits for completion with a timeout (so your tests don’t hang)
+- Gives you a handy handle to read bytes/base64 or check `file_path`
+
+Tiny example that just works:
+
+```python
+import asyncio
+from pathlib import Path
+from pydoll.browser import Chrome
+
+async def download_report():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/reports')
+
+        target_dir = Path('/tmp/my-downloads')
+        async with tab.expect_download(keep_file_at=target_dir, timeout=10) as download:
+            # Trigger the download in the page (button/link/etc.)
+            await (await tab.find(text='Download latest report')).click()
+            # Wait until finished and read the content
+            data = await download.read_bytes()
+            print(f"Downloaded {len(data)} bytes to: {download.file_path}")
+
+asyncio.run(download_report())
+```
+
+Want zero-hassle cleanup? Omit `keep_file_at` and we’ll create a temp folder and remove it automatically after the context exits. Perfect for tests.
+
+### Total browser control with custom preferences! (thanks to [@LucasAlvws](https://github.com/LucasAlvws))
+Want to completely customize how Chrome behaves? **Now you can control EVERYTHING!**<br>
+The new `browser_preferences` system gives you access to hundreds of internal Chrome settings that were previously impossible to change programmatically. We're talking about deep browser customization that goes way beyond command-line flags!
+
+**The possibilities are endless:**
+```python
+options = ChromiumOptions()
+
+# Create the perfect automation environment
+options.browser_preferences = {
+    'download': {
+        'default_directory': '/tmp/downloads',
+        'prompt_for_download': False,
+        'directory_upgrade': True,
+        'extensions_to_open': ''  # Don't auto-open any downloads
+    },
+    'profile': {
+        'default_content_setting_values': {
+            'notifications': 2,        # Block all notifications
+            'geolocation': 2,         # Block location requests
+            'media_stream_camera': 2, # Block camera access
+            'media_stream_mic': 2,    # Block microphone access
+            'popups': 1               # Allow popups (useful for automation)
+        },
+        'password_manager_enabled': False,  # Disable password prompts
+        'exit_type': 'Normal'              # Always exit cleanly
+    },
+    'intl': {
+        'accept_languages': 'en-US,en',
+        'charset_default': 'UTF-8'
+    },
+    'browser': {
+        'check_default_browser': False,    # Don't ask about default browser
+        'show_update_promotion_infobar': False
+    }
+}
+
+# Or use the convenient helper methods
+options.set_default_download_directory('/tmp/downloads')
+options.set_accept_languages('en-US,en,pt-BR')  
+options.prompt_for_download = False
+```
+
+**Real-world power examples:**
+- **Silent downloads** - No prompts, no dialogs, just automated downloads
+- **Block ALL distractions** - Notifications, popups, camera requests, you name it
+- **Perfect for CI/CD** - Disable update checks, default browser prompts, crash reporting
+- **Multi-region testing** - Change languages, timezones, and locale settings instantly
+- **Security hardening** - Lock down permissions and disable unnecessary features
+- **Advanced fingerprinting control** - Modify browser install dates, engagement history, and behavioral patterns
+
+**Fingerprint customization for stealth automation:**
+```python
+import time
+
+# Simulate a browser that's been around for months
+fake_engagement_time = int(time.time()) - (7 * 24 * 60 * 60)  # 7 days ago
+
+options.browser_preferences = {
+    'settings': {
+        'touchpad': {
+            'natural_scroll': True,
+        }
+    },
+    'profile': {
+        'last_engagement_time': fake_engagement_time,
+        'exit_type': 'Normal',
+        'exited_cleanly': True
+    },
+    'newtab_page_location_override': 'https://www.google.com',
+    'session': {
+        'restore_on_startup': 1,  # Restore last session
+        'startup_urls': ['https://www.google.com']
+    }
+}
+```
+
+This level of control was previously only available to Chrome extension developers - now it's in your automation toolkit!
+
+Check the [documentation](https://pydoll.tech/docs/features/#custom-browser-preferences/) for more details.
 
 ### Concurrent Automation
 
