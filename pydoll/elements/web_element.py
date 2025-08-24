@@ -145,7 +145,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         return WebElement(object_id, self._connection_handler, attributes_list=attributes)
 
     async def get_children_elements(
-        self, max_depth: int = 1, tag_filter: list[str] = []
+        self, max_depth: int = 1, tag_filter: list[str] = [], raise_exc: bool = False
     ) -> list['WebElement']:
         """
         Retrieve all direct and nested child elements of this element.
@@ -161,16 +161,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 depth and matching the tag filter criteria.
 
         Raises:
-            ElementNotFound: If no child elements are found for this element.
+            ElementNotFound: If no child elements are found for this element and raise_exc is True.
         """
-        try:
-            return await self._get_family_elements(
-                script=Scripts.GET_CHILDREN_NODE, max_depth=max_depth, tag_filter=tag_filter
-            )
-        except ElementNotFound:
+        children = await self._get_family_elements(
+            script=Scripts.GET_CHILDREN_NODE, max_depth=max_depth, tag_filter=tag_filter
+        )
+        if not children and raise_exc:
             raise ElementNotFound(f'Child element not found for element: {self}')
+        return children
 
-    async def get_siblings_elements(self, tag_filter: list[str] = []) -> list['WebElement']:
+    async def get_siblings_elements(
+        self, tag_filter: list[str] = [], raise_exc: bool = False
+    ) -> list['WebElement']:
         """
         Retrieve all sibling elements of this element (elements at the same DOM level).
 
@@ -183,14 +185,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 parent as this element and match the tag filter criteria.
 
         Raises:
-            ElementNotFound: If no sibling elements are found for this element.
+            ElementNotFound: If no sibling elements are found for this element
+            and raise_exc is True.
         """
-        try:
-            return await self._get_family_elements(
-                script=Scripts.GET_SIBLINGS_NODE, tag_filter=tag_filter
-            )
-        except ElementNotFound:
+        siblings = await self._get_family_elements(
+            script=Scripts.GET_SIBLINGS_NODE, tag_filter=tag_filter
+        )
+        if not siblings and raise_exc:
             raise ElementNotFound(f'Sibling element not found for element: {self}')
+        return siblings
 
     async def take_screenshot(self, path: str, quality: int = 100):
         """
@@ -498,15 +501,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Returns:
             list[WebElement]: List of family WebElement objects that share the same
                 parent as this element and match the tag filter criteria.
-
-        Raises:
-            ElementNotFound: If no family elements are found for this element.
         """
         result = await self.execute_script(
             script.format(tag_filter=tag_filter, max_depth=max_depth)
         )
         if not self._has_object_id_key(result):
-            raise ElementNotFound(f'Family element not found for element: {self}')
+            return []
 
         array_object_id = result['result']['result']['objectId']
 

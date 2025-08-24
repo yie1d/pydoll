@@ -1253,8 +1253,8 @@ class TestWebElementGetChildren:
         )
 
         # Should raise ElementNotFound when script returns no objectId
-        with pytest.raises(ElementNotFound, match='Child element not found for element'):
-            await element.get_children_elements(1)
+        with pytest.raises(ElementNotFound):
+            await element.get_children_elements(1, raise_exc=True)
 
     @pytest.mark.asyncio
     async def test_get_siblings_elements_basic(self, ci_chrome_options):
@@ -1384,5 +1384,5 @@ class TestWebElementGetChildren:
         )
 
         # Should raise ElementNotFound when script returns no objectId
-        with pytest.raises(ElementNotFound, match='Sibling element not found for element'):
-            await element.get_siblings_elements()
+        with pytest.raises(ElementNotFound):
+            await element.get_siblings_elements(raise_exc=True)
