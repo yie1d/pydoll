@@ -36,6 +36,7 @@ from pydoll.protocol.input.types import (
 )
 from pydoll.protocol.page.methods import CaptureScreenshotResponse
 from pydoll.protocol.page.types import ScreenshotFormat, Viewport
+from pydoll.protocol.runtime.methods import GetPropertiesResponse
 from pydoll.utils import (
     decode_base64_to_bytes,
     extract_text_from_html,
@@ -142,6 +143,57 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         object_id = result['result']['result']['objectId']
         attributes = await self._get_object_attributes(object_id=object_id)
         return WebElement(object_id, self._connection_handler, attributes_list=attributes)
+
+    async def get_children_elements(
+        self, max_depth: int = 1, tag_filter: list[str] = [], raise_exc: bool = False
+    ) -> list['WebElement']:
+        """
+        Retrieve all direct and nested child elements of this element.
+
+        Args:
+            max_depth (int, optional): Maximum depth to traverse when finding children.
+                Defaults to 1 for direct children only.
+            tag_filter (list[str], optional): List of HTML tag names to filter results.
+                If empty, returns all child elements regardless of tag. Defaults to [].
+
+        Returns:
+            list[WebElement]: List of child WebElement objects found within the specified
+                depth and matching the tag filter criteria.
+
+        Raises:
+            ElementNotFound: If no child elements are found for this element and raise_exc is True.
+        """
+        children = await self._get_family_elements(
+            script=Scripts.GET_CHILDREN_NODE, max_depth=max_depth, tag_filter=tag_filter
+        )
+        if not children and raise_exc:
+            raise ElementNotFound(f'Child element not found for element: {self}')
+        return children
+
+    async def get_siblings_elements(
+        self, tag_filter: list[str] = [], raise_exc: bool = False
+    ) -> list['WebElement']:
+        """
+        Retrieve all sibling elements of this element (elements at the same DOM level).
+
+        Args:
+            tag_filter (list[str], optional): List of HTML tag names to filter results.
+                If empty, returns all sibling elements regardless of tag. Defaults to [].
+
+        Returns:
+            list[WebElement]: List of sibling WebElement objects that share the same
+                parent as this element and match the tag filter criteria.
+
+        Raises:
+            ElementNotFound: If no sibling elements are found for this element
+            and raise_exc is True.
+        """
+        siblings = await self._get_family_elements(
+            script=Scripts.GET_SIBLINGS_NODE, tag_filter=tag_filter
+        )
+        if not siblings and raise_exc:
+            raise ElementNotFound(f'Sibling element not found for element: {self}')
+        return siblings
 
     async def take_screenshot(self, path: str, quality: int = 100):
         """
@@ -434,6 +486,46 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 return_by_value=return_by_value,
             )
         )
+
+    async def _get_family_elements(
+        self, script: str, max_depth: int = 1, tag_filter: list[str] = []
+    ) -> list['WebElement']:
+        """
+        Retrieve all family elements of this element (elements at the same DOM level).
+
+        Args:
+            script (str): CDP script to execute for retrieving family elements.
+            tag_filter (list[str], optional): List of HTML tag names to filter results.
+                If empty, returns all family elements regardless of tag. Defaults to [].
+
+        Returns:
+            list[WebElement]: List of family WebElement objects that share the same
+                parent as this element and match the tag filter criteria.
+        """
+        result = await self.execute_script(
+            script.format(tag_filter=tag_filter, max_depth=max_depth)
+        )
+        if not self._has_object_id_key(result):
+            return []
+
+        array_object_id = result['result']['result']['objectId']
+
+        get_properties_command = RuntimeCommands.get_properties(object_id=array_object_id)
+        properties_response: GetPropertiesResponse = await self._execute_command(
+            get_properties_command
+        )
+
+        family_elements: list['WebElement'] = []
+        for prop in properties_response['result']['result']:
+            if not (prop['name'].isdigit() and 'objectId' in prop['value']):
+                continue
+            child_object_id = prop['value']['objectId']
+            attributes = await self._get_object_attributes(object_id=child_object_id)
+            family_elements.append(
+                WebElement(child_object_id, self._connection_handler, attributes_list=attributes)
+            )
+
+        return family_elements
 
     def _def_attributes(self, attributes_list: list[str]):
         """Process flat attribute list into dictionary (renames 'class' to 'class_name')."""
