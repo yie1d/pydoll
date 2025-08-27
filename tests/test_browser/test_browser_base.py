@@ -199,16 +199,13 @@ async def test_new_tab(mock_browser):
 
 @pytest.mark.asyncio
 async def test_connect_with_ws_address_returns_tab_and_sets_handler_ws(mock_browser):
-    # Prepare
     ws_browser = 'ws://localhost:9222/devtools/browser/abcdef'
     mock_browser.get_targets = AsyncMock(return_value=[{'type': 'page', 'url': 'https://example', 'targetId': 'p1'}])
     mock_browser._get_valid_tab_id = AsyncMock(return_value='p1')
     mock_browser._connection_handler._ensure_active_connection = AsyncMock()
 
-    # Act
     tab = await mock_browser.connect(ws_browser)
 
-    # Assert internal state
     assert mock_browser._ws_address == ws_browser
     assert mock_browser._connection_handler._ws_address == ws_browser
     mock_browser._connection_handler._ensure_active_connection.assert_awaited_once()
@@ -338,6 +335,30 @@ async def test_get_window_id_for_target(mock_browser):
     mock_browser._connection_handler.execute_command.assert_called_with(
         BrowserCommands.get_window_for_target('page1'), timeout=10
     )
+
+
+@pytest.mark.asyncio
+async def test_get_window_id_for_tab_raises_when_no_target_id_and_no_ws(mock_browser):
+    # Tab created only with connection_port, without target_id and ws
+    tab = Tab(mock_browser, connection_port=9222)
+    with pytest.raises(ValueError, match='Tab has no target ID or WebSocket address'):
+        await mock_browser.get_window_id_for_tab(tab)
+
+
+def test__validate_ws_address_raises_on_invalid_scheme():
+    with pytest.raises(ValueError, match='must start with ws://'):
+        Browser._validate_ws_address('http://localhost:9222/devtools/browser/abc')
+
+
+def test__validate_ws_address_raises_on_insufficient_slashes():
+    with pytest.raises(ValueError, match='must contain at least 4 slashes'):
+        Browser._validate_ws_address('ws://localhost')
+
+
+def test__get_tab_ws_address_raises_when_ws_not_set(mock_browser):
+    mock_browser._ws_address = None
+    with pytest.raises(ValueError, match='WebSocket address is not set'):
+        mock_browser._get_tab_ws_address('some-tab')
 
 
 @pytest.mark.asyncio

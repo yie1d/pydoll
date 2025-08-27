@@ -99,6 +99,18 @@ class TestTabInitialization:
         assert not tab.runtime_events_enabled
         assert not tab.intercept_file_chooser_dialog_enabled
 
+    def test_tab_singleton_with_ws_address_key(self, mock_browser, mock_connection_handler):
+        """Existing instance should be reused when created with same ws_address key."""
+        with patch('pydoll.browser.tab.ConnectionHandler', return_value=mock_connection_handler):
+            ws = 'ws://localhost:9222/devtools/page/AAA'
+            t1 = Tab(browser=mock_browser, ws_address=ws)
+            t2 = Tab(browser=mock_browser, ws_address=ws)
+            assert t1 is t2
+
+    def test_tab_init_raises_when_no_identifiers(self, mock_browser):
+        with pytest.raises(ValueError, match='Either connection_port, target_id, or ws_address must be provided'):
+            Tab(browser=mock_browser)
+
     def test_tab_properties(self, tab):
         """Test Tab boolean properties."""
         # Initially all should be False
