@@ -82,6 +82,7 @@ class Browser(ABC):  # noqa: PLR0904
         self._connection_port = connection_port if connection_port else randint(9223, 9322)
         self._browser_process_manager = BrowserProcessManager()
         self._temp_directory_manager = TempDirectoryManager()
+        self._ws_address: Optional[str] = None
         self._connection_handler = ConnectionHandler(self._connection_port)
         self._backup_preferences_dir = ''
 
@@ -101,6 +102,24 @@ class Browser(ABC):  # noqa: PLR0904
             await self.stop()
 
         await self._connection_handler.close()
+
+    async def connect(self, ws_address: str) -> Tab:
+        """
+        Connect to browser using WebSocket address. When we set
+        the _ws_address attribute, the connection handler will use
+        this address instead of resolving it from the connection port.
+
+        Note:
+            You are supposed to use this method only if you want to connect to a browser
+            that is already running.
+        """
+        self._validate_ws_address(ws_address)
+        self._ws_address = ws_address
+        self._connection_handler._ws_address = self._ws_address
+        await self._connection_handler._ensure_active_connection()
+        valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
+        tab_ws_address = self._get_tab_ws_address(valid_tab_id)
+        return Tab(self, ws_address=tab_ws_address)
 
     async def start(self, headless: bool = False) -> Tab:
         """
@@ -218,9 +237,18 @@ class Browser(ABC):  # noqa: PLR0904
             )
         )
         target_id = response['result']['targetId']
-        tab = Tab(self, self._connection_port, target_id, browser_context_id)
-        if url:
-            await tab.go_to(url)
+        tab_ws_address = self._get_tab_ws_address(target_id) if self._ws_address else None
+        tab = (
+            Tab(self, browser_context_id=browser_context_id, ws_address=tab_ws_address)
+            if tab_ws_address
+            else Tab(
+                self,
+                connection_port=self._connection_port,
+                target_id=target_id,
+                browser_context_id=browser_context_id,
+            )
+        )
+        if url: await tab.go_to(url)
         return tab
 
     async def get_targets(self) -> list[TargetInfo]:
@@ -320,7 +348,10 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def get_window_id_for_tab(self, tab: Tab) -> int:
         """Get window ID for tab (convenience method)."""
-        return await self.get_window_id_for_target(tab._target_id)
+        target_id = tab._target_id or (tab._ws_address.split('/')[-1] if tab._ws_address else None)
+        if not target_id:
+            raise ValueError('Tab has no target ID or WebSocket address')
+        return await self.get_window_id_for_target(target_id)
 
     async def get_window_id(self) -> int:
         """
@@ -507,6 +538,23 @@ class Browser(ABC):  # noqa: PLR0904
         """Validate connection port."""
         if connection_port and connection_port < 0:
             raise ValueError('Connection port must be a positive integer')
+
+    @staticmethod
+    def _validate_ws_address(ws_address: str):
+        """Validate WebSocket address."""
+        min_slashes = 4
+        if not ws_address.startswith('ws://'):
+            raise ValueError('WebSocket address must start with ws://')
+        if len(ws_address.split('/')) < min_slashes:
+            raise ValueError(f'WebSocket address must contain at least {min_slashes} slashes')
+
+    def _get_tab_ws_address(self, tab_id: str) -> str:
+        """Get WebSocket address for tab."""
+        if not self._ws_address:
+            raise ValueError('WebSocket address is not set')
+
+        ws_domain = '/'.join(self._ws_address.split('/')[:3])
+        return f'{ws_domain}/devtools/page/{tab_id}'
 
     async def _continue_request_callback(self, event: RequestPausedEvent):
         """Internal callback to continue paused requests."""
