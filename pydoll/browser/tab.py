@@ -99,9 +99,10 @@ class Tab(FindElementsMixin):
     def __new__(
         cls,
         browser: 'Browser',
-        connection_port: int,
-        target_id: str,
+        connection_port: Optional[int] = None,
+        target_id: Optional[str] = None,
         browser_context_id: Optional[str] = None,
+        ws_address: Optional[str] = None,
     ) -> 'Tab':
         """
         Create or return existing Tab instance for the given target_id.
@@ -111,27 +112,37 @@ class Tab(FindElementsMixin):
             connection_port: CDP WebSocket port.
             target_id: CDP target identifier for this tab.
             browser_context_id: Optional browser context ID.
+            ws_address: Optional WebSocket address for this tab.
 
         Returns:
             Tab instance (new or existing) for the target_id.
         """
-        if target_id in cls._instances:
-            existing_instance = cls._instances[target_id]
+        if any([target_id in cls._instances, ws_address in cls._instances]):
+            existing_instance: 'Tab'
+            if target_id in cls._instances:
+                existing_instance = cls._instances[target_id]
+            if ws_address in cls._instances:
+                existing_instance = cls._instances[ws_address]
+
             existing_instance._browser = browser
             existing_instance._connection_port = connection_port
             existing_instance._browser_context_id = browser_context_id
+            existing_instance._ws_address = ws_address
             return existing_instance
 
         instance = super().__new__(cls)
-        cls._instances[target_id] = instance
+        instance_key = target_id or ws_address
+        if instance_key:
+            cls._instances[instance_key] = instance
         return instance
 
     def __init__(
         self,
         browser: 'Browser',
-        connection_port: int,
-        target_id: str,
+        connection_port: Optional[int] = None,
+        target_id: Optional[str] = None,
         browser_context_id: Optional[str] = None,
+        ws_address: Optional[str] = None,
     ):
         """
         Initialize tab controller for existing browser tab.
@@ -141,16 +152,19 @@ class Tab(FindElementsMixin):
             connection_port: CDP WebSocket port.
             target_id: CDP target identifier for this tab.
             browser_context_id: Optional browser context ID.
+            ws_address: Optional WebSocket address for this tab.
         """
         if hasattr(self, '_initialized') and self._initialized:
             return
 
+        if not any([connection_port, target_id, ws_address]):
+            raise ValueError('Either connection_port, target_id, or ws_address must be provided')
+
         self._browser: 'Browser' = browser
-        self._connection_port: int = connection_port
-        self._target_id: str = target_id
-        self._connection_handler: ConnectionHandler = ConnectionHandler(
-            connection_port, self._target_id
-        )
+        self._connection_port: Optional[int] = connection_port
+        self._target_id: Optional[str] = target_id
+        self._ws_address: Optional[str] = ws_address
+        self._connection_handler: ConnectionHandler = self._get_connection_handler()
         self._page_events_enabled: bool = False
         self._network_events_enabled: bool = False
         self._fetch_events_enabled: bool = False
@@ -1004,6 +1018,11 @@ class Tab(FindElementsMixin):
     async def clear_callbacks(self):
         """Clear all registered event callbacks."""
         await self._connection_handler.clear_callbacks()
+
+    def _get_connection_handler(self) -> ConnectionHandler:
+        if self._ws_address:
+            return ConnectionHandler(ws_address=self._ws_address)
+        return ConnectionHandler(self._connection_port, self._target_id)
 
     async def _execute_script_with_element(self, script: str, element: WebElement):
         """
