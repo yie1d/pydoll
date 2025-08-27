@@ -198,6 +198,58 @@ async def test_new_tab(mock_browser):
 
 
 @pytest.mark.asyncio
+async def test_connect_with_ws_address_returns_tab_and_sets_handler_ws(mock_browser):
+    # Prepare
+    ws_browser = 'ws://localhost:9222/devtools/browser/abcdef'
+    mock_browser.get_targets = AsyncMock(return_value=[{'type': 'page', 'url': 'https://example', 'targetId': 'p1'}])
+    mock_browser._get_valid_tab_id = AsyncMock(return_value='p1')
+    mock_browser._connection_handler._ensure_active_connection = AsyncMock()
+
+    # Act
+    tab = await mock_browser.connect(ws_browser)
+
+    # Assert internal state
+    assert mock_browser._ws_address == ws_browser
+    assert mock_browser._connection_handler._ws_address == ws_browser
+    mock_browser._connection_handler._ensure_active_connection.assert_awaited_once()
+
+    # The returned Tab should connect using page ws address derived from browser ws
+    assert isinstance(tab, Tab)
+    assert tab._ws_address == 'ws://localhost:9222/devtools/page/p1'
+
+
+@pytest.mark.asyncio
+async def test_new_tab_uses_ws_base_when_ws_address_present(mock_browser):
+    # Simulate browser connected via ws
+    mock_browser._ws_address = 'ws://127.0.0.1:9222/devtools/browser/xyz'
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'targetId': 'new_page'}
+    }
+
+    tab = await mock_browser.new_tab()
+
+    assert isinstance(tab, Tab)
+    assert tab._ws_address == 'ws://127.0.0.1:9222/devtools/page/new_page'
+    # When ws_address is used, target_id is resolved from ws when needed
+    assert tab._target_id is None
+
+
+@pytest.mark.asyncio
+async def test_get_window_id_for_tab_uses_ws_target_when_no_target_id(mock_browser):
+    # Tab created only with ws address
+    tab = Tab(mock_browser, ws_address='ws://localhost:9222/devtools/page/targetXYZ')
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'windowId': 'win1'}
+    }
+
+    window_id = await mock_browser.get_window_id_for_tab(tab)
+    assert window_id == 'win1'
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        BrowserCommands.get_window_for_target('targetXYZ'), timeout=10
+    )
+
+
+@pytest.mark.asyncio
 async def test_cookie_management(mock_browser):
     cookies = [{'name': 'test', 'value': '123'}]
     await mock_browser.set_cookies(cookies)

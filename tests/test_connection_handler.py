@@ -45,6 +45,20 @@ async def connection_handler_with_page_id():
 
 
 @pytest.mark.asyncio
+async def test_resolve_ws_address_priority_ws_address_over_port_and_page():
+    handler = ConnectionHandler(
+        connection_port=9333,
+        page_id='SHOULD_NOT_BE_USED',
+        ws_address='ws://host:9999/devtools/page/REAL',
+        ws_address_resolver=AsyncMock(return_value='ws://host:9333/devtools/browser/ALT'),
+        ws_connector=AsyncMock(),
+    )
+    # Should return the explicit ws_address regardless of others
+    resolved = await handler._resolve_ws_address()
+    assert resolved == 'ws://host:9999/devtools/page/REAL'
+
+
+@pytest.mark.asyncio
 async def test_ping_success(connection_handler):
     connection_handler._ws_connection.ping = AsyncMock()
     result = await connection_handler.ping()
