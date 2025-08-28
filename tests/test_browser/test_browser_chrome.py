@@ -6,7 +6,7 @@ import pytest
 
 from pydoll.browser.chromium.chrome import Chrome
 from pydoll.browser.options import ChromiumOptions
-from pydoll.exceptions import InvalidBrowserPath, UnsupportedOS
+from pydoll.exceptions import InvalidBrowserPath, UnsupportedOS, InvalidConnectionPort
 
 
 class TestChromeInitialization:
@@ -350,7 +350,7 @@ class TestChromeEdgeCases:
             assert chrome._connection_port in range(9223, 9323)
 
     def test_chrome_with_negative_port(self):
-        """Test Chrome with negative port (should raise ValueError)."""
+        """Test Chrome with negative port (should raise InvalidConnectionPort)."""
         with patch.multiple(
             Chrome,
             _get_default_binary_location=MagicMock(return_value='/fake/chrome'),
@@ -367,7 +367,7 @@ class TestChromeEdgeCases:
             'pydoll.browser.managers.proxy_manager.ProxyManager',
             autospec=True,
         ):
-            with pytest.raises(ValueError, match='Connection port must be a positive integer'):
+            with pytest.raises(InvalidConnectionPort):
                 Chrome(connection_port=-1)
 
 

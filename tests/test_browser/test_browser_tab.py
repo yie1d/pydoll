@@ -12,7 +12,7 @@ from pydoll.constants import By
 from pydoll.browser.tab import Tab
 from pydoll.protocol.browser.events import BrowserEvent
 from pydoll.protocol.browser.types import DownloadBehavior
-from pydoll.exceptions import DownloadTimeout
+from pydoll.exceptions import DownloadTimeout, InvalidTabInitialization
 from pydoll.exceptions import (
     NoDialogPresent,
     PageLoadTimeout,
@@ -50,20 +50,15 @@ async def mock_browser():
 @pytest_asyncio.fixture
 async def tab(mock_browser, mock_connection_handler):
     """Tab fixture with mocked dependencies."""
-    # Clear singleton registry before each test
-    Tab._instances.clear()
-    
-    # Generate unique target_id for each test to avoid singleton conflicts
     unique_target_id = f'test-target-{uuid.uuid4().hex[:8]}'
-    
     with patch('pydoll.browser.tab.ConnectionHandler', return_value=mock_connection_handler):
-        tab = Tab(
+        created = Tab(
             browser=mock_browser,
             connection_port=9222,
             target_id=unique_target_id,
             browser_context_id='test-context-id'
         )
-        return tab
+        return created
 
 
 def assert_mock_called_at_least_once(mock_obj, method_name='execute_command'):
@@ -78,9 +73,8 @@ def assert_mock_called_at_least_once(mock_obj, method_name='execute_command'):
 
 @pytest.fixture(autouse=True)
 def cleanup_tab_registry():
-    """Automatically clean up Tab singleton registry after each test."""
+    """No-op: singleton removed; keep fixture for compatibility."""
     yield
-    Tab._instances.clear()
 
 
 class TestTabInitialization:
@@ -90,7 +84,7 @@ class TestTabInitialization:
         """Test basic Tab initialization."""
         assert tab._browser == mock_browser
         assert tab._connection_port == 9222
-        assert tab._target_id.startswith('test-target-')  # Now using unique IDs
+        assert tab._target_id.startswith('test-target-')
         assert tab._browser_context_id == 'test-context-id'
         assert not tab.page_events_enabled
         assert not tab.network_events_enabled
@@ -99,16 +93,8 @@ class TestTabInitialization:
         assert not tab.runtime_events_enabled
         assert not tab.intercept_file_chooser_dialog_enabled
 
-    def test_tab_singleton_with_ws_address_key(self, mock_browser, mock_connection_handler):
-        """Existing instance should be reused when created with same ws_address key."""
-        with patch('pydoll.browser.tab.ConnectionHandler', return_value=mock_connection_handler):
-            ws = 'ws://localhost:9222/devtools/page/AAA'
-            t1 = Tab(browser=mock_browser, ws_address=ws)
-            t2 = Tab(browser=mock_browser, ws_address=ws)
-            assert t1 is t2
-
     def test_tab_init_raises_when_no_identifiers(self, mock_browser):
-        with pytest.raises(ValueError, match='Either connection_port, target_id, or ws_address must be provided'):
+        with pytest.raises(InvalidTabInitialization):
             Tab(browser=mock_browser)
 
     def test_tab_properties(self, tab):
