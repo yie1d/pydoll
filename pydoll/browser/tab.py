@@ -40,6 +40,8 @@ from pydoll.exceptions import (
     InvalidFileExtension,
     InvalidIFrame,
     InvalidScriptWithElement,
+    InvalidTabInitialization,
+    MissingScreenshotPath,
     NetworkEventsNotEnabled,
     NoDialogPresent,
     NotAnIFrame,
@@ -89,52 +91,7 @@ class Tab(FindElementsMixin):
     Primary interface for web page automation including navigation, DOM manipulation,
     JavaScript execution, event handling, network monitoring, and specialized tasks
     like Cloudflare bypass.
-
-    This class implements a singleton pattern based on target_id to ensure
-    only one Tab instance exists per browser tab.
     """
-
-    _instances: dict[str, 'Tab'] = {}
-
-    def __new__(
-        cls,
-        browser: 'Browser',
-        connection_port: Optional[int] = None,
-        target_id: Optional[str] = None,
-        browser_context_id: Optional[str] = None,
-        ws_address: Optional[str] = None,
-    ) -> 'Tab':
-        """
-        Create or return existing Tab instance for the given target_id.
-
-        Args:
-            browser: Browser instance that created this tab.
-            connection_port: CDP WebSocket port.
-            target_id: CDP target identifier for this tab.
-            browser_context_id: Optional browser context ID.
-            ws_address: Optional WebSocket address for this tab.
-
-        Returns:
-            Tab instance (new or existing) for the target_id.
-        """
-        if any([target_id in cls._instances, ws_address in cls._instances]):
-            existing_instance: 'Tab'
-            if target_id in cls._instances:
-                existing_instance = cls._instances[target_id]
-            if ws_address in cls._instances:
-                existing_instance = cls._instances[ws_address]
-
-            existing_instance._browser = browser
-            existing_instance._connection_port = connection_port
-            existing_instance._browser_context_id = browser_context_id
-            existing_instance._ws_address = ws_address
-            return existing_instance
-
-        instance = super().__new__(cls)
-        instance_key = target_id or ws_address
-        if instance_key:
-            cls._instances[instance_key] = instance
-        return instance
 
     def __init__(
         self,
@@ -154,60 +111,23 @@ class Tab(FindElementsMixin):
             browser_context_id: Optional browser context ID.
             ws_address: Optional WebSocket address for this tab.
         """
-        if hasattr(self, '_initialized') and self._initialized:
-            return
-
         if not any([connection_port, target_id, ws_address]):
-            raise ValueError('Either connection_port, target_id, or ws_address must be provided')
+            raise InvalidTabInitialization()
 
-        self._browser: 'Browser' = browser
-        self._connection_port: Optional[int] = connection_port
-        self._target_id: Optional[str] = target_id
-        self._ws_address: Optional[str] = ws_address
-        self._connection_handler: ConnectionHandler = self._get_connection_handler()
-        self._page_events_enabled: bool = False
-        self._network_events_enabled: bool = False
-        self._fetch_events_enabled: bool = False
-        self._dom_events_enabled: bool = False
-        self._runtime_events_enabled: bool = False
-        self._intercept_file_chooser_dialog_enabled: bool = False
+        self._browser = browser
+        self._connection_port = connection_port
+        self._target_id = target_id
+        self._ws_address = ws_address
+        self._browser_context_id = browser_context_id
+        self._connection_handler = self._get_connection_handler()
+        self._page_events_enabled = False
+        self._network_events_enabled = False
+        self._fetch_events_enabled = False
+        self._dom_events_enabled = False
+        self._runtime_events_enabled = False
+        self._intercept_file_chooser_dialog_enabled = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
-        self._browser_context_id: Optional[str] = browser_context_id
-        self._initialized: bool = True
         self._request: Optional[Request] = None
-
-    @classmethod
-    def _remove_instance(cls, target_id: str) -> None:
-        """
-        Remove instance from registry when tab is closed.
-
-        Args:
-            target_id: Target ID to remove from registry.
-        """
-        cls._instances.pop(target_id, None)
-
-    @classmethod
-    def get_instance(cls, target_id: str) -> Optional['Tab']:
-        """
-        Get existing Tab instance for target_id if it exists.
-
-        Args:
-            target_id: Target ID to look up.
-
-        Returns:
-            Existing Tab instance or None if not found.
-        """
-        return cls._instances.get(target_id)
-
-    @classmethod
-    def get_all_instances(cls) -> dict[str, 'Tab']:
-        """
-        Get all active Tab instances.
-
-        Returns:
-            Dictionary mapping target_id to Tab instances.
-        """
-        return cls._instances.copy()
 
     @property
     def page_events_enabled(self) -> bool:
@@ -406,7 +326,7 @@ class Tab(FindElementsMixin):
             Tab instance becomes invalid after calling this method.
         """
         result = await self._execute_command(PageCommands.close())
-        self._remove_instance(self._target_id)
+        self._browser._tabs_opened.pop(self._target_id)
         return result
 
     async def get_frame(self, frame: WebElement) -> IFrame:
@@ -436,7 +356,17 @@ class Tab(FindElementsMixin):
         if not iframe_target:
             raise IFrameNotFound('The target for the iframe was not found')
 
-        return Tab(self._browser, self._connection_port, iframe_target['targetId'])
+        target_id = iframe_target['targetId']
+        if target_id in self._browser._tabs_opened:
+            return self._browser._tabs_opened[target_id]
+
+        tab = Tab(
+            self._browser,
+            target_id=target_id,
+            connection_port=self._connection_port,
+        )
+        self._browser._tabs_opened[target_id] = tab
+        return tab
 
     async def bring_to_front(self):
         """Brings the page to front."""
@@ -581,10 +511,10 @@ class Tab(FindElementsMixin):
 
         Raises:
             InvalidFileExtension: If file extension not supported.
-            ValueError: If path is None and as_base64 is False.
+            MissingScreenshotPath: If path is None and as_base64 is False.
         """
         if not path and not as_base64:
-            raise ValueError('path is required when as_base64 is False')
+            raise MissingScreenshotPath()
 
         output_extension = path.split('.')[-1] if path else ScreenshotFormat.PNG
         if not ScreenshotFormat.has_value(output_extension):
