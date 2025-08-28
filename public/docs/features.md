@@ -184,6 +184,44 @@ async def query_examples():
 asyncio.run(query_examples())
 ```
 
+### DOM Traversal Helpers: get_children_elements() and get_siblings_elements()
+
+These helpers let you traverse the DOM tree from a known anchor, preserving scope and intent.
+
+- get_children_elements(max_depth: int = 1, tag_filter: list[str] | None = None, raise_exc: bool = False) -> list[WebElement]
+  - Returns descendants up to max_depth using pre-order traversal (direct children first, then their descendants)
+  - max_depth=1 returns only direct children; 2 includes grandchildren, and so on
+  - tag_filter restricts results to specific tags (use lowercase names, e.g. ['a', 'li'])
+  - raise_exc=True raises ElementNotFound if the underlying script fails to resolve
+
+- get_siblings_elements(tag_filter: list[str] | None = None, raise_exc: bool = False) -> list[WebElement]
+  - Returns elements sharing the same parent, excluding the current element
+  - tag_filter narrows by tag; order follows the parent’s child order
+
+```python
+# Direct children in document order
+container = await tab.find(id='cards')
+children = await container.get_children_elements(max_depth=1)
+
+# Include grandchildren
+descendants = await container.get_children_elements(max_depth=2)
+
+# Filter by tag
+links = await container.get_children_elements(max_depth=4, tag_filter=['a'])
+
+# Horizontal traversal
+active = await tab.find(class_name='item-active')
+siblings = await active.get_siblings_elements()
+link_siblings = await active.get_siblings_elements(tag_filter=['a'])
+```
+
+Performance and correctness notes:
+
+- DOM is a tree: breadth expands quickly with depth. Prefer small max_depth values and apply tag_filter to minimize work.
+- Ordering: children follow document order; siblings follow the parent’s order for stable iteration.
+- iFrames: each iframe has its own tree. Use `tab.get_frame(iframe_element)` to traverse inside the frame, then call these helpers there.
+- Large documents: deep traversals can touch many nodes. Combine shallow traversal with targeted `find()`/`query()` on subtree anchors for best performance.
+
 ## Native Cloudflare Captcha Bypass
 
 !!! warning "Important Information About Captcha Bypass"
