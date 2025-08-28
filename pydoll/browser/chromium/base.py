@@ -25,7 +25,14 @@ from pydoll.commands import (
     TargetCommands,
 )
 from pydoll.connection import ConnectionHandler
-from pydoll.exceptions import BrowserNotRunning, FailedToStartBrowser, NoValidTabFound
+from pydoll.exceptions import (
+    BrowserNotRunning,
+    FailedToStartBrowser,
+    NoValidTabFound,
+    InvalidWebSocketAddress,
+    MissingTargetOrWebSocket,
+    InvalidConnectionPort,
+)
 from pydoll.protocol.base import Command, Response, T_CommandParams, T_CommandResponse
 from pydoll.protocol.browser.methods import (
     GetVersionResponse,
@@ -85,6 +92,7 @@ class Browser(ABC):  # noqa: PLR0904
         self._ws_address: Optional[str] = None
         self._connection_handler = ConnectionHandler(self._connection_port)
         self._backup_preferences_dir = ''
+        self._tabs_opened: dict[str, Tab] = {}
 
     async def __aenter__(self) -> 'Browser':
         """Async context manager entry."""
@@ -109,17 +117,19 @@ class Browser(ABC):  # noqa: PLR0904
         the _ws_address attribute, the connection handler will use
         this address instead of resolving it from the connection port.
 
+        Args:
+            ws_address: WebSocket address of the browser.
+
+        Returns:
+            The first tab in the list of opened tabs.
+
         Note:
             You are supposed to use this method only if you want to connect to a browser
             that is already running.
         """
-        self._validate_ws_address(ws_address)
-        self._ws_address = ws_address
-        self._connection_handler._ws_address = self._ws_address
-        await self._connection_handler._ensure_active_connection()
-        valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
-        tab_ws_address = self._get_tab_ws_address(valid_tab_id)
-        return Tab(self, ws_address=tab_ws_address)
+        await self._setup_ws_address(ws_address)
+        tabs = await self.get_opened_tabs()
+        return tabs[0]
 
     async def start(self, headless: bool = False) -> Tab:
         """
@@ -155,7 +165,9 @@ class Browser(ABC):  # noqa: PLR0904
         await self._configure_proxy(proxy_config[0], proxy_config[1])
 
         valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
-        return Tab(self, self._connection_port, valid_tab_id)
+        tab = Tab(self, target_id=valid_tab_id, connection_port=self._connection_port)
+        self._tabs_opened[valid_tab_id] = tab
+        return tab
 
     async def stop(self):
         """
@@ -237,17 +249,7 @@ class Browser(ABC):  # noqa: PLR0904
             )
         )
         target_id = response['result']['targetId']
-        tab_ws_address = self._get_tab_ws_address(target_id) if self._ws_address else None
-        tab = (
-            Tab(self, browser_context_id=browser_context_id, ws_address=tab_ws_address)
-            if tab_ws_address
-            else Tab(
-                self,
-                connection_port=self._connection_port,
-                target_id=target_id,
-                browser_context_id=browser_context_id,
-            )
-        )
+        tab = Tab(self, **self._get_tab_kwargs(target_id, browser_context_id))
         if url: await tab.go_to(url)
         return tab
 
@@ -266,7 +268,9 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def get_opened_tabs(self) -> list[Tab]:
         """
-        Get all opened tabs that are not extensions and have the type 'page'
+        Get all opened tabs that are not extensions and have the type 'page'.
+        Tabs that are already opened will be returned as is. If a new target is opened,
+        a new Tab instance will be created.
 
         Returns:
             List of Tab instances. The last tab is the most recent one.
@@ -277,10 +281,16 @@ class Browser(ABC):  # noqa: PLR0904
             for target in targets
             if target['type'] == 'page' and 'extension' not in target['url']
         ]
-        return [
-            Tab(self, self._connection_port, target['targetId'])
-            for target in reversed(valid_tab_targets)
+        all_target_ids = [target['targetId'] for target in valid_tab_targets]
+        existing_target_ids = list(self._tabs_opened.keys())
+        remaining_target_ids = [target_id for target_id in all_target_ids if target_id not in existing_target_ids]
+        existing_tabs = [self._tabs_opened[target_id] for target_id in existing_target_ids]
+        new_tabs = [
+            Tab(self, **self._get_tab_kwargs(target_id))
+            for target_id in reversed(remaining_target_ids)
         ]
+        self._tabs_opened.update(dict(zip(remaining_target_ids, new_tabs)))
+        return existing_tabs + new_tabs
 
     async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
         """Set download directory path (convenience method for set_download_behavior)."""
@@ -350,7 +360,7 @@ class Browser(ABC):  # noqa: PLR0904
         """Get window ID for tab (convenience method)."""
         target_id = tab._target_id or (tab._ws_address.split('/')[-1] if tab._ws_address else None)
         if not target_id:
-            raise ValueError('Tab has no target ID or WebSocket address')
+            raise MissingTargetOrWebSocket()
         return await self.get_window_id_for_target(target_id)
 
     async def get_window_id(self) -> int:
@@ -537,24 +547,7 @@ class Browser(ABC):  # noqa: PLR0904
     def _validate_connection_port(connection_port: Optional[int]):
         """Validate connection port."""
         if connection_port and connection_port < 0:
-            raise ValueError('Connection port must be a positive integer')
-
-    @staticmethod
-    def _validate_ws_address(ws_address: str):
-        """Validate WebSocket address."""
-        min_slashes = 4
-        if not ws_address.startswith('ws://'):
-            raise ValueError('WebSocket address must start with ws://')
-        if len(ws_address.split('/')) < min_slashes:
-            raise ValueError(f'WebSocket address must contain at least {min_slashes} slashes')
-
-    def _get_tab_ws_address(self, tab_id: str) -> str:
-        """Get WebSocket address for tab."""
-        if not self._ws_address:
-            raise ValueError('WebSocket address is not set')
-
-        ws_domain = '/'.join(self._ws_address.split('/')[:3])
-        return f'{ws_domain}/devtools/page/{tab_id}'
+            raise InvalidConnectionPort()
 
     async def _continue_request_callback(self, event: RequestPausedEvent):
         """Internal callback to continue paused requests."""
@@ -713,6 +706,56 @@ class Browser(ABC):  # noqa: PLR0904
             if arg.startswith('--user-data-dir='):
                 return arg.split('=', 1)[1]
         return None
+
+    @staticmethod
+    def _validate_ws_address(ws_address: str):
+        """Validate WebSocket address."""
+        min_slashes = 4
+        if not ws_address.startswith('ws://'):
+            raise InvalidWebSocketAddress('WebSocket address must start with ws://')
+        if len(ws_address.split('/')) < min_slashes:
+            raise InvalidWebSocketAddress(f'WebSocket address must contain at least {min_slashes} slashes')
+
+    async def _setup_ws_address(self, ws_address: str):
+        """Setup WebSocket address for browser."""
+        self._validate_ws_address(ws_address)
+        self._ws_address = ws_address
+        self._connection_handler._ws_address = self._ws_address
+        await self._connection_handler._ensure_active_connection()
+
+    def _get_tab_kwargs(self, target_id: str, browser_context_id: Optional[str] = None) -> dict:
+        """
+        Get kwargs for creating a tab based on the WebSocket address.
+        If the WebSocket address is set, the tab will be created with the WebSocket address.
+        Otherwise, the tab will be created with the connection port and target ID.
+
+        Args:
+            target_id: Target ID of the tab.
+            browser_context_id: Browser context ID of the tab.
+
+        Returns:
+            Dict of kwargs for creating a tab.
+        """
+        kwargs: dict[str, Any] = {
+            "target_id": target_id,
+            "browser_context_id": browser_context_id,
+        }
+        if self._ws_address:
+            kwargs["ws_address"] = self._get_tab_ws_address(target_id)
+        else:
+            kwargs["connection_port"] = self._connection_port
+        return kwargs
+
+    def _get_tab_ws_address(self, tab_id: str) -> str:
+        """
+        Get WebSocket address for tab. If tab_id is not provided,
+        it will be derived from the targets.
+        """
+        if not self._ws_address:
+            raise InvalidWebSocketAddress('WebSocket address is not set')
+
+        ws_domain = '/'.join(self._ws_address.split('/')[:3])
+        return f'{ws_domain}/devtools/page/{tab_id}'
 
     @abstractmethod
     def _get_default_binary_location(self) -> str:
