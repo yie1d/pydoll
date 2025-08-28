@@ -57,6 +57,53 @@ Capture visual content from web pages:
 - **High-Quality PDF Export**: Generate PDF documents from web pages
 - **Custom Formatting**: Coming soon!
 
+## Remote Connections and Hybrid Automation
+
+### Connect to a running browser via WebSocket
+
+Control an already running browser remotely by pointing Pydoll to its DevTools WebSocket address.
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def main():
+    chrome = Chrome()
+    tab = await chrome.connect('ws://YOUR_HOST:9222/devtools/browser/XXXX')
+
+    await tab.go_to('https://example.com')
+    title = await tab.execute_script('return document.title')
+    print(title)
+
+asyncio.run(main())
+```
+
+Perfect for CI, containers, remote hosts, or shared debugging targets—no local launch required. Just provide the WS endpoint and automate.
+
+### Bring your own CDP: wrap existing sessions with Pydoll objects
+
+If you already have your own CDP integration, you can still leverage Pydoll’s high-level API by wiring it to an existing DevTools session. As long as you know an element’s `objectId`, you can create a `WebElement` directly:
+
+```python
+from pydoll.connection import ConnectionHandler
+from pydoll.elements.web_element import WebElement
+
+# Your DevTools WebSocket endpoint and an element objectId you resolved via CDP
+ws = 'ws://YOUR_HOST:9222/devtools/page/ABCDEF...'
+object_id = 'REMOTE_ELEMENT_OBJECT_ID'
+
+connection_handler = ConnectionHandler(ws_address=ws)
+element = WebElement(object_id=object_id, connection_handler=connection_handler)
+
+# Use the full WebElement API immediately
+visible = await element.is_visible()
+await element.wait_until(is_interactable=True, timeout=10)
+await element.click()
+text = await element.text
+```
+
+This hybrid approach lets you blend your low-level CDP tooling (for discovery, instrumentation, or custom flows) with Pydoll’s ergonomic element API.
+
 ## Intuitive Element Finding
 
 Pydoll v2.0+ introduces a revolutionary approach to finding elements that's both more intuitive and more powerful than traditional selector-based methods.

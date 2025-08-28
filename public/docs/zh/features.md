@@ -59,6 +59,53 @@ Pydoll支持操作任何Chromium核心的浏览器:
 - **高质量 PDF 导出**：从网页生成 PDF 文档
 - **自定义格式**：即将推出！
 
+## 远程连接与混合自动化
+
+### 通过 WebSocket 连接已运行的浏览器
+
+只需提供 DevTools 的 WebSocket 地址，即可远程控制已经在运行的浏览器实例：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def main():
+    chrome = Chrome()
+    tab = await chrome.connect('ws://YOUR_HOST:9222/devtools/browser/XXXX')
+
+    await tab.go_to('https://example.com')
+    title = await tab.execute_script('return document.title')
+    print(title)
+
+asyncio.run(main())
+```
+
+非常适合 CI、容器、远程主机或共享调试目标——无需本地启动，只需指向 WS 端点即可自动化。
+
+### 自带 CDP：用 Pydoll 封装已有会话
+
+如果你已经有自己的 CDP 集成，也可以将其与 Pydoll 的高级 API 结合使用。只要你知道元素的 `objectId`，就能直接构造 `WebElement`：
+
+```python
+from pydoll.connection import ConnectionHandler
+from pydoll.elements.web_element import WebElement
+
+# 你的 DevTools WebSocket 地址，以及通过 CDP 获取到的元素 objectId
+ws = 'ws://YOUR_HOST:9222/devtools/page/ABCDEF...'
+object_id = 'REMOTE_ELEMENT_OBJECT_ID'
+
+connection_handler = ConnectionHandler(ws_address=ws)
+element = WebElement(object_id=object_id, connection_handler=connection_handler)
+
+# 立刻使用完整的 WebElement API
+visible = await element.is_visible()
+await element.wait_until(is_interactable=True, timeout=10)
+await element.click()
+text = await element.text
+```
+
+这种混合模式让你可以将底层的 CDP 能力（用于发现、注入或自定义流程）与 Pydoll 更易用的元素 API 顺畅结合。
+
 ## 直观的元素查找
 
 Pydoll v2.0+ 引入了一种革命性的元素查找方法，比传统的基于选择器的方法更直观、更强大。
