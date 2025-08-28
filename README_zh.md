@@ -49,6 +49,45 @@ Pydoll 采用全新设计理念，从零构建，直接对接 Chrome DevTools Pr
 
 ## 最新功能
 
+### 通过 WebSocket 进行远程连接 —— 随时随地控制浏览器！
+
+现在你可以使用浏览器的 WebSocket 地址直接连接到已运行的实例，并立即使用完整的 Pydoll API：
+
+```python
+from pydoll.browser.chromium import Chrome
+
+chrome = Chrome()
+tab = await chrome.connect('ws://YOUR_HOST:9222/devtools/browser/XXXX')
+
+# 直接开干：导航、元素自动化、请求、事件…
+await tab.go_to('https://example.com')
+title = await tab.execute_script('return document.title')
+print(title)
+```
+
+这让你可以轻松对接远程/CI 浏览器、容器或共享调试目标——无需本地启动，只需指向 WS 端点即可自动化。
+
+### 像专业人士一样漫游 DOM：get_children_elements() 与 get_siblings_elements()
+
+两个让复杂布局遍历更优雅的小助手：
+
+```python
+# 获取容器的直接子元素
+container = await tab.find(id='cards')
+cards = await container.get_children_elements(max_depth=1)
+
+# 想更深入？这将返回子元素的子元素（以此类推）
+elements = await container.get_children_elements(max_depth=2) 
+
+# 在横向列表中无痛遍历兄弟元素
+active = await tab.find(class_name='item--active')
+siblings = await active.get_siblings_elements()
+
+print(len(cards), len(siblings))
+```
+
+用更少样板代码表达更多意图，特别适合动态网格、列表与菜单的场景，让抓取/自动化逻辑更清晰、更可读。
+
 ### WebElement：状态等待与新的公共 API
 
 - 新增 `wait_until(...)` 用于等待元素状态，使用更简单：

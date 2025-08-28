@@ -120,6 +120,7 @@ def ci_chrome_options():
     """Chrome options optimized for CI environments."""
     options = Options()
     options.headless = True
+    options.start_timeout = 30
 
     # CI-specific arguments
     options.add_argument('--no-sandbox')
