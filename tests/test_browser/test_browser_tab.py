@@ -1281,6 +1281,29 @@ class TestTabFrameHandling:
         mock_browser.get_targets.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_get_frame_uses_cache_on_subsequent_calls(self, tab, mock_browser):
+        """Subsequent calls to get_frame should return cached Tab instance."""
+        # Prepare iframe element
+        mock_iframe_element = MagicMock()
+        mock_iframe_element.tag_name = 'iframe'
+        frame_url = 'https://example.com/iframe'
+        mock_iframe_element.get_attribute.return_value = frame_url
+        # Prepare browser targets and cache
+        mock_browser.get_targets = AsyncMock(return_value=[
+            {'targetId': 'iframe-target-id', 'url': frame_url, 'type': 'page'}
+        ])
+        tab._browser._tabs_opened = {}
+
+        with patch('pydoll.browser.tab.ConnectionHandler', autospec=True):
+            frame1 = await tab.get_frame(mock_iframe_element)
+            # Second call should reuse from cache and not create a new Tab
+            frame2 = await tab.get_frame(mock_iframe_element)
+
+        assert isinstance(frame1, Tab)
+        assert frame1 is frame2
+        assert tab._browser._tabs_opened['iframe-target-id'] is frame1
+
+    @pytest.mark.asyncio
     async def test_get_frame_not_iframe(self, tab):
         """Test getting frame from non-iframe element."""
         mock_element = MagicMock()
