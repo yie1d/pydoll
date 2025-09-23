@@ -478,7 +478,7 @@ class FindElementsMixin:
         - XPath: starts with ./, or /
         - Default: CSS_SELECTOR
         """
-        if any([expression.startswith('./'), expression.startswith('/'), expression.startswith('(/')]):
+        if expression.startswith(('./', '/', '(/')):
             return By.XPATH
 
         return By.CSS_SELECTOR
