@@ -40,10 +40,11 @@ class ConnectionHandler:
 
     def __init__(
         self,
-        connection_port: int,
+        connection_port: Optional[int] = None,
         page_id: Optional[str] = None,
         ws_address_resolver: Callable[[int], Coroutine[Any, Any, str]] = get_browser_ws_address,
         ws_connector: type[Connect] = websockets.connect,
+        ws_address: Optional[str] = None,
     ):
         """
         Initialize connection handler.
@@ -53,11 +54,13 @@ class ConnectionHandler:
             page_id: Target page ID. If None, connects to browser-level endpoint.
             ws_address_resolver: Function to resolve WebSocket URL from port.
             ws_connector: WebSocket connection factory (mainly for testing).
+            ws_address: WebSocket address. It has priority over connection_port and page_id.
         """
         self._connection_port = connection_port
         self._page_id = page_id
         self._ws_address_resolver = ws_address_resolver
         self._ws_connector = ws_connector
+        self._ws_address = ws_address
         self._ws_connection: Optional[ClientConnection] = None
         self._command_manager = CommandsManager()
         self._events_handler = EventsManager()
@@ -173,9 +176,11 @@ class ConnectionHandler:
 
     async def _resolve_ws_address(self):
         """Determine correct WebSocket address based on page ID."""
+        if self._ws_address:
+            return self._ws_address
         if not self._page_id:
             return await self._ws_address_resolver(self._connection_port)
-        return f'ws://localhost:{self._connection_port}/devtools/page/{self._page_id}'
+        return f'ws://localhost:{self._connection_port}/devtools/page/{self._page_id}'  # noqa: E501
 
     async def _handle_connection_loss(self):
         """Clean up resources after connection loss."""

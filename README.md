@@ -47,6 +47,45 @@ We believe that powerful automation shouldn't require you to become an expert in
 
 ## What's New
 
+### Remote connections via WebSocket — control any Chrome from anywhere!
+
+You asked for it, we delivered. You can now connect to an already running browser remotely via its WebSocket address and use the full Pydoll API immediately.
+
+```python
+from pydoll.browser.chromium import Chrome
+
+chrome = Chrome()
+tab = await chrome.connect('ws://YOUR_HOST:9222/devtools/browser/XXXX')
+
+# Full power unlocked: navigation, element automation, requests, events…
+await tab.go_to('https://example.com')
+title = await tab.execute_script('return document.title')
+print(title)
+```
+
+This makes it effortless to run Pydoll against remote/CI browsers, containers, or shared debugging targets — no local launch required. Just point to the WS endpoint and automate.
+
+### Navigate the DOM like a pro: get_children_elements() and get_siblings_elements()
+
+Two delightful helpers to traverse complex layouts with intention:
+
+```python
+# Grab direct children of a container
+container = await tab.find(id='cards')
+cards = await container.get_children_elements(max_depth=1)
+
+# Want to go deeper? This will return children of children (and so on)
+elements = await container.get_children_elements(max_depth=2) 
+
+# Walk horizontal lists without re-querying the DOM
+active = await tab.find(class_name='item-active')
+siblings = await active.get_siblings_elements()
+
+print(len(cards), len(siblings))
+```
+
+Use them to cut boilerplate, express intent, and keep your scraping/automation logic clean and readable — especially in dynamic grids, lists and menus.
+
 ### WebElement: state waiting and new public APIs
 
 - New `wait_until(...)` on `WebElement` to await element states with minimal code:

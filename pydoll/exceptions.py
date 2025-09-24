@@ -79,6 +79,24 @@ class NoValidTabFound(BrowserException):
     message = 'No valid attached tab found'
 
 
+class InvalidConnectionPort(BrowserException):
+    """Raised when an invalid (non-positive) connection port is provided."""
+
+    message = 'Connection port must be a positive integer'
+
+
+class InvalidWebSocketAddress(BrowserException):
+    """Raised when an invalid WebSocket address is provided or required but missing."""
+
+    message = 'Invalid WebSocket address'
+
+
+class MissingTargetOrWebSocket(BrowserException):
+    """Raised when a Tab has neither target ID nor WebSocket address available."""
+
+    message = 'Tab has no target ID or WebSocket address'
+
+
 class ProtocolException(PydollException):
     """Base class for exceptions related to CDP protocol communication."""
 
@@ -217,6 +235,18 @@ class InvalidFileExtension(ConfigurationException):
     message = 'The file extension provided is not supported'
 
 
+class InvalidTabInitialization(ConfigurationException):
+    """Raised when creating a Tab without connection_port, target_id or ws_address."""
+
+    message = 'Either connection_port, target_id, or ws_address must be provided'
+
+
+class MissingScreenshotPath(ConfigurationException):
+    """Raised when take_screenshot is called without path and not returning base64."""
+
+    message = 'path is required when as_base64 is False'
+
+
 class DialogException(PydollException):
     """Base class for exceptions related to browser dialogs."""
 
@@ -269,3 +299,9 @@ class WrongPrefsDict(PydollException):
     """Raised when the prefs dict provided contains the 'prefs' key"""
 
     message = 'The dict can not contain "prefs" key, provide only the prefs options'
+
+
+class ElementPreconditionError(ElementException):
+    """Raised when invalid or missing preconditions are provided for element operations."""
+
+    message = 'Invalid element preconditions'
