@@ -1,3 +1,14 @@
+## 2.8.1 (2025-09-27)
+
+### Fix
+
+- store the opened tab in the _tabs_opened dictionary
+- **elements**: correctly detect parenthesized XPath expressions
+
+### Refactor
+
+- simplify FindElementsMixin._get_expression_type startswith checks into single tuple
+
 ## 2.8.0 (2025-08-28)
 
 ### Feat

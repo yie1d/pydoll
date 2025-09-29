@@ -250,6 +250,7 @@ class Browser(ABC):  # noqa: PLR0904
         )
         target_id = response['result']['targetId']
         tab = Tab(self, **self._get_tab_kwargs(target_id, browser_context_id))
+        self._tabs_opened[target_id] = tab
         if url:
             await tab.go_to(url)
         return tab
