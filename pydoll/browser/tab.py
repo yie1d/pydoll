@@ -56,7 +56,7 @@ from pydoll.protocol.browser.events import (
     DownloadWillBeginEvent,
 )
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
-from pydoll.protocol.fetch.types import HeaderEntry, RequestStage
+from pydoll.protocol.fetch.types import AuthChallengeResponseType, HeaderEntry, RequestStage
 from pydoll.protocol.network.events import RequestWillBeSentEvent
 from pydoll.protocol.network.types import (
     Cookie,
@@ -706,6 +706,27 @@ class Tab(FindElementsMixin):
                 response_headers=response_headers,
                 body=body,
                 response_phrase=response_phrase,
+            )
+        )
+
+    async def continue_with_auth(
+        self,
+        request_id: str,
+        auth_challenge_response: AuthChallengeResponseType,
+        proxy_username: Optional[str] = None,
+        proxy_password: Optional[str] = None,
+    ):
+        """Continue a paused request replying to an authentication challenge.
+
+        Useful for proxy auth (407) or server auth (401) when Fetch is enabled
+        with handle_auth=True.
+        """
+        return await self._execute_command(
+            FetchCommands.continue_request_with_auth(
+                request_id=request_id,
+                auth_challenge_response=auth_challenge_response,
+                proxy_username=proxy_username,
+                proxy_password=proxy_password,
             )
         )
 
