@@ -585,6 +585,8 @@ async def test_create_browser_context_with_private_proxy_no_scheme_sanitizes_and
         ('username:password@host:8080', 'http://host:8080', ('username', 'password')),
         ('http://username:password@host:8080', 'http://host:8080', ('username', 'password')),
         ('socks5://user:pass@10.0.0.1:1080', 'socks5://10.0.0.1:1080', ('user', 'pass')),
+        ('user@host:3128', 'http://host:3128', ('user', '')),
+        ('http://user@host:8080', 'http://host:8080', ('user', '')),
         ('host:3128', 'http://host:3128', None),
     ],
 )
