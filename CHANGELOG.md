@@ -1,3 +1,38 @@
+## 2.8.1 (2025-09-27)
+
+### Fix
+
+- store the opened tab in the _tabs_opened dictionary
+- **elements**: correctly detect parenthesized XPath expressions
+
+### Refactor
+
+- simplify FindElementsMixin._get_expression_type startswith checks into single tuple
+
+## 2.8.0 (2025-08-28)
+
+### Feat
+
+- adding get_siblings_elements method
+- adding get_children_elements method
+- refactor Tab class to support optional WebSocket address handling
+- add WebSocket connection support for existing browser instances
+- add optional WebSocket address support in connection handler
+
+### Fix
+
+- add get siblings and get childen methods a raise_exc option
+- improving children and parent retrive docstring and creating a private generic method for then
+- using new execute_script public method
+- solving conflicts
+- rename pages fixtures files and adding a error test
+
+### Refactor
+
+- refactor Tab class to improve initialization and error handling
+- refactor Browser class to manage opened tabs and WebSocket setup
+- add new exception classes for connection and WebSocket errors
+
 ## 2.7.0 (2025-08-22)
 
 ### Feat

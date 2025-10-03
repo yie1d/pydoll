@@ -46,6 +46,7 @@ from pydoll.exceptions import (
     NoDialogPresent,
     NotAnIFrame,
     PageLoadTimeout,
+    TopLevelTargetRequired,
     WaitElementTimeout,
 )
 from pydoll.protocol.base import EmptyResponse, Response
@@ -252,7 +253,7 @@ class Tab(FindElementsMixin):
     async def enable_auto_solve_cloudflare_captcha(
         self,
         custom_selector: Optional[tuple[By, str]] = None,
-        time_before_click: int = 2,
+        time_before_click: int = 5,
         time_to_wait_captcha: int = 5,
     ):
         """
@@ -527,7 +528,15 @@ class Tab(FindElementsMixin):
                 capture_beyond_viewport=beyond_viewport,
             )
         )
-        screenshot_data = response['result']['data']
+
+        try:
+            screenshot_data = response['result']['data']
+        except KeyError:
+            raise TopLevelTargetRequired(
+                'Command can only be executed on top-level targets. Please use '
+                'take_screenshot method on the WebElement object instead.'
+            )
+
         if as_base64:
             return screenshot_data
 

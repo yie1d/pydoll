@@ -28,10 +28,10 @@ from pydoll.connection import ConnectionHandler
 from pydoll.exceptions import (
     BrowserNotRunning,
     FailedToStartBrowser,
-    NoValidTabFound,
+    InvalidConnectionPort,
     InvalidWebSocketAddress,
     MissingTargetOrWebSocket,
-    InvalidConnectionPort,
+    NoValidTabFound,
 )
 from pydoll.protocol.base import Command, Response, T_CommandParams, T_CommandResponse
 from pydoll.protocol.browser.methods import (
@@ -250,7 +250,9 @@ class Browser(ABC):  # noqa: PLR0904
         )
         target_id = response['result']['targetId']
         tab = Tab(self, **self._get_tab_kwargs(target_id, browser_context_id))
-        if url: await tab.go_to(url)
+        self._tabs_opened[target_id] = tab
+        if url:
+            await tab.go_to(url)
         return tab
 
     async def get_targets(self) -> list[TargetInfo]:
@@ -283,7 +285,9 @@ class Browser(ABC):  # noqa: PLR0904
         ]
         all_target_ids = [target['targetId'] for target in valid_tab_targets]
         existing_target_ids = list(self._tabs_opened.keys())
-        remaining_target_ids = [target_id for target_id in all_target_ids if target_id not in existing_target_ids]
+        remaining_target_ids = [
+            target_id for target_id in all_target_ids if target_id not in existing_target_ids
+        ]
         existing_tabs = [self._tabs_opened[target_id] for target_id in existing_target_ids]
         new_tabs = [
             Tab(self, **self._get_tab_kwargs(target_id))
@@ -714,7 +718,9 @@ class Browser(ABC):  # noqa: PLR0904
         if not ws_address.startswith('ws://'):
             raise InvalidWebSocketAddress('WebSocket address must start with ws://')
         if len(ws_address.split('/')) < min_slashes:
-            raise InvalidWebSocketAddress(f'WebSocket address must contain at least {min_slashes} slashes')
+            raise InvalidWebSocketAddress(
+                f'WebSocket address must contain at least {min_slashes} slashes'
+            )
 
     async def _setup_ws_address(self, ws_address: str):
         """Setup WebSocket address for browser."""
@@ -737,13 +743,13 @@ class Browser(ABC):  # noqa: PLR0904
             Dict of kwargs for creating a tab.
         """
         kwargs: dict[str, Any] = {
-            "target_id": target_id,
-            "browser_context_id": browser_context_id,
+            'target_id': target_id,
+            'browser_context_id': browser_context_id,
         }
         if self._ws_address:
-            kwargs["ws_address"] = self._get_tab_ws_address(target_id)
+            kwargs['ws_address'] = self._get_tab_ws_address(target_id)
         else:
-            kwargs["connection_port"] = self._connection_port
+            kwargs['connection_port'] = self._connection_port
         return kwargs
 
     def _get_tab_ws_address(self, tab_id: str) -> str:

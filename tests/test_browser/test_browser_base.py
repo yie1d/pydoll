@@ -25,6 +25,10 @@ from pydoll.commands import (
 )
 from pydoll.protocol.fetch.events import FetchEvent
 from pydoll.connection.connection_handler import ConnectionHandler
+from pydoll.exceptions import (
+    MissingTargetOrWebSocket,
+    InvalidWebSocketAddress,
+)
 
 from pydoll.protocol.network.types import RequestMethod, ErrorReason
 from pydoll.protocol.browser.types import DownloadBehavior, PermissionType
@@ -227,8 +231,8 @@ async def test_new_tab_uses_ws_base_when_ws_address_present(mock_browser):
 
     assert isinstance(tab, Tab)
     assert tab._ws_address == 'ws://127.0.0.1:9222/devtools/page/new_page'
-    # When ws_address is used, target_id is resolved from ws when needed
-    assert tab._target_id is None
+    # When ws_address is used, target_id can be known from create_target response
+    assert tab._target_id == 'new_page'
 
 
 @pytest.mark.asyncio
@@ -341,23 +345,23 @@ async def test_get_window_id_for_target(mock_browser):
 async def test_get_window_id_for_tab_raises_when_no_target_id_and_no_ws(mock_browser):
     # Tab created only with connection_port, without target_id and ws
     tab = Tab(mock_browser, connection_port=9222)
-    with pytest.raises(ValueError, match='Tab has no target ID or WebSocket address'):
+    with pytest.raises(MissingTargetOrWebSocket):
         await mock_browser.get_window_id_for_tab(tab)
 
 
 def test__validate_ws_address_raises_on_invalid_scheme():
-    with pytest.raises(ValueError, match='must start with ws://'):
+    with pytest.raises(InvalidWebSocketAddress):
         Browser._validate_ws_address('http://localhost:9222/devtools/browser/abc')
 
 
 def test__validate_ws_address_raises_on_insufficient_slashes():
-    with pytest.raises(ValueError, match='must contain at least 4 slashes'):
+    with pytest.raises(InvalidWebSocketAddress):
         Browser._validate_ws_address('ws://localhost')
 
 
 def test__get_tab_ws_address_raises_when_ws_not_set(mock_browser):
     mock_browser._ws_address = None
-    with pytest.raises(ValueError, match='WebSocket address is not set'):
+    with pytest.raises(InvalidWebSocketAddress):
         mock_browser._get_tab_ws_address('some-tab')
 
 
@@ -899,7 +903,7 @@ async def test_get_opened_tabs_success(mock_browser):
     """Test get_opened_tabs with multiple valid tabs."""
     # Mock get_targets to return various target types
     mock_targets = [
-        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
+        {'targetId': 'tab3', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
         {
             'targetId': 'ext1',
             'type': 'page',
@@ -913,13 +917,10 @@ async def test_get_opened_tabs_success(mock_browser):
             'url': 'chrome://background',
             'title': 'Background Page',
         },
-        {'targetId': 'tab3', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
+        {'targetId': 'tab1', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry to avoid conflicts
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -931,7 +932,7 @@ async def test_get_opened_tabs_success(mock_browser):
         assert isinstance(tab, Tab)
 
     # Verify target IDs are correct (should be in reversed order)
-    expected_target_ids = ['tab3', 'tab2', 'tab1']  # reversed order
+    expected_target_ids = ['tab1', 'tab2', 'tab3']  # reversed order
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
 
@@ -966,9 +967,6 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return empty list
@@ -982,9 +980,6 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
 async def test_get_opened_tabs_empty_targets(mock_browser):
     """Test get_opened_tabs when no targets exist."""
     mock_browser.get_targets = AsyncMock(return_value=[])
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -1015,9 +1010,6 @@ async def test_get_opened_tabs_filters_extensions(mock_browser):
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -1057,9 +1049,6 @@ async def test_get_opened_tabs_filters_non_page_types(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return only 2 tabs (only 'page' type)
@@ -1073,34 +1062,6 @@ async def test_get_opened_tabs_filters_non_page_types(mock_browser):
     expected_target_ids = ['tab2', 'tab1']
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
-
-
-@pytest.mark.asyncio
-async def test_get_opened_tabs_singleton_behavior(mock_browser):
-    """Test that get_opened_tabs respects Tab singleton pattern."""
-    mock_targets = [
-        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
-        {'targetId': 'tab2', 'type': 'page', 'url': 'https://google.com', 'title': 'Google'},
-    ]
-
-    mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
-    # First call
-    tabs1 = await mock_browser.get_opened_tabs()
-
-    # Second call with same targets
-    tabs2 = await mock_browser.get_opened_tabs()
-
-    # Should return same instances due to singleton pattern
-    assert len(tabs1) == len(tabs2) == 2
-
-    # Verify singleton behavior - same target_id should return same instance
-    for tab1, tab2 in zip(tabs1, tabs2):
-        if tab1._target_id == tab2._target_id:
-            assert tab1 is tab2  # Same object reference
 
 
 @pytest.mark.asyncio
@@ -1128,9 +1089,6 @@ async def test_get_opened_tabs_order_is_reversed(mock_browser):
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -1180,9 +1138,6 @@ async def test_get_opened_tabs_with_mixed_valid_invalid_targets(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return only 3 valid tabs
@@ -1203,9 +1158,6 @@ async def test_get_opened_tabs_integration_with_new_tab(mock_browser):
     """Test get_opened_tabs integration with new_tab method."""
     # Mock initial targets (empty)
     mock_browser.get_targets = AsyncMock(return_value=[])
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     # Initially no tabs
     tabs = await mock_browser.get_opened_tabs()
@@ -1237,8 +1189,8 @@ async def test_get_opened_tabs_integration_with_new_tab(mock_browser):
     assert len(tabs) == 1
     assert tabs[0]._target_id == 'new_tab_1'
 
-    # Due to singleton pattern, should be the same instance
-    assert tabs[0] is new_tab
+    # Without singleton, instance identity can differ but ids should match
+    assert tabs[0]._target_id == new_tab._target_id
 
 
 @pytest.mark.asyncio
