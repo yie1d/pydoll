@@ -1,7 +1,7 @@
 <p align="center">
     <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="Pydoll Logo" /> <br>
 </p>
-<h1 align="center">Pydoll: Automate the Web, Naturally</h1>
+<h1 align="center">Pydoll: scraping, the easier way</h1>
 
 <p align="center">
     <a href="https://github.com/autoscrape-labs/pydoll/stargazers"><img src="https://img.shields.io/github/stars/autoscrape-labs/pydoll?style=social"></a>
@@ -44,43 +44,6 @@ We believe that powerful automation shouldn't require you to become an expert in
 - **Asynchronous Performance**: For high-speed automation and multiple simultaneous tasks
 - **Humanized Interactions**: Mimic real user behavior
 - **Simplicity**: With Pydoll, you install and you're ready to automate.
-
-## What's New
-
-### WebElement: state waiting and new public APIs
-
-- New `wait_until(...)` on `WebElement` to await element states with minimal code:
-
-```python
-# Wait until it becomes visible OR the timeout expires
-await element.wait_until(is_visible=True, timeout=5)
-
-# Wait until it becomes interactable (visible, on top, receiving pointer events)
-await element.wait_until(is_interactable=True, timeout=10)
-```
-
-- Methods now public on `WebElement`:
-  - `is_visible()`
-    - Checks that the element has a visible area (> 0), isn’t hidden by CSS and is in the viewport (after `scroll_into_view()` when needed). Useful pre-check before interactions.
-  - `is_interactable()`
-    - “Click-ready” state: combines visibility, enabledness and pointer-event hit testing. Ideal for robust flows that avoid lost clicks.
-  - `is_on_top()`
-    - Verifies the element is the top hit-test target at the intended click point, avoiding overlays.
-  - `execute_script(script: str, return_by_value: bool = False)`
-    - Executes JavaScript in the element’s own context (where `this` is the element). Great for fine-tuning and quick inspections.
-
-```python
-# Visually outline the element via JS
-await element.execute_script("this.style.outline='2px solid #22d3ee'")
-
-# Confirm states
-visible = await element.is_visible()
-interactable = await element.is_interactable()
-on_top = await element.is_on_top()
-```
-
-These additions simplify waiting and state validation before clicking/typing, reducing flakiness and making automations more predictable.
-
 
 ## 📦 Installation
 
@@ -206,7 +169,6 @@ In this example, we're configuring the browser to use a proxy and a 1920x1080 wi
 
 Pydoll offers a series of advanced features to please even the most
 demanding users.
-
 
 
 ### Advanced Element Search

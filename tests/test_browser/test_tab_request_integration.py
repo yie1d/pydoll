@@ -42,9 +42,6 @@ async def mock_browser():
 @pytest_asyncio.fixture
 async def tab(mock_browser, mock_connection_handler):
     """Tab fixture with mocked dependencies."""
-    # Clear singleton registry before each test
-    Tab._instances.clear()
-    
     # Generate unique target_id for each test to avoid singleton conflicts
     unique_target_id = f'test-target-{uuid.uuid4().hex[:8]}'
     
@@ -69,9 +66,8 @@ async def tab(mock_browser, mock_connection_handler):
 
 @pytest_asyncio.fixture
 def cleanup_tab_registry():
-    """Clean up Tab singleton registry after each test."""
+    """No-op: singleton removed; keep fixture for compatibility."""
     yield
-    Tab._instances.clear()
 
 
 class TestTabRequestProperty:
@@ -405,20 +401,18 @@ class TestTabRequestEdgeCases:
             )
             request1 = tab1.request
             
-            # Second tab instance with same target_id (simulating singleton behavior)
+            # Second tab instance with same target_id (no singleton anymore)
             tab2 = Tab(
                 browser=mock_browser,
                 connection_port=9222,
                 target_id=target_id,
                 browser_context_id='test-context-reuse'
             )
-            
-            # Due to singleton behavior, tab2 should be the same as tab1
-            assert tab2 is tab1
-            
-            # Request should also be the same
+            # With no singleton, they are different instances, but independent request is allowed
+            assert tab2 is not tab1
+            # Request instances are created per tab; they are distinct here
             request2 = tab2.request
-            assert request2 is request1
+            assert request2 is not request1
 
     @pytest.mark.asyncio
     async def test_request_property_memory_efficiency(self, tab):

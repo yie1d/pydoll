@@ -25,6 +25,10 @@ from pydoll.commands import (
 )
 from pydoll.protocol.fetch.events import FetchEvent
 from pydoll.connection.connection_handler import ConnectionHandler
+from pydoll.exceptions import (
+    MissingTargetOrWebSocket,
+    InvalidWebSocketAddress,
+)
 
 from pydoll.protocol.network.types import RequestMethod, ErrorReason
 from pydoll.protocol.browser.types import DownloadBehavior, PermissionType
@@ -198,6 +202,55 @@ async def test_new_tab(mock_browser):
 
 
 @pytest.mark.asyncio
+async def test_connect_with_ws_address_returns_tab_and_sets_handler_ws(mock_browser):
+    ws_browser = 'ws://localhost:9222/devtools/browser/abcdef'
+    mock_browser.get_targets = AsyncMock(return_value=[{'type': 'page', 'url': 'https://example', 'targetId': 'p1'}])
+    mock_browser._get_valid_tab_id = AsyncMock(return_value='p1')
+    mock_browser._connection_handler._ensure_active_connection = AsyncMock()
+
+    tab = await mock_browser.connect(ws_browser)
+
+    assert mock_browser._ws_address == ws_browser
+    assert mock_browser._connection_handler._ws_address == ws_browser
+    mock_browser._connection_handler._ensure_active_connection.assert_awaited_once()
+
+    # The returned Tab should connect using page ws address derived from browser ws
+    assert isinstance(tab, Tab)
+    assert tab._ws_address == 'ws://localhost:9222/devtools/page/p1'
+
+
+@pytest.mark.asyncio
+async def test_new_tab_uses_ws_base_when_ws_address_present(mock_browser):
+    # Simulate browser connected via ws
+    mock_browser._ws_address = 'ws://127.0.0.1:9222/devtools/browser/xyz'
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'targetId': 'new_page'}
+    }
+
+    tab = await mock_browser.new_tab()
+
+    assert isinstance(tab, Tab)
+    assert tab._ws_address == 'ws://127.0.0.1:9222/devtools/page/new_page'
+    # When ws_address is used, target_id can be known from create_target response
+    assert tab._target_id == 'new_page'
+
+
+@pytest.mark.asyncio
+async def test_get_window_id_for_tab_uses_ws_target_when_no_target_id(mock_browser):
+    # Tab created only with ws address
+    tab = Tab(mock_browser, ws_address='ws://localhost:9222/devtools/page/targetXYZ')
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'windowId': 'win1'}
+    }
+
+    window_id = await mock_browser.get_window_id_for_tab(tab)
+    assert window_id == 'win1'
+    mock_browser._connection_handler.execute_command.assert_called_with(
+        BrowserCommands.get_window_for_target('targetXYZ'), timeout=10
+    )
+
+
+@pytest.mark.asyncio
 async def test_cookie_management(mock_browser):
     cookies = [{'name': 'test', 'value': '123'}]
     await mock_browser.set_cookies(cookies)
@@ -286,6 +339,30 @@ async def test_get_window_id_for_target(mock_browser):
     mock_browser._connection_handler.execute_command.assert_called_with(
         BrowserCommands.get_window_for_target('page1'), timeout=10
     )
+
+
+@pytest.mark.asyncio
+async def test_get_window_id_for_tab_raises_when_no_target_id_and_no_ws(mock_browser):
+    # Tab created only with connection_port, without target_id and ws
+    tab = Tab(mock_browser, connection_port=9222)
+    with pytest.raises(MissingTargetOrWebSocket):
+        await mock_browser.get_window_id_for_tab(tab)
+
+
+def test__validate_ws_address_raises_on_invalid_scheme():
+    with pytest.raises(InvalidWebSocketAddress):
+        Browser._validate_ws_address('http://localhost:9222/devtools/browser/abc')
+
+
+def test__validate_ws_address_raises_on_insufficient_slashes():
+    with pytest.raises(InvalidWebSocketAddress):
+        Browser._validate_ws_address('ws://localhost')
+
+
+def test__get_tab_ws_address_raises_when_ws_not_set(mock_browser):
+    mock_browser._ws_address = None
+    with pytest.raises(InvalidWebSocketAddress):
+        mock_browser._get_tab_ws_address('some-tab')
 
 
 @pytest.mark.asyncio
@@ -460,6 +537,132 @@ async def test_create_browser_context(mock_browser):
             proxy_server='http://proxy.example.com:8080', proxy_bypass_list='localhost'
         )
     )
+
+
+@pytest.mark.asyncio
+async def test_create_browser_context_with_private_proxy_sanitizes_and_stores_auth(mock_browser):
+    mock_browser._execute_command = AsyncMock()
+    mock_browser._execute_command.return_value = {'result': {'browserContextId': 'ctx1'}}
+
+    context_id = await mock_browser.create_browser_context(
+        proxy_server='http://user:pass@proxy.example.com:8080',
+        proxy_bypass_list='localhost',
+    )
+
+    assert context_id == 'ctx1'
+    # Should send sanitized proxy (without credentials) to CDP
+    mock_browser._execute_command.assert_called_with(
+        TargetCommands.create_browser_context(
+            proxy_server='http://proxy.example.com:8080', proxy_bypass_list='localhost'
+        )
+    )
+    # Credentials must be stored per-context for later Tab setup
+    assert mock_browser._context_proxy_auth['ctx1'] == ('user', 'pass')
+
+
+@pytest.mark.asyncio
+async def test_create_browser_context_with_private_proxy_no_scheme_sanitizes_and_stores_auth(
+    mock_browser,
+):
+    mock_browser._execute_command = AsyncMock()
+    mock_browser._execute_command.return_value = {'result': {'browserContextId': 'ctx2'}}
+
+    # Without scheme -> should default to http://
+    context_id = await mock_browser.create_browser_context(
+        proxy_server='user:pwd@host.local:9000'
+    )
+
+    assert context_id == 'ctx2'
+    mock_browser._execute_command.assert_called_with(
+        TargetCommands.create_browser_context(proxy_server='http://host.local:9000', proxy_bypass_list=None)
+    )
+    assert mock_browser._context_proxy_auth['ctx2'] == ('user', 'pwd')
+
+
+@pytest.mark.parametrize(
+    'input_proxy, expected_sanitized, expected_creds',
+    [
+        ('username:password@host:8080', 'http://host:8080', ('username', 'password')),
+        ('http://username:password@host:8080', 'http://host:8080', ('username', 'password')),
+        ('socks5://user:pass@10.0.0.1:1080', 'socks5://10.0.0.1:1080', ('user', 'pass')),
+        ('user@host:3128', 'http://host:3128', ('user', '')),
+        ('http://user@host:8080', 'http://host:8080', ('user', '')),
+        ('host:3128', 'http://host:3128', None),
+    ],
+)
+def test__sanitize_proxy_and_extract_auth_variants(input_proxy, expected_sanitized, expected_creds):
+    sanitized, creds = Browser._sanitize_proxy_and_extract_auth(input_proxy)
+    assert sanitized == expected_sanitized
+    assert creds == expected_creds
+
+
+@pytest.mark.asyncio
+@patch('pydoll.browser.chromium.base.Tab')
+async def test_new_tab_sets_up_context_proxy_auth_handlers(MockTab, mock_browser):
+    # Arrange context credentials
+    context_id = 'ctx-auth'
+    mock_browser._context_proxy_auth[context_id] = ('u1', 'p1')
+
+    # Mock CDP create_target response
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'targetId': 'new_page_ctx'}
+    }
+
+    # Fake Tab with async methods
+    fake_tab = MagicMock()
+    fake_tab.enable_fetch_events = AsyncMock()
+    fake_tab.on = AsyncMock()
+    MockTab.return_value = fake_tab
+
+    # Act
+    tab = await mock_browser.new_tab(browser_context_id=context_id)
+
+    # Assert: enable fetch events with auth handling
+    fake_tab.enable_fetch_events.assert_awaited_once()
+    enable_call = fake_tab.enable_fetch_events.await_args
+    assert enable_call.kwargs.get('handle_auth') is True
+
+    # Assert: event handlers registered with temporary=True
+    from pydoll.protocol.fetch.events import FetchEvent as FE
+    # First: request paused
+    assert any(
+        (c.args[0] == FE.REQUEST_PAUSED and c.kwargs.get('temporary') is True)
+        for c in fake_tab.on.await_args_list
+    )
+    # Second: auth required
+    auth_calls = [c for c in fake_tab.on.await_args_list if c.args[0] == FE.AUTH_REQUIRED]
+    assert len(auth_calls) == 1
+    cb = auth_calls[0].args[1]
+    from functools import partial as _partial
+    assert isinstance(cb, _partial)
+    assert cb.keywords.get('proxy_username') == 'u1'
+    assert cb.keywords.get('proxy_password') == 'p1'
+    assert cb.keywords.get('tab') is fake_tab
+
+    # Returned tab is the fake
+    assert tab is fake_tab
+
+
+@pytest.mark.asyncio
+@patch('pydoll.browser.chromium.base.Tab')
+async def test_new_tab_without_context_proxy_auth_does_not_setup_handlers(MockTab, mock_browser):
+    # No credentials stored for this context
+    context_id = 'ctx-no-auth'
+    mock_browser._context_proxy_auth.pop(context_id, None)
+
+    mock_browser._connection_handler.execute_command.return_value = {
+        'result': {'targetId': 'new_page2'}
+    }
+
+    fake_tab = MagicMock()
+    fake_tab.enable_fetch_events = AsyncMock()
+    fake_tab.on = AsyncMock()
+    MockTab.return_value = fake_tab
+
+    await mock_browser.new_tab(browser_context_id=context_id)
+
+    fake_tab.enable_fetch_events.assert_not_called()
+    fake_tab.on.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -826,7 +1029,7 @@ async def test_get_opened_tabs_success(mock_browser):
     """Test get_opened_tabs with multiple valid tabs."""
     # Mock get_targets to return various target types
     mock_targets = [
-        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
+        {'targetId': 'tab3', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
         {
             'targetId': 'ext1',
             'type': 'page',
@@ -840,13 +1043,10 @@ async def test_get_opened_tabs_success(mock_browser):
             'url': 'chrome://background',
             'title': 'Background Page',
         },
-        {'targetId': 'tab3', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
+        {'targetId': 'tab1', 'type': 'page', 'url': 'chrome://newtab/', 'title': 'New Tab'},
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry to avoid conflicts
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -858,7 +1058,7 @@ async def test_get_opened_tabs_success(mock_browser):
         assert isinstance(tab, Tab)
 
     # Verify target IDs are correct (should be in reversed order)
-    expected_target_ids = ['tab3', 'tab2', 'tab1']  # reversed order
+    expected_target_ids = ['tab1', 'tab2', 'tab3']  # reversed order
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
 
@@ -893,9 +1093,6 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return empty list
@@ -909,9 +1106,6 @@ async def test_get_opened_tabs_no_valid_tabs(mock_browser):
 async def test_get_opened_tabs_empty_targets(mock_browser):
     """Test get_opened_tabs when no targets exist."""
     mock_browser.get_targets = AsyncMock(return_value=[])
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -942,9 +1136,6 @@ async def test_get_opened_tabs_filters_extensions(mock_browser):
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -984,9 +1175,6 @@ async def test_get_opened_tabs_filters_non_page_types(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return only 2 tabs (only 'page' type)
@@ -1000,34 +1188,6 @@ async def test_get_opened_tabs_filters_non_page_types(mock_browser):
     expected_target_ids = ['tab2', 'tab1']
     actual_target_ids = [tab._target_id for tab in tabs]
     assert actual_target_ids == expected_target_ids
-
-
-@pytest.mark.asyncio
-async def test_get_opened_tabs_singleton_behavior(mock_browser):
-    """Test that get_opened_tabs respects Tab singleton pattern."""
-    mock_targets = [
-        {'targetId': 'tab1', 'type': 'page', 'url': 'https://example.com', 'title': 'Example Site'},
-        {'targetId': 'tab2', 'type': 'page', 'url': 'https://google.com', 'title': 'Google'},
-    ]
-
-    mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
-    # First call
-    tabs1 = await mock_browser.get_opened_tabs()
-
-    # Second call with same targets
-    tabs2 = await mock_browser.get_opened_tabs()
-
-    # Should return same instances due to singleton pattern
-    assert len(tabs1) == len(tabs2) == 2
-
-    # Verify singleton behavior - same target_id should return same instance
-    for tab1, tab2 in zip(tabs1, tabs2):
-        if tab1._target_id == tab2._target_id:
-            assert tab1 is tab2  # Same object reference
 
 
 @pytest.mark.asyncio
@@ -1055,9 +1215,6 @@ async def test_get_opened_tabs_order_is_reversed(mock_browser):
     ]
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     tabs = await mock_browser.get_opened_tabs()
 
@@ -1107,9 +1264,6 @@ async def test_get_opened_tabs_with_mixed_valid_invalid_targets(mock_browser):
 
     mock_browser.get_targets = AsyncMock(return_value=mock_targets)
 
-    # Clear Tab singleton registry
-    Tab._instances.clear()
-
     tabs = await mock_browser.get_opened_tabs()
 
     # Should return only 3 valid tabs
@@ -1130,9 +1284,6 @@ async def test_get_opened_tabs_integration_with_new_tab(mock_browser):
     """Test get_opened_tabs integration with new_tab method."""
     # Mock initial targets (empty)
     mock_browser.get_targets = AsyncMock(return_value=[])
-
-    # Clear Tab singleton registry
-    Tab._instances.clear()
 
     # Initially no tabs
     tabs = await mock_browser.get_opened_tabs()
@@ -1164,8 +1315,8 @@ async def test_get_opened_tabs_integration_with_new_tab(mock_browser):
     assert len(tabs) == 1
     assert tabs[0]._target_id == 'new_tab_1'
 
-    # Due to singleton pattern, should be the same instance
-    assert tabs[0] is new_tab
+    # Without singleton, instance identity can differ but ids should match
+    assert tabs[0]._target_id == new_tab._target_id
 
 
 @pytest.mark.asyncio

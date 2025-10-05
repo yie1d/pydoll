@@ -6,7 +6,7 @@ import pytest
 from pydoll.browser.chromium.edge import Edge
 from pydoll.browser.managers import ChromiumOptionsManager
 from pydoll.browser.options import ChromiumOptions
-from pydoll.exceptions import UnsupportedOS, InvalidBrowserPath
+from pydoll.exceptions import UnsupportedOS, InvalidBrowserPath, InvalidConnectionPort
 
 
 class TestEdgeInitialization:
@@ -403,7 +403,7 @@ class TestEdgeEdgeCases:
             assert edge._connection_port in range(9223, 9323)
 
     def test_edge_with_negative_port(self):
-        """Test Edge with negative port (should raise ValueError)."""
+        """Test Edge with negative port (should raise InvalidConnectionPort)."""
         with patch.multiple(
             Edge,
             _get_default_binary_location=MagicMock(return_value='/fake/edge'),
@@ -420,7 +420,7 @@ class TestEdgeEdgeCases:
             'pydoll.browser.managers.proxy_manager.ProxyManager',
             autospec=True,
         ):
-            with pytest.raises(ValueError, match='Connection port must be a positive integer'):
+            with pytest.raises(InvalidConnectionPort):
                 Edge(connection_port=-1)
 
     def test_edge_with_edge_specific_arguments(self):

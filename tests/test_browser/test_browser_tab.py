@@ -12,7 +12,7 @@ from pydoll.constants import By
 from pydoll.browser.tab import Tab
 from pydoll.protocol.browser.events import BrowserEvent
 from pydoll.protocol.browser.types import DownloadBehavior
-from pydoll.exceptions import DownloadTimeout
+from pydoll.exceptions import DownloadTimeout, InvalidTabInitialization
 from pydoll.exceptions import (
     NoDialogPresent,
     PageLoadTimeout,
@@ -23,6 +23,7 @@ from pydoll.exceptions import (
     WaitElementTimeout,
     NetworkEventsNotEnabled,
     InvalidScriptWithElement,
+    TopLevelTargetRequired,
 )
 
 @pytest_asyncio.fixture
@@ -50,20 +51,15 @@ async def mock_browser():
 @pytest_asyncio.fixture
 async def tab(mock_browser, mock_connection_handler):
     """Tab fixture with mocked dependencies."""
-    # Clear singleton registry before each test
-    Tab._instances.clear()
-    
-    # Generate unique target_id for each test to avoid singleton conflicts
     unique_target_id = f'test-target-{uuid.uuid4().hex[:8]}'
-    
     with patch('pydoll.browser.tab.ConnectionHandler', return_value=mock_connection_handler):
-        tab = Tab(
+        created = Tab(
             browser=mock_browser,
             connection_port=9222,
             target_id=unique_target_id,
             browser_context_id='test-context-id'
         )
-        return tab
+        return created
 
 
 def assert_mock_called_at_least_once(mock_obj, method_name='execute_command'):
@@ -78,9 +74,8 @@ def assert_mock_called_at_least_once(mock_obj, method_name='execute_command'):
 
 @pytest.fixture(autouse=True)
 def cleanup_tab_registry():
-    """Automatically clean up Tab singleton registry after each test."""
+    """No-op: singleton removed; keep fixture for compatibility."""
     yield
-    Tab._instances.clear()
 
 
 class TestTabInitialization:
@@ -90,7 +85,7 @@ class TestTabInitialization:
         """Test basic Tab initialization."""
         assert tab._browser == mock_browser
         assert tab._connection_port == 9222
-        assert tab._target_id.startswith('test-target-')  # Now using unique IDs
+        assert tab._target_id.startswith('test-target-')
         assert tab._browser_context_id == 'test-context-id'
         assert not tab.page_events_enabled
         assert not tab.network_events_enabled
@@ -98,6 +93,10 @@ class TestTabInitialization:
         assert not tab.dom_events_enabled
         assert not tab.runtime_events_enabled
         assert not tab.intercept_file_chooser_dialog_enabled
+
+    def test_tab_init_raises_when_no_identifiers(self, mock_browser):
+        with pytest.raises(InvalidTabInitialization):
+            Tab(browser=mock_browser)
 
     def test_tab_properties(self, tab):
         """Test Tab boolean properties."""
@@ -425,6 +424,14 @@ class TestTabScreenshotAndPDF:
             assert command['method'] == 'Page.captureScreenshot'
             assert command['params']['captureBeyondViewport'] is True
             assert result == screenshot_data
+
+    @pytest.mark.asyncio
+    async def test_take_screenshot_in_iframe_raises_top_level_required(self, tab):
+        """Tab.take_screenshot must be called on top-level targets; iframe Tab raises."""
+        # Simulate CDP returning no image data (missing 'data' key) for non top-level target
+        with patch.object(tab, '_execute_command', AsyncMock(return_value={'result': {}})):
+            with pytest.raises(TopLevelTargetRequired):
+                await tab.take_screenshot(path=None, as_base64=True)
 
     @pytest.mark.asyncio
     async def test_print_to_pdf_to_file(self, tab, tmp_path):
@@ -1281,6 +1288,29 @@ class TestTabFrameHandling:
         
         assert isinstance(frame, Tab)
         mock_browser.get_targets.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_frame_uses_cache_on_subsequent_calls(self, tab, mock_browser):
+        """Subsequent calls to get_frame should return cached Tab instance."""
+        # Prepare iframe element
+        mock_iframe_element = MagicMock()
+        mock_iframe_element.tag_name = 'iframe'
+        frame_url = 'https://example.com/iframe'
+        mock_iframe_element.get_attribute.return_value = frame_url
+        # Prepare browser targets and cache
+        mock_browser.get_targets = AsyncMock(return_value=[
+            {'targetId': 'iframe-target-id', 'url': frame_url, 'type': 'page'}
+        ])
+        tab._browser._tabs_opened = {}
+
+        with patch('pydoll.browser.tab.ConnectionHandler', autospec=True):
+            frame1 = await tab.get_frame(mock_iframe_element)
+            # Second call should reuse from cache and not create a new Tab
+            frame2 = await tab.get_frame(mock_iframe_element)
+
+        assert isinstance(frame1, Tab)
+        assert frame1 is frame2
+        assert tab._browser._tabs_opened['iframe-target-id'] is frame1
 
     @pytest.mark.asyncio
     async def test_get_frame_not_iframe(self, tab):
