@@ -1,3 +1,9 @@
+## 2.9.0 (2025-10-05)
+
+### Feat
+
+- add configurable page load state
+
 ## 2.8.2 (2025-10-03)
 
 ### Fix
