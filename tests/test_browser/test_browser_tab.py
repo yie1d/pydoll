@@ -6,6 +6,7 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch, ANY
 from pathlib import Path
 
+from pydoll.browser.options import ChromiumOptions
 from pydoll.protocol.network.types import ResourceType, RequestMethod
 from pydoll.protocol.fetch.types import RequestStage
 from pydoll.constants import By
@@ -45,6 +46,7 @@ async def mock_browser():
     """Mock browser instance."""
     browser = MagicMock()
     browser.close_tab = AsyncMock()
+    browser.options = ChromiumOptions()
     return browser
 
 
