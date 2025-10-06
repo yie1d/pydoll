@@ -53,6 +53,19 @@ pip install pydoll-python
 
 And that's it! Just install and start automating.
 
+
+## ⭐ Sponsors
+The support from sponsors is essential to keep the project alive, evolving, and accessible to the entire community. Each partnership helps cover costs, drive new features, and ensure ongoing development.
+We are truly grateful to everyone who believes in and supports the project!
+
+<br>
+<p style="font-size:21px; color:black;">Browser testing via 
+    <a href="https://www.lambdatest.com/?utm_source=pydoll&utm_medium=sponsor" target="_blank">
+        <img src="https://www.lambdatest.com/blue-logo.png" style="vertical-align: middle;" width="250" height="45" />
+    </a>
+</p>
+<br>
+
 ## 🚀 Getting Started
 
 ### Your first automation
