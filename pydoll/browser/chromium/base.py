@@ -656,22 +656,24 @@ class Browser(ABC):  # noqa: PLR0904
         self, private_proxy: bool, proxy_credentials: tuple[Optional[str], Optional[str]]
     ):
         """Setup proxy authentication handling if needed."""
-        if private_proxy:
-            await self.enable_fetch_events(handle_auth_requests=True)
-            await self.on(
-                FetchEvent.REQUEST_PAUSED,
-                self._continue_request_callback,
-                temporary=True,
-            )
-            await self.on(
-                FetchEvent.AUTH_REQUIRED,
-                partial(
-                    self._continue_request_with_auth_callback,
-                    proxy_username=proxy_credentials[0],
-                    proxy_password=proxy_credentials[1],
-                ),
-                temporary=True,
-            )
+        if not private_proxy:
+            return
+
+        await self.enable_fetch_events(handle_auth_requests=True)
+        await self.on(
+            FetchEvent.REQUEST_PAUSED,
+            self._continue_request_callback,
+            temporary=True,
+        )
+        await self.on(
+            FetchEvent.AUTH_REQUIRED,
+            partial(
+                self._continue_request_with_auth_callback,
+                proxy_username=proxy_credentials[0],
+                proxy_password=proxy_credentials[1],
+            ),
+            temporary=True,
+        )
 
     @staticmethod
     def _is_valid_tab(target: TargetInfo) -> bool:
