@@ -483,42 +483,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self,
         script: str,
         *,
-        arguments: Optional[list[CallArgument]] = None,
-        silent: Optional[bool] = None,
         return_by_value: Optional[bool] = None,
-        generate_preview: Optional[bool] = None,
-        user_gesture: Optional[bool] = None,
         await_promise: Optional[bool] = None,
-        execution_context_id: Optional[int] = None,
-        object_group: Optional[str] = None,
-        throw_on_side_effect: Optional[bool] = None,
-        unique_context_id: Optional[str] = None,
-        serialization_options: Optional[SerializationOptions] = None,
     ) -> CallFunctionOnResponse:
         """
         Execute JavaScript in element context.
 
-
         Args:
             script: JavaScript code to execute. Use 'this' to reference this element.
-            arguments: Arguments to pass to the function (Runtime.callFunctionOn).
-            silent: Whether to silence exceptions (Runtime.callFunctionOn).
             return_by_value: Whether to return the result by value instead of reference
                 (Runtime.callFunctionOn).
-            generate_preview: Whether to generate a preview for the result
-                (Runtime.callFunctionOn).
-            user_gesture: Whether to treat the call as initiated by user gesture
-                (Runtime.callFunctionOn).
             await_promise: Whether to await promise result (Runtime.callFunctionOn).
-            execution_context_id: ID of the execution context to call the function in
-                (Runtime.callFunctionOn).
-            object_group: Symbolic group name for the result (Runtime.callFunctionOn).
-            throw_on_side_effect: Whether to throw if side effect cannot be ruled out
-                (Runtime.callFunctionOn).
-            unique_context_id: Unique context ID for the function call
-                (Runtime.callFunctionOn).
-            serialization_options: Serialization options for the result
-                (Runtime.callFunctionOn).
 
         Returns:
             The result of the script execution.
@@ -542,17 +517,8 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         command = RuntimeCommands.call_function_on(
             function_declaration=script,
             object_id=self._object_id,
-            arguments=arguments,
-            silent=silent,
             return_by_value=return_by_value,
-            generate_preview=generate_preview,
-            user_gesture=user_gesture,
             await_promise=await_promise,
-            execution_context_id=execution_context_id,
-            object_group=object_group,
-            throw_on_side_effect=throw_on_side_effect,
-            unique_context_id=unique_context_id,
-            serialization_options=serialization_options,
         )
         return await self._execute_command(command)
 

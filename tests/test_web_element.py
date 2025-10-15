@@ -908,7 +908,6 @@ class TestWebElementUtilityMethods:
         result = await web_element.execute_script(
             script, 
             return_by_value=True,
-            user_gesture=True
         )
 
         assert result == expected_response
@@ -916,7 +915,6 @@ class TestWebElementUtilityMethods:
             object_id='test-object-id',
             function_declaration='function(){ this.value = "test" }',
             return_by_value=True,
-            user_gesture=True,
         )
         web_element._connection_handler.execute_command.assert_called_once_with(
             expected_command, timeout=60
@@ -966,27 +964,6 @@ class TestWebElementUtilityMethods:
         assert 'this.style.margin = "5px"' in func_decl
         assert 'this.style.borderRadius = "8px"' in func_decl
 
-    @pytest.mark.asyncio
-    async def test_execute_script_with_arguments(self, web_element):
-        """Test execute_script with custom arguments."""
-        from pydoll.protocol.runtime.types import CallArgument
-        
-        script = 'this.value = arguments[0];'
-        arguments = [CallArgument(value="test_value")]
-        expected_response = {'result': {'result': {'value': None}}}
-        web_element._connection_handler.execute_command.return_value = expected_response
-
-        result = await web_element.execute_script(script, arguments=arguments)
-
-        assert result == expected_response
-        expected_command = RuntimeCommands.call_function_on(
-            object_id='test-object-id',
-            function_declaration='function(){ this.value = arguments[0]; }',
-            arguments=arguments,
-        )
-        web_element._connection_handler.execute_command.assert_called_once_with(
-            expected_command, timeout=60
-        )
 
     @pytest.mark.asyncio
     async def test_execute_script_all_parameters(self, web_element):
@@ -997,30 +974,16 @@ class TestWebElementUtilityMethods:
 
         result = await web_element.execute_script(
             script,
-            silent=True,
             return_by_value=True,
-            generate_preview=True,
-            user_gesture=True,
             await_promise=True,
-            execution_context_id=123,
-            object_group="test_group",
-            throw_on_side_effect=True,
-            unique_context_id="unique_123"
         )
 
         assert result == expected_response
         expected_command = RuntimeCommands.call_function_on(
             object_id='test-object-id',
             function_declaration='function(){ this.click() }',
-            silent=True,
             return_by_value=True,
-            generate_preview=True,
-            user_gesture=True,
             await_promise=True,
-            execution_context_id=123,
-            object_group="test_group",
-            throw_on_side_effect=True,
-            unique_context_id="unique_123",
         )
         web_element._connection_handler.execute_command.assert_called_once_with(
             expected_command, timeout=60
