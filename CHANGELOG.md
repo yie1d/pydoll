@@ -1,3 +1,13 @@
+## 2.9.1 (2025-10-15)
+
+### Fix
+
+- change download event handling to use PageEvent instead of BrowserEvent
+
+### Refactor
+
+- use early return in setup proxy method
+
 ## 2.9.0 (2025-10-05)
 
 ### Feat
