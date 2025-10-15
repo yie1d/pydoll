@@ -51,7 +51,6 @@ from pydoll.exceptions import (
 )
 from pydoll.protocol.base import EmptyResponse, Response
 from pydoll.protocol.browser.events import (
-    BrowserEvent,
     DownloadProgressEvent,
     DownloadWillBeginEvent,
 )
@@ -851,8 +850,12 @@ class Tab(FindElementsMixin):
             behavior=DownloadBehavior.ALLOW,
             download_path=download_dir,
             browser_context_id=self._browser_context_id,
-            events_enabled=True,
         )
+
+        _page_events_was_enabled = True
+        if not self._page_events_enabled:
+            _page_events_was_enabled = False
+            await self.enable_page_events()
 
         loop = asyncio.get_event_loop()
         will_begin: asyncio.Future[bool] = loop.create_future()
@@ -889,13 +892,13 @@ class Tab(FindElementsMixin):
             if not done.done():
                 done.set_result(True)
 
-        cb_id_will_begin = await self.on(
-            BrowserEvent.DOWNLOAD_WILL_BEGIN,
+        await self.on(
+            PageEvent.DOWNLOAD_WILL_BEGIN,
             cast(Callable[[dict], Awaitable[Any]], on_will_begin),
             True,
         )
         cb_id_progress = await self.on(
-            BrowserEvent.DOWNLOAD_PROGRESS,
+            PageEvent.DOWNLOAD_PROGRESS,
             cast(Callable[[dict], Awaitable[Any]], on_progress),
             False,
         )
@@ -914,19 +917,37 @@ class Tab(FindElementsMixin):
             except asyncio.TimeoutError as exc:
                 raise DownloadTimeout() from exc
         finally:
-            await self.remove_callback(cb_id_progress)
-            await self.remove_callback(cb_id_will_begin)
-            await self._browser.set_download_behavior(
-                behavior=DownloadBehavior.DEFAULT,
-                browser_context_id=self._browser_context_id,
+            await self._cleanup_download_context(
+                cb_id_progress,
+                _page_events_was_enabled,
+                cleanup_dir,
+                state,
+                download_dir,
             )
 
-            if cleanup_dir:
-                file_path = state['filePath']
-                if not file_path:
-                    return
-                Path(file_path).unlink(missing_ok=True)
-                shutil.rmtree(download_dir, ignore_errors=True)
+    async def _cleanup_download_context(
+        self,
+        cb_id_progress: int,
+        page_events_was_enabled: bool,
+        cleanup_dir: bool,
+        state: dict[str, Any],
+        download_dir: str,
+    ) -> None:
+        await self.remove_callback(cb_id_progress)
+        await self._browser.set_download_behavior(
+            behavior=DownloadBehavior.DEFAULT,
+            browser_context_id=self._browser_context_id,
+        )
+
+        if cleanup_dir:
+            file_path = state['filePath']
+            if not file_path:
+                return
+            Path(file_path).unlink(missing_ok=True)
+            shutil.rmtree(download_dir, ignore_errors=True)
+
+        if not page_events_was_enabled:
+            await self.disable_page_events()
 
     @overload
     async def on(
