@@ -821,14 +821,21 @@ class Browser(ABC):  # noqa: PLR0904
 
     def _get_tab_ws_address(self, tab_id: str) -> str:
         """
-        Get WebSocket address for tab. If tab_id is not provided,
-        it will be derived from the targets.
+        Get WebSocket address for a specific tab, preserving any query or fragment
+        components present in the original browser-level WebSocket URL.
+
+        This ensures authentication tokens passed via query string (e.g.,
+        ws://host/devtools/browser/abc?token=XYZ) are retained when switching
+        to the page-level endpoint (devtools/page/<tab_id>), which is critical
+        for providers like Browserless or authenticated CDP proxies.
         """
         if not self._ws_address:
             raise InvalidWebSocketAddress('WebSocket address is not set')
 
-        ws_domain = '/'.join(self._ws_address.split('/')[:3])
-        return f'{ws_domain}/devtools/page/{tab_id}'
+        parts = urlsplit(self._ws_address)
+        # Preserve scheme and netloc; build the page path and keep query/fragment
+        page_path = f'/devtools/page/{tab_id}'
+        return urlunsplit((parts.scheme, parts.netloc, page_path, parts.query, parts.fragment))
 
     @staticmethod
     def _sanitize_proxy_and_extract_auth(
