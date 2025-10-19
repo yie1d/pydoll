@@ -1,6 +1,9 @@
+import logging
 from typing import Optional
 
 from pydoll.browser.options import Options
+
+logger = logging.getLogger(__name__)
 
 
 class ProxyManager:
@@ -20,6 +23,7 @@ class ProxyManager:
                 Will be modified if credentials are found.
         """
         self.options = options
+        logger.debug('ProxyManager initialized with options')
 
     def get_proxy_credentials(self) -> tuple[bool, tuple[Optional[str], Optional[str]]]:
         """
@@ -44,6 +48,11 @@ class ProxyManager:
                 self._update_proxy_argument(index, clean_proxy)
                 private_proxy = True
                 credentials = (username, password)
+                logger.debug(
+                    f'Proxy credentials extracted (user_set={bool(username)}); argument sanitized'
+                )
+            else:
+                logger.debug('Proxy configured without embedded credentials')
 
         return private_proxy, credentials
 
@@ -56,7 +65,9 @@ class ProxyManager:
         """
         for index, arg in enumerate(self.options.arguments):
             if arg.startswith('--proxy-server='):
-                return index, arg.split('=', 1)[1]
+                value = arg.split('=', 1)[1]
+                logger.debug(f'Found proxy argument at index {index}: {value}')
+                return index, value
         return None
 
     @staticmethod
@@ -83,7 +94,7 @@ class ProxyManager:
             creds_part, server_part = proxy_value.split('@', 1)
             username, password = creds_part.split(':', 1)
 
-            clean_proxy = f"{scheme}://{server_part}" if has_scheme else server_part
+            clean_proxy = f'{scheme}://{server_part}' if has_scheme else server_part
             return True, username, password, clean_proxy
         except ValueError:
             return False, None, None, proxy_value
@@ -91,3 +102,4 @@ class ProxyManager:
     def _update_proxy_argument(self, index: int, clean_proxy: str) -> None:
         """Replace proxy argument with credential-free version."""
         self.options.arguments[index] = f'--proxy-server={clean_proxy}'
+        logger.debug(f'Proxy argument updated at index {index}: {clean_proxy}')
