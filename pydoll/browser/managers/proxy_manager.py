@@ -74,16 +74,13 @@ class ProxyManager:
             return False, None, None, proxy_value
 
         try:
-            # Split scheme if present
+            scheme = ''
+            has_scheme = False
             if '://' in proxy_value:
-                scheme, rest = proxy_value.split('://', 1)
+                scheme, proxy_value = proxy_value.split('://', 1)
                 has_scheme = True
-            else:
-                rest = proxy_value
-                scheme = ''
-                has_scheme = False
 
-            creds_part, server_part = rest.split('@', 1)
+            creds_part, server_part = proxy_value.split('@', 1)
             username, password = creds_part.split(':', 1)
 
             clean_proxy = f"{scheme}://{server_part}" if has_scheme else server_part
