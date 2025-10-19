@@ -1,3 +1,18 @@
+## 2.9.2 (2025-10-19)
+
+### Fix
+
+- update process creation to capture output and clean proxy format
+- preserve query and fragment in WebSocket URL for tabs
+
+### Refactor
+
+- remove debug logging for request status and network events
+- refactor logger messages to use consistent single quotes
+- fix merge conflicts
+- add logging for browser lifecycle and context management events
+- refactor proxy parsing logic for improved clarity and efficiency
+
 ## 2.9.1 (2025-10-15)
 
 ### Fix
