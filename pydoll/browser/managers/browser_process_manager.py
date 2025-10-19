@@ -28,8 +28,7 @@ class BrowserProcessManager:
         self._process_creator = process_creator or self._default_process_creator
         self._process: Optional[subprocess.Popen] = None
         logger.debug(
-            f"BrowserProcessManager initialized; "
-            f"custom process_creator={bool(process_creator)}"
+            f'BrowserProcessManager initialized; custom process_creator={bool(process_creator)}'
         )
 
     def start_browser_process(
@@ -52,24 +51,23 @@ class BrowserProcessManager:
         Note:
             Automatically adds --remote-debugging-port argument.
         """
-        logger.info(f"Starting browser process: {binary_location} on port {port}")
+        logger.info(f'Starting browser process: {binary_location} on port {port}')
         command = [
             binary_location,
             f'--remote-debugging-port={port}',
             *arguments,
         ]
-        logger.debug(f"Command: {command}")
+        logger.debug(f'Command: {command}')
         self._process = self._process_creator(command)
         logger.debug(
-            f"Browser process started: pid="
-            f"{self._process.pid if self._process else 'unknown'}"
+            f'Browser process started: pid={self._process.pid if self._process else "unknown"}'
         )
         return self._process
 
     @staticmethod
     def _default_process_creator(command: list[str]) -> subprocess.Popen:
         """Create browser process with output capture to prevent console clutter."""
-        logger.debug(f"Creating process: {command}")
+        logger.debug(f'Creating process: {command}')
         return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def stop_process(self):
@@ -80,12 +78,12 @@ class BrowserProcessManager:
         Safe to call even if no process is running.
         """
         if self._process:
-            logger.info(f"Stopping browser process pid={self._process.pid}")
+            logger.info(f'Stopping browser process pid={self._process.pid}')
             self._process.terminate()
             try:
                 self._process.wait(timeout=15)
-                logger.debug("Process terminated gracefully")
+                logger.debug('Process terminated gracefully')
             except subprocess.TimeoutExpired:
-                logger.warning("Process did not terminate in 15s; sending SIGKILL")
+                logger.warning('Process did not terminate in 15s; sending SIGKILL')
                 self._process.kill()
-                logger.debug("Process killed")
+                logger.debug('Process killed')

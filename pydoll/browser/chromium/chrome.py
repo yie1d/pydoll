@@ -42,7 +42,7 @@ class Chrome(Browser):
             ValueError: If executable not found at default location.
         """
         os_name = platform.system()
-        logger.debug(f"Resolving default Chrome binary for OS: {os_name}")
+        logger.debug(f'Resolving default Chrome binary for OS: {os_name}')
 
         browser_paths = {
             'Windows': [
@@ -61,9 +61,9 @@ class Chrome(Browser):
         browser_path = browser_paths.get(os_name)
 
         if not browser_path:
-            logger.error(f"Unsupported OS: {os_name}")
+            logger.error(f'Unsupported OS: {os_name}')
             raise UnsupportedOS(f'Unsupported OS: {os_name}')
 
         path = validate_browser_paths(browser_path)
-        logger.debug(f"Using Chrome binary: {path}")
+        logger.debug(f'Using Chrome binary: {path}')
         return path

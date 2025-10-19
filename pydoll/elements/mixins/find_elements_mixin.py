@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 from pydoll.commands import (
@@ -21,6 +22,9 @@ from pydoll.protocol.runtime.methods import (
 
 if TYPE_CHECKING:
     from pydoll.elements.web_element import WebElement
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_web_element(*args, **kwargs):
@@ -155,6 +159,11 @@ class FindElementsMixin:
             ElementNotFound: If no elements found and raise_exc=True.
             WaitElementTimeout: If timeout specified and no elements appear in time.
         """
+        logger.debug(
+            f'find() called with id={id}, class_name={class_name}, name={name}, '
+            f'tag_name={tag_name}, text={text}, timeout={timeout}, '
+            f'find_all={find_all}, raise_exc={raise_exc}, attrs={attributes}'
+        )
         if not any([id, class_name, name, tag_name, text, *attributes.keys()]):
             raise ValueError(
                 'At least one of the following arguments must be provided: id, '
@@ -171,6 +180,7 @@ class FindElementsMixin:
         by, value = self._get_by_and_value(
             by_map, id, class_name, name, tag_name, text, **attributes
         )
+        logger.debug(f'find() resolved to by={by} value={value}')
         return await self.find_or_wait_element(
             by, value, timeout=timeout, find_all=find_all, raise_exc=raise_exc
         )
@@ -242,7 +252,12 @@ class FindElementsMixin:
             ElementNotFound: If no elements found and raise_exc=True.
             WaitElementTimeout: If timeout specified and no elements appear in time.
         """
+        logger.debug(
+            f'query() called with expression={expression}, timeout={timeout}, '
+            f'find_all={find_all}, raise_exc={raise_exc}'
+        )
         by = self._get_expression_type(expression)
+        logger.debug(f'query() resolved to by={by}')
         return await self.find_or_wait_element(
             by=by, value=expression, timeout=timeout, find_all=find_all, raise_exc=raise_exc
         )
@@ -276,19 +291,29 @@ class FindElementsMixin:
             ElementNotFound: If no elements found with timeout=0 and raise_exc=True.
             WaitElementTimeout: If elements not found within timeout and raise_exc=True.
         """
+        logger.debug(
+            f'find_or_wait_element(): by={by}, value={value}, timeout={timeout}, '
+            f'find_all={find_all}, raise_exc={raise_exc}'
+        )
         find_method = self._find_element if not find_all else self._find_elements
         start_time = asyncio.get_event_loop().time()
 
         if not timeout:
+            logger.debug('No timeout specified; performing single attempt')
             return await find_method(by, value, raise_exc=raise_exc)
 
         while True:
             element = await find_method(by, value, raise_exc=False)
             if element:
+                if isinstance(element, list):
+                    logger.debug(f'Found {len(element)} elements within timeout window')
+                else:
+                    logger.debug('Found 1 element within timeout window')
                 return element
 
             if asyncio.get_event_loop().time() - start_time > timeout:
                 if raise_exc:
+                    logger.error('Timeout while waiting for elements')
                     raise WaitElementTimeout()
                 return None
 
@@ -315,6 +340,7 @@ class FindElementsMixin:
         Raises:
             ElementNotFound: If element not found and raise_exc=True.
         """
+        logger.debug(f'_find_element(): by={by}, value={value}, raise_exc={raise_exc}')
         if hasattr(self, '_object_id'):
             command = self._get_find_element_command(by, value, self._object_id)
         else:
@@ -326,11 +352,13 @@ class FindElementsMixin:
 
         if not self._has_object_id_key(response_for_command):
             if raise_exc:
+                logger.debug('Element not found and raise_exc=True')
                 raise ElementNotFound()
             return None
 
         object_id = response_for_command['result']['result']['objectId']
         attributes = await self._get_object_attributes(object_id=object_id)
+        logger.debug(f'_find_element() found object_id={object_id}')
         return create_web_element(object_id, self._connection_handler, by, value, attributes)
 
     async def _find_elements(
@@ -354,6 +382,7 @@ class FindElementsMixin:
         Raises:
             ElementNotFound: If no elements found and raise_exc=True.
         """
+        logger.debug(f'_find_elements(): by={by}, value={value}, raise_exc={raise_exc}')
         if hasattr(self, '_object_id'):
             command = self._get_find_elements_command(by, value, self._object_id)
         else:
@@ -365,6 +394,7 @@ class FindElementsMixin:
 
         if not response_for_command.get('result', {}).get('result', {}).get('objectId'):
             if raise_exc:
+                logger.debug('No elements found and raise_exc=True')
                 raise ElementNotFound()
             return []
 
@@ -392,6 +422,7 @@ class FindElementsMixin:
             elements.append(
                 create_web_element(object_id, self._connection_handler, by, value, attributes)
             )
+        logger.debug(f'_find_elements() returning {len(elements)} elements')
         return elements
 
     async def _get_object_attributes(self, object_id: str) -> list[str]:
@@ -420,6 +451,10 @@ class FindElementsMixin:
         For single attribute: uses direct selector strategy.
         For multiple attributes: builds XPath expression.
         """
+        logger.debug(
+            f'_get_by_and_value(): id={id}, class_name={class_name}, name={name}, '
+            f'tag_name={tag_name}, text={text}, attrs={attributes}'
+        )
         simple_selectors = {
             'id': id,
             'class_name': class_name,
@@ -431,9 +466,11 @@ class FindElementsMixin:
         if len(provided_selectors) == 1 and not text and not attributes:
             key, value = next(iter(provided_selectors.items()))
             by = by_map[key]
+            logger.debug(f'Simple selector resolved: by={by}, value={value}')
             return by, value
 
         xpath = self._build_xpath(id, class_name, name, tag_name, text, **attributes)
+        logger.debug(f'Complex selector resolved to XPath: {xpath}')
         return By.XPATH, xpath
 
     @staticmethod
@@ -467,7 +504,11 @@ class FindElementsMixin:
         for attribute, value in attributes.items():
             xpath_conditions.append(f'@{attribute}="{value}"')
 
-        return f'{base_xpath}[{" and ".join(xpath_conditions)}]' if xpath_conditions else base_xpath
+        xpath = (
+            f'{base_xpath}[{" and ".join(xpath_conditions)}]' if xpath_conditions else base_xpath
+        )
+        logger.debug(f'_build_xpath() -> {xpath}')
+        return xpath
 
     @staticmethod
     def _get_expression_type(expression: str) -> By:

@@ -99,20 +99,20 @@ class Browser(ABC):  # noqa: PLR0904
         self._tabs_opened: dict[str, Tab] = {}
         self._context_proxy_auth: dict[str, tuple[str, str]] = {}
         logger.debug(
-            f"Browser initialized: port={self._connection_port}, "
-            f"headless={getattr(self.options, 'headless', None)}"
+            f'Browser initialized: port={self._connection_port}, '
+            f'headless={getattr(self.options, "headless", None)}'
         )
 
     async def __aenter__(self) -> 'Browser':
         """Async context manager entry."""
-        logger.debug("Entering browser async context")
+        logger.debug('Entering browser async context')
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit with cleanup."""
-        logger.debug(f"Exiting browser async context: exc_type={exc_type}")
+        logger.debug(f'Exiting browser async context: exc_type={exc_type}')
         if self._backup_preferences_dir:
-            logger.debug(f"Restoring backup preferences directory: {self._backup_preferences_dir}")
+            logger.debug(f'Restoring backup preferences directory: {self._backup_preferences_dir}')
             user_data_dir = self._get_user_data_dir()
             shutil.copy2(
                 self._backup_preferences_dir,
@@ -139,10 +139,10 @@ class Browser(ABC):  # noqa: PLR0904
             You are supposed to use this method only if you want to connect to a browser
             that is already running.
         """
-        logger.info(f"Connecting to browser via WebSocket: {ws_address}")
+        logger.info(f'Connecting to browser via WebSocket: {ws_address}')
         await self._setup_ws_address(ws_address)
         tabs = await self.get_opened_tabs()
-        logger.info(f"Connected. Tabs available: {len(tabs)}")
+        logger.info(f'Connected. Tabs available: {len(tabs)}')
         return tabs[0]
 
     async def start(self, headless: bool = False) -> Tab:
@@ -159,7 +159,6 @@ class Browser(ABC):  # noqa: PLR0904
             FailedToStartBrowser: If the browser fails to start or connect.
         """
         if headless:
-
             warnings.warn(
                 "The 'headless' parameter is deprecated and will be removed in a future version. "
                 'Use `options.headless = True` instead.',
@@ -169,24 +168,24 @@ class Browser(ABC):  # noqa: PLR0904
             self.options.headless = headless
 
         binary_location = self.options.binary_location or self._get_default_binary_location()
-        logger.debug("Resolved binary location: %s", binary_location)
+        logger.debug('Resolved binary location: %s', binary_location)
 
         self._setup_user_dir()
-        logger.debug("User data directory configured")
+        logger.debug('User data directory configured')
         proxy_config = self._proxy_manager.get_proxy_credentials()
 
-        logger.info(f"Starting browser process on port {self._connection_port}")
+        logger.info(f'Starting browser process on port {self._connection_port}')
         self._browser_process_manager.start_browser_process(
             binary_location, self._connection_port, self.options.arguments
         )
         await self._verify_browser_running()
-        logger.info("Browser process started and responsive")
+        logger.info('Browser process started and responsive')
         await self._configure_proxy(proxy_config[0], proxy_config[1])
 
         valid_tab_id = await self._get_valid_tab_id(await self.get_targets())
         tab = Tab(self, target_id=valid_tab_id, connection_port=self._connection_port)
         self._tabs_opened[valid_tab_id] = tab
-        logger.info(f"Initial tab attached: {valid_tab_id}")
+        logger.info(f'Initial tab attached: {valid_tab_id}')
         return tab
 
     async def stop(self):
@@ -200,15 +199,15 @@ class Browser(ABC):  # noqa: PLR0904
             BrowserNotRunning: If the browser is not currently running.
         """
         if not await self._is_browser_running():
-            logger.error("Stop called but browser is not running")
+            logger.error('Stop called but browser is not running')
             raise BrowserNotRunning()
 
-        logger.info("Stopping browser process")
+        logger.info('Stopping browser process')
         await self._execute_command(BrowserCommands.close())
         self._browser_process_manager.stop_process()
         self._temp_directory_manager.cleanup()
         await self._connection_handler.close()
-        logger.info("Browser process stopped and resources cleaned up")
+        logger.info('Browser process stopped and resources cleaned up')
 
     async def create_browser_context(
         self, proxy_server: Optional[str] = None, proxy_bypass_list: Optional[str] = None
@@ -232,8 +231,8 @@ class Browser(ABC):  # noqa: PLR0904
         if proxy_server:
             sanitized_proxy, extracted_auth = self._sanitize_proxy_and_extract_auth(proxy_server)
             logger.debug(
-                f"Creating browser context with proxy: {sanitized_proxy}"
-                f"(credentials provided={bool(extracted_auth)})"
+                f'Creating browser context with proxy: {sanitized_proxy}'
+                f'(credentials provided={bool(extracted_auth)})'
             )
 
         response: CreateBrowserContextResponse = await self._execute_command(
@@ -245,7 +244,7 @@ class Browser(ABC):  # noqa: PLR0904
         context_id = response['result']['browserContextId']
         if extracted_auth:
             self._context_proxy_auth[context_id] = extracted_auth
-        logger.info(f"Created browser context: {context_id}")
+        logger.info(f'Created browser context: {context_id}')
         return context_id
 
     async def delete_browser_context(self, browser_context_id: str):
@@ -258,7 +257,7 @@ class Browser(ABC):  # noqa: PLR0904
         Note:
             Closes all associated tabs immediately.
         """
-        logger.info(f"Deleting browser context: {browser_context_id}")
+        logger.info(f'Deleting browser context: {browser_context_id}')
         return await self._execute_command(
             TargetCommands.dispose_browser_context(browser_context_id)
         )
@@ -268,7 +267,7 @@ class Browser(ABC):  # noqa: PLR0904
         response: GetBrowserContextsResponse = await self._execute_command(
             TargetCommands.get_browser_contexts()
         )
-        logger.debug(f"Fetched {len(response['result']['browserContextIds'])} browser contexts")
+        logger.debug(f'Fetched {len(response["result"]["browserContextIds"])} browser contexts')
         return response['result']['browserContextIds']
 
     async def new_tab(self, url: str = '', browser_context_id: Optional[str] = None) -> Tab:
@@ -282,7 +281,7 @@ class Browser(ABC):  # noqa: PLR0904
         Returns:
             Tab instance for page navigation and element interaction.
         """
-        logger.info(f"Creating new tab (context={browser_context_id})")
+        logger.info(f'Creating new tab (context={browser_context_id})')
         response: CreateTargetResponse = await self._execute_command(
             TargetCommands.create_target(
                 browser_context_id=browser_context_id,
@@ -292,8 +291,9 @@ class Browser(ABC):  # noqa: PLR0904
         tab = Tab(self, **self._get_tab_kwargs(target_id, browser_context_id))
         self._tabs_opened[target_id] = tab
         await self._setup_context_proxy_auth_for_tab(tab, browser_context_id)
-        if url: await tab.go_to(url)
-        logger.info(f"New tab created: {target_id}")
+        if url:
+            await tab.go_to(url)
+        logger.info(f'New tab created: {target_id}')
         return tab
 
     async def get_targets(self) -> list[TargetInfo]:
@@ -307,7 +307,7 @@ class Browser(ABC):  # noqa: PLR0904
             List of TargetInfo objects.
         """
         response: GetTargetsResponse = await self._execute_command(TargetCommands.get_targets())
-        logger.debug(f"Fetched {len(response['result']['targetInfos'])} targets")
+        logger.debug(f'Fetched {len(response["result"]["targetInfos"])} targets')
         return response['result']['targetInfos']
 
     async def get_opened_tabs(self) -> list[Tab]:
@@ -337,13 +337,13 @@ class Browser(ABC):  # noqa: PLR0904
         ]
         self._tabs_opened.update(dict(zip(remaining_target_ids, new_tabs)))
         logger.debug(
-            f"Opened tabs resolved: existing={len(existing_tabs)}, new={len(new_tabs)}",
+            f'Opened tabs resolved: existing={len(existing_tabs)}, new={len(new_tabs)}',
         )
         return existing_tabs + new_tabs
 
     async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
         """Set download directory path (convenience method for set_download_behavior)."""
-        logger.info(f"Setting download path: {path} (context={browser_context_id})")
+        logger.info(f'Setting download path: {path} (context={browser_context_id})')
         return await self._execute_command(
             BrowserCommands.set_download_behavior(
                 behavior=DownloadBehavior.ALLOW,
@@ -369,9 +369,9 @@ class Browser(ABC):  # noqa: PLR0904
             events_enabled: Generate download events for progress tracking.
         """
         logger.info(
-            f"Setting download behavior: behavior={behavior},"
-            f"path={download_path}, context={browser_context_id},"
-            f"events={events_enabled}"
+            f'Setting download behavior: behavior={behavior},'
+            f'path={download_path}, context={browser_context_id},'
+            f'events={events_enabled}'
         )
         return await self._execute_command(
             BrowserCommands.set_download_behavior(
@@ -384,14 +384,14 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def delete_all_cookies(self, browser_context_id: Optional[str] = None):
         """Delete all cookies (session, persistent, third-party) from browser or context."""
-        logger.info(f"Clearing all cookies (context={browser_context_id})")
+        logger.info(f'Clearing all cookies (context={browser_context_id})')
         return await self._execute_command(StorageCommands.clear_cookies(browser_context_id))
 
     async def set_cookies(
         self, cookies: list[CookieParam], browser_context_id: Optional[str] = None
     ):
         """Set multiple cookies in browser or context."""
-        logger.debug(f"Setting {len(cookies)} cookies (context={browser_context_id})")
+        logger.debug(f'Setting {len(cookies)} cookies (context={browser_context_id})')
         return await self._execute_command(StorageCommands.set_cookies(cookies, browser_context_id))
 
     async def get_cookies(self, browser_context_id: Optional[str] = None) -> list[Cookie]:
@@ -400,14 +400,14 @@ class Browser(ABC):  # noqa: PLR0904
             StorageCommands.get_cookies(browser_context_id)
         )
         logger.debug(
-            f"Retrieved {len(response['result']['cookies'])} cookies (context={browser_context_id})"
+            f'Retrieved {len(response["result"]["cookies"])} cookies (context={browser_context_id})'
         )
         return response['result']['cookies']
 
     async def get_version(self) -> GetVersionResult:
         """Get browser version and CDP protocol information."""
         response: GetVersionResponse = await self._execute_command(BrowserCommands.get_version())
-        logger.debug(f"Browser version: {response['result']}")
+        logger.debug(f'Browser version: {response["result"]}')
         return response['result']
 
     async def get_window_id_for_target(self, target_id: str) -> int:
@@ -415,14 +415,14 @@ class Browser(ABC):  # noqa: PLR0904
         response: GetWindowForTargetResponse = await self._execute_command(
             BrowserCommands.get_window_for_target(target_id)
         )
-        logger.debug(f"Window id for target {target_id}: {response['result']['windowId']}")
+        logger.debug(f'Window id for target {target_id}: {response["result"]["windowId"]}')
         return response['result']['windowId']
 
     async def get_window_id_for_tab(self, tab: Tab) -> int:
         """Get window ID for tab (convenience method)."""
         target_id = tab._target_id or (tab._ws_address.split('/')[-1] if tab._ws_address else None)
         if not target_id:
-            logger.error("Missing target id or ws address for tab when getting window id")
+            logger.error('Missing target id or ws address for tab when getting window id')
             raise MissingTargetOrWebSocket()
         return await self.get_window_id_for_target(target_id)
 
@@ -440,13 +440,13 @@ class Browser(ABC):  # noqa: PLR0904
     async def set_window_maximized(self):
         """Maximize browser window (affects all tabs in window)."""
         window_id = await self.get_window_id()
-        logger.info(f"Maximizing window: id={window_id}")
+        logger.info(f'Maximizing window: id={window_id}')
         return await self._execute_command(BrowserCommands.set_window_maximized(window_id))
 
     async def set_window_minimized(self):
         """Minimize browser window to taskbar/dock."""
         window_id = await self.get_window_id()
-        logger.info(f"Minimizing window: id={window_id}")
+        logger.info(f'Minimizing window: id={window_id}')
         return await self._execute_command(BrowserCommands.set_window_minimized(window_id))
 
     async def set_window_bounds(self, bounds: Bounds):
@@ -458,7 +458,7 @@ class Browser(ABC):  # noqa: PLR0904
                 Only specified properties are changed.
         """
         window_id = await self.get_window_id()
-        logger.info(f"Setting window bounds: id={window_id}, bounds={bounds}")
+        logger.info(f'Setting window bounds: id={window_id}, bounds={bounds}')
         return await self._execute_command(BrowserCommands.set_window_bounds(window_id, bounds))
 
     async def grant_permissions(
@@ -478,7 +478,7 @@ class Browser(ABC):  # noqa: PLR0904
             browser_context_id: Context to apply to (default if None).
         """
         logger.info(
-            f"Granting permissions: {permissions} (origin={origin}, context={browser_context_id})",
+            f'Granting permissions: {permissions} (origin={origin}, context={browser_context_id})',
         )
         return await self._execute_command(
             BrowserCommands.grant_permissions(permissions, origin, browser_context_id)
@@ -486,7 +486,7 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def reset_permissions(self, browser_context_id: Optional[str] = None):
         """Reset all permissions to defaults and restore prompting behavior."""
-        logger.info(f"Resetting permissions (context={browser_context_id})")
+        logger.info(f'Resetting permissions (context={browser_context_id})')
         return await self._execute_command(BrowserCommands.reset_permissions(browser_context_id))
 
     @overload
@@ -523,8 +523,8 @@ class Browser(ABC):  # noqa: PLR0904
         else:
             function_to_register = callback
         logger.debug(
-            f"Registering callback: event={event_name}, temporary={temporary}, "
-            f"async={asyncio.iscoroutinefunction(callback)}"
+            f'Registering callback: event={event_name}, temporary={temporary}, '
+            f'async={asyncio.iscoroutinefunction(callback)}'
         )
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
@@ -532,7 +532,7 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def remove_callback(self, callback_id: int):
         """Remove callback from browser."""
-        logger.debug(f"Removing callback: id={callback_id}")
+        logger.debug(f'Removing callback: id={callback_id}')
         return await self._connection_handler.remove_callback(callback_id)
 
     async def enable_fetch_events(
@@ -554,8 +554,8 @@ class Browser(ABC):  # noqa: PLR0904
             Paused requests must be continued or they will timeout.
         """
         logger.debug(
-            f"Enabling Fetch events: handle_auth={handle_auth_requests}, "
-            f"resource_type={resource_type}"
+            f'Enabling Fetch events: handle_auth={handle_auth_requests}, '
+            f'resource_type={resource_type}'
         )
         return await self._connection_handler.execute_command(
             FetchCommands.enable(
@@ -566,17 +566,17 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def disable_fetch_events(self):
         """Disable request interception and release any paused requests."""
-        logger.debug("Disabling Fetch events")
+        logger.debug('Disabling Fetch events')
         return await self._connection_handler.execute_command(FetchCommands.disable())
 
     async def enable_runtime_events(self):
         """Enable runtime events."""
-        logger.debug("Enabling Runtime events")
+        logger.debug('Enabling Runtime events')
         return await self._connection_handler.execute_command(RuntimeCommands.enable())
 
     async def disable_runtime_events(self):
         """Disable runtime events."""
-        logger.debug("Disabling Runtime events")
+        logger.debug('Disabling Runtime events')
         return await self._connection_handler.execute_command(RuntimeCommands.disable())
 
     async def continue_request(
@@ -591,7 +591,7 @@ class Browser(ABC):  # noqa: PLR0904
         """
         Continue paused request without modifications.
         """
-        logger.debug(f"Continuing request: id={request_id}")
+        logger.debug(f'Continuing request: id={request_id}')
         return await self._execute_command(
             FetchCommands.continue_request(
                 request_id=request_id,
@@ -605,7 +605,7 @@ class Browser(ABC):  # noqa: PLR0904
 
     async def fail_request(self, request_id: str, error_reason: ErrorReason):
         """Fail request with error code."""
-        logger.debug(f"Failing request: id={request_id}, reason={error_reason}")
+        logger.debug(f'Failing request: id={request_id}, reason={error_reason}')
         return await self._execute_command(FetchCommands.fail_request(request_id, error_reason))
 
     async def fulfill_request(
@@ -618,8 +618,8 @@ class Browser(ABC):  # noqa: PLR0904
     ):
         """Fulfill request with response data."""
         logger.debug(
-            f"Fulfilling request: id={request_id}, code={response_code}, "
-            f"headers={bool(response_headers)}, body={bool(body)}"
+            f'Fulfilling request: id={request_id}, code={response_code}, '
+            f'headers={bool(response_headers)}, body={bool(body)}'
         )
         return await self._execute_command(
             FetchCommands.fulfill_request(
@@ -635,13 +635,13 @@ class Browser(ABC):  # noqa: PLR0904
     def _validate_connection_port(connection_port: Optional[int]):
         """Validate connection port."""
         if connection_port and connection_port < 0:
-            logger.error(f"Invalid connection port: {connection_port}")
+            logger.error(f'Invalid connection port: {connection_port}')
             raise InvalidConnectionPort()
 
     async def _continue_request_callback(self, event: RequestPausedEvent):
         """Internal callback to continue paused requests."""
         request_id = event['params']['requestId']
-        logger.debug(f"[Fetch] REQUEST_PAUSED -> continue: id={request_id}")
+        logger.debug(f'[Fetch] REQUEST_PAUSED -> continue: id={request_id}')
         return await self.continue_request(request_id)
 
     async def _continue_request_with_auth_callback(
@@ -653,8 +653,8 @@ class Browser(ABC):  # noqa: PLR0904
         """Internal callback for proxy authentication."""
         request_id = event['params']['requestId']
         logger.debug(
-            f"[Fetch] AUTH_REQUIRED -> provide credentials: id={request_id}, "
-            f"user_set={bool(proxy_username)}"
+            f'[Fetch] AUTH_REQUIRED -> provide credentials: id={request_id}, '
+            f'user_set={bool(proxy_username)}'
         )
         response: Response = await self._execute_command(
             FetchCommands.continue_request_with_auth(
@@ -671,7 +671,7 @@ class Browser(ABC):  # noqa: PLR0904
     async def _tab_continue_request_callback(event: RequestPausedEvent, tab: Tab):
         """Internal callback to continue paused requests at Tab level."""
         request_id = event['params']['requestId']
-        logger.debug(f"[Tab Fetch] REQUEST_PAUSED -> continue: id={request_id}")
+        logger.debug(f'[Tab Fetch] REQUEST_PAUSED -> continue: id={request_id}')
         return await tab.continue_request(request_id)
 
     @staticmethod
@@ -684,8 +684,8 @@ class Browser(ABC):  # noqa: PLR0904
         """Internal callback for proxy/server authentication at Tab level."""
         request_id = event['params']['requestId']
         logger.debug(
-            f"[Tab Fetch] AUTH_REQUIRED -> provide credentials: id={request_id}, "
-            f"user_set={bool(proxy_username)}"
+            f'[Tab Fetch] AUTH_REQUIRED -> provide credentials: id={request_id}, '
+            f'user_set={bool(proxy_username)}'
         )
         response: Response = await tab.continue_with_auth(
             request_id=request_id,
@@ -707,8 +707,8 @@ class Browser(ABC):  # noqa: PLR0904
             return
         username, password = creds
         logger.debug(
-            f"Enabling context-level proxy auth for tab (context={browser_context_id}, "
-            f"user_set={bool(username)}"
+            f'Enabling context-level proxy auth for tab (context={browser_context_id}, '
+            f'user_set={bool(username)}'
         )
         await tab.enable_fetch_events(handle_auth=True)
         await tab.on(
@@ -737,9 +737,9 @@ class Browser(ABC):  # noqa: PLR0904
         Raises:
             FailedToStartBrowser: If the browser failed to start.
         """
-        logger.debug(f"Verifying browser is running (timeout={self.options.start_timeout})")
+        logger.debug(f'Verifying browser is running (timeout={self.options.start_timeout})')
         if not await self._is_browser_running(self.options.start_timeout):
-            logger.error("Browser failed to start within timeout")
+            logger.error('Browser failed to start within timeout')
             raise FailedToStartBrowser()
 
     async def _configure_proxy(
@@ -750,8 +750,8 @@ class Browser(ABC):  # noqa: PLR0904
             return
 
         logger.debug(
-            "Configuring proxy authentication: "
-            f"credentials provided={bool(proxy_credentials[0] or proxy_credentials[1])}"
+            'Configuring proxy authentication: '
+            f'credentials provided={bool(proxy_credentials[0] or proxy_credentials[1])}'
         )
         await self.enable_fetch_events(handle_auth_requests=True)
         await self.on(
@@ -792,12 +792,12 @@ class Browser(ABC):  # noqa: PLR0904
         )
 
         if not valid_tab:
-            logger.error(f"No valid tab found among {len(targets)} targets")
+            logger.error(f'No valid tab found among {len(targets)} targets')
             raise NoValidTabFound()
 
         tab_id = valid_tab.get('targetId')
         if not tab_id:
-            logger.error("Valid tab missing targetId")
+            logger.error('Valid tab missing targetId')
             raise NoValidTabFound('Tab missing targetId')
 
         return tab_id
@@ -815,7 +815,7 @@ class Browser(ABC):  # noqa: PLR0904
         self, command: Command[T_CommandParams, T_CommandResponse], timeout: int = 10
     ) -> T_CommandResponse:
         """Execute CDP command and return result (core method for browser communication)."""
-        logger.debug(f"Executing command: {command.get('method')} (timeout={timeout})")
+        logger.debug(f'Executing command: {command.get("method")} (timeout={timeout})')
         return await self._connection_handler.execute_command(command, timeout=timeout)
 
     def _setup_user_dir(self):
@@ -829,7 +829,7 @@ class Browser(ABC):  # noqa: PLR0904
             self.options.arguments.append(f'--user-data-dir={temp_dir.name}')
             if self.options.browser_preferences:
                 self._set_browser_preferences_in_temp_dir(temp_dir)
-        logger.debug(f"User dir setup complete: {self._get_user_data_dir()}")
+        logger.debug(f'User dir setup complete: {self._get_user_data_dir()}')
 
     def _set_browser_preferences_in_temp_dir(self, temp_dir: TemporaryDirectory):
         os.mkdir(os.path.join(temp_dir.name, 'Default'))
@@ -838,7 +838,7 @@ class Browser(ABC):  # noqa: PLR0904
             os.path.join(temp_dir.name, 'Default', 'Preferences'), 'w', encoding='utf-8'
         ) as json_file:
             json.dump(preferences, json_file)
-        logger.debug("Wrote browser preferences to temp user dir")
+        logger.debug('Wrote browser preferences to temp user dir')
 
     def _set_browser_preferences_in_user_data_dir(self, user_data_dir: str):
         """
@@ -870,7 +870,7 @@ class Browser(ABC):  # noqa: PLR0904
         preferences.update(self.options.browser_preferences)
         with open(preferences_path, 'w', encoding='utf-8') as json_file:
             json.dump(preferences, json_file, indent=2)
-        logger.debug(f"Updated browser preferences in user data dir: {preferences_path}")
+        logger.debug(f'Updated browser preferences in user data dir: {preferences_path}')
 
     def _get_user_data_dir(self) -> Optional[str]:
         for arg in self.options.arguments:
@@ -883,10 +883,10 @@ class Browser(ABC):  # noqa: PLR0904
         """Validate WebSocket address."""
         min_slashes = 4
         if not ws_address.startswith('ws://'):
-            logger.error("Invalid WebSocket address: missing ws:// prefix")
+            logger.error('Invalid WebSocket address: missing ws:// prefix')
             raise InvalidWebSocketAddress('WebSocket address must start with ws://')
         if len(ws_address.split('/')) < min_slashes:
-            logger.error("Invalid WebSocket address: not enough slashes")
+            logger.error('Invalid WebSocket address: not enough slashes')
             raise InvalidWebSocketAddress(
                 f'WebSocket address must contain at least {min_slashes} slashes'
             )
@@ -897,7 +897,7 @@ class Browser(ABC):  # noqa: PLR0904
         self._ws_address = ws_address
         self._connection_handler._ws_address = self._ws_address
         await self._connection_handler._ensure_active_connection()
-        logger.info("WebSocket address set for browser-level connection")
+        logger.info('WebSocket address set for browser-level connection')
 
     def _get_tab_kwargs(self, target_id: str, browser_context_id: Optional[str] = None) -> dict:
         """
@@ -920,7 +920,7 @@ class Browser(ABC):  # noqa: PLR0904
             kwargs['ws_address'] = self._get_tab_ws_address(target_id)
         else:
             kwargs['connection_port'] = self._connection_port
-        logger.debug(f"Tab kwargs resolved for {target_id}: using_ws={bool(self._ws_address)}")
+        logger.debug(f'Tab kwargs resolved for {target_id}: using_ws={bool(self._ws_address)}')
         return kwargs
 
     def _get_tab_ws_address(self, tab_id: str) -> str:
@@ -940,7 +940,7 @@ class Browser(ABC):  # noqa: PLR0904
         # Preserve scheme and netloc; build the page path and keep query/fragment
         page_path = f'/devtools/page/{tab_id}'
         ws = urlunsplit((parts.scheme, parts.netloc, page_path, parts.query, parts.fragment))
-        logger.debug(f"Resolved tab WebSocket address: {ws}")
+        logger.debug(f'Resolved tab WebSocket address: {ws}')
         return ws
 
     @staticmethod

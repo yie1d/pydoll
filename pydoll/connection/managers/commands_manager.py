@@ -18,6 +18,7 @@ class CommandsManager:
         """Initialize command manager with empty state."""
         self._pending_commands: dict[int, asyncio.Future] = {}
         self._id = 1
+        logger.debug('CommandsManager initialized')
 
     def create_command_future(self, command: Command) -> asyncio.Future:
         """
@@ -33,6 +34,9 @@ class CommandsManager:
         future = asyncio.Future()  # type: ignore
         self._pending_commands[self._id] = future
         self._id += 1
+        logger.debug(
+            f'Created future for command id={command["id"]} method={command.get("method")}'
+        )
         return future
 
     def resolve_command(self, response_id: int, result: str):
@@ -40,8 +44,10 @@ class CommandsManager:
         if response_id in self._pending_commands:
             self._pending_commands[response_id].set_result(result)
             del self._pending_commands[response_id]
+            logger.debug(f'Resolved command future id={response_id}')
 
     def remove_pending_command(self, command_id: int):
         """Remove pending command without resolving (for timeouts/cancellations)."""
         if command_id in self._pending_commands:
             del self._pending_commands[command_id]
+            logger.debug(f'Removed pending command id={command_id}')

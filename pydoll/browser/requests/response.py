@@ -69,8 +69,8 @@ class Response:
         self._url = url
         self._ok = status_code in STATUS_CODE_RANGE_OK
         logger.debug(
-            f"Response initialized: status={status_code}, url={url}, "
-            f"headers={len(self._response_headers)}, cookies={len(self._cookies)}"
+            f'Response initialized: status={status_code}, url={url}, '
+            f'headers={len(self._response_headers)}, cookies={len(self._cookies)}'
         )
 
     @property
@@ -199,7 +199,7 @@ class Response:
             self._json = jsonlib.loads(self.text)
             return self._json
         except jsonlib.JSONDecodeError as exc:
-            logger.debug("Failed to decode response as JSON")
+            logger.debug('Failed to decode response as JSON')
             raise ValueError('Response is not valid JSON') from exc
 
     def raise_for_status(self) -> None:
@@ -218,7 +218,7 @@ class Response:
         """
         if self.status_code not in STATUS_CODE_RANGE_OK:
             logger.error(
-                f"HTTP error status encountered: status={self.status_code}, url={self._url}"
+                f'HTTP error status encountered: status={self.status_code}, url={self._url}'
             )
             raise HTTPError(f'{self.status_code} Client Error: for url {self._url}')
 

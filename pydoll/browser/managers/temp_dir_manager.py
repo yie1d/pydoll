@@ -26,7 +26,7 @@ class TempDirectoryManager:
         """
         self._temp_dir_factory = temp_dir_factory
         self._temp_dirs: list[TemporaryDirectory] = []
-        logger.debug("TempDirectoryManager initialized")
+        logger.debug('TempDirectoryManager initialized')
 
     def create_temp_dir(self) -> TemporaryDirectory:
         """
@@ -37,7 +37,7 @@ class TempDirectoryManager:
         """
         temp_dir = self._temp_dir_factory()
         self._temp_dirs.append(temp_dir)
-        logger.debug(f"Created temp directory: {temp_dir.name}")
+        logger.debug(f'Created temp directory: {temp_dir.name}')
         return temp_dir
 
     @staticmethod
@@ -62,7 +62,7 @@ class TempDirectoryManager:
             except PermissionError:
                 time.sleep(0.1)
                 logger.debug(
-                    f"Retrying file operation due to PermissionError (attempt {retry_time})"
+                    f'Retrying file operation due to PermissionError (attempt {retry_time})'
                 )
         else:
             raise PermissionError()
@@ -88,7 +88,7 @@ class TempDirectoryManager:
                     self.retry_process_file(func, path)
                     return
                 except PermissionError:
-                    logger.warning(f"Failed retrying cleanup for locked file: {path}")
+                    logger.warning(f'Failed retrying cleanup for locked file: {path}')
                     raise exc_value
         elif exc_type is OSError:
             return
@@ -102,5 +102,5 @@ class TempDirectoryManager:
         Continues cleanup even if some files resist deletion.
         """
         for temp_dir in self._temp_dirs:
-            logger.info(f"Cleaning up temp directory: {temp_dir.name}")
+            logger.info(f'Cleaning up temp directory: {temp_dir.name}')
             shutil.rmtree(temp_dir.name, onerror=self.handle_cleanup_error)
