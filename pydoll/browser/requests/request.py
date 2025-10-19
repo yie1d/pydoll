@@ -141,12 +141,6 @@ class Request:
             received_headers = self._extract_received_headers()
             sent_headers = self._extract_sent_headers()
             cookies = self._extract_set_cookies()
-            status = result.get('result', {}).get('result', {}).get('value', {}).get('status')
-            logger.debug(
-                f'Request complete: status={status}, '
-                f'received_headers={len(received_headers)}, sent_headers={len(sent_headers)}, '
-                f'cookies={len(cookies)}'
-            )
             return self._build_response(result, received_headers, sent_headers, cookies)
 
         except Exception as exc:

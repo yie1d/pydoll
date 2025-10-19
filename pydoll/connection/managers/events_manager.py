@@ -84,10 +84,6 @@ class EventsManager:
 
         if 'Network.requestWillBeSent' in event_name:
             self._update_network_logs(event_data)
-            req_url = event_data.get('params', {}).get('request', {}).get('url') or event_data.get(
-                'url', ''
-            )
-            logger.debug(f'Network log appended (total={len(self.network_logs)}): {req_url}')
 
         if 'Page.javascriptDialogOpening' in event_name:
             self.dialog = JavascriptDialogOpeningEvent(
