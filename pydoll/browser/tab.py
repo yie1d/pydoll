@@ -129,6 +129,13 @@ class Tab(FindElementsMixin):
         self._intercept_file_chooser_dialog_enabled = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._request: Optional[Request] = None
+        logger.debug(
+            (
+                f"Tab initialized: target_id={self._target_id}, "
+                f"ws_address_set={bool(self._ws_address)}, "
+                f"context_id={self._browser_context_id}, port={self._connection_port}"
+            )
+        )
 
     @property
     def page_events_enabled(self) -> bool:
@@ -190,14 +197,18 @@ class Tab(FindElementsMixin):
 
     async def enable_page_events(self):
         """Enable CDP Page domain events (load, navigation, dialogs, etc.)."""
+        logger.debug("Enabling Page events")
         response = await self._execute_command(PageCommands.enable())
         self._page_events_enabled = True
+        logger.debug("Page events enabled")
         return response
 
     async def enable_network_events(self):
         """Enable CDP Network domain events (requests, responses, etc.)."""
+        logger.debug("Enabling Network events")
         response = await self._execute_command(NetworkCommands.enable())
         self._network_events_enabled = True
+        logger.debug("Network events enabled")
         return response
 
     async def enable_fetch_events(
@@ -217,6 +228,11 @@ class Tab(FindElementsMixin):
         Note:
             Intercepted requests must be explicitly continued or timeout.
         """
+        logger.debug(
+            f"Enabling Fetch events: handle_auth={handle_auth}, resource_type={resource_type}, "
+            f"stage={request_stage}"
+
+        )
         response: Response[EmptyResponse] = await self._execute_command(
             FetchCommands.enable(
                 handle_auth_requests=handle_auth,
@@ -225,18 +241,23 @@ class Tab(FindElementsMixin):
             )
         )
         self._fetch_events_enabled = True
+        logger.debug("Fetch events enabled")
         return response
 
     async def enable_dom_events(self):
         """Enable CDP DOM domain events (document structure changes)."""
+        logger.debug("Enabling DOM events")
         response = await self._execute_command(DomCommands.enable())
         self._dom_events_enabled = True
+        logger.debug("DOM events enabled")
         return response
 
     async def enable_runtime_events(self):
         """Enable CDP Runtime domain events."""
+        logger.debug("Enabling Runtime events")
         response = await self._execute_command(RuntimeCommands.enable())
         self._runtime_events_enabled = True
+        logger.debug("Runtime events enabled")
         return response
 
     async def enable_intercept_file_chooser_dialog(self):
@@ -246,8 +267,12 @@ class Tab(FindElementsMixin):
         Note:
             Use expect_file_chooser context manager for convenience.
         """
-        response = await self._execute_command(PageCommands.set_intercept_file_chooser_dialog(True))
+        logger.info("Enabling file chooser interception")
+        response = await self._execute_command(
+            PageCommands.set_intercept_file_chooser_dialog(True)
+        )
         self._intercept_file_chooser_dialog_enabled = True
+        logger.debug("File chooser interception enabled")
         return response
 
     async def enable_auto_solve_cloudflare_captcha(
@@ -264,6 +289,7 @@ class Tab(FindElementsMixin):
             time_before_click: Delay before clicking captcha (default 2s).
             time_to_wait_captcha: Timeout for captcha detection (default 5s).
         """
+        logger.info("Enabling Cloudflare captcha auto-solve")
         if not self.page_events_enabled:
             await self.enable_page_events()
 
@@ -274,48 +300,66 @@ class Tab(FindElementsMixin):
             time_to_wait_captcha=time_to_wait_captcha,
         )
 
-        self._cloudflare_captcha_callback_id = await self.on(PageEvent.LOAD_EVENT_FIRED, callback)
+        self._cloudflare_captcha_callback_id = await self.on(
+            PageEvent.LOAD_EVENT_FIRED, callback
+        )
+        logger.debug(
+            f"Cloudflare auto-solve callback registered: id={self._cloudflare_captcha_callback_id}"
+        )
 
     async def disable_fetch_events(self):
         """Disable CDP Fetch domain and release paused requests."""
+        logger.debug("Disabling Fetch events")
         response = await self._execute_command(FetchCommands.disable())
         self._fetch_events_enabled = False
+        logger.debug("Fetch events disabled")
         return response
 
     async def disable_page_events(self):
         """Disable CDP Page domain events."""
+        logger.debug("Disabling Page events")
         response = await self._execute_command(PageCommands.disable())
         self._page_events_enabled = False
+        logger.debug("Page events disabled")
         return response
 
     async def disable_network_events(self):
         """Disable CDP Network domain events."""
+        logger.debug("Disabling Network events")
         response = await self._execute_command(NetworkCommands.disable())
         self._network_events_enabled = False
+        logger.debug("Network events disabled")
         return response
 
     async def disable_dom_events(self):
         """Disable CDP DOM domain events."""
+        logger.debug("Disabling DOM events")
         response = await self._execute_command(DomCommands.disable())
         self._dom_events_enabled = False
+        logger.debug("DOM events disabled")
         return response
 
     async def disable_runtime_events(self):
         """Disable CDP Runtime domain events."""
+        logger.debug("Disabling Runtime events")
         response = await self._execute_command(RuntimeCommands.disable())
         self._runtime_events_enabled = False
+        logger.debug("Runtime events disabled")
         return response
 
     async def disable_intercept_file_chooser_dialog(self):
         """Disable file chooser dialog interception."""
+        logger.info("Disabling file chooser interception")
         response = await self._execute_command(
             PageCommands.set_intercept_file_chooser_dialog(False)
         )
         self._intercept_file_chooser_dialog_enabled = False
+        logger.debug("File chooser interception disabled")
         return response
 
     async def disable_auto_solve_cloudflare_captcha(self):
         """Disable automatic Cloudflare Turnstile captcha bypass."""
+        logger.info("Disabling Cloudflare captcha auto-solve")
         await self._connection_handler.remove_callback(self._cloudflare_captcha_callback_id)
         self._cloudflare_captcha_callback_id = None
 
@@ -326,8 +370,10 @@ class Tab(FindElementsMixin):
         Note:
             Tab instance becomes invalid after calling this method.
         """
+        logger.info(f"Closing tab: target_id={self._target_id}")
         result = await self._execute_command(PageCommands.close())
         self._browser._tabs_opened.pop(self._target_id)
+        logger.debug("Tab closed and removed from browser registry")
         return result
 
     async def get_frame(self, frame: WebElement) -> IFrame:
@@ -345,10 +391,12 @@ class Tab(FindElementsMixin):
             InvalidIFrame: If iframe lacks valid src attribute.
             IFrameNotFound: If iframe target not found in browser.
         """
+        logger.debug(f"Resolving iframe: tag={frame.tag_name}")
         if not frame.tag_name == 'iframe':
             raise NotAnIFrame
 
         frame_url = frame.get_attribute('src')
+        logger.debug(f"Iframe src resolved: {frame_url}")
         if not frame_url:
             raise InvalidIFrame('The iframe does not have a valid src attribute')
 
@@ -359,6 +407,7 @@ class Tab(FindElementsMixin):
 
         target_id = iframe_target['targetId']
         if target_id in self._browser._tabs_opened:
+            logger.debug(f"Iframe tab already tracked: {target_id}")
             return self._browser._tabs_opened[target_id]
 
         tab = Tab(
@@ -367,18 +416,23 @@ class Tab(FindElementsMixin):
             connection_port=self._connection_port,
         )
         self._browser._tabs_opened[target_id] = tab
+        logger.debug(f"Iframe tab created and registered: {target_id}")
         return tab
 
     async def bring_to_front(self):
         """Brings the page to front."""
+        logger.info("Bringing page to front")
         return await self._execute_command(PageCommands.bring_to_front())
 
     async def get_cookies(self) -> list[Cookie]:
         """Get all cookies accessible from current page."""
+        logger.debug("Fetching cookies for current page")
         response: GetCookiesResponse = await self._execute_command(
             StorageCommands.get_cookies(self._browser_context_id)
         )
-        return response['result']['cookies']
+        cookies = response['result']['cookies']
+        logger.debug(f"Fetched {len(cookies)} cookies")
+        return cookies
 
     async def get_network_response_body(self, request_id: str) -> str:
         """
@@ -399,6 +453,7 @@ class Tab(FindElementsMixin):
         response: 'GetResponseBodyResponse' = await self._execute_command(
             NetworkCommands.get_response_body(request_id)
         )
+        logger.debug(f"Retrieved network response body for request_id={request_id}")
         return response['result']['body']
 
     async def get_network_logs(self, filter: Optional[str] = None) -> list[RequestWillBeSentEvent]:
@@ -422,6 +477,7 @@ class Tab(FindElementsMixin):
             logs = [
                 log for log in logs if filter in log['params'].get('request', {}).get('url', '')
             ]
+        logger.debug(f"Returning {len(logs)} network logs (filtered={bool(filter)})")
         return logs
 
     async def set_cookies(self, cookies: list[CookieParam]):
@@ -434,13 +490,17 @@ class Tab(FindElementsMixin):
         Note:
             Defaults to current page's domain if not specified.
         """
+        logger.info(f"Setting {len(cookies)} cookies on current page")
         return await self._execute_command(
             StorageCommands.set_cookies(cookies, self._browser_context_id)
         )
 
     async def delete_all_cookies(self):
         """Delete all cookies from current browser context."""
-        return await self._execute_command(StorageCommands.clear_cookies(self._browser_context_id))
+        logger.info("Clearing all cookies from current browser context")
+        return await self._execute_command(
+            StorageCommands.clear_cookies(self._browser_context_id)
+        )
 
     async def go_to(self, url: str, timeout: int = 300):
         """
@@ -455,14 +515,18 @@ class Tab(FindElementsMixin):
         Raises:
             PageLoadTimeout: If page doesn't finish loading within timeout.
         """
+        logger.info(f"Navigating to URL: {url} (timeout={timeout}s)")
         if await self._refresh_if_url_not_changed(url):
+            logger.debug("URL matches current page; refreshing instead")
             return
 
         await self._execute_command(PageCommands.navigate(url))
 
         try:
             await self._wait_page_load(timeout=timeout)
+            logger.info(f"Navigation complete: {url}")
         except WaitElementTimeout:
+            logger.error(f"Page load timeout after {timeout}s for URL: {url}")
             raise PageLoadTimeout()
 
     async def refresh(
@@ -480,6 +544,10 @@ class Tab(FindElementsMixin):
         Raises:
             PageLoadTimeout: If page doesn't finish loading within timeout.
         """
+        logger.info(
+            f"Reloading page (ignore_cache={ignore_cache}, "
+            f"script_on_load={bool(script_to_evaluate_on_load)})"
+        )
         await self._execute_command(
             PageCommands.reload(
                 ignore_cache=ignore_cache, script_to_evaluate_on_load=script_to_evaluate_on_load
@@ -487,7 +555,9 @@ class Tab(FindElementsMixin):
         )
         try:
             await self._wait_page_load()
+            logger.info("Page reloaded successfully")
         except WaitElementTimeout:
+            logger.error("Page reload timed out")
             raise PageLoadTimeout()
 
     async def take_screenshot(
@@ -521,6 +591,10 @@ class Tab(FindElementsMixin):
         if not ScreenshotFormat.has_value(output_extension):
             raise InvalidFileExtension(f'{output_extension} extension is not supported.')
 
+        logger.info(
+            f"Taking screenshot: path={path}, quality={quality}, "
+            f"beyond_viewport={beyond_viewport}, as_base64={as_base64}"
+        )
         response: CaptureScreenshotResponse = await self._execute_command(
             PageCommands.capture_screenshot(
                 format=ScreenshotFormat.get_value(output_extension),
@@ -538,12 +612,14 @@ class Tab(FindElementsMixin):
             )
 
         if as_base64:
+            logger.info("Screenshot captured and returned as base64")
             return screenshot_data
 
         if path:
             screenshot_bytes = decode_base64_to_bytes(screenshot_data)
             async with aiofiles.open(path, 'wb') as file:
                 await file.write(screenshot_bytes)
+            logger.info(f"Screenshot saved to: {path}")
 
         return None
 
@@ -570,6 +646,11 @@ class Tab(FindElementsMixin):
         Returns:
             Base64 PDF data if as_base64=True, None otherwise.
         """
+        logger.info(
+            f"Generating PDF: path={path}, landscape={landscape}, "
+            f"header_footer={display_header_footer}, print_bg={print_background}, "
+            f"scale={scale}, as_base64={as_base64}"
+        )
         response: PrintToPDFResponse = await self._execute_command(
             PageCommands.print_to_pdf(
                 landscape=landscape,
@@ -580,11 +661,13 @@ class Tab(FindElementsMixin):
         )
         pdf_data = response['result']['data']
         if as_base64:
+            logger.info("PDF generated and returned as base64")
             return pdf_data
 
         pdf_bytes = decode_base64_to_bytes(pdf_data)
         async with aiofiles.open(path, 'wb') as file:
             await file.write(pdf_bytes)
+        logger.info(f"PDF saved to: {path}")
 
         return None
 
@@ -596,6 +679,7 @@ class Tab(FindElementsMixin):
             Page events must be enabled to detect dialogs.
         """
         if self._connection_handler.dialog:
+            logger.debug("Dialog present")
             return True
 
         return False
@@ -609,7 +693,9 @@ class Tab(FindElementsMixin):
         """
         if not await self.has_dialog():
             raise NoDialogPresent()
-        return self._connection_handler.dialog['params']['message']
+        message = self._connection_handler.dialog['params']['message']
+        logger.debug(f"Dialog message retrieved: {message}")
+        return message
 
     async def handle_dialog(self, accept: bool, prompt_text: Optional[str] = None):
         """
@@ -627,6 +713,7 @@ class Tab(FindElementsMixin):
         """
         if not await self.has_dialog():
             raise NoDialogPresent()
+        logger.info(f"Handling dialog: accept={accept}, has_prompt_text={bool(prompt_text)}")
         return await self._execute_command(
             PageCommands.handle_javascript_dialog(accept=accept, prompt_text=prompt_text)
         )
@@ -657,9 +744,11 @@ class Tab(FindElementsMixin):
         if 'argument' in script and element is None:
             raise InvalidScriptWithElement('Script contains "argument" but no element was provided')
 
+        logger.debug(
+            f"Executing script: with_element={bool(element)}, length={len(script)}"
+        )
         if element:
             return await self._execute_script_with_element(script, element)
-
         return await self._execute_script_without_element(script)
 
     # TODO: think about how to remove these duplications with the base class
@@ -675,6 +764,7 @@ class Tab(FindElementsMixin):
         """
         Continue paused request without modifications.
         """
+        logger.debug(f"Continue request on tab: id={request_id}")
         return await self._execute_command(
             FetchCommands.continue_request(
                 request_id=request_id,
@@ -688,6 +778,7 @@ class Tab(FindElementsMixin):
 
     async def fail_request(self, request_id: str, error_reason: ErrorReason):
         """Fail request with error code."""
+        logger.debug(f"Fail request on tab: id={request_id}, reason={error_reason}")
         return await self._execute_command(FetchCommands.fail_request(request_id, error_reason))
 
     async def fulfill_request(
@@ -699,6 +790,10 @@ class Tab(FindElementsMixin):
         response_phrase: Optional[str] = None,
     ):
         """Fulfill request with response data."""
+        logger.debug(
+            f"Fulfill request on tab: id={request_id}, code={response_code}, "
+            f"headers_set={bool(response_headers)}, body_set={bool(body)}"
+        )
         return await self._execute_command(
             FetchCommands.fulfill_request(
                 request_id=request_id,
@@ -721,6 +816,10 @@ class Tab(FindElementsMixin):
         Useful for proxy auth (407) or server auth (401) when Fetch is enabled
         with handle_auth=True.
         """
+        logger.debug(
+            f"Continue with auth on tab: id={request_id}, response={auth_challenge_response}, "
+            f"user_set={bool(proxy_username)}"
+        )
         return await self._execute_command(
             FetchCommands.continue_request_with_auth(
                 request_id=request_id,
@@ -742,6 +841,7 @@ class Tab(FindElementsMixin):
         """
 
         async def event_handler(event: FileChooserOpenedEvent):
+            logger.info("File chooser opened; setting files")
             file_list = [str(file) for file in files] if isinstance(files, list) else [str(files)]
             await self._execute_command(
                 DomCommands.set_file_input_files(
@@ -749,6 +849,7 @@ class Tab(FindElementsMixin):
                     backend_node_id=event['params']['backendNodeId'],
                 )
             )
+            logger.debug(f"Files set on input: {file_list}")
 
         if self.page_events_enabled is False:
             _before_page_events_enabled = False
@@ -759,6 +860,7 @@ class Tab(FindElementsMixin):
         if self.intercept_file_chooser_dialog_enabled is False:
             await self.enable_intercept_file_chooser_dialog()
 
+        logger.info("Waiting for file chooser to open")
         await self.on(
             PageEvent.FILE_CHOOSER_OPENED,
             cast(Callable[[dict], Any], event_handler),
@@ -806,6 +908,7 @@ class Tab(FindElementsMixin):
         if not _before_page_events_enabled:
             await self.enable_page_events()
 
+        logger.info("Expecting and bypassing Cloudflare captcha if present")
         callback_id = await self.on(PageEvent.LOAD_EVENT_FIRED, bypass_cloudflare)
 
         try:
@@ -847,6 +950,9 @@ class Tab(FindElementsMixin):
             download_dir = str(Path(keep_file_at))
             Path(download_dir).mkdir(parents=True, exist_ok=True)
 
+        logger.info(
+            f"Expecting download (dir={download_dir}, timeout={download_timeout}s)"
+        )
         await self._browser.set_download_behavior(
             behavior=DownloadBehavior.ALLOW,
             download_path=download_dir,
@@ -872,6 +978,9 @@ class Tab(FindElementsMixin):
             state['suggestedFilename'] = params['suggestedFilename']
             if not will_begin.done():
                 will_begin.set_result(True)
+            logger.info(
+                f"Download will begin: url={state['url']}, filename={state['suggestedFilename']}"
+            )
 
         async def on_progress(event: DownloadProgressEvent):
             params = event['params']
@@ -888,6 +997,7 @@ class Tab(FindElementsMixin):
             state['filePath'] = file_path
             if not done.done():
                 done.set_result(True)
+            logger.info(f"Download completed: {file_path}")
 
         cb_id_will_begin = await self.on(
             BrowserEvent.DOWNLOAD_WILL_BEGIN,
@@ -927,6 +1037,7 @@ class Tab(FindElementsMixin):
                     return
                 Path(file_path).unlink(missing_ok=True)
                 shutil.rmtree(download_dir, ignore_errors=True)
+                logger.debug(f"Temporary download directory cleaned up: {download_dir}")
 
     @overload
     async def on(
@@ -967,21 +1078,32 @@ class Tab(FindElementsMixin):
         else:
             function_to_register = callback
 
+        logger.debug(
+            f"Registering callback on tab: event={event_name}, temporary={temporary}, "
+            f"async={asyncio.iscoroutinefunction(callback)}"
+        )
         return await self._connection_handler.register_callback(
             event_name, function_to_register, temporary
         )
 
     async def remove_callback(self, callback_id: int):
         """Remove callback from tab."""
+        logger.debug(f"Removing callback from tab: id={callback_id}")
         return await self._connection_handler.remove_callback(callback_id)
 
     async def clear_callbacks(self):
         """Clear all registered event callbacks."""
+        logger.debug("Clearing all callbacks from tab")
         await self._connection_handler.clear_callbacks()
 
     def _get_connection_handler(self) -> ConnectionHandler:
         if self._ws_address:
+            logger.debug("Using WebSocket address for connection handler")
             return ConnectionHandler(ws_address=self._ws_address)
+        logger.debug(
+            "Using port/target for connection handler: "
+            f"port={self._connection_port}, target_id={self._target_id}"
+        )
         return ConnectionHandler(self._connection_port, self._target_id)
 
     async def _execute_script_with_element(self, script: str, element: WebElement):
@@ -1022,6 +1144,7 @@ class Tab(FindElementsMixin):
             script = f'(function(){{ {script} }})()'
 
         command = RuntimeCommands.evaluate(expression=script)
+        logger.debug(f"Executing script without element: length={len(script)}")
         return await self._execute_command(command)
 
     async def _refresh_if_url_not_changed(self, url: str) -> bool:
@@ -1040,6 +1163,7 @@ class Tab(FindElementsMixin):
             asyncio.TimeoutError: If page doesn't load within timeout.
         """
         start_time = asyncio.get_event_loop().time()
+        logger.debug(f"Waiting for page load (timeout={timeout}s)")
         while True:
             response: EvaluateResponse = await self._execute_command(
                 RuntimeCommands.evaluate(expression='document.readyState')
@@ -1048,6 +1172,7 @@ class Tab(FindElementsMixin):
                 response['result']['result']['value']
                 == self._browser.options.page_load_state.value
             ):
+                logger.debug(f"Page load state reached: {self._browser.options.page_load_state}")
                 break
             if asyncio.get_event_loop().time() - start_time > timeout:
                 raise WaitElementTimeout('Page load timed out')
