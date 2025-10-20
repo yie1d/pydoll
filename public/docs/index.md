@@ -21,7 +21,7 @@ Hey there! Thanks for checking out Pydoll, the next generation of browser automa
 
 Pydoll is revolutionizing browser automation by **eliminating the need for webdrivers** completely! Unlike other solutions that rely on external dependencies, Pydoll connects directly to browsers using their DevTools Protocol, providing a seamless and reliable automation experience with native asynchronous performance.
 
-Whether you're scraping data, testing web applications, or automating repetitive tasks, Pydoll makes it surprisingly easy with its intuitive API and powerful features.
+Whether you're scraping data, [testing web applications](https://www.lambdatest.com/web-testing), or automating repetitive tasks, Pydoll makes it surprisingly easy with its intuitive API and powerful features.
 
 ## Installation
 
@@ -247,6 +247,19 @@ That's it! This minimal dependency approach means:
 - **Easier updates** - Simpler maintenance and fewer breaking changes
 
 The small number of dependencies also contributes to Pydoll's reliability and performance, as there are fewer external factors that could impact its operation.
+
+## Sponsors
+
+The support from sponsors is essential to keep the project alive, evolving, and accessible to the entire community. Each partnership helps cover costs, drive new features, and ensure ongoing development. We are truly grateful to everyone who believes in and supports the project!
+
+<a href="https://www.lambdatest.com/?utm_source=pydoll&utm_medium=sponsor" target="_blank" rel="noopener nofollow sponsored">
+  <img src="https://www.lambdatest.com/blue-logo.png" alt="LambdaTest" width="200" height="45" />
+  
+</a>
+
+<p>
+  <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener">Become a sponsor</a>
+</p>
 
 ## License
 

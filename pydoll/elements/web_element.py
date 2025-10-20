@@ -84,6 +84,11 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self._connection_handler = connection_handler
         self._attributes: dict[str, str] = {}
         self._def_attributes(attributes_list)
+        logger.debug(
+            f'WebElement initialized: object_id={self._object_id}, '
+            f'method={self._search_method}, selector={self._selector}, '
+            f'attributes={len(self._attributes)}'
+        )
 
     @property
     def value(self) -> Optional[str]:
@@ -114,7 +119,9 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def text(self) -> str:
         """Visible text content of the element."""
         outer_html = await self.inner_html
-        return extract_text_from_html(outer_html, strip=True)
+        text_value = extract_text_from_html(outer_html, strip=True)
+        logger.debug(f'Extracted text length: {len(text_value)}')
+        return text_value
 
     @property
     async def bounds(self) -> Quad:
@@ -125,14 +132,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         command = DomCommands.get_box_model(object_id=self._object_id)
         response: GetBoxModelResponse = await self._execute_command(command)
-        return response['result']['model']['content']
+        content = response['result']['model']['content']
+        logger.debug(f'Bounds retrieved (points={len(content)})')
+        return content
 
     @property
     async def inner_html(self) -> str:
         """Element's HTML content (actually returns outerHTML)."""
         command = DomCommands.get_outer_html(object_id=self._object_id)
         response: GetOuterHTMLResponse = await self._execute_command(command)
-        return response['result']['outerHTML']
+        html = response['result']['outerHTML']
+        logger.debug(f'Inner HTML length: {len(html)})')
+        return html
 
     async def get_bounds_using_js(self) -> dict[str, int]:
         """
@@ -141,16 +152,20 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Returns coordinates relative to viewport (alternative to bounds property).
         """
         response = await self.execute_script(Scripts.BOUNDS, return_by_value=True)
-        return json.loads(response['result']['result']['value'])
+        bounds = json.loads(response['result']['result']['value'])
+        logger.debug(f'Bounds via JS: {bounds}')
+        return bounds
 
     async def get_parent_element(self) -> 'WebElement':
         """Element's parent element."""
+        logger.debug(f'Getting parent element for object_id={self._object_id}')
         result = await self.execute_script(Scripts.GET_PARENT_NODE)
         if not self._has_object_id_key(result):
             raise ElementNotFound(f'Parent element not found for element: {self}')
 
         object_id = result['result']['result']['objectId']
         attributes = await self._get_object_attributes(object_id=object_id)
+        logger.debug(f'Parent element resolved: object_id={object_id}')
         return WebElement(object_id, self._connection_handler, attributes_list=attributes)
 
     async def get_children_elements(
@@ -172,11 +187,16 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Raises:
             ElementNotFound: If no child elements are found for this element and raise_exc is True.
         """
+        logger.debug(
+            f'Getting children: max_depth={max_depth}, '
+            f'tag_filter={tag_filter}, raise_exc={raise_exc}'
+        )
         children = await self._get_family_elements(
             script=Scripts.GET_CHILDREN_NODE, max_depth=max_depth, tag_filter=tag_filter
         )
         if not children and raise_exc:
             raise ElementNotFound(f'Child element not found for element: {self}')
+        logger.debug(f'Children found: {len(children)}')
         return children
 
     async def get_siblings_elements(
@@ -197,11 +217,13 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             ElementNotFound: If no sibling elements are found for this element
             and raise_exc is True.
         """
+        logger.debug(f'Getting siblings: tag_filter={tag_filter}, raise_exc={raise_exc}')
         siblings = await self._get_family_elements(
             script=Scripts.GET_SIBLINGS_NODE, tag_filter=tag_filter
         )
         if not siblings and raise_exc:
             raise ElementNotFound(f'Sibling element not found for element: {self}')
+        logger.debug(f'Siblings found: {len(siblings)}')
         return siblings
 
     async def take_screenshot(self, path: str, quality: int = 100):
@@ -218,6 +240,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             height=bounds['height'],
             scale=1,
         )
+        logger.debug(
+            f'Taking element screenshot: path={path}, quality={quality}, '
+            f'clip={{x: {clip["x"]}, y: {clip["y"]}, w: {clip["width"]}, h: {clip["height"]}}}'
+        )
         screenshot: CaptureScreenshotResponse = await self._connection_handler.execute_command(
             PageCommands.capture_screenshot(
                 format=ScreenshotFormat.JPEG, clip=clip, quality=quality
@@ -226,6 +252,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         async with aiofiles.open(path, 'wb') as file:
             image_bytes = decode_base64_to_bytes(screenshot['result']['data'])
             await file.write(image_bytes)
+        logger.info(f'Element screenshot saved: {path}')
 
     def get_attribute(self, name: str) -> Optional[str]:
         """
@@ -240,6 +267,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def scroll_into_view(self):
         """Scroll element into visible viewport."""
         command = DomCommands.scroll_into_view_if_needed(object_id=self._object_id)
+        logger.info(f'Scrolling element into view: object_id={self._object_id}')
         await self._execute_command(command)
 
     async def wait_until(
@@ -270,14 +298,20 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             condition_parts.append('interactable')
         condition_msg = ' and '.join(condition_parts)
 
+        logger.info(
+            f'Waiting for element: visible={is_visible}, '
+            f'interactable={is_interactable}, timeout={timeout}s'
+        )
         loop = asyncio.get_event_loop()
         start_time = loop.time()
         while True:
             results = await asyncio.gather(*(check() for check in checks))
             if all(results):
+                logger.info(f'Element condition satisfied: {condition_msg}')
                 return
 
             if timeout and loop.time() - start_time > timeout:
+                logger.error(f'Timeout waiting for element to become {condition_msg}')
                 raise WaitElementTimeout(f'Timed out waiting for element to become {condition_msg}')
 
             await asyncio.sleep(0.5)
@@ -302,6 +336,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         if not await self.is_visible():
             raise ElementNotVisible()
 
+        logger.info(f'Clicking element via JS: object_id={self._object_id}')
         result = await self.execute_script(Scripts.CLICK, return_by_value=True)
         clicked = result['result']['result']['value']
         if not clicked:
@@ -349,6 +384,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 element_bounds_js['x'] + element_bounds_js['width'] / 2,
                 element_bounds_js['y'] + element_bounds_js['height'] / 2,
             )
+        logger.info(
+            f'Clicking element: x={position_to_click[0]}, '
+            f'y={position_to_click[1]}, hold={hold_time}s'
+        )
 
         press_command = InputCommands.dispatch_mouse_event(
             type=MouseEventType.MOUSE_PRESSED,
@@ -375,6 +414,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Note:
             Element should already be focused for text to be inserted correctly.
         """
+        logger.info(f'Inserting text on element (length={len(text)})')
         await self._execute_command(InputCommands.insert_text(text))
 
     async def set_input_files(self, files: list[str]):
@@ -392,6 +432,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             or self._attributes.get('type', '').lower() != 'file'
         ):
             raise ElementNotAFileInput()
+        logger.info(f'Setting input files: count={len(files)}')
         await self._execute_command(
             DomCommands.set_file_input_files(files=files, object_id=self._object_id)
         )
@@ -402,6 +443,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         More realistic than insert_text() but slower.
         """
+        logger.info(f'Typing text (length={len(text)}, interval={interval}s)')
         await self.click()
         for char in text:
             await self._execute_command(
@@ -420,6 +462,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             Only sends key down without release. Pair with key_up() for complete keypress.
         """
         key_name, code = key
+        logger.info(f'Key down: key={key_name} code={code} modifiers={modifiers}')
         await self._execute_command(
             InputCommands.dispatch_key_event(
                 type=KeyEventType.KEY_DOWN,
@@ -433,6 +476,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def key_up(self, key: Key):
         """Send key up event (should follow corresponding key_down())."""
         key_name, code = key
+        logger.info(f'Key up: key={key_name} code={code}')
         await self._execute_command(
             InputCommands.dispatch_key_event(
                 type=KeyEventType.KEY_UP,
@@ -599,6 +643,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 WebElement(child_object_id, self._connection_handler, attributes_list=attributes)
             )
 
+        logger.debug(f'Family elements found: {len(family_elements)}')
         return family_elements
 
     def _def_attributes(self, attributes_list: list[str]):
@@ -608,6 +653,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             key = key if key != 'class' else 'class_name'
             value = attributes_list[i + 1]
             self._attributes[key] = value
+        logger.debug(f'Attributes defined: count={len(self._attributes)}')
 
     def _is_option_tag(self):
         """Check if element is an <option> tag."""

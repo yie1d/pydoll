@@ -1,3 +1,52 @@
+## 2.9.2 (2025-10-19)
+
+### Fix
+
+- update process creation to capture output and clean proxy format
+- preserve query and fragment in WebSocket URL for tabs
+
+### Refactor
+
+- remove debug logging for request status and network events
+- refactor logger messages to use consistent single quotes
+- fix merge conflicts
+- add logging for browser lifecycle and context management events
+- refactor proxy parsing logic for improved clarity and efficiency
+
+## 2.9.1 (2025-10-15)
+
+### Fix
+
+- change download event handling to use PageEvent instead of BrowserEvent
+
+### Refactor
+
+- use early return in setup proxy method
+
+## 2.9.0 (2025-10-05)
+
+### Feat
+
+- add configurable page load state
+
+## 2.8.2 (2025-10-03)
+
+### Fix
+
+- implement proxy authentication handling for browser tabs
+- map exception when try to take screenshot of an iframe
+
+## 2.8.1 (2025-09-27)
+
+### Fix
+
+- store the opened tab in the _tabs_opened dictionary
+- **elements**: correctly detect parenthesized XPath expressions
+
+### Refactor
+
+- simplify FindElementsMixin._get_expression_type startswith checks into single tuple
+
 ## 2.8.0 (2025-08-28)
 
 ### Feat

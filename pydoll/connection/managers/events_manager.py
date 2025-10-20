@@ -27,6 +27,7 @@ class EventsManager:
         self.network_logs: list[RequestWillBeSentEvent] = []
         self.dialog = JavascriptDialogOpeningEvent(method='')
         logger.info('EventsManager initialized')
+        logger.debug('Initial state: callbacks=0, logs=0, dialog=empty')
 
     def register_callback(
         self, event_name: str, callback: Callable[[dict], Any], temporary: bool = False
@@ -49,6 +50,9 @@ class EventsManager:
             'temporary': temporary,
         }
         logger.info(f"Registered callback '{event_name}' with ID {self._callback_id}")
+        logger.debug(
+            f'Callback details: temporary={temporary}, total_callbacks={len(self._event_callbacks)}'
+        )
         return self._callback_id
 
     def remove_callback(self, callback_id: int) -> bool:
@@ -59,12 +63,14 @@ class EventsManager:
 
         del self._event_callbacks[callback_id]
         logger.info(f'Removed callback ID {callback_id}')
+        logger.debug(f'Remaining callbacks: {len(self._event_callbacks)}')
         return True
 
     def clear_callbacks(self):
         """Remove all registered callbacks."""
         self._event_callbacks.clear()
         logger.info('All callbacks cleared')
+        logger.debug('Callbacks store is now empty')
 
     async def process_event(self, event_data: CDPEvent):
         """
@@ -114,3 +120,6 @@ class EventsManager:
 
         for cb_id in callbacks_to_remove:
             self.remove_callback(cb_id)
+        logger.debug(
+            f"Triggered callbacks for '{event_name}'. Removed temporaries: {callbacks_to_remove}"
+        )
