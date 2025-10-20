@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pydoll.elements.web_element import WebElement
 from pydoll.protocol.runtime.types import CallArgument, SerializationOptions
+from pydoll.browser.options import ChromiumOptions
 
 from pydoll.protocol.network.types import ResourceType, RequestMethod
 from pydoll.protocol.fetch.types import RequestStage

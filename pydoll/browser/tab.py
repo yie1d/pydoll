@@ -692,30 +692,41 @@ class Tab(FindElementsMixin):
     ) -> Union[EvaluateResponse, CallFunctionOnResponse]:
         """
         Execute JavaScript in page context.
+
         Args:
-            script: JavaScript code to execute.
-            object_group: Symbolic group name for the result (Runtime.evaluate).
-            include_command_line_api: Whether to include command line API (Runtime.evaluate).
-            silent: Whether to silence exceptions (Runtime.evaluate).
-            context_id: ID of the execution context to evaluate in (Runtime.evaluate).
-            return_by_value: Whether to return the result by value instead of reference
+            script (str): JavaScript code to execute.
+            element (Optional[WebElement]): Optional WebElement to execute script on.
+            arguments (Optional[list[CallArgument]]): Arguments to pass to the function.
+            object_group (Optional[str]): Symbolic group name for the result (Runtime.evaluate).
+            include_command_line_api (Optional[bool]): Whether to include command line API
                 (Runtime.evaluate).
-            generate_preview: Whether to generate a preview for the result
+            silent (Optional[bool]): Whether to silence exceptions (Runtime.evaluate).
+            context_id (Optional[int]): ID of the execution context to evaluate in
                 (Runtime.evaluate).
-            user_gesture: Whether to treat evaluation as initiated by user gesture
+            return_by_value (Optional[bool]): Whether to return the result by value instead of
+                reference (Runtime.evaluate).
+            generate_preview (Optional[bool]): Whether to generate a preview for the result
                 (Runtime.evaluate).
-            await_promise: Whether to await promise result (Runtime.evaluate).
-            throw_on_side_effect: Whether to throw if side effect cannot be ruled out
+            user_gesture (Optional[bool]): Whether to treat evaluation as initiated by user
+                gesture (Runtime.evaluate).
+            await_promise (Optional[bool]): Whether to await promise result (Runtime.evaluate).
+            execution_context_id (Optional[int]): ID of the execution context to call the
+                function in.
+            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
+                ruled out (Runtime.evaluate).
+            timeout (Optional[float]): Timeout in milliseconds (Runtime.evaluate).
+            disable_breaks (Optional[bool]): Whether to disable breakpoints during evaluation
                 (Runtime.evaluate).
-            timeout: Timeout in milliseconds (Runtime.evaluate).
-            disable_breaks: Whether to disable breakpoints during evaluation (Runtime.evaluate).
-            repl_mode: Whether to execute in REPL mode (Runtime.evaluate).
-            allow_unsafe_eval_blocked_by_csp: Allow unsafe evaluation (Runtime.evaluate).
-            unique_context_id: Unique context ID for evaluation (Runtime.evaluate).
-            serialization_options: Serialization for the result (Runtime.evaluate).
+            repl_mode (Optional[bool]): Whether to execute in REPL mode (Runtime.evaluate).
+            allow_unsafe_eval_blocked_by_csp (Optional[bool]): Allow unsafe evaluation
+                (Runtime.evaluate).
+            unique_context_id (Optional[str]): Unique context ID for evaluation
+                (Runtime.evaluate).
+            serialization_options (Optional[SerializationOptions]): Serialization options for
+                the result (Runtime.evaluate).
 
         Returns:
-            The result of the script execution.
+            Union[EvaluateResponse, CallFunctionOnResponse]: The result of the script execution.
 
         Examples:
             await page.execute_script('console.log("Hello World")')

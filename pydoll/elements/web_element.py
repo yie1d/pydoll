@@ -502,28 +502,31 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         Execute JavaScript in element context.
 
         Args:
-            script: JavaScript code to execute. Use 'this' to reference this element.
-            arguments: Arguments to pass to the function (Runtime.callFunctionOn).
-            silent: Whether to silence exceptions (Runtime.callFunctionOn).
-            return_by_value: Whether to return the result by value instead of reference
+            script (str): JavaScript code to execute. Use 'this' to reference this element.
+            arguments (Optional[list[CallArgument]]): Arguments to pass to the function
                 (Runtime.callFunctionOn).
-            generate_preview: Whether to generate a preview for the result
+            silent (Optional[bool]): Whether to silence exceptions (Runtime.callFunctionOn).
+            return_by_value (Optional[bool]): Whether to return the result by value instead of
+                reference (Runtime.callFunctionOn).
+            generate_preview (Optional[bool]): Whether to generate a preview for the result
                 (Runtime.callFunctionOn).
-            user_gesture: Whether to treat the call as initiated by user gesture
+            user_gesture (Optional[bool]): Whether to treat the call as initiated by user
+                gesture (Runtime.callFunctionOn).
+            await_promise (Optional[bool]): Whether to await promise result
                 (Runtime.callFunctionOn).
-            await_promise: Whether to await promise result (Runtime.callFunctionOn).
-            execution_context_id: ID of the execution context to call the function in
+            execution_context_id (Optional[int]): ID of the execution context to call the
+                function in (Runtime.callFunctionOn).
+            object_group (Optional[str]): Symbolic group name for the result
                 (Runtime.callFunctionOn).
-            object_group: Symbolic group name for the result (Runtime.callFunctionOn).
-            throw_on_side_effect: Whether to throw if side effect cannot be ruled out
+            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
+                ruled out (Runtime.callFunctionOn).
+            unique_context_id (Optional[str]): Unique context ID for the function call
                 (Runtime.callFunctionOn).
-            unique_context_id: Unique context ID for the function call
-                (Runtime.callFunctionOn).
-            serialization_options: Serialization options for the result
-                (Runtime.callFunctionOn).
+            serialization_options (Optional[SerializationOptions]): Serialization options for
+                the result (Runtime.callFunctionOn).
 
         Returns:
-            The result of the script execution.
+            CallFunctionOnResponse: The result of the script execution.
 
         Examples:
             # Click the element
