@@ -21,7 +21,7 @@
 
 Pydoll采用全新的浏览器自动化技术——完全无需 WebDriver！与其他依赖外部驱动的解决方案不同，Pydoll 通过浏览器原生 DevTools 协议直接通信，提供零依赖的自动化体验，并自带原生异步高性能支持。
 
-无论是数据采集、Web应用测试，还是自动化重复任务，Pydoll 都能通过其直观的 API 和强大功能，让这些工作变得异常简单。  
+无论是数据采集、[Web应用测试](https://www.lambdatest.com/web-testing)，还是自动化重复任务，Pydoll 都能通过其直观的 API 和强大功能，让这些工作变得异常简单。  
 
 ## 安装
 
@@ -248,6 +248,19 @@ bs4 = "^0.0.2"
 - **🔄 方便升级** - 方便维护已经无破坏性更新
 
 更少的依赖项带来了： 更高的运行可靠性以及更强的性能表现。
+
+## 赞助商
+
+赞助商的支持对于项目的持续发展至关重要。每一份合作都能帮助我们覆盖基础成本、推动新功能迭代，并保证项目长期维护与更新。非常感谢所有相信并支持 Pydoll 的伙伴！
+
+<a href="https://www.lambdatest.com/?utm_source=pydoll&utm_medium=sponsor" target="_blank" rel="noopener nofollow sponsored">
+  <img src="https://www.lambdatest.com/blue-logo.png" alt="LambdaTest" width="200" height="45" />
+  
+</a>
+
+<p>
+  <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" style="display:inline-block;padding:6px 10px;border:1px solid #94a3b8;border-radius:6px;text-decoration:none;color:#e2e8f0;background:#0f172a;">成为赞助商</a>
+</p>
 
 ## 许可证
 

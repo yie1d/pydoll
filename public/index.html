@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1220" />
-    <title>Pydoll - Automate the Web, naturally</title>
+    <title>Pydoll - scraping, the easier way</title>
     <meta name="description" content="Pydoll is a Python browser automation library built on CDP with zero configuration, async performance, intuitive API, and full type safety. Simple, powerful web automation." />
     <meta name="keywords" content="pydoll, browser automation, web automation, web scraping, scraping, data scraping, data extraction, crawler, crawling, headless browser, headless chrome, chrome devtools protocol, devtools protocol, cdp, python cdp, chrome cdp, async python, asyncio, network interception, request interception, browser context requests, http requests browser context, humanized interactions, human-like interactions, automation library, scraping framework, type safety, zero configuration, concurrent automation, browser preferences, downloads, python automation, modern web scraping" />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://pydoll.tech/" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Pydoll - Automate the Web, naturally" />
+    <meta property="og:title" content="Pydoll - scraping, the easier way" />
     <meta property="og:description" content="Python browser automation with zero configuration, async performance, intuitive API, and full type safety. Simple, powerful web automation." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://pydoll.tech/images/logo.png" />
@@ -22,7 +22,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Pydoll - Automate the Web, naturally" />
+    <meta name="twitter:title" content="Pydoll - scraping, the easier way" />
     <meta name="twitter:description" content="Python browser automation with zero configuration, async performance, intuitive API, and full type safety." />
     <meta name="twitter:image" content="https://pydoll.tech/images/logo.png" />
 
@@ -73,7 +73,7 @@
             "@type": "WebPage",
             "@id": "https://pydoll.tech/#webpage",
             "url": "https://pydoll.tech/",
-            "name": "Pydoll - Automate the Web, naturally",
+            "name": "Pydoll - scraping, the easier way",
             "isPartOf": { "@id": "https://pydoll.tech/#website" },
             "about": { "@id": "https://pydoll.tech/#software" },
             "description": "Pydoll is a Python CDP browser automation library for web scraping, with zero configuration, async performance, and intuitive API."
@@ -210,6 +210,7 @@
           <nav class="hidden items-center gap-2 sm:flex sm:gap-3">
             <a href="https://pydoll.tech/docs/" target="_blank" rel="noopener" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Docs</a>
             <a href="#install" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Install</a>
+            <a href="#sponsors" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Sponsors</a>
             <a href="#faq" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">FAQ</a>
             <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Sponsor</a>
             <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" aria-label="Star on GitHub" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-yellow-400">
@@ -230,6 +231,7 @@
           <div class="space-y-1 border-t border-white/10 py-3">
             <a href="https://pydoll.tech/docs/" target="_blank" rel="noopener" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Docs</a>
             <a href="#install" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Install</a>
+            <a href="#sponsors" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Sponsors</a>
             <a href="#faq" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">FAQ</a>
             <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Sponsor</a>
             <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-yellow-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 22 12 18 5 22 7 14 2 9 9 9 12 2"/></svg> Star</a>
@@ -245,7 +247,7 @@
       <div class="mx-auto max-w-7xl px-4 pb-12 pt-16 sm:pb-16 sm:pt-24 lg:flex lg:items-start lg:gap-12 lg:px-8">
         <div class="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
           <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
-            Pydoll: automate the web, naturally
+            Pydoll: scraping, the easier way
           </h1>
           <p class="mt-6 text-lg leading-8 text-slate-300">
             Built from scratch with zero configuration complexity, Pydoll connects directly to the Chrome DevTools Protocol. 
@@ -271,18 +273,14 @@
               <div class="flex items-center gap-3">
               </div>
               <div class="rounded-lg bg-slate-950 p-0">
-                <pre class="language-python"><code class="language-python">async def extract_github_data():
-   async with Chrome() as browser:
-      tab = await browser.start()
-      await tab.go_to('https://github.com/autoscrape-labs/pydoll')
-      # Extract data with readable code
-      stars = await (await tab.find(
-        id='repo-stars-counter-star')
-      ).text
-      description = await (await tab.query(
-        '//h2[contains(text(), "About")]/following-sibling::p')
-      ).text
-      print(f"⭐ Stars: {stars}", f"📝 Description: {description}")</code></pre>
+                <iframe 
+                  class="w-full aspect-video rounded-lg" 
+                  src="https://www.youtube.com/embed/sSw5dS3dQ8k" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
               </div>
               <div class="flex items-center justify-between text-xs text-slate-400">
                 <span>✨ Simple, powerful, async</span>
@@ -596,6 +594,23 @@ asyncio.run(main())
 
           </div>
         </div>
+      </div>
+    </section>
+
+
+    <!-- Sponsors -->
+    <section id="sponsors" class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div class="reveal rounded-xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight">Sponsors</h2>
+            <p class="mt-1 text-sm text-slate-300">Companies and partners supporting Pydoll.</p>
+          </div>
+          <div>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-400">Become a sponsor</a>
+          </div>
+        </div>
+        <ul id="sponsorsGrid" class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 items-center"></ul>
       </div>
     </section>
 

@@ -66,6 +66,26 @@ def test_proxy_manager_invalid_credentials_format(proxy_options):
     ]
 
 
+def test_proxy_manager_with_scheme_http(proxy_options):
+    proxy_options.add_argument('--proxy-server=http://user:pass@proxy.local:8080')
+    manager = ProxyManager(proxy_options)
+    result = manager.get_proxy_credentials()
+
+    assert result[0] is True
+    assert result[1] == ('user', 'pass')
+    assert proxy_options.arguments == ['--proxy-server=http://proxy.local:8080']
+
+
+def test_proxy_manager_with_scheme_socks(proxy_options):
+    proxy_options.add_argument('--proxy-server=socks5://alice:pwd@1.2.3.4:1080')
+    manager = ProxyManager(proxy_options)
+    result = manager.get_proxy_credentials()
+
+    assert result[0] is True
+    assert result[1] == ('alice', 'pwd')
+    assert proxy_options.arguments == ['--proxy-server=socks5://1.2.3.4:1080']
+
+
 def test_proxy_manager_invalid_proxy_format(proxy_options):
     proxy_options.add_argument('--proxy-server=invalidformat')
     manager = ProxyManager(proxy_options)

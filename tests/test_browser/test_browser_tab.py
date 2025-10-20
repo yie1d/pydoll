@@ -14,7 +14,7 @@ from pydoll.protocol.network.types import ResourceType, RequestMethod
 from pydoll.protocol.fetch.types import RequestStage
 from pydoll.constants import By
 from pydoll.browser.tab import Tab
-from pydoll.protocol.browser.events import BrowserEvent
+from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.browser.types import DownloadBehavior
 from pydoll.exceptions import DownloadTimeout, InvalidTabInitialization
 from pydoll.exceptions import (
@@ -47,6 +47,7 @@ async def mock_browser():
     """Mock browser instance."""
     browser = MagicMock()
     browser.close_tab = AsyncMock()
+    browser.options = ChromiumOptions()
     return browser
 
 
@@ -426,6 +427,14 @@ class TestTabScreenshotAndPDF:
             assert command['method'] == 'Page.captureScreenshot'
             assert command['params']['captureBeyondViewport'] is True
             assert result == screenshot_data
+
+    @pytest.mark.asyncio
+    async def test_take_screenshot_in_iframe_raises_top_level_required(self, tab):
+        """Tab.take_screenshot must be called on top-level targets; iframe Tab raises."""
+        # Simulate CDP returning no image data (missing 'data' key) for non top-level target
+        with patch.object(tab, '_execute_command', AsyncMock(return_value={'result': {}})):
+            with pytest.raises(TopLevelTargetRequired):
+                await tab.take_screenshot(path=None, as_base64=True)
 
     @pytest.mark.asyncio
     async def test_print_to_pdf_to_file(self, tab, tmp_path):
@@ -1070,13 +1079,13 @@ class TestTabDownload:
 
         async def fake_on(event_name, handler, temporary=False):
             handlers[event_name] = handler
-            return 100 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 101
+            return 100 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 101
 
         with patch.object(tab, 'on', fake_on):
             async with tab.expect_download(keep_file_at=str(target_dir)) as download:
                 # Simulate willBegin
-                await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
-                    'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': PageEvent.DOWNLOAD_WILL_BEGIN,
                     'params': {
                         'frameId': 'frame-1',
                         'guid': 'guid-1',
@@ -1085,8 +1094,8 @@ class TestTabDownload:
                     }
                 })
                 # Simulate progress Completed without filePath (fallback to suggested)
-                await handlers[BrowserEvent.DOWNLOAD_PROGRESS]({
-                    'method': BrowserEvent.DOWNLOAD_PROGRESS,
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
                     'params': {
                         'guid': 'guid-1',
                         'totalBytes': 10,
@@ -1115,14 +1124,14 @@ class TestTabDownload:
 
         async def fake_on(event_name, handler, temporary=False):
             handlers[event_name] = handler
-            return 200 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 201
+            return 200 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 201
 
         with patch.object(tab, 'on', fake_on):
             with pytest.raises(DownloadTimeout):
                 async with tab.expect_download(keep_file_at=str(tmp_path), timeout=0.01):
                     # Trigger will begin but never complete
-                    await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
-                        'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                    await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                        'method': PageEvent.DOWNLOAD_WILL_BEGIN,
                         'params': {
                             'frameId': 'frame-1',
                             'guid': 'guid-2',
@@ -1140,13 +1149,13 @@ class TestTabDownload:
 
         async def fake_on(event_name, handler, temporary=False):
             handlers[event_name] = handler
-            return 300 if event_name == BrowserEvent.DOWNLOAD_WILL_BEGIN else 301
+            return 300 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 301
 
         with patch.object(tab, 'on', fake_on):
             # Use None to create temp dir and ensure cleanup occurs
             async with tab.expect_download(keep_file_at=None) as download:
-                await handlers[BrowserEvent.DOWNLOAD_WILL_BEGIN]({
-                    'method': BrowserEvent.DOWNLOAD_WILL_BEGIN,
+                await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': PageEvent.DOWNLOAD_WILL_BEGIN,
                     'params': {
                         'frameId': 'frame-1',
                         'guid': 'guid-3',
@@ -1154,8 +1163,8 @@ class TestTabDownload:
                         'suggestedFilename': 'tmp.txt',
                     }
                 })
-                await handlers[BrowserEvent.DOWNLOAD_PROGRESS]({
-                    'method': BrowserEvent.DOWNLOAD_PROGRESS,
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
                     'params': {
                         'guid': 'guid-3',
                         'totalBytes': 3,
@@ -1174,6 +1183,140 @@ class TestTabDownload:
             # After context, temp dir should be removed
             # We cannot know the exact temp dir path (random), but ensure file is gone
             assert not file_path.exists()
+
+    @pytest.mark.asyncio
+    async def test_expect_download_ignores_progress_with_different_guid(self, tab, tmp_path):
+        tab._browser.set_download_behavior = AsyncMock()
+
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 400 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 401
+
+        with patch.object(tab, 'on', fake_on):
+            async with tab.expect_download(keep_file_at=str(tmp_path)) as download:
+                await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': PageEvent.DOWNLOAD_WILL_BEGIN,
+                    'params': {
+                        'frameId': 'frame-1',
+                        'guid': 'guid-x',
+                        'url': 'https://example.com/file.bin',
+                        'suggestedFilename': 'file.bin',
+                    }
+                })
+
+                # Wrong guid should be ignored and not mark as done
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'wrong-guid',
+                        'totalBytes': 1,
+                        'receivedBytes': 1,
+                        'state': 'completed',
+                    }
+                })
+
+                # Still not finished
+                assert download.file_path is None
+
+                # Correct guid completes
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'guid-x',
+                        'totalBytes': 10,
+                        'receivedBytes': 10,
+                        'state': 'completed',
+                        'filePath': str(tmp_path / 'file.bin'),
+                    }
+                })
+
+                await download.wait_finished()
+
+    @pytest.mark.asyncio
+    async def test_expect_download_page_events_auto_enable_disable(self, tab, tmp_path):
+        """When page events are disabled, expect_download should enable and then disable them."""
+        tab._browser.set_download_behavior = AsyncMock()
+        tab._page_events_enabled = False
+
+        enable_page_events = AsyncMock()
+        disable_page_events = AsyncMock()
+
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 500 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 501
+
+        with patch.object(tab, 'enable_page_events', enable_page_events), \
+             patch.object(tab, 'disable_page_events', disable_page_events), \
+             patch.object(tab, 'on', fake_on):
+            async with tab.expect_download(keep_file_at=str(tmp_path)):
+                await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': PageEvent.DOWNLOAD_WILL_BEGIN,
+                    'params': {
+                        'frameId': 'frame-1',
+                        'guid': 'guid-y',
+                        'url': 'https://example.com/auto.bin',
+                        'suggestedFilename': 'auto.bin',
+                    }
+                })
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'guid-y',
+                        'totalBytes': 2,
+                        'receivedBytes': 2,
+                        'state': 'completed',
+                        'filePath': str(tmp_path / 'auto.bin'),
+                    }
+                })
+
+        enable_page_events.assert_awaited_once()
+        disable_page_events.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_expect_download_keeps_page_events_enabled_when_already_enabled(self, tab, tmp_path):
+        """When page events already enabled, expect_download should not disable them on exit."""
+        tab._browser.set_download_behavior = AsyncMock()
+        tab._page_events_enabled = True
+
+        enable_page_events = AsyncMock()
+        disable_page_events = AsyncMock()
+
+        handlers = {}
+
+        async def fake_on(event_name, handler, temporary=False):
+            handlers[event_name] = handler
+            return 600 if event_name == PageEvent.DOWNLOAD_WILL_BEGIN else 601
+
+        with patch.object(tab, 'enable_page_events', enable_page_events), \
+             patch.object(tab, 'disable_page_events', disable_page_events), \
+             patch.object(tab, 'on', fake_on):
+            async with tab.expect_download(keep_file_at=str(tmp_path)):
+                await handlers[PageEvent.DOWNLOAD_WILL_BEGIN]({
+                    'method': PageEvent.DOWNLOAD_WILL_BEGIN,
+                    'params': {
+                        'frameId': 'frame-1',
+                        'guid': 'guid-z',
+                        'url': 'https://example.com/enabled.bin',
+                        'suggestedFilename': 'enabled.bin',
+                    }
+                })
+                await handlers[PageEvent.DOWNLOAD_PROGRESS]({
+                    'method': PageEvent.DOWNLOAD_PROGRESS,
+                    'params': {
+                        'guid': 'guid-z',
+                        'totalBytes': 2,
+                        'receivedBytes': 2,
+                        'state': 'completed',
+                        'filePath': str(tmp_path / 'enabled.bin'),
+                    }
+                })
+
+        enable_page_events.assert_not_awaited()
+        disable_page_events.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_disable_auto_solve_cloudflare_captcha(self, tab):

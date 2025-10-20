@@ -57,6 +57,9 @@ Capture visual content from web pages:
 - **High-Quality PDF Export**: Generate PDF documents from web pages
 - **Custom Formatting**: Coming soon!
 
+!!! note "Screenshots in iFrames and top-level targets"
+    `tab.take_screenshot()` only works on top-level targets. When working inside an `iframe` (using `await tab.get_frame(iframe_element)`), Chrome's `Page.captureScreenshot` cannot capture the subtarget directly. In these scenarios, use `WebElement.take_screenshot()` instead—it captures via viewport and works inside iframes.
+
 ## Remote Connections and Hybrid Automation
 
 ### Connect to a running browser via WebSocket
@@ -525,12 +528,8 @@ async def main():
     async with Chrome() as browser:
         # Start the browser once
         await browser.start()
-        
-        # Create partial function with browser parameter
-        scrape_with_browser = partial(scrape_page, browser)
-        
         # Process all URLs concurrently using the same browser
-        results = await asyncio.gather(*(scrape_with_browser(url) for url in urls))
+        results = await asyncio.gather(*(scrape_page(browser, url) for url in urls))
     
     # Print results
     for result in results:
@@ -1165,6 +1164,26 @@ options.browser_preferences = {
 
 This direct access to Chromium's preference system gives you the same level of control as enterprise administrators and extension developers, making sophisticated browser customization possible within your automation scripts.
 
+## Page Load State Control
+
+Control when navigations are considered loaded by selecting the page readiness checkpoint used by `tab.go_to()` and internal load waits.
+
+- Default: `complete`
+- Optional: `interactive` (ends earlier once the DOM is interactive)
+
+```python
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
+from pydoll.constants import PageLoadState
+
+options = ChromiumOptions()
+options.page_load_state = PageLoadState.INTERACTIVE  # default is COMPLETE
+
+async with Chrome(options=options) as browser:
+    tab = await browser.start()
+    await tab.go_to('https://example.com')
+```
+
 
 ## File Upload Support
 
@@ -1311,6 +1330,40 @@ asyncio.run(iframe_interaction())
 ## Request Interception
 
 Intercept and modify network requests before they're sent:
+
+!!! note "Private proxy + request interception (Fetch)"
+    When using a private/authenticated proxy, Pydoll enables Fetch at the Browser level to handle the proxy authentication challenge during the first navigation and may change its state. To avoid domain conflicts with your Tab-level interception, enable Fetch at the Tab level only after the first navigation completes.
+
+    Recommended pattern:
+
+    ```python
+    import asyncio
+    from pydoll.browser.chromium import Chrome
+    from pydoll.browser.options import ChromiumOptions
+
+    async def main():
+        options = ChromiumOptions()
+        options.add_argument('--proxy-server=username:password@host:port')
+
+        async with Chrome(options=options) as browser:
+            tab = await browser.start()
+
+            # 1) Trigger proxy auth at Browser level first
+            await tab.go_to('https://example.com')
+
+            # 2) Then enable Tab-level Fetch interception safely
+            await tab.enable_fetch_events()
+
+            async def on_paused(event):
+                await tab.continue_request(event['params']['requestId'])
+
+            await tab.on('Fetch.requestPaused', on_paused)
+
+            # 3) Proceed with your navigations/interception
+            await tab.go_to('https://example.com/next')
+
+    asyncio.run(main())
+    ```
 
 ### Basic Request Modification
 
