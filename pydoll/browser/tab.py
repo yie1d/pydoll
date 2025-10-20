@@ -2,6 +2,7 @@ import asyncio
 import base64 as _b64
 import logging
 import shutil
+import warnings
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
@@ -67,9 +68,11 @@ from pydoll.protocol.page.events import FileChooserOpenedEvent, PageEvent
 from pydoll.protocol.page.methods import CaptureScreenshotResponse, PrintToPDFResponse
 from pydoll.protocol.page.types import ScreenshotFormat
 from pydoll.protocol.runtime.methods import (
+    CallFunctionOnResponse,
     EvaluateResponse,
     SerializationOptions,
 )
+from pydoll.protocol.runtime.types import CallArgument
 from pydoll.protocol.storage.methods import GetCookiesResponse
 from pydoll.utils import (
     decode_base64_to_bytes,
@@ -623,21 +626,93 @@ class Tab(FindElementsMixin):
             PageCommands.handle_javascript_dialog(accept=accept, prompt_text=prompt_text)
         )
 
+    @overload
     async def execute_script(
         self,
         script: str,
         *,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
         return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
         await_promise: Optional[bool] = None,
-    ) -> EvaluateResponse:
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ) -> EvaluateResponse: ...
+
+    @overload
+    async def execute_script(
+        self,
+        script: str,
+        element: WebElement,
+        *,
+        arguments: Optional[list[CallArgument]] = None,
+        silent: Optional[bool] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        execution_context_id: Optional[int] = None,
+        object_group: Optional[str] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ) -> CallFunctionOnResponse: ...
+
+    async def execute_script(
+        self,
+        script: str,
+        element: Optional[WebElement] = None,
+        *,
+        arguments: Optional[list[CallArgument]] = None,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        execution_context_id: Optional[int] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ) -> Union[EvaluateResponse, CallFunctionOnResponse]:
         """
         Execute JavaScript in page context.
-
         Args:
             script: JavaScript code to execute.
+            object_group: Symbolic group name for the result (Runtime.evaluate).
+            include_command_line_api: Whether to include command line API (Runtime.evaluate).
+            silent: Whether to silence exceptions (Runtime.evaluate).
+            context_id: ID of the execution context to evaluate in (Runtime.evaluate).
             return_by_value: Whether to return the result by value instead of reference
                 (Runtime.evaluate).
+            generate_preview: Whether to generate a preview for the result
+                (Runtime.evaluate).
+            user_gesture: Whether to treat evaluation as initiated by user gesture
+                (Runtime.evaluate).
             await_promise: Whether to await promise result (Runtime.evaluate).
+            throw_on_side_effect: Whether to throw if side effect cannot be ruled out
+                (Runtime.evaluate).
+            timeout: Timeout in milliseconds (Runtime.evaluate).
+            disable_breaks: Whether to disable breakpoints during evaluation (Runtime.evaluate).
+            repl_mode: Whether to execute in REPL mode (Runtime.evaluate).
+            allow_unsafe_eval_blocked_by_csp: Allow unsafe evaluation (Runtime.evaluate).
+            unique_context_id: Unique context ID for evaluation (Runtime.evaluate).
+            serialization_options: Serialization for the result (Runtime.evaluate).
 
         Returns:
             The result of the script execution.
@@ -646,14 +721,52 @@ class Tab(FindElementsMixin):
             await page.execute_script('console.log("Hello World")')
             await page.execute_script('return document.title')
         """
+        logger.debug(f'Executing script: with_element={bool(element)}, length={len(script)}')
+        if element is not None:
+            warnings.warn(
+                'Passing a WebElement to Tab.execute_script() is deprecated. '
+                'Use WebElement.execute_script() instead.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+            return await element.execute_script(
+                script,
+                arguments=arguments,
+                silent=silent,
+                return_by_value=return_by_value,
+                generate_preview=generate_preview,
+                user_gesture=user_gesture,
+                await_promise=await_promise,
+                execution_context_id=execution_context_id,
+                object_group=object_group,
+                throw_on_side_effect=throw_on_side_effect,
+                unique_context_id=unique_context_id,
+                serialization_options=serialization_options,
+            )
+
         if has_return_outside_function(script):
             script = f'(function(){{ {script} }})()'
 
         command = RuntimeCommands.evaluate(
             expression=script,
+            object_group=object_group,
+            include_command_line_api=include_command_line_api,
+            silent=silent,
+            context_id=context_id,
             return_by_value=return_by_value,
+            generate_preview=generate_preview,
+            user_gesture=user_gesture,
             await_promise=await_promise,
+            throw_on_side_effect=throw_on_side_effect,
+            timeout=timeout,
+            disable_breaks=disable_breaks,
+            repl_mode=repl_mode,
+            allow_unsafe_eval_blocked_by_csp=allow_unsafe_eval_blocked_by_csp,
+            unique_context_id=unique_context_id,
+            serialization_options=serialization_options,
         )
+        logger.debug(f'Executing script without element: length={len(script)}')
         return await self._execute_command(command)
 
     # TODO: think about how to remove these duplications with the base class
