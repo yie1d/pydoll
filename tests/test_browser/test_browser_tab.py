@@ -26,6 +26,7 @@ from pydoll.exceptions import (
     InvalidFileExtension,
     WaitElementTimeout,
     NetworkEventsNotEnabled,
+    TopLevelTargetRequired,
 )
 
 @pytest_asyncio.fixture
