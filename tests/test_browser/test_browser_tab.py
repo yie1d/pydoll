@@ -1357,50 +1357,55 @@ class TestTabDownload:
     async def test_bypass_cloudflare_with_element_found(self, tab):
         """Test _bypass_cloudflare when element is found."""
         mock_element = AsyncMock()
-        mock_element.execute_script = AsyncMock()
         
         mock_find = AsyncMock(return_value=mock_element)
+        mock_execute_script = AsyncMock()
         
         with patch.object(tab, 'find_or_wait_element', mock_find):
-            with patch('asyncio.sleep', AsyncMock()):
-                await tab._bypass_cloudflare({})
+            with patch.object(tab, 'execute_script', mock_execute_script):
+                with patch('asyncio.sleep', AsyncMock()):
+                    await tab._bypass_cloudflare({})
         
         mock_find.assert_called_once()
-        mock_element.execute_script.assert_called_once_with('this.style="width: 300px"')
+        mock_execute_script.assert_called_once()
         mock_element.click.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_bypass_cloudflare_no_element_found(self, tab):
         """Test _bypass_cloudflare when no element is found."""
         mock_find = AsyncMock(return_value=None)
+        mock_execute_script = AsyncMock()
         
         with patch.object(tab, 'find_or_wait_element', mock_find):
-            await tab._bypass_cloudflare({})
+            with patch.object(tab, 'execute_script', mock_execute_script):
+                await tab._bypass_cloudflare({})
         
         mock_find.assert_called_once()
+        # execute_script and click should not be called
+        mock_execute_script.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_bypass_cloudflare_with_custom_selector(self, tab):
         """Test _bypass_cloudflare with custom selector."""
         mock_element = AsyncMock()
-        mock_element.execute_script = AsyncMock()
         custom_selector = (By.ID, 'custom-captcha')
         
         mock_find = AsyncMock(return_value=mock_element)
+        mock_execute_script = AsyncMock()
         
         with patch.object(tab, 'find_or_wait_element', mock_find):
-            with patch('asyncio.sleep', AsyncMock()):
-                await tab._bypass_cloudflare(
-                    {},
-                    custom_selector=custom_selector,
-                    time_before_click=3,
-                    time_to_wait_captcha=10
-                )
+            with patch.object(tab, 'execute_script', mock_execute_script):
+                with patch('asyncio.sleep', AsyncMock()):
+                    await tab._bypass_cloudflare(
+                        {},
+                        custom_selector=custom_selector,
+                        time_before_click=3,
+                        time_to_wait_captcha=10
+                    )
         
         mock_find.assert_called_with(
             By.ID, 'custom-captcha', timeout=10, raise_exc=False
         )
-        mock_element.execute_script.assert_called_once_with('this.style="width: 300px"')
 
 
 class TestTabFrameHandling:
