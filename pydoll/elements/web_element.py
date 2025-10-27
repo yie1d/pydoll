@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import aiofiles
 
@@ -24,24 +26,28 @@ from pydoll.exceptions import (
     ElementNotVisible,
     WaitElementTimeout,
 )
-from pydoll.protocol.dom.methods import (
-    GetBoxModelResponse,
-    GetOuterHTMLResponse,
-)
-from pydoll.protocol.dom.types import Quad
 from pydoll.protocol.input.types import (
     KeyEventType,
     KeyModifier,
     MouseButton,
     MouseEventType,
 )
-from pydoll.protocol.page.methods import CaptureScreenshotResponse
 from pydoll.protocol.page.types import ScreenshotFormat, Viewport
-from pydoll.protocol.runtime.methods import GetPropertiesResponse
 from pydoll.utils import (
     decode_base64_to_bytes,
     extract_text_from_html,
 )
+
+if TYPE_CHECKING:
+    from typing import Optional
+
+    from pydoll.protocol.dom.methods import (
+        GetBoxModelResponse,
+        GetOuterHTMLResponse,
+    )
+    from pydoll.protocol.dom.types import Quad
+    from pydoll.protocol.page.methods import CaptureScreenshotResponse
+    from pydoll.protocol.runtime.methods import GetPropertiesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +156,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         logger.debug(f'Bounds via JS: {bounds}')
         return bounds
 
-    async def get_parent_element(self) -> 'WebElement':
+    async def get_parent_element(self) -> WebElement:
         """Element's parent element."""
         logger.debug(f'Getting parent element for object_id={self._object_id}')
         result = await self.execute_script(Scripts.GET_PARENT_NODE)
@@ -164,7 +170,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def get_children_elements(
         self, max_depth: int = 1, tag_filter: list[str] = [], raise_exc: bool = False
-    ) -> list['WebElement']:
+    ) -> list[WebElement]:
         """
         Retrieve all direct and nested child elements of this element.
 
@@ -195,7 +201,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def get_siblings_elements(
         self, tag_filter: list[str] = [], raise_exc: bool = False
-    ) -> list['WebElement']:
+    ) -> list[WebElement]:
         """
         Retrieve all sibling elements of this element (elements at the same DOM level).
 
@@ -539,7 +545,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def _get_family_elements(
         self, script: str, max_depth: int = 1, tag_filter: list[str] = []
-    ) -> list['WebElement']:
+    ) -> list[WebElement]:
         """
         Retrieve all family elements of this element (elements at the same DOM level).
 
@@ -565,7 +571,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             get_properties_command
         )
 
-        family_elements: list['WebElement'] = []
+        family_elements: list[WebElement] = []
         for prop in properties_response['result']['result']:
             if not (prop['name'].isdigit() and 'objectId' in prop['value']):
                 continue

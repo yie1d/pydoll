@@ -3,16 +3,19 @@ This module provides a Request class that mimics the behavior of requests.
 It allows making HTTP requests using the browser's fetch API.
 """
 
+from __future__ import annotations
+
 import json as jsonlib
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from pydoll.browser.requests.response import HTTPError, Response
+from pydoll.browser.requests.response import Response
 from pydoll.commands.runtime_commands import RuntimeCommands
 from pydoll.constants import Scripts
+from pydoll.exceptions import HTTPError
 from pydoll.protocol.fetch.types import HeaderEntry
-from pydoll.protocol.network.events import NetworkEvent
+from pydoll.protocol.network.events import NetworkEvent, ResponseReceivedExtraInfoEventParams
 from pydoll.protocol.network.types import CookieParam
 
 logger = logging.getLogger(__name__)
@@ -27,7 +30,6 @@ if TYPE_CHECKING:
         ResponseReceivedEvent,
         ResponseReceivedEventParams,
         ResponseReceivedExtraInfoEvent,
-        ResponseReceivedExtraInfoEventParams,
     )
     from pydoll.protocol.runtime.methods import EvaluateResponse
 
@@ -71,7 +73,7 @@ class Request:
     - Cookies are managed automatically by the browser
     """
 
-    def __init__(self, tab: 'Tab'):
+    def __init__(self, tab: Tab):
         """Initialize a new Request instance bound to a browser tab.
 
         Args:
@@ -81,8 +83,8 @@ class Request:
         """
         self.tab = tab
         self._network_events_enabled = False
-        self._requests_sent: list['RequestSentEvent'] = []
-        self._requests_received: list['RequestReceivedEvent'] = []
+        self._requests_sent: list[RequestSentEvent] = []
+        self._requests_received: list[RequestReceivedEvent] = []
         logger.debug('Request helper initialized for tab')
 
     async def request(
@@ -334,7 +336,7 @@ class Request:
             options['body'] = data
             logger.debug('Request data set as raw payload')
 
-    async def _execute_fetch_request(self, url: str, options: dict[str, Any]) -> 'EvaluateResponse':
+    async def _execute_fetch_request(self, url: str, options: dict[str, Any]) -> EvaluateResponse:
         """Execute the fetch request using browser's runtime."""
         script = Scripts.MAKE_REQUEST.format(url=jsonlib.dumps(url), options=jsonlib.dumps(options))
         await self._register_callbacks()
@@ -350,7 +352,7 @@ class Request:
 
     @staticmethod
     def _build_response(
-        result: 'EvaluateResponse',
+        result: EvaluateResponse,
         response_headers: list[HeaderEntry],
         request_headers: list[HeaderEntry],
         cookies: list[CookieParam],
@@ -385,11 +387,11 @@ class Request:
             logger.debug('Network events enabled on tab for request capture')
 
         def append_received_request(event: dict) -> None:
-            self._requests_received.append(cast('RequestReceivedEvent', event))
+            self._requests_received.append(cast(RequestReceivedEvent, event))
             logger.debug(f'Appended received request: event={event}')
 
         def append_sent_request(event: dict) -> None:
-            self._requests_sent.append(cast('RequestSentEvent', event))
+            self._requests_sent.append(cast(RequestSentEvent, event))
             logger.debug(f'Appended sent request: event={event}')
 
         await self.tab.on(
@@ -450,7 +452,7 @@ class Request:
 
     @staticmethod
     def _extract_headers_from_events(
-        events: Union[list['RequestSentEvent'], list['RequestReceivedEvent']],
+        events: Union[list[RequestSentEvent], list[RequestReceivedEvent]],
         event_extractors: dict[str, Callable[[Any], list[HeaderEntry]]],
     ) -> list[HeaderEntry]:
         """Extract headers from network events using appropriate extractors.
@@ -488,7 +490,7 @@ class Request:
         return headers
 
     def _extract_request_sent_headers(
-        self, params: 'RequestWillBeSentEventParams'
+        self, params: RequestWillBeSentEventParams
     ) -> list[HeaderEntry]:
         """Extract headers from main request event.
 
@@ -503,7 +505,7 @@ class Request:
         return self._convert_dict_to_header_entries(request.get('headers', {}))
 
     def _extract_request_sent_extra_info_headers(
-        self, params: 'RequestWillBeSentExtraInfoEventParams'
+        self, params: RequestWillBeSentExtraInfoEventParams
     ) -> list[HeaderEntry]:
         """Extract headers from extra request info event.
 
@@ -520,7 +522,7 @@ class Request:
         return self._convert_dict_to_header_entries(params.get('headers', {}))
 
     def _extract_response_received_headers(
-        self, params: 'ResponseReceivedEventParams'
+        self, params: ResponseReceivedEventParams
     ) -> list[HeaderEntry]:
         """Extract headers from main response event.
 
@@ -535,7 +537,7 @@ class Request:
         return self._convert_dict_to_header_entries(response.get('headers', {}))
 
     def _extract_response_received_extra_info_headers(
-        self, params: 'ResponseReceivedExtraInfoEventParams'
+        self, params: ResponseReceivedExtraInfoEventParams
     ) -> list[HeaderEntry]:
         """Extract headers from extra response info event.
 
@@ -583,7 +585,7 @@ class Request:
             f'response_extra_info_events={response_extra_info_events}'
         )
         for event in response_extra_info_events:
-            params = cast('ResponseReceivedExtraInfoEventParams', event['params'])
+            params = cast(ResponseReceivedExtraInfoEventParams, event['params'])
             headers = self._convert_dict_to_header_entries(params['headers'])
             logger.debug(f'Converting dictionary to header entries: headers={headers}')
             set_cookie_headers = [
@@ -598,7 +600,7 @@ class Request:
         logger.debug(f'Set cookies extracted: cookies={cookies}')
         return cookies
 
-    def _filter_response_extra_info_events(self) -> list['RequestReceivedEvent']:
+    def _filter_response_extra_info_events(self) -> list[RequestReceivedEvent]:
         """Filter network events to find those containing Set-Cookie information.
 
         Returns:

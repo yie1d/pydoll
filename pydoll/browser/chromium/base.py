@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -8,11 +10,9 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from functools import partial
 from random import randint
-from tempfile import TemporaryDirectory
-from typing import Any, Awaitable, Callable, Optional, overload
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, overload
 from urllib.parse import urlsplit, urlunsplit
 
-from pydoll.browser.interfaces import BrowserOptionsManager
 from pydoll.browser.managers import (
     BrowserProcessManager,
     ProxyManager,
@@ -35,30 +35,38 @@ from pydoll.exceptions import (
     MissingTargetOrWebSocket,
     NoValidTabFound,
 )
-from pydoll.protocol.base import Command, Response, T_CommandParams, T_CommandResponse
-from pydoll.protocol.browser.methods import (
-    GetVersionResponse,
-    GetVersionResult,
-    GetWindowForTargetResponse,
-)
-from pydoll.protocol.browser.types import Bounds, DownloadBehavior, PermissionType
-from pydoll.protocol.fetch.events import FetchEvent, RequestPausedEvent
-from pydoll.protocol.fetch.types import AuthChallengeResponseType, HeaderEntry
-from pydoll.protocol.network.types import (
-    Cookie,
-    CookieParam,
-    ErrorReason,
-    RequestMethod,
-    ResourceType,
-)
-from pydoll.protocol.storage.methods import GetCookiesResponse
-from pydoll.protocol.target.methods import (
-    CreateBrowserContextResponse,
-    CreateTargetResponse,
-    GetBrowserContextsResponse,
-    GetTargetsResponse,
-)
-from pydoll.protocol.target.types import TargetInfo
+from pydoll.protocol.browser.types import DownloadBehavior
+from pydoll.protocol.fetch.events import FetchEvent
+from pydoll.protocol.fetch.types import AuthChallengeResponseType
+
+if TYPE_CHECKING:
+    from tempfile import TemporaryDirectory
+
+    from pydoll.browser.interfaces import BrowserOptionsManager
+    from pydoll.protocol.base import Command, Response, T_CommandParams, T_CommandResponse
+    from pydoll.protocol.browser.methods import (
+        GetVersionResponse,
+        GetVersionResult,
+        GetWindowForTargetResponse,
+    )
+    from pydoll.protocol.browser.types import Bounds, PermissionType
+    from pydoll.protocol.fetch.events import RequestPausedEvent
+    from pydoll.protocol.fetch.types import HeaderEntry
+    from pydoll.protocol.network.types import (
+        Cookie,
+        CookieParam,
+        ErrorReason,
+        RequestMethod,
+        ResourceType,
+    )
+    from pydoll.protocol.storage.methods import GetCookiesResponse
+    from pydoll.protocol.target.methods import (
+        CreateBrowserContextResponse,
+        CreateTargetResponse,
+        GetBrowserContextsResponse,
+        GetTargetsResponse,
+    )
+    from pydoll.protocol.target.types import TargetInfo
 
 logger = logging.getLogger(__name__)
 
