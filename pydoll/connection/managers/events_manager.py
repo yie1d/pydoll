@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-from typing import Any, Callable, cast
+from typing import TYPE_CHECKING, cast
 
-from pydoll.protocol.base import CDPEvent
-from pydoll.protocol.network.events import RequestWillBeSentEvent
-from pydoll.protocol.page.events import (
-    JavascriptDialogOpeningEvent,
-    JavascriptDialogOpeningEventParams,
-)
+from pydoll.protocol.page.events import JavascriptDialogOpeningEvent
+
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
+    from pydoll.protocol.base import CDPEvent
+    from pydoll.protocol.network.events import RequestWillBeSentEvent
+    from pydoll.protocol.page.events import JavascriptDialogOpeningEventParams
 
 logger = logging.getLogger(__name__)
 

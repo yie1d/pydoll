@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, overload
 
 from pydoll.commands import (
     DomCommands,
@@ -9,19 +11,21 @@ from pydoll.commands import (
 from pydoll.connection.connection_handler import ConnectionHandler
 from pydoll.constants import By, Scripts
 from pydoll.exceptions import ElementNotFound, WaitElementTimeout
-from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
-from pydoll.protocol.dom.methods import DescribeNodeResponse
-from pydoll.protocol.dom.types import Node
-from pydoll.protocol.runtime.methods import (
-    CallFunctionOnParams,
-    CallFunctionOnResponse,
-    EvaluateParams,
-    EvaluateResponse,
-    GetPropertiesResponse,
-)
 
 if TYPE_CHECKING:
+    from typing import Literal, Optional, Union
+
     from pydoll.elements.web_element import WebElement
+    from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
+    from pydoll.protocol.dom.methods import DescribeNodeResponse
+    from pydoll.protocol.dom.types import Node
+    from pydoll.protocol.runtime.methods import (
+        CallFunctionOnParams,
+        CallFunctionOnResponse,
+        EvaluateParams,
+        EvaluateResponse,
+        GetPropertiesResponse,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +68,7 @@ class FindElementsMixin:
         find_all: Literal[False] = False,
         raise_exc: Literal[True] = True,
         **attributes,
-    ) -> 'WebElement': ...
+    ) -> WebElement: ...
 
     @overload
     async def find(
@@ -78,7 +82,7 @@ class FindElementsMixin:
         find_all: Literal[True] = True,
         raise_exc: Literal[True] = True,
         **attributes,
-    ) -> list['WebElement']: ...
+    ) -> list[WebElement]: ...
 
     @overload
     async def find(
@@ -92,7 +96,7 @@ class FindElementsMixin:
         find_all: Literal[True] = True,
         raise_exc: Literal[False] = False,
         **attributes,
-    ) -> Optional[list['WebElement']]: ...
+    ) -> Optional[list[WebElement]]: ...
 
     @overload
     async def find(
@@ -106,7 +110,7 @@ class FindElementsMixin:
         find_all: Literal[False] = False,
         raise_exc: Literal[False] = False,
         **attributes,
-    ) -> Optional['WebElement']: ...
+    ) -> Optional[WebElement]: ...
 
     @overload
     async def find(
@@ -120,7 +124,7 @@ class FindElementsMixin:
         find_all: bool = ...,
         raise_exc: bool = ...,
         **attributes,
-    ) -> Union['WebElement', list['WebElement'], None]: ...
+    ) -> Union[WebElement, list[WebElement], None]: ...
 
     async def find(
         self,
@@ -133,7 +137,7 @@ class FindElementsMixin:
         find_all: bool = False,
         raise_exc: bool = True,
         **attributes: dict[str, str],
-    ) -> Union['WebElement', list['WebElement'], None]:
+    ) -> Union[WebElement, list[WebElement], None]:
         """
         Find element(s) using combination of common HTML attributes.
 
@@ -192,7 +196,7 @@ class FindElementsMixin:
         timeout: int = ...,
         find_all: Literal[False] = False,
         raise_exc: Literal[True] = True,
-    ) -> 'WebElement': ...
+    ) -> WebElement: ...
 
     @overload
     async def query(
@@ -201,7 +205,7 @@ class FindElementsMixin:
         timeout: int = ...,
         find_all: Literal[False] = False,
         raise_exc: Literal[False] = False,
-    ) -> Optional['WebElement']: ...
+    ) -> Optional[WebElement]: ...
 
     @overload
     async def query(
@@ -210,7 +214,7 @@ class FindElementsMixin:
         timeout: int = ...,
         find_all: Literal[True] = True,
         raise_exc: Literal[True] = True,
-    ) -> list['WebElement']: ...
+    ) -> list[WebElement]: ...
 
     @overload
     async def query(
@@ -219,7 +223,7 @@ class FindElementsMixin:
         timeout: int = ...,
         find_all: Literal[True] = True,
         raise_exc: Literal[False] = False,
-    ) -> Optional[list['WebElement']]: ...
+    ) -> Optional[list[WebElement]]: ...
 
     @overload
     async def query(
@@ -228,11 +232,11 @@ class FindElementsMixin:
         timeout: int = ...,
         find_all: bool = ...,
         raise_exc: bool = ...,
-    ) -> Union['WebElement', list['WebElement'], None]: ...
+    ) -> Union[WebElement, list[WebElement], None]: ...
 
     async def query(
         self, expression: str, timeout: int = 0, find_all: bool = False, raise_exc: bool = True
-    ) -> Union['WebElement', list['WebElement'], None]:
+    ) -> Union[WebElement, list[WebElement], None]:
         """
         Find element(s) using raw CSS selector or XPath expression.
 
@@ -269,7 +273,7 @@ class FindElementsMixin:
         timeout: int = 0,
         find_all: bool = False,
         raise_exc: bool = True,
-    ) -> Union['WebElement', list['WebElement'], None]:
+    ) -> Union[WebElement, list[WebElement], None]:
         """
         Core element finding method with optional waiting capability.
 
@@ -321,7 +325,7 @@ class FindElementsMixin:
 
     async def _find_element(
         self, by: By, value: str, raise_exc: bool = True
-    ) -> Optional['WebElement']:
+    ) -> Optional[WebElement]:
         """
         Find first element matching selector.
 
@@ -361,9 +365,7 @@ class FindElementsMixin:
         logger.debug(f'_find_element() found object_id={object_id}')
         return create_web_element(object_id, self._connection_handler, by, value, attributes)
 
-    async def _find_elements(
-        self, by: By, value: str, raise_exc: bool = True
-    ) -> list['WebElement']:
+    async def _find_elements(self, by: By, value: str, raise_exc: bool = True) -> list[WebElement]:
         """
         Find all elements matching selector.
 

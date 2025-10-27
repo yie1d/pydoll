@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import json as jsonlib
 import logging
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
-from pydoll.protocol.fetch.types import HeaderEntry
-from pydoll.protocol.network.types import CookieParam
+from pydoll.exceptions import HTTPError
+
+if TYPE_CHECKING:
+    from pydoll.protocol.fetch.types import HeaderEntry
+    from pydoll.protocol.network.types import CookieParam
 
 logger = logging.getLogger(__name__)
 
@@ -221,11 +226,3 @@ class Response:
                 f'HTTP error status encountered: status={self.status_code}, url={self._url}'
             )
             raise HTTPError(f'{self.status_code} Client Error: for url {self._url}')
-
-
-class HTTPError(Exception):
-    """
-    Exception raised for HTTP error responses (4xx and 5xx status codes).
-    """
-
-    pass
