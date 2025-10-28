@@ -1,21 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 from contextlib import suppress
-from typing import (
-    Any,
-    AsyncGenerator,
-    Awaitable,
-    Callable,
-    Coroutine,
-    Optional,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, cast
 
 import websockets
 from websockets.asyncio.client import ClientConnection
-from websockets.asyncio.client import connect as Connect
 from websockets.protocol import State
 
 from pydoll.connection.managers import CommandsManager, EventsManager
@@ -23,8 +15,15 @@ from pydoll.exceptions import (
     CommandExecutionTimeout,
     WebSocketConnectionClosed,
 )
-from pydoll.protocol.base import CDPEvent, Command, Response, T_CommandParams, T_CommandResponse
+from pydoll.protocol.base import CDPEvent, Response
 from pydoll.utils import get_browser_ws_address
+
+if TYPE_CHECKING:
+    from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Optional, Union
+
+    from websockets.asyncio.client import connect as Connect
+
+    from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
 
 logger = logging.getLogger(__name__)
 

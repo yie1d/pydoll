@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import logging
 import platform
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydoll.browser.chromium.base import Browser
 from pydoll.browser.managers import ChromiumOptionsManager
-from pydoll.browser.options import ChromiumOptions
 from pydoll.exceptions import UnsupportedOS
 from pydoll.utils import validate_browser_paths
+
+if TYPE_CHECKING:
+    from pydoll.browser.options import ChromiumOptions
 
 logger = logging.getLogger(__name__)
 

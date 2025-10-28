@@ -1,7 +1,10 @@
-import logging
-from typing import Optional
+from __future__ import annotations
 
-from pydoll.browser.options import Options
+import logging
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from pydoll.browser.options import Options
 
 logger = logging.getLogger(__name__)
 

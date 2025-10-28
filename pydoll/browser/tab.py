@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64 as _b64
 import logging
@@ -34,7 +36,6 @@ from pydoll.commands import (
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import By
 from pydoll.elements.mixins import FindElementsMixin
-from pydoll.elements.web_element import WebElement
 from pydoll.exceptions import (
     DownloadTimeout,
     IFrameNotFound,
@@ -49,23 +50,8 @@ from pydoll.exceptions import (
     TopLevelTargetRequired,
     WaitElementTimeout,
 )
-from pydoll.protocol.base import EmptyResponse, Response
-from pydoll.protocol.browser.events import (
-    DownloadProgressEvent,
-    DownloadWillBeginEvent,
-)
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
-from pydoll.protocol.fetch.types import AuthChallengeResponseType, HeaderEntry, RequestStage
-from pydoll.protocol.network.events import RequestWillBeSentEvent
-from pydoll.protocol.network.types import (
-    Cookie,
-    CookieParam,
-    ErrorReason,
-    RequestMethod,
-    ResourceType,
-)
-from pydoll.protocol.page.events import FileChooserOpenedEvent, PageEvent
-from pydoll.protocol.page.methods import CaptureScreenshotResponse, PrintToPDFResponse
+from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.types import ScreenshotFormat
 from pydoll.protocol.runtime.methods import (
     CallFunctionOnResponse,
@@ -81,7 +67,26 @@ from pydoll.utils import (
 
 if TYPE_CHECKING:
     from pydoll.browser.chromium.base import Browser
+    from pydoll.elements.web_element import WebElement
+    from pydoll.protocol.base import EmptyResponse, Response
+    from pydoll.protocol.browser.events import (
+        DownloadProgressEvent,
+        DownloadWillBeginEvent,
+    )
+    from pydoll.protocol.fetch.types import AuthChallengeResponseType, HeaderEntry, RequestStage
+    from pydoll.protocol.network.events import RequestWillBeSentEvent
     from pydoll.protocol.network.methods import GetResponseBodyResponse
+    from pydoll.protocol.network.types import (
+        Cookie,
+        CookieParam,
+        ErrorReason,
+        RequestMethod,
+        ResourceType,
+    )
+    from pydoll.protocol.page.events import FileChooserOpenedEvent
+    from pydoll.protocol.page.methods import CaptureScreenshotResponse, PrintToPDFResponse
+    from pydoll.protocol.runtime.methods import CallFunctionOnResponse, EvaluateResponse
+    from pydoll.protocol.storage.methods import GetCookiesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +104,7 @@ class Tab(FindElementsMixin):
 
     def __init__(
         self,
-        browser: 'Browser',
+        browser: Browser,
         connection_port: Optional[int] = None,
         target_id: Optional[str] = None,
         browser_context_id: Optional[str] = None,
@@ -374,7 +379,7 @@ class Tab(FindElementsMixin):
         logger.debug('Tab closed and removed from browser registry')
         return result
 
-    async def get_frame(self, frame: WebElement) -> IFrame:
+    async def get_frame(self, frame: 'WebElement') -> IFrame:
         """
         Get Tab object for interacting with iframe content.
 
@@ -448,7 +453,7 @@ class Tab(FindElementsMixin):
         if not self.network_events_enabled:
             raise NetworkEventsNotEnabled('Network events must be enabled to get response body')
 
-        response: 'GetResponseBodyResponse' = await self._execute_command(
+        response: GetResponseBodyResponse = await self._execute_command(
             NetworkCommands.get_response_body(request_id)
         )
         logger.debug(f'Retrieved network response body for request_id={request_id}')
@@ -1041,7 +1046,7 @@ class Tab(FindElementsMixin):
         self,
         keep_file_at: Optional[Union[str, Path]] = None,
         timeout: Optional[float] = None,
-    ) -> AsyncGenerator['_DownloadHandle', None]:
+    ) -> AsyncGenerator[_DownloadHandle, None]:
         """
         Context manager for handling a file download triggered inside the block.
 
@@ -1283,7 +1288,7 @@ class Tab(FindElementsMixin):
             element = await self.find_or_wait_element(
                 *selector, timeout=time_to_wait_captcha, raise_exc=False
             )
-            element = cast(WebElement, element)
+            element = cast('WebElement', element)
             if element:
                 # adjust the external div size to shadow root width (usually 300px)
                 await element.execute_script('this.style="width: 300px"')
