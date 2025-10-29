@@ -61,6 +61,9 @@ asyncio.run(realistic_clicking())
 
 Real users rarely click at the exact center of elements. Use offsets to vary click positions:
 
+!!! info "Current State: Manual Offset Calculation"
+    Currently, you must manually calculate and randomize click offsets for each interaction. Future versions will include an optional parameter to automatically randomize click positions within element bounds.
+
 ```python
 import asyncio
 import random
@@ -79,7 +82,7 @@ async def click_with_offset():
             y_offset=-3   # 3 pixels above center
         )
         
-        # Vary the offset for each click to appear more human
+        # Currently: Manually vary the offset for each click to appear more human
         for item in await tab.find(class_name="clickable-item", find_all=True):
             offset_x = random.randint(-10, 10)
             offset_y = random.randint(-10, 10)
@@ -160,7 +163,10 @@ asyncio.run(click_methods_comparison())
 
 ### Natural Typing with Intervals
 
-The `type_text()` method simulates human typing by sending individual keystrokes with configurable delays:
+The `type_text()` method simulates human typing by sending individual keystrokes. The `interval` parameter adds a **fixed delay** between each keystroke.
+
+!!! info "Current State: Manual Randomization Required"
+    Currently, the `interval` parameter uses a **constant delay** for all characters. For maximum realism, you need to manually randomize typing speeds (as shown in the advanced examples below). Future versions will include automatic variable typing speed with built-in randomization.
 
 ```python
 import asyncio
@@ -174,7 +180,7 @@ async def natural_typing():
         username_field = await tab.find(id="username")
         password_field = await tab.find(id="password")
         
-        # Type with realistic intervals
+        # Type with fixed intervals (currently)
         # Average human typing: 0.1-0.3 seconds per character
         await username_field.type_text("john.doe@example.com", interval=0.15)
         
@@ -204,11 +210,11 @@ async def fast_vs_realistic_input():
         
         # Fast insertion for hidden or backend fields
         hidden_field = await tab.find(id="hidden-token")
-        await hidden_field.click()
         await hidden_field.insert_text("very-long-generated-token-12345678")
         
         # Realistic typing for fields that matter
         comment = await tab.find(id="comment-box")
+        await comment.click()
         await comment.type_text("This looks like human input!", interval=0.15)
 
 asyncio.run(fast_vs_realistic_input())
@@ -221,7 +227,7 @@ asyncio.run(fast_vs_realistic_input())
 
 ### Complete Form Filling Example
 
-Here's a comprehensive example combining all human-like interaction techniques:
+Here's a comprehensive example combining all human-like interaction techniques. **This demonstrates the current manual approach** for achieving maximum realism—future versions will automate much of this randomization:
 
 ```python
 import asyncio
@@ -246,6 +252,8 @@ async def human_like_form_filling():
         )
         await asyncio.sleep(random.uniform(0.2, 0.5))
         
+        # Manual character-by-character typing with randomized delays
+        # (This will be automated in future versions)
         name_text = "John"
         for char in name_text:
             await first_name.type_text(char, interval=0)
@@ -306,6 +314,9 @@ asyncio.run(human_like_form_filling())
 
 ## Best Practices for Avoiding Detection
 
+!!! tip "Manual Randomization Currently Required"
+    The following best practices represent the **current state of Pydoll**, where you must manually implement randomization. While this requires more code, it gives you fine-grained control over behavior. Future versions will automate these patterns while maintaining the same level of realism.
+
 ### 1. Always Add Random Delays
 
 ```python
@@ -318,7 +329,7 @@ await element1.click()
 await element2.click()
 await element3.click()
 
-# Good: Variable timing
+# Good: Variable timing (currently required)
 await element1.click()
 await asyncio.sleep(random.uniform(0.5, 1.5))
 await element2.click()
@@ -337,7 +348,7 @@ from pydoll.browser.chromium import Chrome
 for button in buttons:
     await button.click()
 
-# Good: Varied positions
+# Good: Varied positions (currently manual)
 for button in buttons:
     await button.click(
         x_offset=random.randint(-10, 10),
@@ -360,8 +371,8 @@ async def natural_user_simulation(tab):
     await asyncio.sleep(random.uniform(1.0, 3.0))
     
     # User scrolls down to see more
-    # Note: Future versions will have a dedicated scroll() method with
-    # human-like momentum and acceleration patterns
+    # Currently: Manual JavaScript scroll (instant, not realistic)
+    # Future: Dedicated scroll() method with human-like momentum and acceleration
     await tab.execute_script("window.scrollBy(0, 300)")
     await asyncio.sleep(random.uniform(0.5, 1.5))
     
@@ -392,8 +403,8 @@ async def advanced_stealth_automation():
         await tab.go_to('https://example.com/sensitive-page')
         await asyncio.sleep(random.uniform(2.0, 4.0))
         
-        # Scroll realistically
-        # Note: Future versions will have a dedicated scroll() method
+        # Scroll realistically (current manual approach)
+        # Future versions will have a dedicated scroll() method with momentum
         for _ in range(random.randint(2, 4)):
             scroll_amount = random.randint(200, 500)
             await tab.execute_script(f"window.scrollBy(0, {scroll_amount})")

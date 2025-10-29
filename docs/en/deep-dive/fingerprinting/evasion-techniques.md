@@ -6,6 +6,7 @@ This document provides **practical, actionable techniques** for evading fingerpr
     - **[← Fingerprinting Overview](./index.md)** - Module introduction and philosophy
     - **[← Network Fingerprinting](./network-fingerprinting.md)** - Protocol-level fingerprinting
     - **[← Browser Fingerprinting](./browser-fingerprinting.md)** - Application-layer fingerprinting
+    - **[← Behavioral Fingerprinting](./behavioral-fingerprinting.md)** - Human behavior analysis
     
     For practical Pydoll usage, see **[Human-Like Interactions](../../features/automation/human-interactions.md)** and **[Behavioral Captcha Bypass](../../features/advanced/behavioral-captcha-bypass.md)**.
 
@@ -752,7 +753,7 @@ Network-level fingerprinting requires proper proxy usage:
 
 ## Common Mistakes to Avoid
 
-### ❌ Mistake 1: Randomizing Everything
+### Mistake 1: Randomizing Everything
 
 ```python
 # Bad: Random fingerprint that doesn't make sense
@@ -766,7 +767,7 @@ fingerprint = {
 
 **Why it fails**: Real browsers have **consistent, realistic** configurations. Random values create impossible combinations.
 
-### ❌ Mistake 2: Ignoring Client Hints
+### Mistake 2: Ignoring Client Hints
 
 ```python
 # Bad: Setting User-Agent without Client Hints
@@ -777,7 +778,7 @@ await tab.send_cdp_command('Emulation.setUserAgentOverride', {
 # Result: Sec-CH-UA headers will be inconsistent
 ```
 
-### ❌ Mistake 3: Canvas Noise Injection
+### Mistake 3: Canvas Noise Injection
 
 ```python
 # Bad: Adding random noise to canvas
@@ -791,7 +792,7 @@ def add_canvas_noise(ctx):
 
 **Why it fails**: Noise makes fingerprint **inconsistent**, which is itself detectable. Sites can request fingerprint multiple times and detect variations.
 
-### ❌ Mistake 4: Outdated User-Agents
+### Mistake 4: Outdated User-Agents
 
 ```python
 # Bad: Using old browser version
@@ -800,7 +801,7 @@ userAgent = 'Mozilla/5.0 ... Chrome/90.0.0.0'  # ❌ 2 years old!
 
 **Why it fails**: Old versions missing modern features are easily detected. Use versions from the last 3-6 months.
 
-### ❌ Mistake 5: Headless Mode Detection
+### Mistake 5: Headless Mode Detection
 
 ```python
 # Bad: Using headless without proper configuration
@@ -820,16 +821,22 @@ options.add_argument('--window-size=1920,1080')
 
 Browser and network fingerprinting is a sophisticated cat-and-mouse game between automation developers and anti-bot systems. Success requires understanding fingerprinting at **multiple layers**:
 
-**Network Level (Part 1):**
+**Network Level:**
 - TCP/IP characteristics (TTL, window size, options)
 - TLS handshake patterns (JA3, cipher suites, GREASE)
 - HTTP/2 settings and stream priorities
 
-**Browser Level (Part 2):**
+**Browser Level:**
 - HTTP headers consistency
 - JavaScript API properties (navigator, screen, etc.)
 - Canvas and WebGL rendering
 - CDP-based evasion techniques
+
+**Behavioral Level:**
+- Mouse movement patterns and physics (Fitts's Law, Bezier curves)
+- Keystroke dynamics and typing rhythm (bigrams, dwell/flight time)
+- Scroll momentum and inertia
+- Event sequences and timing analysis
 
 **Key Takeaways:**
 
@@ -864,6 +871,9 @@ With the techniques in this guide, you can create **highly stealthy** browser au
 
 - **[Pydoll Core Concepts](../features/core-concepts.md)** - Understanding Pydoll's architecture
 - **[Chrome DevTools Protocol](./cdp.md)** - Deep dive into CDP usage
+- **[Network Fingerprinting](./network-fingerprinting.md)** - Protocol-level identification techniques
+- **[Browser Fingerprinting](./browser-fingerprinting.md)** - Application-layer detection methods
+- **[Behavioral Fingerprinting](./behavioral-fingerprinting.md)** - Human behavior analysis and detection
 - **[Browser Options](../features/configuration/browser-options.md)** - Command-line arguments for stealth
 - **[Browser Preferences](../features/configuration/browser-preferences.md)** - Internal settings for realism
 - **[Proxy Configuration](../features/configuration/proxy.md)** - Network-level anonymization

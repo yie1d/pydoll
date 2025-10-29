@@ -65,7 +65,20 @@ Climb to the application layer: how browsers are identified through JavaScript A
 
 **Why it matters**: This is where most detection happens. Even if your network stack is perfect, a single exposed `navigator.webdriver` property can end your session.
 
-### 3. Evasion Techniques
+### 3. Behavioral Fingerprinting
+**[Behavioral Fingerprinting](./behavioral-fingerprinting.md)**
+
+The final frontier: how **human behavior itself** is analyzed to distinguish real users from automation.
+
+- **Mouse movement analysis**: Trajectory curvature, velocity profiles, Fitts's Law compliance
+- **Keystroke dynamics**: Typing rhythm, dwell time, flight time, bigram patterns
+- **Scroll patterns**: Momentum, inertia, deceleration curves
+- **Event sequences**: Natural interaction ordering (mousemove → click), timing analysis
+- **Machine learning**: ML models trained on billions of behavioral signals
+
+**Why it matters**: Even with perfect network and browser fingerprints, unnatural mouse movements or instant text insertion can instantly reveal automation. This is the **hardest layer to spoof** because it requires replicating biomechanical human behavior.
+
+### 4. Evasion Techniques
 **[Evasion Techniques](./evasion-techniques.md)**
 
 The practical payoff: **how to evade fingerprinting** using Pydoll's CDP integration, JavaScript overrides, and architectural insights.

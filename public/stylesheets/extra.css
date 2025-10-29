@@ -117,7 +117,7 @@
 }
 
 .md-header__button.md-logo {
-  background-image: url('../images/E2ECED-cinza-azulado.png');
+  background-image: url('../images/logo.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -146,13 +146,13 @@
 /* Modo claro - mostrar logo roxo */
 [data-md-color-scheme="default"] .md-content img[alt="Pydoll Logo"] {
   display: block;
-  content: url('../images/0D141C-preto-azulado.png');
+  content: url('../images/logo-black.png');
 }
 
 /* Modo escuro - mostrar logo cinza */
 [data-md-color-scheme="slate"] .md-content img[alt="Pydoll Logo"] {
   display: block;
-  content: url('../images/E2ECED-cinza-azulado.png');
+  content: url('../images/logo.png');
 }
 
 /* ===== MELHORIAS DE LINKS PARA MODO ESCURO ===== */

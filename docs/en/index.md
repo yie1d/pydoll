@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./images/E2ECED-cinza-azulado.png" alt="Pydoll Logo" /> <br><br>
+    <img src="resources/images/logo.png" alt="Pydoll Logo" /> <br><br>
 </p>
 
 <p align="center">

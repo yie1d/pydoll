@@ -217,6 +217,13 @@ class Browser(ABC):  # noqa: PLR0904
         await self._connection_handler.close()
         logger.info('Browser process stopped and resources cleaned up')
 
+    async def close(self):
+        """
+        Closes the WebSocket connection and releases resources.
+        """
+        logger.info('Closing browser WebSocket connection')
+        await self._connection_handler.close()
+
     async def create_browser_context(
         self, proxy_server: Optional[str] = None, proxy_bypass_list: Optional[str] = None
     ) -> str:

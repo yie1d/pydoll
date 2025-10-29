@@ -490,6 +490,10 @@ class FindElementsMixin:
         Constructs complex XPath combining multiple conditions with 'and' operators.
         Handles class names correctly for space-separated class lists.
         Uses contains() for text matching (partial text support).
+
+        Note:
+            Attribute names with underscores are automatically converted to hyphens
+            to match HTML attribute naming conventions (e.g., data_test -> data-test).
         """
         xpath_conditions = []
         base_xpath = f'//{tag_name}' if tag_name else '//*'
@@ -504,7 +508,9 @@ class FindElementsMixin:
         if text:
             xpath_conditions.append(f'contains(text(), "{text}")')
         for attribute, value in attributes.items():
-            xpath_conditions.append(f'@{attribute}="{value}"')
+            # Convert underscores to hyphens for HTML attribute names
+            html_attribute = attribute.replace('_', '-')
+            xpath_conditions.append(f'@{html_attribute}="{value}"')
 
         xpath = (
             f'{base_xpath}[{" and ".join(xpath_conditions)}]' if xpath_conditions else base_xpath

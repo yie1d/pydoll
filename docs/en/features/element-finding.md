@@ -1,6 +1,6 @@
 # Element Finding
 
-Finding elements on a web page is the foundation of browser automation. Pydoll v2.0+ introduces a revolutionary, intuitive approach that makes element location both more powerful and easier to use than traditional selector-based methods.
+Finding elements on a web page is the foundation of browser automation. Pydoll introduces a revolutionary, intuitive approach that makes element location both more powerful and easier to use than traditional selector-based methods.
 
 ## Why Pydoll's Approach is Different
 
@@ -114,6 +114,11 @@ async def precise_finding():
 asyncio.run(precise_finding())
 ```
 
+!!! info "Combination Logic: AND"
+    Combining attributes in `find()` works as an AND operation. The element must match **all** provided attributes.
+    
+    For more complex scenarios requiring OR logic—like finding an element that may have either an `id` or a different `name`—the correct approach is to chain multiple `find()` calls, as demonstrated in the "Complete Example" section.
+
 !!! tip "Attribute Naming Convention"
     Use underscores for attribute names with hyphens. For example, `data-testid` becomes `data_testid`, and `aria-label` becomes `aria_label`. Pydoll automatically converts them to the correct format.
 
@@ -127,6 +132,7 @@ Pydoll automatically chooses the most efficient selector based on the attributes
 | Single: `class_name` | `By.CLASS_NAME` | ⚡ Fast |
 | Single: `name` | `By.NAME` | ⚡ Fast |
 | Single: `tag_name` | `By.TAG_NAME` | ⚡ Fast |
+| Single: `text` | `By.XPATH` | ⚡ Fast |
 | Multiple attributes | XPath Expression | ✓ Efficient |
 
 ```mermaid
@@ -388,7 +394,36 @@ asyncio.run(traverse_siblings())
 
 ## Finding Elements Within Elements
 
-Once you have an element, you can search within its scope using the same `find()` and `query()` methods:
+Once you have an element, you can search within its scope using the same `find()` and `query()` methods.
+
+!!! warning "Important: Search Depth Behavior"
+    When you call `element.find()` or `element.query()`, Pydoll searches through **ALL descendants** (children, grandchildren, great-grandchildren, etc.), not just direct children. This is the standard behavior of `querySelector()` and matches what most developers expect.
+
+### Understanding Search Scope
+
+```mermaid
+graph TB
+    Container[div id='container']
+    
+    Container --> Child1[div class='card' ✓]
+    Container --> Child2[div class='card' ✓]
+    Container --> Child3[div class='other']
+    
+    Child1 --> GrandChild1[div class='card' ✓]
+    Child1 --> GrandChild2[p class='text']
+    
+    Child3 --> GrandChild3[div class='card' ✓]
+    Child3 --> GrandChild4[div class='card' ✓]
+```
+
+```python
+# This finds ALL 5 elements with class='card' in the tree
+# (2 direct children + 3 nested descendants)
+cards = await container.find(class_name="card", find_all=True)
+print(len(cards))  # Output: 5
+```
+
+### Basic Scoped Search
 
 ```python
 import asyncio
@@ -402,7 +437,7 @@ async def scoped_search():
         # Find a product container
         product_card = await tab.find(class_name="product-card")
         
-        # Search within the product card
+        # Search within the product card (searches ALL descendants, returns only the first match)
         product_title = await product_card.find(class_name="title")
         product_price = await product_card.find(class_name="price")
         add_button = await product_card.find(tag_name="button", text="Add to Cart")
@@ -410,7 +445,7 @@ async def scoped_search():
         # Query within scope
         product_image = await product_card.query("img.product-image")
         
-        # Find all items within a container
+        # Find all items within a container (ALL descendants)
         nav_menu = await tab.find(class_name="nav-menu")
         menu_items = await nav_menu.find(tag_name="li", find_all=True)
         
@@ -419,6 +454,99 @@ async def scoped_search():
 asyncio.run(scoped_search())
 ```
 
+### Finding Only Direct Children
+
+If you need to find **only direct children** (depth 1), use CSS child combinator `>` or XPath:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def direct_children_only():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/cards')
+        
+        container = await tab.find(id="cards-container")
+        
+        # Method 1: CSS child combinator (>)
+        # Finds ONLY direct children with class='card'
+        direct_cards = await container.query("> .card", find_all=True)
+        print(f"Direct children: {len(direct_cards)}")
+        
+        # Method 2: XPath direct child
+        direct_divs = await container.query("./div[@class='card']", find_all=True)
+        
+        # Method 3: Use get_children_elements() with max_depth=1
+        # (but this only filters by tag, not by other attributes)
+        direct_children = await container.get_children_elements(
+            max_depth=1,
+            tag_filter=["div"]
+        )
+        
+        # Then filter manually by class
+        cards_only = [
+            child for child in direct_children
+            if 'card' in (await child.get_attribute('class') or '')
+        ]
+
+asyncio.run(direct_children_only())
+```
+
+### Comparison: find() vs get_children_elements()
+
+| Feature | `find()` / `query()` | `get_children_elements()` |
+|---------|---------------------|---------------------------|
+| **Search Depth** | ALL descendants | Configurable with `max_depth` |
+| **Filter By** | Any HTML attribute | Only tag name |
+| **Use Case** | Find specific elements anywhere in subtree | Explore DOM structure, get direct children |
+| **Performance** | Optimized for single attribute | Good for broad exploration |
+| **Parameter** | `tag_name="a"` (string) | `tag_filter=["a"]` (list) |
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def comparison_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+        
+        container = await tab.find(id="container")
+        
+        # Scenario 1: I want ALL links anywhere in container
+        # Use find() - searches all descendants
+        all_links = await container.find(tag_name="a", find_all=True)
+        
+        # Scenario 2: I want ONLY direct child links
+        # Use CSS child combinator
+        direct_links = await container.query("> a", find_all=True)
+        
+        # Scenario 3: I want direct children with specific class
+        # Use CSS child combinator
+        direct_cards = await container.query("> .card", find_all=True)
+        
+        # Scenario 4: I want to explore the DOM structure
+        # Use get_children_elements()
+        direct_children = await container.get_children_elements(max_depth=1)
+        
+        # Scenario 5: I want all descendants up to depth 2, filtered by tag
+        # Use get_children_elements()
+        shallow_links = await container.get_children_elements(
+            max_depth=2,
+            tag_filter=["a"]
+        )
+
+asyncio.run(comparison_example())
+```
+
+!!! tip "When to Use Each Method"
+    - **Use `find()`**: When you know the attributes (class, id, etc.) and want to search the entire subtree
+    - **Use `query("> .class")`**: When you need only direct children with specific attributes
+    - **Use `get_children_elements()`**: When exploring DOM structure or filtering by tag only
+
+### Common Use Cases
+
 This scoped searching is incredibly useful for working with repeating patterns like:
 
 - Product cards in e-commerce sites
@@ -426,8 +554,42 @@ This scoped searching is incredibly useful for working with repeating patterns l
 - Form sections with multiple fields
 - Navigation menus with nested items
 
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def practical_example():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/products')
+        
+        # Find all product cards on the page
+        product_cards = await tab.find(class_name="product-card", find_all=True)
+        
+        for card in product_cards:
+            # Within each card, find ALL descendants with these classes
+            title = await card.find(class_name="product-title")
+            price = await card.find(class_name="product-price")
+            
+            # Get the button that's anywhere inside this card
+            buy_button = await card.find(tag_name="button", text="Buy Now")
+            
+            title_text = await title.text
+            price_text = await price.text
+            
+            print(f"Product: {title_text}, Price: {price_text}")
+            
+            # Click buy button
+            await buy_button.click()
+
+asyncio.run(practical_example())
+```
+
 
 ## Working with iFrames
+
+!!! info "Complete IFrame Guide Available"
+    This section covers basic iframe interaction for element finding. For a comprehensive guide including nested iframes, CAPTCHA handling, technical deep dives, and troubleshooting, see **[Working with IFrames](automation/iframes.md)**.
 
 iFrames present a special challenge in browser automation because they have separate DOM contexts. Pydoll makes iframe interaction seamless:
 

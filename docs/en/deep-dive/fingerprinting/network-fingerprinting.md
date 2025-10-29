@@ -805,11 +805,11 @@ def analyze_ja3_from_pcap(pcap_file: str):
 # Example: Known browser JA3 hashes
 KNOWN_JA3_FINGERPRINTS = {
     '579ccef312d18482fc42e2b822ca2430': 'Chrome 90+ on Windows',
-    'cd08e31efaa7a0a82988
-
-099039d4a289': 'Firefox 88+ on Windows',
+    'cd08e31efaa7a0a82988099039d4a289': 'Firefox 88+ on Windows',
     'ac1a36f8b3f5e5d4a6e4f0c3e5a5e5e5': 'Safari 14+ on macOS',
     'b32309a26951912be7dba376398abc3b': 'Python requests library',
+    'e7d705a3286e19bd28ca826f69a8b2c9': 'curl 7.88+'
+
 }
 
 
