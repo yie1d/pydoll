@@ -32,10 +32,29 @@ Built from scratch with a different philosophy, Pydoll connects directly to the 
 
 We believe that powerful automation shouldn't require you to become an expert in configuration or constantly fight with bot protection systems. With Pydoll, you can focus on what really matters: your automation logic, not the underlying complexity or protection systems.
 
-<div>
-  <h4>Be a good human. Give it a star ⭐</h4> 
-    No stars, no bugs fixed. Just kidding (maybe)
-</div>
+### 🚀 Major Update in Development: Enhanced Stealth and Humanization Capabilities
+
+Pydoll is undergoing a significant development phase focused on incorporating advanced techniques for bot detection evasion and more realistic user interaction simulation.
+
+This update is based on extensive technical research and will include both substantial documentation improvements and new library features.
+
+**Highlights of the Upcoming Release:**
+
+* **Integrated Humanization Features:** Native implementations for:
+    * **Mouse Interaction:** Simulation of cursor paths using Bezier curves, variable speeds based on Fitts's Law principles, and randomized click offsets. Event sequences (`mousemove`, `mousedown`, `mouseup`, `click`) will be handled automatically.
+    * **Keyboard Input:** Character-by-character typing with randomized `Dwell` (key press duration) and `Flight` (time between keys) times. Optional simulation of typing errors and corrections.
+    * **Scroll Simulation:** Physics-based scrolling mimicking momentum and inertia.
+    * **Timing Variations:** Introduction of randomized delays ("cognitive time") before and after actions to avoid predictable automation patterns.
+* **Comprehensive Documentation Overhaul:** A new series of in-depth technical guides ("Deep Dives") covering:
+    * **Network Fingerprinting:** Analysis of TCP/IP, TLS/JA3, and HTTP/2 characteristics. Includes practical examples like **building custom HTTP and SOCKS5 proxy servers** and discussing proxy detection techniques.
+    * **Browser Fingerprinting:** Detailed exploration of `navigator` properties, Client Hints, Canvas/WebGL rendering, font detection, and screen attributes.
+    * **Behavioral Fingerprinting:** Analysis of mouse dynamics, keystroke patterns (including bigram timing), scroll physics, and event sequencing.
+    * **Advanced Browser Control:** Extensive documentation on using `browser_preferences` to modify hundreds of internal Chromium settings for granular control over performance, privacy, and fingerprinting.
+    * **Practical Examples:** Including configurations for **Docker environments** and common evasion scenarios.
+
+The aim is to provide users with both the theoretical understanding and the practical tools within Pydoll to create automation flows that are significantly harder to detect.
+
+**Follow the progress by starring the repository ⭐!**
 
 ## 🌟 What makes Pydoll special?
 
