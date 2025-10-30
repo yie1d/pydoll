@@ -608,6 +608,15 @@ async def stealth_automation_example():
 asyncio.run(stealth_automation_example())
 ```
 
+!!! warning "User-Agent Consistency is Critical"
+    Setting `--user-agent` only changes the **HTTP header**, but detection systems also check `navigator.userAgent`, `navigator.platform`, `navigator.vendor`, and other JavaScript properties. **Inconsistencies between these values are a strong bot indicator.**
+    
+    For example, if your HTTP User-Agent says "Windows" but `navigator.platform` says "Linux", you'll be flagged immediately.
+    
+    **Solution**: You must also override JavaScript properties via CDP to maintain consistency. See **[Browser Fingerprinting - User-Agent Consistency](../../deep-dive/fingerprinting/browser-fingerprinting.md#user-agent-consistency)** for detailed explanation and implementation using `Page.addScriptToEvaluateOnNewDocument`.
+    
+    This is why comprehensive stealth requires both command-line arguments AND browser preferences configuration.
+
 !!! tip "Complete Stealth Strategy"
     Command-line arguments are only part of the solution. For maximum stealth:
     

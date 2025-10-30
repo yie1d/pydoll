@@ -1,6 +1,6 @@
 # Browser Contexts
 
-Browser Contexts are Pydoll's solution for creating completely isolated browsing environments within a single browser process. Think of them as separate "incognito windows" but with full programmatic control—each context maintains its own cookies, storage, cache, and authentication state.
+Browser Contexts are Pydoll's solution for creating completely isolated browsing environments within a single browser process. Think of them as separate "incognito windows" but with full programmatic control, each context maintains its own cookies, storage, cache, and authentication state.
 
 ## Quick Start
 

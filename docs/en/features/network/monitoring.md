@@ -63,6 +63,15 @@ async def analyze_requests():
 asyncio.run(analyze_requests())
 ```
 
+!!! note "Production-Ready Waiting"
+    The examples above use `asyncio.sleep(2)` for simplicity. In production code, consider using more explicit waiting strategies:
+    
+    - Wait for specific elements to appear
+    - Use the [Event System](../advanced/event-system.md) to detect when all resources have loaded
+    - Implement network idle detection (see Real-Time Network Monitoring section)
+    
+    This ensures your automation waits exactly as long as needed, no more, no less.
+
 ### Filtering Network Logs
 
 You can filter logs by URL pattern:
@@ -336,7 +345,6 @@ async def track_resource_types():
         
         # Group by resource type
         by_type = {}
-        total_size = 0
         
         for log in logs:
             params = log['params']
@@ -620,81 +628,6 @@ while True:
     logs = await tab.get_network_logs()
     # Process logs...
     await asyncio.sleep(0.5)  # Wasteful!
-```
-
-## Common Pitfalls
-
-### 1. Accessing Response Body Too Early
-
-```python
-import asyncio
-from pydoll.browser.chromium import Chrome
-
-async def pitfall_example():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.enable_network_events()
-        
-        # ❌ Bad: Response might not be complete yet
-        await tab.go_to('https://httpbin.org/json')
-        logs = await tab.get_network_logs()
-        # Immediately trying to get body might fail!
-        body = await tab.get_network_response_body(logs[0]['params']['requestId'])
-        
-        # ✅ Good: Wait for page to fully load
-        await tab.go_to('https://httpbin.org/json')
-        await asyncio.sleep(2)  # Give time for resources to load
-        logs = await tab.get_network_logs()
-        body = await tab.get_network_response_body(logs[0]['params']['requestId'])
-```
-
-### 2. Forgetting to Enable Network Events
-
-```python
-import asyncio
-from pydoll.browser.chromium import Chrome
-
-async def pitfall_enable_events():
-    async with Chrome() as browser:
-        # ❌ Bad: Network events not enabled
-        tab = await browser.start()
-        await tab.go_to('https://example.com')
-        logs = await tab.get_network_logs()  # Empty! Events weren't enabled
-        
-        # ✅ Good: Enable before navigation
-        tab2 = await browser.new_tab()
-        await tab2.enable_network_events()
-        await tab2.go_to('https://example.com')
-        logs = await tab2.get_network_logs()  # Now populated
-```
-
-### 3. Not Handling Exceptions
-
-```python
-import asyncio
-from pydoll.browser.chromium import Chrome
-
-async def pitfall_exceptions():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.enable_network_events()
-        await tab.go_to('https://example.com')
-        await asyncio.sleep(2)
-        
-        logs = await tab.get_network_logs()
-        
-        # ✅ Good: Handle potential errors
-        for log in logs:
-            request_id = log['params']['requestId']
-            try:
-                body = await tab.get_network_response_body(request_id)
-                print(body)
-            except Exception as e:
-                # Some responses don't have accessible bodies
-                print(f"Could not get body: {e}")
-        
-        # ❌ Bad: Assuming all requests have accessible bodies
-        # body = await tab.get_network_response_body(request_id)  # May fail!
 ```
 
 ## See Also

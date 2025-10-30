@@ -140,9 +140,9 @@ When you provide credentials in the proxy URL, Pydoll:
 
 1. **Intercepts the authentication challenge** using the Fetch domain
 2. **Automatically responds** with credentials
-3. **Continues navigation** seamlessly
+3. **Continues navigation** sea@mlessly
 
-This happens transparently - you don't need to handle authentication manually!
+This happens transparently, you don't need to handle authentication manually!
 
 ```python
 import asyncio
@@ -465,10 +465,10 @@ asyncio.run(datacenter_proxy_example())
 !!! warning "Proxy Quality Matters"
     **Bad proxies** cause more problems than they solve:
     
-    - ❌ Slow response times (timeouts)
-    - ❌ Connection failures (error rates)
-    - ❌ Blacklisted IPs (immediate bans)
-    - ❌ Leaked real IP (privacy breach)
+    - Slow response times (timeouts)
+    - Connection failures (error rates)
+    - Blacklisted IPs (immediate bans)
+    - Leaked real IP (privacy breach)
     
     **Invest in quality proxies** from reputable providers. Free proxies are almost never worth it.
 
@@ -499,29 +499,29 @@ async def test_proxy():
             # Test 2: IP verification
             print("Verifying proxy IP...")
             ip_response = await tab.execute_script('return document.body.textContent')
-            print(f"✅ Proxy IP: {ip_response}")
+            print(f"[OK] Proxy IP: {ip_response}")
             
             # Test 3: Geographic location (if available)
             await tab.go_to('https://ipapi.co/json/')
             geo_data = await tab.execute_script('return document.body.textContent')
-            print(f"✅ Geographic data: {geo_data}")
+            print(f"[OK] Geographic data: {geo_data}")
             
             # Test 4: Speed test
             import time
             start = time.time()
             await tab.go_to('https://example.com')
             load_time = time.time() - start
-            print(f"✅ Load time: {load_time:.2f}s")
+            print(f"[OK] Load time: {load_time:.2f}s")
             
             if load_time > 5:
-                print("⚠️  Warning: Slow proxy response time")
+                print("[WARNING] Slow proxy response time")
             
-            print("\n✅ All proxy tests passed!")
+            print("\n[SUCCESS] All proxy tests passed!")
             
     except asyncio.TimeoutError:
-        print("❌ Proxy connection timeout")
+        print("[ERROR] Proxy connection timeout")
     except Exception as e:
-        print(f"❌ Proxy test failed: {e}")
+        print(f"[ERROR] Proxy test failed: {e}")
 
 asyncio.run(test_proxy())
 ```

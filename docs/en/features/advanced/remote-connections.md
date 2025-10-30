@@ -349,7 +349,7 @@ async def connect_to_remote_server():
     chrome = Chrome()
     tab = await chrome.connect(ws_url)
     
-    print(f"\n✅ Connected to remote Chrome server!")
+    print(f"\n[SUCCESS] Connected to remote Chrome server!")
     
     # 3. Use normally
     await tab.go_to('https://example.com')
@@ -499,7 +499,16 @@ asyncio.run(connect_to_remote_browser())
     "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
     ```
     
-    Then visit `http://localhost:9222/json/version` to get the WebSocket URL in the `webSocketDebuggerUrl` field.
+    **For local connections** (same machine):
+    
+    - Visit `http://localhost:9222/json/version` in your browser to get the WebSocket URL in the `webSocketDebuggerUrl` field
+    - Or programmatically query it as shown in the example above using `aiohttp`
+    - For quick debugging, you can also check `browser._connection_port` after starting a local browser instance
+    
+    **For remote connections** (different machine):
+    
+    - Query `http://SERVER_IP:9222/json/version` from your client machine
+    - Use the `webSocketDebuggerUrl` from the response, replacing `localhost` with the actual server IP if needed
 
 ### Method 2: Direct Element Control (Hybrid Approach)
 

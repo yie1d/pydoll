@@ -162,7 +162,7 @@ await tab.on(NetworkEvent.RESPONSE_RECEIVED, log_response)
 async def log_failure(event: LoadingFailedEvent):
     url = event['params']['type']
     error = event['params']['errorText']
-    print(f"✗ Failed: {url} - {error}")
+    print(f"[FAILED] {url} - {error}")
 
 await tab.on(NetworkEvent.LOADING_FAILED, log_failure)
 ```
@@ -477,11 +477,11 @@ Each event type is a `TypedDict` that defines the exact structure of the event, 
 ```python
 from pydoll.protocol.network.events import NetworkEvent
 
-# ✅ Good
+# Good
 await tab.enable_network_events()
 await tab.on(NetworkEvent.RESPONSE_RECEIVED, callback)
 
-# ❌ Bad - callback will never fire
+# Bad: callback will never fire
 await tab.on(NetworkEvent.RESPONSE_RECEIVED, callback)
 await tab.enable_network_events()
 ```
@@ -508,7 +508,7 @@ await tab.disable_network_events()
 ```python
 from pydoll.protocol.network.events import RequestWillBeSentEvent
 
-# ✅ Good - filter early
+# Good: filter early
 async def handle_api_request(event: RequestWillBeSentEvent):
     url = event['params']['request']['url']
     if '/api/' not in url:
@@ -517,7 +517,7 @@ async def handle_api_request(event: RequestWillBeSentEvent):
     # Process only API requests
     process_request(event)
 
-# ❌ Bad - processes everything
+# Bad: processes everything
 async def handle_all_requests(event: RequestWillBeSentEvent):
     url = event['params']['request']['url']
     process_request(event)
@@ -569,12 +569,12 @@ async def safe_callback(event: ResponseReceivedEvent):
 import asyncio
 from pydoll.protocol.network.events import ResponseReceivedEvent
 
-# ✅ Good - fast callback, offload heavy work
+# Good: fast callback, offload heavy work
 async def handle_response(event: ResponseReceivedEvent):
     if should_process(event):
         asyncio.create_task(heavy_processing(event))  # Don't block
 
-# ❌ Bad - blocks event loop
+# Bad: blocks event loop
 async def handle_response(event: ResponseReceivedEvent):
     await heavy_processing(event)  # Blocks other events
 ```

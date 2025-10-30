@@ -30,7 +30,7 @@ Pydoll supports three image formats based on file extension:
 await tab.take_screenshot('screenshot.png', quality=100)
 
 # JPEG format (lossy, smaller file size)
-await tab.take_screenshot('screenshot.jpg', quality=85)
+await tab.take_screenshot('screenshot.jpeg', quality=85)
 
 # WebP format (modern, efficient)
 await tab.take_screenshot('screenshot.webp', quality=90)
@@ -38,6 +38,8 @@ await tab.take_screenshot('screenshot.webp', quality=90)
 
 !!! info "Format Detection"
     The image format is automatically determined by the file extension. Using an unsupported extension raises `InvalidFileExtension`.
+    
+    Both `.jpg` and `.jpeg` are supported for JPEG format (`.jpg` is automatically normalized to `.jpeg` internally to match CDP requirements).
 
 ### Screenshot Parameters
 
@@ -106,18 +108,21 @@ async def element_screenshot():
         tab = await browser.start()
         await tab.go_to('https://example.com')
         
-        # Screenshot a specific element
+        # Screenshot a specific element (PNG)
         header = await tab.find(tag_name='header')
         await header.take_screenshot('header.png', quality=100)
         
-        # Screenshot a form
+        # Screenshot a form (JPEG)
         form = await tab.find(id='login-form')
-        await form.take_screenshot('login-form.jpg', quality=85)
+        await form.take_screenshot('login-form.jpeg', quality=85)
         
-        # Screenshot a chart or graph
+        # Screenshot a chart or graph (WebP)
         chart = await tab.find(class_name='data-visualization')
-        await chart.take_screenshot('chart.png')
+        await chart.take_screenshot('chart.webp', quality=90)
 ```
+
+!!! info "Format Detection"
+    The image format is automatically detected from the file extension (`.png`, `.jpeg`/`.jpg`, or `.webp`). Using an unsupported extension raises `InvalidFileExtension`.
 
 !!! tip "Automatic Scrolling"
     When capturing element screenshots, Pydoll automatically scrolls the element into view before taking the screenshot.
@@ -127,35 +132,12 @@ async def element_screenshot():
 | Feature | `tab.take_screenshot()` | `element.take_screenshot()` |
 |---------|------------------------|----------------------------|
 | **Scope** | Entire viewport or page | Specific element only |
-| **Format Support** | PNG, JPEG, WebP | JPEG only |
+| **Format Support** | PNG, JPEG, WebP | PNG, JPEG, WebP |
 | **Beyond Viewport** | ✅ Supported | ❌ Not applicable |
-| **Base64 Output** | ✅ Supported | ❌ Not supported |
-| **Auto-Scroll** | ❌ No | ✅ Yes |
+| **Base64 Output** | ✅ Supported | ✅ Supported |
+| **Auto-Scroll** | ❌ Not applicable | ✅ Yes |
 | **Use Case** | Full page captures | Component isolation, testing |
 
-### Multiple Screenshots
-
-Capture multiple elements or pages efficiently:
-
-```python
-async def multiple_screenshots():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        await tab.go_to('https://example.com/dashboard')
-        
-        # Screenshot multiple components
-        components = {
-            'sidebar': await tab.find(id='sidebar'),
-            'main-content': await tab.find(id='main'),
-            'footer': await tab.find(tag_name='footer'),
-        }
-        
-        for name, element in components.items():
-            await element.take_screenshot(f'{name}.jpg', quality=90)
-        
-        # Full page screenshot
-        await tab.take_screenshot('full-dashboard.png', beyond_viewport=True)
-```
 
 ## PDF Generation
 
@@ -164,12 +146,19 @@ async def multiple_screenshots():
 Convert pages to PDF with print-quality output:
 
 ```python
+import asyncio
+from pathlib import Path
+from pydoll.browser.chromium import Chrome
+
 async def generate_pdf():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/document')
         
-        # Generate PDF
+        # Generate PDF with Path
+        await tab.print_to_pdf(Path('document.pdf'))
+        
+        # Or with string
         await tab.print_to_pdf('document.pdf')
 
 asyncio.run(generate_pdf())
@@ -179,16 +168,23 @@ asyncio.run(generate_pdf())
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `path` | `str` | **Required** | File path to save PDF. |
+| `path` | `Optional[str \| Path]` | `None` | File path to save PDF. Required if `as_base64=False`. |
 | `landscape` | `bool` | `False` | Use landscape orientation (vs portrait). |
 | `display_header_footer` | `bool` | `False` | Include browser-generated header/footer with title, URL, page numbers. |
 | `print_background` | `bool` | `True` | Include background graphics and colors. |
 | `scale` | `float` | `1.0` | Page scale factor (0.1-2.0). Useful for zoom/shrink effects. |
 | `as_base64` | `bool` | `False` | Return base64-encoded string instead of saving to file. |
 
+!!! tip "Path vs String"
+    While `Path` objects from `pathlib` are recommended as best practice for better path handling and cross-platform compatibility, you can also use plain strings if preferred.
+
 ### Advanced PDF Options
 
 ```python
+import asyncio
+from pathlib import Path
+from pydoll.browser.chromium import Chrome
+
 async def advanced_pdf():
     async with Chrome() as browser:
         tab = await browser.start()
@@ -196,7 +192,7 @@ async def advanced_pdf():
         
         # Landscape PDF with headers/footers
         await tab.print_to_pdf(
-            'report-landscape.pdf',
+            Path('report-landscape.pdf'),
             landscape=True,
             display_header_footer=True,
             print_background=True,
@@ -205,11 +201,13 @@ async def advanced_pdf():
         
         # Portrait PDF without backgrounds (ink-friendly)
         await tab.print_to_pdf(
-            'report-ink-friendly.pdf',
+            Path('report-ink-friendly.pdf'),
             landscape=False,
             print_background=False,
             scale=1.0
         )
+
+asyncio.run(advanced_pdf())
 ```
 
 ### PDF Scale Factor
@@ -217,19 +215,25 @@ async def advanced_pdf():
 Control the zoom level of PDF output:
 
 ```python
+import asyncio
+from pathlib import Path
+from pydoll.browser.chromium import Chrome
+
 async def scaled_pdfs():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/content')
         
         # Shrink content to fit more on each page
-        await tab.print_to_pdf('compact.pdf', scale=0.7)
+        await tab.print_to_pdf(Path('compact.pdf'), scale=0.7)
         
         # Normal scale
-        await tab.print_to_pdf('normal.pdf', scale=1.0)
+        await tab.print_to_pdf(Path('normal.pdf'), scale=1.0)
         
         # Enlarge content (fewer pages)
-        await tab.print_to_pdf('large.pdf', scale=1.5)
+        await tab.print_to_pdf(Path('large.pdf'), scale=1.5)
+
+asyncio.run(scaled_pdfs())
 ```
 
 !!! warning "Scale Limits"
@@ -240,17 +244,26 @@ async def scaled_pdfs():
 Generate PDF as base64 string for API transmission:
 
 ```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
 async def base64_pdf():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/invoice')
         
-        # Get PDF as base64
-        pdf_base64 = await tab.print_to_pdf(
-            'invoice.pdf',  # Path still required
-            as_base64=True
-        )
+        # Get PDF as base64 (no path needed)
+        pdf_base64 = await tab.print_to_pdf(as_base64=True)
+        
+        # Send via API
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            await session.post(
+                'https://api.example.com/invoices',
+                json={'pdf': pdf_base64}
+            )
 
+asyncio.run(base64_pdf())
 ```
 
 
@@ -298,7 +311,7 @@ async def safe_screenshot():
             
             # Correct approach
             content = await frame.find(id='content')
-            await content.take_screenshot('iframe-content.jpg')
+            await content.take_screenshot('iframe-content.jpeg')
 ```
 
 ## Learn More

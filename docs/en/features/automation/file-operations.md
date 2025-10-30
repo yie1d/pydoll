@@ -17,6 +17,7 @@ The simplest approach is using `set_input_files()` directly on file input elemen
 
 ```python
 import asyncio
+from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
 async def direct_file_upload():
@@ -28,7 +29,8 @@ async def direct_file_upload():
         file_input = await tab.find(tag_name='input', type='file')
         
         # Set the file directly
-        await file_input.set_input_files(['path/to/document.pdf'])
+        file_path = Path('path/to/document.pdf')
+        await file_input.set_input_files(file_path)
         
         # Submit the form
         submit_button = await tab.find(id='submit-button')
@@ -39,12 +41,19 @@ async def direct_file_upload():
 asyncio.run(direct_file_upload())
 ```
 
+!!! tip "Path vs String"
+    While `Path` objects from `pathlib` are recommended as best practice for better path handling and cross-platform compatibility, you can also use plain strings if preferred:
+    ```python
+    await file_input.set_input_files('path/to/document.pdf')  # Also works!
+    ```
+
 ### Multiple Files
 
 For inputs that accept multiple files (`<input type="file" multiple>`), pass a list of file paths:
 
 ```python
 import asyncio
+from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
 async def upload_multiple_files():
@@ -56,9 +65,9 @@ async def upload_multiple_files():
         
         # Upload multiple files at once
         files = [
-            'documents/report.pdf',
-            'images/screenshot.png',
-            'data/results.csv'
+            Path('documents/report.pdf'),
+            Path('images/screenshot.png'),
+            Path('data/results.csv')
         ]
         await file_input.set_input_files(files)
         
@@ -69,29 +78,32 @@ async def upload_multiple_files():
 asyncio.run(upload_multiple_files())
 ```
 
-### Using Path Objects
+### Dynamic Path Resolution
 
-Both string paths and `Path` objects from `pathlib` are supported:
+`Path` objects make it easy to build paths dynamically and handle cross-platform compatibility:
 
 ```python
 import asyncio
 from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
-async def upload_with_path_objects():
+async def upload_with_dynamic_paths():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/upload')
         
         file_input = await tab.find(tag_name='input', type='file')
         
-        # Using Path objects
+        # Build paths dynamically
         project_dir = Path(__file__).parent
         file_path = project_dir / 'uploads' / 'data.json'
-        
-        await file_input.set_input_files([str(file_path)])
 
-asyncio.run(upload_with_path_objects())
+        await file_input.set_input_files(file_path)
+        # Or use home directory
+        user_file = Path.home() / 'Documents' / 'report.pdf'
+        await file_input.set_input_files(user_file)
+
+asyncio.run(upload_with_dynamic_paths())
 ```
 
 !!! tip "When to Use Direct File Input"
@@ -119,7 +131,7 @@ The `expect_file_chooser()` context manager:
 
 ```python
 import asyncio
-import os
+from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
 async def file_chooser_upload():
@@ -128,7 +140,7 @@ async def file_chooser_upload():
         await tab.go_to('https://example.com/custom-upload')
         
         # Prepare the file path
-        file_path = os.path.join(os.getcwd(), 'document.pdf')
+        file_path = Path.cwd() / 'document.pdf'
         
         # Use context manager to handle file chooser
         async with tab.expect_file_chooser(files=file_path):
@@ -147,6 +159,7 @@ asyncio.run(file_chooser_upload())
 
 ```python
 import asyncio
+from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
 async def multiple_files_chooser():
@@ -155,10 +168,11 @@ async def multiple_files_chooser():
         await tab.go_to('https://example.com/gallery-upload')
         
         # Prepare multiple files
+        photos_dir = Path.home() / 'photos'
         files = [
-            '/home/user/photos/img1.jpg',
-            '/home/user/photos/img2.jpg',
-            '/home/user/photos/img3.jpg'
+            photos_dir / 'img1.jpg',
+            photos_dir / 'img2.jpg',
+            photos_dir / 'img3.jpg'
         ]
         
         async with tab.expect_file_chooser(files=files):
@@ -175,7 +189,7 @@ asyncio.run(multiple_files_chooser())
 
 ```python
 import asyncio
-import glob
+from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
 async def dynamic_file_selection():
@@ -183,8 +197,9 @@ async def dynamic_file_selection():
         tab = await browser.start()
         await tab.go_to('https://example.com/batch-upload')
         
-        # Find all CSV files in a directory
-        csv_files = glob.glob('data/*.csv')
+        # Find all CSV files in a directory using Path.glob()
+        data_dir = Path('data')
+        csv_files = list(data_dir.glob('*.csv'))
         
         async with tab.expect_file_chooser(files=csv_files):
             upload_area = await tab.find(class_name='drop-zone')
@@ -219,7 +234,6 @@ Here's a comprehensive example combining both approaches:
 
 ```python
 import asyncio
-import os
 from pathlib import Path
 from pydoll.browser.chromium import Chrome
 
@@ -228,16 +242,16 @@ async def comprehensive_upload_example():
         tab = await browser.start()
         await tab.go_to('https://example.com/upload-form')
         
-        # Scenario 1: Direct input for profile picture
+        # Scenario 1: Direct input for profile picture (single file)
         avatar_input = await tab.find(id='avatar-upload')
         avatar_path = Path.home() / 'Pictures' / 'profile.jpg'
-        await avatar_input.set_input_files([str(avatar_path)])
+        await avatar_input.set_input_files(avatar_path)
         
         # Wait a bit for preview to load
         await asyncio.sleep(1)
         
         # Scenario 2: File chooser for document upload
-        document_path = os.path.join(os.getcwd(), 'documents', 'resume.pdf')
+        document_path = Path.cwd() / 'documents' / 'resume.pdf'
         async with tab.expect_file_chooser(files=document_path):
             # Custom styled button that triggers file chooser
             upload_btn = await tab.find(class_name='btn-upload-document')
@@ -247,10 +261,11 @@ async def comprehensive_upload_example():
         await asyncio.sleep(2)
         
         # Scenario 3: Multiple files via file chooser
+        certs_dir = Path('certs')
         certificates = [
-            'certs/certificate1.pdf',
-            'certs/certificate2.pdf',
-            'certs/certificate3.pdf'
+            certs_dir / 'certificate1.pdf',
+            certs_dir / 'certificate2.pdf',
+            certs_dir / 'certificate3.pdf'
         ]
         async with tab.expect_file_chooser(files=certificates):
             add_certs_btn = await tab.find(text='Add Certificates')
@@ -267,6 +282,14 @@ async def comprehensive_upload_example():
 
 asyncio.run(comprehensive_upload_example())
 ```
+
+!!! info "Method Summary"
+    This example demonstrates the flexibility of Pydoll's file upload system:
+    
+    - **Single files**: Pass `Path` or `str` directly (no list needed)
+    - **Multiple files**: Pass a list of `Path` or `str` objects
+    - **Direct input**: Fast for visible `<input>` elements
+    - **File chooser**: Works with custom upload buttons and hidden inputs
 
 ## Learn More
 

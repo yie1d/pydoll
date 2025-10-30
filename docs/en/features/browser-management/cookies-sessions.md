@@ -1,10 +1,10 @@
 # Cookies & Sessions
 
-Managing cookies and sessions effectively is crucial for realistic browser automation. Websites use cookies to track authentication, preferences, and user behavior—and they expect browsers to behave accordingly.
+Managing cookies and sessions effectively is crucial for realistic browser automation. Websites use cookies to track authentication, preferences, and user behavior, and they expect browsers to behave accordingly.
 
 ## Why Cookies Matter for Automation
 
-Cookies are more than just stored data—they're a fingerprint of browser activity:
+Cookies are more than just stored data: they're a fingerprint of browser activity:
 
 - **Authentication**: Session cookies maintain login state across requests
 - **Tracking Prevention**: Anti-bot systems analyze cookie patterns
@@ -53,7 +53,7 @@ asyncio.run(basic_cookie_management())
 ## Understanding Cookie Types
 
 !!! info "TypedDict: Use Regular Dicts in Practice"
-    Throughout this documentation, you'll see references to `CookieParam` and `Cookie`. These are **TypedDict** types—they're just regular Python dicts with type hints for IDE autocomplete and type checking.
+    Throughout this documentation, you'll see references to `CookieParam` and `Cookie`. These are **TypedDict** types, they're just regular Python dicts with type hints for IDE autocomplete and type checking.
     
     **In practice, you use regular dicts:**
     ```python
@@ -176,15 +176,21 @@ context_id = await browser.create_browser_context()
 await browser.set_cookies(cookies, browser_context_id=context_id)
 ```
 
+!!! tip "Tab vs Browser Methods for Setting Cookies"
+    - `tab.set_cookies(cookies)`: Sets cookies in the tab's browser context (convenient shortcut)
+    - `browser.set_cookies(cookies, browser_context_id=...)`: Sets cookies with explicit context control
+    
+    Both methods add cookies to the **entire context**, not just the current page. The cookies will be available to all tabs in that context.
+
 ### Retrieving Cookies
 
-#### Get All Cookies from Tab
+#### Get All Cookies (Context-Wide)
 
 ```python
 import asyncio
 from pydoll.browser.chromium import Chrome
 
-async def get_tab_cookies():
+async def get_cookies_example():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://github.com')
@@ -192,16 +198,25 @@ async def get_tab_cookies():
         # Wait for page to set cookies
         await asyncio.sleep(2)
         
-        # Get cookies from default context
-        cookies = await browser.get_cookies()
+        # Option 1: Get cookies via tab (shortcut for current context)
+        cookies = await tab.get_cookies()
+        
+        # Option 2: Get cookies via browser (explicit context control)
+        # cookies = await browser.get_cookies()  # Same as tab.get_cookies() for default context
         
         print(f"Found {len(cookies)} cookies:")
         for cookie in cookies:
             print(f"  - {cookie['name']}: {cookie['value'][:20]}...")
             print(f"    Domain: {cookie['domain']}, Secure: {cookie['secure']}")
 
-asyncio.run(get_tab_cookies())
+asyncio.run(get_cookies_example())
 ```
+
+!!! tip "Tab vs Browser Methods"
+    - `tab.get_cookies()`: Returns cookies from the tab's browser context (convenient shortcut)
+    - `browser.get_cookies()`: Returns cookies from the default context (or specify `browser_context_id`)
+    
+    Both methods return **all cookies** from the context, not just cookies for the current page domain.
 
 #### Get Cookies from Specific Context
 
@@ -271,6 +286,9 @@ async def reuse_saved_cookies():
     saved_cookies = json.loads(COOKIE_FILE.read_text())
     
     # Convert to simplified format (only required fields)
+    # Note: get_cookies() returns detailed Cookie objects with read-only fields
+    # (size, session, sourceScheme, etc.). set_cookies() expects CookieParam
+    # format with only the settable fields.
     cookies_to_set = [
         {
             'name': c['name'],
@@ -307,6 +325,11 @@ async def reuse_saved_cookies():
 # Subsequent runs: reuse cookies
 asyncio.run(reuse_saved_cookies())
 ```
+
+!!! note "Cookie Reformatting Required"
+    `get_cookies()` returns **detailed `Cookie` objects** with read-only attributes like `size`, `session`, `sourceScheme`, and `sourcePort`. When using `set_cookies()`, you must provide **`CookieParam` format** containing only the settable fields (`name`, `value`, `domain`, `path`, `secure`, `httpOnly`, `sameSite`, `expires`, `priority`).
+    
+    The reformatting step in the example above is **essential**. Passing raw `Cookie` objects to `set_cookies()` may cause errors or unexpected behavior.
 
 !!! tip "Cookie Expiration"
     Always check if saved cookies have expired. Session cookies (`session=True`) expire when the browser closes, while persistent cookies have an `expires` timestamp you can validate.
@@ -478,10 +501,10 @@ cookie = {
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
-async def temporary_cookies(tab, cookies):
+async def temporary_cookies(browser, tab, cookies):
     """Set cookies, execute code, then restore original cookies."""
     # Save current cookies
-    original_cookies = await tab._browser.get_cookies()
+    original_cookies = await browser.get_cookies()
     
     try:
         # Set temporary cookies
@@ -503,11 +526,14 @@ async def temporary_cookies(tab, cookies):
         await tab.set_cookies(cookies_to_restore)
 
 # Usage
-async with temporary_cookies(tab, test_cookies):
+async with temporary_cookies(browser, tab, test_cookies):
     await tab.go_to('https://example.com')
     # ... perform actions with temporary cookies ...
 # Original cookies restored automatically
 ```
+
+!!! tip "Using Public APIs"
+    This context manager accepts both `browser` and `tab` as parameters to use public APIs. Since `tab` doesn't expose its parent `browser` as a public property, passing it explicitly is the recommended approach for accessing browser-level methods.
 
 ### Cookie Fingerprint Comparison
 

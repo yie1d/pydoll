@@ -27,7 +27,7 @@ Traditional automation often requires you to extract cookies and headers manuall
 
 ## Quick Start
 
-The simplest example - login via UI, then make authenticated API calls:
+The simplest example: +login via UI, then make authenticated API calls:
 
 ```python
 import asyncio
@@ -397,6 +397,9 @@ print(response.url)
 response.raise_for_status()  # Raises HTTPError if 4xx or 5xx
 ```
 
+!!! note "Redirects and URL Tracking"
+    The `response.url` property contains only the **final URL** after all redirects. If you need to track the complete redirect chain (intermediate URLs, status codes, timing), use [Network Monitoring](monitoring.md) to observe all requests in detail.
+
 ## Headers and Cookies
 
 ### Working with Headers
@@ -412,7 +415,7 @@ async def header_example():
     async with Chrome() as browser:
         tab = await browser.start()
         
-        # Add custom headers
+        # Using HeaderEntry type for IDE autocomplete and type checking
         headers: list[HeaderEntry] = [
             {'name': 'Authorization', 'value': 'Bearer token-123'},
             {'name': 'X-Custom-Header', 'value': 'custom-value'},
@@ -423,7 +426,7 @@ async def header_example():
             headers=headers
         )
         
-        # Inspect response headers
+        # Inspect response headers (also HeaderEntry typed dicts)
         for header in response.headers:
             if header['name'] == 'Content-Type':
                 print(f"Content-Type: {header['value']}")
@@ -431,8 +434,19 @@ async def header_example():
 asyncio.run(header_example())
 ```
 
-!!! tip "Headers are Additive"
-    Custom headers are **added** to browser's automatic headers, not replacements. The browser still sends `User-Agent`, `Accept`, and other standard headers.
+!!! tip "Type Hints for Headers"
+    `HeaderEntry` is a `TypedDict` from `pydoll.protocol.fetch.types`. Using it as a type hint gives you:
+    
+    - **Autocomplete**: IDE suggests `name` and `value` keys
+    - **Type safety**: Catch typos and missing keys before running
+    - **Documentation**: Clear structure for headers
+    
+    While you can pass plain dictionaries, using the type hint improves code quality and IDE support.
+
+!!! tip "Custom Headers Behavior"
+    Custom headers are sent **alongside** the browser's automatic headers (like `User-Agent`, `Accept`, `Referer`, etc.). 
+    
+    If you try to set a standard browser header (e.g., `User-Agent`), the behavior depends on the specific header; some may be overridden, others ignored, and some may cause conflicts. For most use cases, stick to custom headers (e.g., `X-API-Key`, `Authorization`) to avoid unexpected behavior.
 
 ### Understanding Cookies
 
@@ -466,68 +480,6 @@ async def cookie_example():
         print(f"Profile data: {profile_response.json()}")
 
 asyncio.run(cookie_example())
-```
-
-## Error Handling
-
-Handle errors gracefully with try-except blocks:
-
-```python
-import asyncio
-from pydoll.browser.chromium import Chrome
-from pydoll.exceptions import HTTPError
-
-async def error_handling():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        
-        try:
-            response = await tab.request.get('https://api.example.com/users/9999')
-            response.raise_for_status()  # Raise exception if 4xx or 5xx
-            user = response.json()
-            
-        except HTTPError as e:
-            print(f"HTTP Error: {e}")
-            print(f"Status: {response.status_code}")
-            print(f"Response: {response.text}")
-            
-        except ValueError as e:
-            # JSON parsing error
-            print(f"Invalid JSON: {e}")
-            
-        except Exception as e:
-            # Other errors
-            print(f"Unexpected error: {e}")
-
-asyncio.run(error_handling())
-```
-
-### Checking Response Status
-
-```python
-response = await tab.request.get('https://api.example.com/users')
-
-# Method 1: Check ok property
-if response.ok:
-    print("Success (2xx or 3xx)")
-else:
-    print(f"Error: {response.status_code}")
-
-# Method 2: Check specific status codes
-if response.status_code == 200:
-    print("OK")
-elif response.status_code == 404:
-    print("Not Found")
-elif response.status_code >= 500:
-    print("Server Error")
-
-# Method 3: Raise exception for errors
-try:
-    response.raise_for_status()
-    # Continue with successful response
-except HTTPError:
-    # Handle error
-    pass
 ```
 
 ## Comparison with Traditional Requests

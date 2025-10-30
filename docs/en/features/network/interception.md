@@ -122,6 +122,9 @@ asyncio.run(basic_interception())
 !!! info "Type Hints for Better IDE Support"
     Use type hints like `RequestPausedEvent` to get autocomplete for event keys. All event types are in `pydoll.protocol.fetch.events`.
 
+!!! note "Production-Ready Waiting"
+    The examples in this guide use `asyncio.sleep()` for simplicity. In production code, consider using more explicit waiting strategies like waiting for specific elements or implementing network idle detection. See the [Network Monitoring](monitoring.md) guide for advanced techniques.
+
 ## Common Use Cases
 
 ### 1. Blocking Resources to Save Bandwidth
@@ -188,7 +191,7 @@ async def modify_headers():
             
             # Only modify API requests
             if '/api/' in url:
-                # Build custom headers
+                # Build custom headers (using HeaderEntry type hint for IDE support)
                 headers: list[HeaderEntry] = [
                     {'name': 'X-Custom-Header', 'value': 'MyValue'},
                     {'name': 'Authorization', 'value': 'Bearer my-token-123'},
@@ -209,6 +212,9 @@ async def modify_headers():
 
 asyncio.run(modify_headers())
 ```
+
+!!! tip "Type Hints for Headers"
+    `HeaderEntry` is a `TypedDict` from `pydoll.protocol.fetch.types`. Using it as a type hint gives you IDE autocomplete for `name` and `value` keys. You can also use plain dictionaries without the type hint.
 
 !!! tip "Header Management"
     When you provide custom headers, they **replace** all existing headers. Make sure to include necessary headers like `User-Agent`, `Accept`, etc., if needed.
@@ -365,7 +371,7 @@ asyncio.run(modify_post_data())
 
 ### 6. Handling Authentication Challenges
 
-Automatically respond to HTTP authentication:
+Manually respond to HTTP authentication challenges (Basic Auth, Digest Auth, etc.):
 
 ```python
 import asyncio
@@ -383,9 +389,9 @@ async def handle_auth():
             
             print(f"🔐 Auth challenge from: {auth_challenge['origin']}")
             print(f"   Scheme: {auth_challenge['scheme']}")
-            print(f"   Realm: {auth_challenge['realm']}")
+            print(f"   Realm: {auth_challenge.get('realm', 'N/A')}")
             
-            # Provide credentials
+            # Provide credentials for the authentication challenge
             await tab.continue_with_auth(
                 request_id=request_id,
                 auth_challenge_response=AuthChallengeResponseType.PROVIDE_CREDENTIALS,
@@ -404,6 +410,16 @@ async def handle_auth():
 
 asyncio.run(handle_auth())
 ```
+
+!!! note "Automatic Proxy Authentication"
+    **Pydoll automatically handles proxy authentication** (407 Proxy Authentication Required) when you configure proxy credentials via browser options. This example demonstrates **manual handling** of authentication challenges, which is useful for:
+    
+    - HTTP Basic/Digest Authentication from servers (401 Unauthorized)
+    - Custom authentication flows
+    - Dynamic credential selection based on the challenge
+    - Testing authentication failure scenarios
+    
+    For standard proxy usage, simply configure your proxy credentials in browser options - no manual handling needed!
 
 ### 7. Simulating Network Errors
 
@@ -520,7 +536,7 @@ Use these with `fail_request()` to simulate different network failures:
 ### 1. Always Continue or Fail Requests
 
 ```python
-# ✅ Good: Every paused request is handled
+# Good: Every paused request is handled
 async def handle_request(event: RequestPausedEvent):
     request_id = event['params']['requestId']
     try:
@@ -530,7 +546,7 @@ async def handle_request(event: RequestPausedEvent):
         # Fail on error to prevent hanging
         await tab.fail_request(request_id, ErrorReason.FAILED)
 
-# ❌ Bad: Request might hang if callback raises exception
+# Bad: Request might hang if callback raises exception
 async def handle_request(event: RequestPausedEvent):
     request_id = event['params']['requestId']
     # If this raises, request hangs forever
@@ -540,22 +556,22 @@ async def handle_request(event: RequestPausedEvent):
 ### 2. Use Selective Interception
 
 ```python
-# ✅ Good: Only intercept what you need
+# Good: Only intercept what you need
 await tab.enable_fetch_events(resource_type='Image')
 
-# ❌ Bad: Intercepts everything, slows down all requests
+# Bad: Intercepts everything, slows down all requests
 await tab.enable_fetch_events()
 ```
 
 ### 3. Disable When Done
 
 ```python
-# ✅ Good: Clean up after yourself
+# Good: Clean up after yourself
 await tab.enable_fetch_events()
 # ... do work ...
 await tab.disable_fetch_events()
 
-# ❌ Bad: Leaves interception enabled
+# Bad: Leaves interception enabled
 await tab.enable_fetch_events()
 # ... do work ...
 # (never disabled)
@@ -564,7 +580,7 @@ await tab.enable_fetch_events()
 ### 4. Handle Errors Gracefully
 
 ```python
-# ✅ Good: Wrap in try/except
+# Good: Wrap in try/except
 async def safe_handler(event: RequestPausedEvent):
     request_id = event['params']['requestId']
     try:

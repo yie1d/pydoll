@@ -289,6 +289,7 @@ Orchestrate complex workflows that require multiple tabs to interact:
 ```python
 import asyncio
 from pydoll.browser.chromium import Chrome
+from pydoll.protocol.network.events import NetworkEvent, RequestWillBeSentEvent
 
 async def multi_tab_workflow():
     async with Chrome() as browser:
@@ -320,12 +321,12 @@ async def multi_tab_workflow():
         
         # Track API calls
         api_calls = []
-        async def track_api(event):
+        async def track_api(event: RequestWillBeSentEvent):
             url = event['params']['request']['url']
             if '/api/' in url:
                 api_calls.append(url)
         
-        await monitor_tab.on('Network.requestWillBeSent', track_api)
+        await monitor_tab.on(NetworkEvent.REQUEST_WILL_BE_SENT, track_api)
         await asyncio.sleep(5)
         
         print(f"Tracked {len(api_calls)} API calls:")

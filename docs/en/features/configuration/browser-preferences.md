@@ -1,6 +1,6 @@
 # Custom Browser Preferences
 
-One of Pydoll's most powerful features is direct access to Chromium's internal preference system. Unlike traditional browser automation tools that only expose a limited set of options, Pydoll gives you the same level of control that extensions and enterprise administrators have—allowing you to configure **any** browser setting available in Chromium's source code.
+One of Pydoll's most powerful features is direct access to Chromium's internal preference system. Unlike traditional browser automation tools that only expose a limited set of options, Pydoll gives you the same level of control that extensions and enterprise administrators have, allowing you to configure **any** browser setting available in Chromium's source code.
 
 ## Why Browser Preferences Matter
 
@@ -128,7 +128,7 @@ options.browser_preferences = {
 ```
 
 !!! warning "Preferences Are Merged, Not Replaced"
-    When you set `browser_preferences` multiple times, the new preferences are **merged** with existing ones. Only the specific keys you set are updated—everything else is preserved.
+    When you set `browser_preferences` multiple times, the new preferences are **merged** with existing ones. Only the specific keys you set are updated; everything else is preserved.
     
     ```python
     options.browser_preferences = {'download': {'prompt': False}}
@@ -549,17 +549,6 @@ options.browser_preferences = {
     - **Platform-specific**: Only work on certain operating systems
     
     Test thoroughly before relying on undocumented preferences.
-
-
-## Performance Impact
-
-| Preference Category | Expected Impact | Use Case |
-|---------------------|----------------|----------|
-| Disable images | 50-70% faster loads | Scraping text content |
-| Disable prefetch | 10-20% faster loads | Reduce bandwidth usage |
-| Disable plugins | 5-10% faster loads | Security and performance |
-| Block notifications | Eliminates popups | Clean automation |
-| Silent downloads | Eliminates prompts | Automated file downloads |
 
 ## Useful Preferences Reference
 
@@ -1026,7 +1015,9 @@ options.browser_preferences = {
 
 ```python
 import uuid
+from pydoll.browser.options import ChromiumOptions
 
+options = ChromiumOptions()
 options.browser_preferences = {
     # Country ID at install (affects default settings and locale)
     'countryid_at_install': 16978,          # Varies by country (e.g., 16978 for Brazil)
@@ -1153,7 +1144,9 @@ options.browser_preferences = {
 
 ```python
 import time
+from pydoll.browser.options import ChromiumOptions
 
+options = ChromiumOptions()
 options.browser_preferences = {
     'signin': {
         'allowed': True,                        # Allow sign-in to Google
@@ -1192,7 +1185,9 @@ options.browser_preferences = {
 
 ```python
 import time
+from pydoll.browser.options import ChromiumOptions
 
+options = ChromiumOptions()
 options.browser_preferences = {
     # Optimization guide (Google's performance hints)
     'optimization_guide': {
@@ -1251,7 +1246,9 @@ Chrome tracks session history for recovery and telemetry:
 
 ```python
 import time
+from pydoll.browser.options import ChromiumOptions
 
+options = ChromiumOptions()
 options.browser_preferences = {
     'sessions': {
         'event_log': [
@@ -1556,7 +1553,7 @@ async def advanced_stealth():
     
     **Window placement**: Realistic screen dimensions that match actual monitor resolutions.
     
-    **Privacy Sandbox**: Google's new tracking system—disabling it is unusual and suspicious.
+    **Privacy Sandbox**: Google's new tracking system. Disabling it is unusual and suspicious.
 
 ## Performance Impact
 
@@ -1570,12 +1567,12 @@ Understanding the performance implications of browser preferences helps you opti
 | Block notifications | Eliminates popups | Clean automation |
 | Silent downloads | Eliminates prompts | Automated file downloads |
 
-!!! tip "Optimization Strategy"
+!!! tip "Speed vs Stealth Trade-off"
     **For speed**: Disable images, prefetch, plugins, and spell check.
     
     **For stealth**: Enable Safe Browsing, autofill, search suggestions, and DNS prefetch (even though they slow things down).
     
-    **Balance both**: Enable stealth features but disable images and plugins. This gives 40-50% speedup while maintaining realistic fingerprint.
+    **Balanced approach**: Enable stealth features but disable images and plugins. This gives 40-50% speedup while maintaining realistic fingerprint.
 
 ## See Also
 
