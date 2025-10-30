@@ -278,7 +278,7 @@ await connection.clear_callbacks()
 
 ### Asynchronous Callback Execution
 
-Callbacks can be either synchronous functions or asynchronous coroutines. The ConnectionHandler handles both types properly:
+Callbacks can be either synchronous functions or asynchronous coroutines. The EventsHandler (managed by the ConnectionHandler) handles both types properly:
 
 ```python
 # Synchronous callback
@@ -295,7 +295,26 @@ await connection.register_callback('Network.requestWillBeSent', synchronous_call
 await connection.register_callback('Network.responseReceived', asynchronous_callback)
 ```
 
-For asynchronous callbacks, the ConnectionHandler wraps them in a task that runs in the background, allowing the event processing loop to continue without waiting for the callback to complete.
+**Sequential Execution Model:**
+
+Asynchronous callbacks are **awaited sequentially** by the EventsManager. This ensures that for a single event, callbacks execute in the order they were registered, preventing race conditions when multiple callbacks modify shared state.
+
+```python
+# Inside EventsManager.process_event()
+for callback_data in callbacks:
+    if asyncio.iscoroutinefunction(callback_data['callback']):
+        await callback_data['callback'](event_data)  # Sequential await
+    else:
+        callback_data['callback'](event_data)  # Sync execution
+```
+
+**Non-blocking execution** (for UI callbacks that should not block other operations) is achieved at a **higher level**, such as in the `Tab.on()` method, which wraps the user's callback in an `asyncio.create_task()` before registering it here. This architecture provides:
+
+- **Lower layer** (ConnectionHandler/EventsManager): Guarantees sequential execution and predictable order
+- **Higher layer** (Tab.on()): Provides non-blocking semantics when needed
+
+!!! info "Event Architecture Details"
+    See [Event Architecture Deep Dive](../architecture/event-architecture.md) for complete details on the multi-layer event system and the rationale behind sequential callback execution.
 
 ## Connection Management
 

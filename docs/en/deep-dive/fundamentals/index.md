@@ -1,33 +1,33 @@
 # Core Fundamentals
 
-**Master the foundation—everything else becomes easy.**
+**Master the foundation, everything else becomes easier.**
 
-This section covers the **bedrock technologies** that power Pydoll: the Chrome DevTools Protocol (CDP), WebSocket-based async communication, and Python's type system integration. These aren't just implementation details—they're the **fundamental design decisions** that make Pydoll fast, powerful, and type-safe.
+This section covers the **bedrock technologies** that power Pydoll: the Chrome DevTools Protocol (CDP), WebSocket-based async communication, and Python's type system integration. These aren't just implementation details, they're the **fundamental design decisions** that make Pydoll fast, powerful, and type-safe.
 
 ## Why Fundamentals Matter
 
-Most automation frameworks abstract away their communication layer, leaving you with a "black box" that works until it doesn't. When something breaks, you're stuck—unable to debug, optimize, or extend.
+Most automation frameworks abstract away their communication layer, leaving you with a "black box" that works until it doesn't. When something breaks, debugging and optimization become difficult without understanding the underlying mechanisms.
 
-**Pydoll takes the opposite approach**: We expose and explain the fundamentals, transforming you from a **framework user** into a **protocol engineer**.
+**Pydoll takes a different approach**: we expose and explain the fundamentals, enabling you to work as both a **framework user** and a **protocol engineer**.
 
 !!! quote "The Power of First Principles"
     **"If you know the way broadly, you will see it in all things."** - Miyamoto Musashi
     
-    Understanding CDP, async communication, and type systems isn't just about Pydoll—it's about understanding **how modern browser automation works at its core**. This knowledge transfers to any CDP-based tool and any async Python project.
+    Understanding CDP, async communication, and type systems isn't just about Pydoll, it's about understanding **how modern browser automation works at its core**. This knowledge transfers to any CDP-based tool and any async Python project.
 
 ## The Three Pillars
 
 ### 1. Chrome DevTools Protocol (CDP)
 **[→ Read CDP Deep Dive](./cdp.md)**
 
-**The protocol that changed everything.**
+**The protocol that powers modern browser automation.**
 
-CDP is Chrome's native debugging protocol—the same one Chrome DevTools (F12) uses. By talking directly to CDP, Pydoll:
+CDP is Chrome's native debugging protocol, the same one Chrome DevTools (F12) uses. By communicating directly with CDP, Pydoll:
 
-- ✅ **Eliminates WebDriver** (no Selenium overhead, no geckodriver/chromedriver intermediaries)
-- ✅ **Gains deep control** (modify requests, intercept events, execute privileged operations)
-- ✅ **Achieves native speed** (direct WebSocket communication, no HTTP polling)
-- ✅ **Becomes undetectable** (no `navigator.webdriver`, no WebDriver fingerprints)
+- **Eliminates WebDriver** (no Selenium overhead, no geckodriver/chromedriver intermediaries)
+- **Gains deep control** (modify requests, intercept events, execute privileged operations)
+- **Achieves native speed** (direct WebSocket communication, no HTTP polling)
+- **Becomes undetectable** (no `navigator.webdriver`, no WebDriver fingerprints)
 
 **What you'll learn:**
 
@@ -36,7 +36,7 @@ CDP is Chrome's native debugging protocol—the same one Chrome DevTools (F12) u
 - Why CDP-based tools are **fundamentally more powerful** than Selenium
 - How to read CDP documentation and extend Pydoll
 
-**Why this matters**: CDP isn't just Pydoll's implementation detail—it's the **future of browser automation**. Puppeteer, Playwright, and modern tools all use CDP. Master it once, leverage it everywhere.
+**Why this matters**: CDP isn't just Pydoll's implementation detail, it's the foundation of modern browser automation. Puppeteer, Playwright, and similar tools all use CDP. Understanding it once provides knowledge applicable across multiple tools.
 
 ---
 
@@ -55,9 +55,9 @@ While CDP defines **what** you can do, the Connection Layer defines **how** Pydo
 - Event dispatching: how browser events trigger Python callbacks
 - Error handling: timeout management, connection failures, graceful degradation
 
-**Why this matters**: The connection layer is the **nervous system** of Pydoll. Understanding it unlocks:
-- **Debugging superpowers**: See exactly what messages flow between Python and Chrome
-- **Performance optimization**: Understand latency sources and parallelize operations
+**Why this matters**: The connection layer is the communication backbone of Pydoll. Understanding it enables:
+- **Effective debugging**: Inspect messages flowing between Python and Chrome
+- **Performance optimization**: Identify latency sources and parallelize operations
 - **Extension capabilities**: Add custom CDP commands or modify existing behavior
 
 ---
@@ -65,14 +65,14 @@ While CDP defines **what** you can do, the Connection Layer defines **how** Pydo
 ### 3. Python Type System Integration
 **[→ Read Type System Deep Dive](./typing-system.md)**
 
-**Types aren't just for safety—they're for productivity.**
+**Types provide both safety and productivity.**
 
-Python's type system (introduced in 3.5, enhanced in every version since) transforms development experience. Pydoll leverages `TypedDict`, `Literal`, `overload`, and generics to provide:
+Python's type system (introduced in 3.5, enhanced in every version since) significantly improves development experience. Pydoll leverages `TypedDict`, `Literal`, `overload`, and generics to provide:
 
-- ✅ **IDE autocomplete** for CDP response fields (no more "what fields does this dict have?")
-- ✅ **Type checking** to catch bugs before runtime (`mypy`, `pyright`)
-- ✅ **Self-documenting code** (function signatures reveal structure)
-- ✅ **Refactoring safety** (rename a field, IDE updates all usages)
+- **IDE autocomplete** for CDP response fields
+- **Type checking** to catch bugs before runtime (`mypy`, `pyright`)
+- **Self-documenting code** (function signatures reveal structure)
+- **Refactoring safety** (rename a field, IDE updates all usages)
 
 **What you'll learn:**
 
@@ -82,7 +82,7 @@ Python's type system (introduced in 3.5, enhanced in every version since) transf
 - Practical patterns: annotating callbacks, typing async functions, using `Literal`
 - Tool integration: configuring mypy, leveraging IDE type inference
 
-**Why this matters**: Type hints aren't optional in modern Python—they're **essential infrastructure**. Pydoll's comprehensive type coverage means:
+**Why this matters**: Type hints have become increasingly important in modern Python. Pydoll's comprehensive type coverage means:
 - **Faster development**: Autocomplete reveals available fields and methods
 - **Fewer bugs**: Type checker catches errors before they reach production
 - **Better refactoring**: Change signatures confidently with IDE support
@@ -115,6 +115,7 @@ graph TB
 ```
 
 **The flow**:
+
 1. You write Python code with **type annotations** (Type System)
 2. Code serializes to JSON and sends via **WebSocket** (Connection Layer)
 3. Browser receives and executes **CDP commands** (CDP)
@@ -123,6 +124,7 @@ graph TB
 6. Your callbacks receive **type-safe event objects** (Type System)
 
 Each layer **amplifies** the others:
+
 - Types make CDP responses discoverable
 - CDP's event model enables async patterns
 - Async communication makes types essential (what fields exist on this response?)
@@ -131,38 +133,35 @@ Each layer **amplifies** the others:
 
 We recommend this progression:
 
-### Step 1: CDP (1-2 hours)
+### Step 1: CDP
 **[Start Here: Chrome DevTools Protocol](./cdp.md)**
 
 Understand the protocol that powers everything. Learn domains, commands, events, and how to read CDP documentation.
 
 **Outcome**: You'll know how to find and use any CDP feature, not just what Pydoll exposes.
 
-### Step 2: Connection Layer (2-3 hours)
+### Step 2: Connection Layer
 **[Continue: Connection Layer Architecture](./connection-layer.md)**
 
 Deep dive into WebSocket communication, async patterns, and event dispatching.
 
 **Outcome**: You'll understand exactly how messages flow between Python and Chrome, enabling debugging and optimization.
 
-### Step 3: Type System (1-2 hours)
+### Step 3: Type System
 **[Finish: Python Type System](./typing-system.md)**
 
 Learn how Pydoll uses modern Python typing for safety and productivity.
 
 **Outcome**: You'll write type-safe automation with full IDE support, catching bugs before they run.
 
-**Total time**: 4-7 hours  
-**Payoff**: **Permanent understanding** of CDP-based automation fundamentals
-
 ## Prerequisites
 
 To get the most from this section:
 
-✅ **Python fundamentals** - Functions, classes, decorators  
-✅ **Basic async/await** - Understand `async def` and `await` keywords  
-✅ **JSON familiarity** - Know how objects/arrays serialize  
-✅ **Browser DevTools** - Have used Chrome Inspector (F12)  
+- **Python fundamentals** - Functions, classes, decorators
+- **Basic async/await** - Understand `async def` and `await` keywords
+- **JSON familiarity** - Know how objects/arrays serialize
+- **Browser DevTools** - Have used Chrome Inspector (F12)  
 
 **If you're new to async Python**, read this first: [Real Python: Async IO in Python](https://realpython.com/async-io-python/)
 
@@ -178,44 +177,44 @@ Once you've mastered these fundamentals, you'll be ready for:
 
 ### "Do I need to understand this to use Pydoll?"
 
-**No**—but you'll be **much more effective** if you do. Basic usage works fine without this knowledge. But when you need to:
+**No**, but understanding these fundamentals will make you more effective. Basic usage works fine without this knowledge. However, when you need to:
 - Debug why something isn't working
 - Optimize slow automation
 - Extend Pydoll with custom CDP commands
 - Understand error messages
 - Contribute to the project
 
-...these fundamentals become **essential**.
+These fundamentals become very helpful.
 
 ### "Isn't this too low-level?"
 
-**That's the point.** Most developers never learn these fundamentals because frameworks hide them. But abstraction has a cost:
+This level of detail is intentional. Most frameworks hide these fundamentals, but abstraction comes with tradeoffs:
 
-- You can't fix what you don't understand
-- You can't optimize what you can't measure
-- You can't extend what you can't see
+- Understanding enables better debugging
+- Visibility enables optimization
+- Knowledge enables extension
 
-By teaching fundamentals, we **empower** you to go beyond what Pydoll provides out-of-the-box.
+By teaching fundamentals, we enable you to go beyond what Pydoll provides out-of-the-box.
 
 ### "How much of this do I need to memorize?"
 
-**None of it.** The goal isn't memorization—it's **building mental models**. After reading these sections, you'll have intuition for:
+**None of it.** The goal is building mental models, not memorization. After reading these sections, you'll develop intuition for:
 
 - "This needs CDP, let me check the protocol docs"
 - "This is slow because of sequential await, let me parallelize"
 - "This type error means I'm using the wrong field name"
 
-The specifics fade. The understanding remains.
+The specifics fade, but the understanding remains.
 
 ## Philosophy
 
-These fundamentals represent **timeless knowledge**:
+These fundamentals represent long-lasting knowledge:
 
-- **CDP** is Chrome's native protocol—it's not going away
-- **Async/await** is Python's standard for concurrency—it's the future
-- **Type systems** are increasingly essential in Python—PEP 484 was just the beginning
+- **CDP** is Chrome's native protocol and continues to evolve
+- **Async/await** is Python's standard for concurrency
+- **Type systems** are increasingly important in Python (PEP 484 onwards)
 
-Learn these once, use them for your entire career.
+Learning these concepts provides value across your development career.
 
 ---
 
@@ -234,4 +233,4 @@ Start with **[Chrome DevTools Protocol](./cdp.md)** to understand the protocol t
     - Network events all follow **CDP's event model**
     - All responses use **TypedDict** for type safety
     
-    The fundamentals aren't separate from Pydoll—they **are** Pydoll's foundation.
+    The fundamentals aren't separate from Pydoll, they **are** Pydoll's foundation.

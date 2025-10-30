@@ -170,13 +170,13 @@ A common question: if JavaScript can execute the request, why use network events
 
 | Information Source | JavaScript (Fetch API) | Network Events (CDP) |
 |-------------------|------------------------|----------------------|
-| Response status | ✅ Available | ✅ Available |
-| Response body | ✅ Available | ❌ Not available |
-| Response headers | ⚠️ Partial (CORS restricted) | ✅ Complete |
-| Request headers | ❌ Not accessible | ✅ Complete |
-| Set-Cookie headers | ❌ Hidden by browser | ✅ Available |
-| Timing information | ⚠️ Limited | ✅ Comprehensive |
-| Redirect chain | ❌ Only final URL | ✅ Full chain |
+| Response status | Available | Available |
+| Response body | Available | Not available |
+| Response headers | Partial (CORS restricted) | Complete |
+| Request headers | Not accessible | Complete |
+| Set-Cookie headers | Hidden by browser | Available |
+| Timing information | Limited | Comprehensive |
+| Redirect chain | Only final URL | Full chain |
 
 **The Solution:** Combine both sources for complete information.
 
@@ -322,11 +322,11 @@ Network events add overhead to request execution:
 ### Optimization Pattern
 
 ```python
-# ❌ Inefficient - events enabled/disabled repeatedly
+# Inefficient - events enabled/disabled repeatedly
 for url in urls:
     response = await tab.request.get(url)
 
-# ✅ Efficient - events enabled once
+# Efficient - events enabled once
 await tab.enable_network_events()
 for url in urls:
     response = await tab.request.get(url)

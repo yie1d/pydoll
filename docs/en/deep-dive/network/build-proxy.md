@@ -1,6 +1,6 @@
 # Building Your Own Proxy Server
 
-This document provides **complete, production-ready implementations** of HTTP and SOCKS5 proxy servers in Python. Building proxies from scratch is the ultimate learning experience—revealing attack vectors, optimization opportunities, and protocol nuances invisible from the outside.
+This document provides **complete implementations** of HTTP and SOCKS5 proxy servers in Python. Building proxies from scratch is the ultimate learning experience, revealing attack vectors, optimization opportunities, and protocol nuances invisible from the outside.
 
 !!! info "Module Navigation"
     - **[← Proxy Detection](./proxy-detection.md)** - Anonymity and evasion techniques
@@ -603,6 +603,7 @@ iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 \
 
 !!! warning "HTTPS Transparent Proxying"
     Transparent HTTPS proxying requires:
+
     - **TLS interception** (MITM with custom CA certificate)
     - **Certificate installation** on client devices
     - **Legal compliance** (employee consent, privacy laws)
@@ -691,7 +692,7 @@ Educational implementations lack critical production features:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Load Balancer (HAProxy, Nginx)                       │
+│  Load Balancer (HAProxy, Nginx)                         │
 │  • TLS termination                                      │
 │  • DDoS protection (rate limiting)                      │
 │  • Health checks                                        │
@@ -754,6 +755,7 @@ Educational implementations lack critical production features:
 ### Related Documentation
 
 **Within This Module:**
+
 - **[HTTP/HTTPS Proxies](./http-proxies.md)** - Protocol fundamentals and authentication
 - **[SOCKS Proxies](./socks-proxies.md)** - SOCKS5 protocol specification
 - **[Proxy Detection](./proxy-detection.md)** - How proxies are detected and identified
@@ -761,6 +763,7 @@ Educational implementations lack critical production features:
 - **[Legal & Ethical](./proxy-legal.md)** - Compliance and responsible proxy operation
 
 **Practical Usage:**
+
 - **[Proxy Configuration (Features)](../../features/configuration/proxy.md)** - Using proxies in Pydoll
 
 ### External References
@@ -872,6 +875,7 @@ While **production proxies** (Squid, HAProxy, Nginx) are superior for performanc
 **Key Takeaway:** Use **production-grade proxies** for infrastructure, build **custom proxies** for application-specific logic.
 
 **Next Steps:**
+
 1. Read **[Proxy Detection](./proxy-detection.md)** to understand how custom proxies can be identified
 2. Review **[Legal & Ethical](./proxy-legal.md)** for compliance considerations
 3. Explore **mitmproxy** source code for advanced Python proxy implementation patterns

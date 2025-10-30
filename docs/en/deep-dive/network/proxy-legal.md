@@ -1,6 +1,6 @@
 # Legal and Ethical Considerations
 
-This document provides **general information** about the legal and ethical landscape of proxy usage and web automation. Laws vary wildly by jurisdiction and use case—this is **not legal advice**. Always consult qualified legal counsel for your specific situation.
+This document provides **general information** about the legal and ethical landscape of proxy usage and web automation. Laws vary wildly by jurisdiction and use case. This is **not legal advice**. Always consult qualified legal counsel for your specific situation.
 
 !!! info "Module Navigation"
     - **[← Building Proxies](./build-proxy.md)** - Implementation and advanced topics

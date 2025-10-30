@@ -181,16 +181,6 @@ async with Chrome() as browser:
 # Browser is automatically stopped when exiting context
 ```
 
-**Async Iterators**
-```python
-# Stream network events as they occur
-await tab.enable_network_events()
-
-async for event in tab.network_event_stream():
-    if 'api' in event['params']['request']['url']:
-        print(f"API call detected: {event['params']['request']['url']}")
-```
-
 **Async Context Managers for Operations**
 ```python
 # Wait for and handle downloads
@@ -329,42 +319,21 @@ The `interval` parameter sets the average delay, but Pydoll adds random variance
 
 ### Realistic Clicking
 
-Clicks aren't just "fire and forget". Pydoll simulates mouse movement and timing:
+Clicks aren't just "fire and forget". Pydoll automatically dispatches all mouse events that a real user would trigger:
 
 ```python
 button = await tab.find(id='submit-button')
 
-# Click with default behavior (slight delay, natural movement)
+# Default behavior: clicks center of element
+# Automatically fires: mouseover, mouseenter, mousemove, mousedown, mouseup, click
 await button.click()
 
-# Click with offset (useful for larger buttons)
+# Click with offset (useful for avoiding detection on larger elements)
 await button.click(offset_x=10, offset_y=5)
-
-# Immediate click (less human-like)
-await button.click(delay=0)
 ```
 
-### Keyboard Control
-
-Complex keyboard interactions are supported through the Keys enum:
-
-```python
-from pydoll.constants import Keys
-
-# Use keyboard shortcuts
-search_field = await tab.find(id='search')
-await search_field.type_text('pydoll automation')
-await search_field.press_keyboard_key(Keys.ENTER)
-
-# Key combinations
-await tab.key_down(Keys.CONTROL)
-await tab.type_text('a')  # Select all
-await tab.key_up(Keys.CONTROL)
-
-# Special keys
-await tab.press_keyboard_key(Keys.TAB)
-await tab.press_keyboard_key(Keys.ESCAPE)
-```
+!!! info "Mouse Events"
+    Pydoll dispatches the complete sequence of mouse events in the correct order, simulating how real browsers handle user clicks. This makes clicks more realistic compared to simple JavaScript `.click()` calls.
 
 !!! warning "Detection Considerations"
     While human-like behavior helps avoid basic bot detection, sophisticated anti-automation systems use many signals. Combine these features with:

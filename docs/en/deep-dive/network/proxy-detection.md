@@ -39,6 +39,7 @@ Websites detect proxies for various legitimate and business reasons:
 
 !!! danger "No Proxy is Truly Undetectable"
     Even **elite residential proxies** can be detected through sophisticated multi-signal analysis:
+
     - IP reputation databases now track residential proxy pools
     - Timing analysis detects network latency inconsistencies
     - Behavioral analysis identifies non-human patterns
@@ -128,14 +129,13 @@ def is_elite_proxy(headers, client_ip):
 ```
 
 !!! info "Anonymity Level in Practice"
+
     - **Transparent proxies** are used for corporate filtering, not privacy
     - **Anonymous proxies** protect your IP but websites know you're using a proxy
     - **Elite proxies** are hardest to detect but not impossible (see detection techniques below)
     
     Most commercial proxy services offer anonymous or elite proxies. Free proxies are often transparent.
 
-!!! warning "No Proxy is Truly Undetectable"
-    Even elite proxies can be detected through sophisticated techniques (IP reputation, timing analysis, behavioral patterns). The goal is to make detection **difficult and expensive**, not impossible.
 
 ### Detection Techniques
 
@@ -355,6 +355,7 @@ def check_geolocation_consistency(ip_address, headers, session_data):
 
 !!! warning "False Positives"
     Legitimate scenarios that trigger geolocation alarms:
+
     - **Travelers**: User at airport connecting through VPN
     - **Expats**: Chinese expat in US using Chinese browser
     - **VPN users**: Privacy-conscious users with legitimate VPN
@@ -451,13 +452,13 @@ Proxy detection is a **multi-layered, probabilistic process** that combines doze
 
 | Proxy Type | Detection Difficulty | Primary Detection Methods | Typical Use Case |
 |------------|----------------------|---------------------------|------------------|
-| **Transparent HTTP** | ⚠️ Trivial | HTTP headers (`Via`, `X-Forwarded-For`) | Corporate filtering |
-| **Anonymous HTTP** | 🟡 Easy | HTTP headers + IP reputation | Basic privacy |
-| **Elite HTTP** | 🟠 Medium | IP reputation + TCP/IP fingerprinting | Privacy-conscious users |
-| **Datacenter SOCKS5** | 🟠 Medium | IP reputation (ASN analysis) | Bot operators |
-| **Residential Proxies** | 🟡 Difficult | Behavioral analysis + connection patterns | Professional scraping |
-| **Mobile Proxies** | 🔴 Very Difficult | Limited signals, mostly behavioral | Premium stealth |
-| **Rotating Proxies** | 🟡 Difficult | Session inconsistencies | Large-scale scraping |
+| **Transparent HTTP** | Trivial | HTTP headers (`Via`, `X-Forwarded-For`) | Corporate filtering |
+| **Anonymous HTTP** | Easy | HTTP headers + IP reputation | Basic privacy |
+| **Elite HTTP** | Medium | IP reputation + TCP/IP fingerprinting | Privacy-conscious users |
+| **Datacenter SOCKS5** | Medium | IP reputation (ASN analysis) | Bot operators |
+| **Residential Proxies** | Difficult | Behavioral analysis + connection patterns | Professional scraping |
+| **Mobile Proxies** | Very Difficult | Limited signals, mostly behavioral | Premium stealth |
+| **Rotating Proxies** | Difficult | Session inconsistencies | Large-scale scraping |
 
 ### Multi-Signal Risk Scoring
 
@@ -497,6 +498,7 @@ To minimize detection risk:
 
 !!! danger "Detection is Inevitable"
     With sufficient resources, **any proxy can be detected**. The goal is to:
+
     - Make detection **expensive** (force adversary to use multiple signals)
     - Make detection **slow** (avoid instant blocks, blend in with legitimate traffic)
     - Make detection **uncertain** (create plausible deniability)
@@ -508,16 +510,19 @@ To minimize detection risk:
 ### Related Documentation
 
 **Within This Module:**
+
 - **[HTTP/HTTPS Proxies](./http-proxies.md)** - How HTTP proxies leak information through headers
 - **[SOCKS Proxies](./socks-proxies.md)** - Why SOCKS5 is more stealthy than HTTP proxies
 - **[Network Fundamentals](./network-fundamentals.md)** - TCP/IP, TLS, WebRTC concepts
 
 **Fingerprinting Deep Dives:**
+
 - **[Network Fingerprinting](../fingerprinting/network-fingerprinting.md)** - TCP/IP and TLS detection techniques
 - **[Browser Fingerprinting](../fingerprinting/browser-fingerprinting.md)** - HTTP/2, Canvas, WebGL fingerprinting
 - **[Evasion Techniques](../fingerprinting/evasion-techniques.md)** - How to spoof fingerprints
 
 **Practical Guides:**
+
 - **[Proxy Configuration](../../features/configuration/proxy.md)** - Configuring proxies in Pydoll
 - **[Behavioral Captcha Bypass](../../features/advanced/behavioral-captcha-bypass.md)** - Evading behavioral detection
 - **[Browser Options](../../features/configuration/browser-options.md)** - Stealth flags and preferences
@@ -525,6 +530,7 @@ To minimize detection risk:
 ### External Resources
 
 **IP Reputation and Geolocation:**
+
 - **MaxMind GeoIP2**: https://www.maxmind.com/en/geoip2-services-and-databases
 - **IPQualityScore Proxy Detection**: https://www.ipqualityscore.com/proxy-vpn-tor-detection-service
 - **IP2Location**: https://www.ip2location.com/
@@ -532,26 +538,31 @@ To minimize detection risk:
 - **AbuseIPDB**: https://www.abuseipdb.com/ (Crowdsourced IP reputation)
 
 **ASN Databases:**
+
 - **Team Cymru IP to ASN Mapping**: https://www.team-cymru.com/ip-asn-mapping
 - **RIPE NCC (European ASN registry)**: https://www.ripe.net/
 - **ARIN (North American ASN registry)**: https://www.arin.net/
 
 **Proxy Detection Services:**
+
 - **proxycheck.io**: https://proxycheck.io/ (Real-time proxy detection API)
 - **getipintel.net**: http://getipintel.net/ (Free proxy detection)
 - **IP2Proxy**: https://www.ip2location.com/proxy-detection (Commercial proxy database)
 
 **Standards and RFCs:**
+
 - **RFC 7239**: Forwarded HTTP Extension (standardized proxy headers)
 - **RFC 7231**: HTTP/1.1 - CONNECT method (proxy tunneling)
 - **RFC 9000**: QUIC Transport Protocol (impacts HTTP/3 proxying)
 
 **Research Papers:**
+
 - "Detecting Proxies in HTTP Traffic" - Various academic papers on ML-based detection
 - "TCP Fingerprinting for Network Security" - Techniques used for proxy detection
 - "TLS Fingerprinting at Scale" - How JA3/JA3S reveal proxies
 
 **Tools for Testing:**
+
 - **Wireshark**: Packet analysis to see what proxies reveal
 - **https://browserleaks.com/ip**: Comprehensive proxy leak testing
 - **https://whoer.net/**: Anonymity checker (detects proxy usage)
@@ -561,21 +572,25 @@ To minimize detection risk:
 ### Advanced Topics (Beyond This Document)
 
 **Machine Learning Detection:**
+
 - Behavioral pattern recognition (mouse movement, typing cadence)
 - Traffic analysis (request timing, volume, patterns)
 - Ensemble models combining 50+ features
 
 **Timing-Based Detection:**
+
 - Round-trip time (RTT) analysis
 - Clock skew fingerprinting
 - Network latency distribution
 
 **Advanced Behavioral Analysis:**
+
 - Canvas/WebGL rendering consistency
 - JavaScript execution timing
 - Browser API usage patterns
 
 **Emerging Techniques:**
+
 - HTTP/3 and QUIC-based fingerprinting
 - Certificate Transparency log analysis
 - Blockchain-based IP reputation

@@ -1,6 +1,6 @@
 # Network & Security Deep Dive
 
-**Welcome to the foundation of modern internet communication—and the battleground of anonymity, detection, and evasion.**
+**Welcome to the foundation of modern internet communication, the battleground of anonymity, detection, and evasion.**
 
 Network protocols are the invisible infrastructure that powers every web request, browser connection, and automation script. Understanding them deeply transforms you from a **tool user** into a **protocol engineer** capable of navigating the most sophisticated anti-bot systems.
 
@@ -14,10 +14,10 @@ When you run `tab.go_to('https://example.com')`, a complex symphony of protocols
 4. **HTTP/2 request** fetches the page (exposing browser version through SETTINGS frames)
 5. **WebRTC discovery** may probe your real IP (bypassing your VPN entirely)
 
-**Every single step is an opportunity for detection—or evasion.**
+**Every single step is an opportunity for detection or evasion.**
 
 !!! danger "The Network Layer Cannot Lie"
-    Unlike browser-level characteristics (which JavaScript can modify), network-level fingerprints are **burned into the OS kernel and TCP/IP stack**. A mismatch here—like a Chrome browser sending Linux TCP options while claiming to be Windows—is instantly fatal to stealth automation.
+    Unlike browser-level characteristics (which JavaScript can modify), network-level fingerprints are **burned into the OS kernel and TCP/IP stack**. A mismatch here like a Chrome browser sending Linux TCP options while claiming to be Windows is instantly fatal to stealth automation.
 
 ## The Architecture of Internet Privacy
 
@@ -53,10 +53,6 @@ graph TB
     Ciphers --> TCP
     SOCKS --> IP
     TCP --> Routing
-    
-    style TLS fill:#ff6b6b
-    style TCP fill:#ffd93d
-    style IP fill:#6bcf7f
 ```
 
 **Each layer is both a shield and a vulnerability:**
@@ -73,19 +69,19 @@ This module is structured as a **technical progression** from fundamentals to ad
 ### 1. Network Fundamentals
 **[Network Fundamentals](./network-fundamentals.md)**
 
-Build the foundation: understand the protocols that power the internet and how they reveal—or hide—your identity.
+Build the foundation: understand the protocols that power the internet and how they reveal, or hide, your identity.
 
 - **OSI Model layers** and their fingerprinting implications
 - **TCP vs UDP**: Why your proxy might leak UDP traffic
 - **WebRTC IP leakage**: The hidden threat in modern browsers
 - **Network stack characteristics**: TTL, window size, option ordering
 
-**Why start here**: Without this foundation, proxy configuration is **cargo cult programming**—copying commands without understanding why they work (or don't).
+**Why start here**: Without this foundation, proxy configuration is **cargo cult programming**, copying commands without understanding why they work (or don't).
 
 ### 2. HTTP/HTTPS Proxies
 **[HTTP/HTTPS Proxies](./http-proxies.md)**
 
-Master the most common proxy protocol—and understand its fundamental limitations.
+Master the most common proxy protocol and understand its fundamental limitations.
 
 - **HTTP proxy operation**: Request forwarding, caching, header injection
 - **CONNECT tunneling**: How HTTPS "tunnels" through HTTP proxies
@@ -93,7 +89,7 @@ Master the most common proxy protocol—and understand its fundamental limitatio
 - **HTTP/3 and QUIC**: UDP-based proxying challenges
 - **Authentication schemes**: Basic, Digest, NTLM, Bearer tokens
 
-**Critical insight**: HTTP proxies operate at Layer 7—they can **read, modify, and log** your unencrypted traffic. For true privacy, you need encryption **before** the proxy sees your data.
+**Critical insight**: HTTP proxies operate at Layer 7, they can **read, modify, and log** your unencrypted traffic. For true privacy, you need encryption **before** the proxy sees your data.
 
 ### 3. SOCKS Proxies
 **[SOCKS Proxies](./socks-proxies.md)**
@@ -106,12 +102,12 @@ Understand why SOCKS5 is the **gold standard** for privacy-conscious automation.
 - **DNS resolution**: Why proxy-side DNS prevents leaks
 - **Why SOCKS5 > HTTP proxies**: Protocol-level comparison
 
-**Key advantage**: SOCKS operates at Layer 5 (Session), **below** the application layer. It can't read your HTTP traffic, only see destination IPs—vastly reducing the trust surface area.
+**Key advantage**: SOCKS operates at Layer 5 (Session), **below** the application layer. It can't read your HTTP traffic, only see destination IPs, vastly reducing the trust surface area.
 
 ### 4. Proxy Detection
 **[Proxy Detection & Anonymity](./proxy-detection.md)**
 
-Learn how websites **detect proxy usage**—and how to evade detection.
+Learn how websites **detect proxy usage** and how to evade detection.
 
 - **Anonymity levels**: Transparent, anonymous, elite proxies
 - **IP reputation databases**: How your datacenter IP betrays you
@@ -124,7 +120,7 @@ Learn how websites **detect proxy usage**—and how to evade detection.
 ### 5. Building Proxy Servers
 **[Building Your Own Proxy](./build-proxy.md)**
 
-Implement HTTP and SOCKS5 proxies from scratch in Python—the ultimate learning experience.
+Implement HTTP and SOCKS5 proxies from scratch in Python, the ultimate learning experience.
 
 - **HTTP proxy server**: Complete async implementation with authentication
 - **SOCKS5 proxy server**: Binary protocol handling, TCP tunneling
@@ -145,13 +141,13 @@ Navigate the legal minefield of proxy usage and web automation.
 - **Case studies**: Legal precedents (hiQ vs LinkedIn, QVC vs Resultly)
 - **When to avoid proxies**: High-risk scenarios
 
-**Disclaimer**: This is **educational information**, not legal advice. The law varies wildly by jurisdiction and use case—consult qualified counsel.
+**Disclaimer**: This is **educational information**, not legal advice. The law varies wildly by jurisdiction and use case. Consult qualified counsel.
 
 ## The Proxy Paradox
 
 Here's the uncomfortable truth about proxies:
 
-!!! warning "Proxies Don't Make You Anonymous—They Make You **Different**"
+!!! warning "Proxies Don't Make You Anonymous. They Make You **Different**"
     A proxy changes your IP address, but it also:
     
     - Adds **latency** (detectible via timing analysis)
@@ -166,10 +162,10 @@ Here's the uncomfortable truth about proxies:
 
 This is **advanced material**. You should be comfortable with:
 
-✅ Basic networking concepts (IP addresses, ports, protocols)  
-✅ TCP/IP fundamentals (three-way handshake, packets, routing)  
-✅ Asynchronous Python programming (asyncio, async/await)  
-✅ Pydoll basics (see [Core Concepts](../../features/core-concepts.md))  
+Basic networking concepts (IP addresses, ports, protocols)  
+TCP/IP fundamentals (three-way handshake, packets, routing)  
+Asynchronous Python programming (asyncio, async/await)  
+Pydoll basics (see [Core Concepts](../../features/core-concepts.md))  
 
 **If you're new to networking**, we highly recommend:
 
@@ -190,32 +186,36 @@ Network architecture doesn't exist in isolation. It integrates deeply with:
 
 We recommend this progression:
 
-**Phase 1: Foundation (2-3 hours)**
+**Phase 1: Foundation**
+
 1. Read [Network Fundamentals](./network-fundamentals.md)
 2. Understand OSI model and protocol layering
 3. Learn about WebRTC leaks and UDP tunneling
 
-**Phase 2: Protocol Deep Dive (3-4 hours)**
+**Phase 2: Protocol Deep Dive**
+
 4. Study [HTTP/HTTPS Proxies](./http-proxies.md)
 5. Master [SOCKS Proxies](./socks-proxies.md)
 6. Compare protocols and understand tradeoffs
 
-**Phase 3: Adversarial Thinking (2-3 hours)**
+**Phase 3: Adversarial Thinking**
+
 7. Explore [Proxy Detection](./proxy-detection.md)
 8. Learn detection techniques from the defender's perspective
 9. Apply evasion strategies
 
-**Phase 4: Hands-On Implementation (4-6 hours)**
+**Phase 4: Hands-On Implementation**
+
 10. Build proxy servers from [Building Proxies](./build-proxy.md)
 11. Capture and analyze traffic with Wireshark
 12. Test proxy chains and rotation strategies
 
-**Phase 5: Operational Security (1-2 hours)**
+**Phase 5: Operational Security**
+
 13. Review [Legal & Ethical](./proxy-legal.md) guidelines
 14. Understand compliance requirements
 15. Develop responsible automation policies
 
-**Total investment**: ~12-18 hours of deep, technical learning. But the payoff is **permanent expertise** in network-level automation.
 
 ## The Philosophy
 
@@ -231,11 +231,11 @@ Master these fundamentals once, and you'll understand **every network-based syst
 
 Before proceeding, acknowledge:
 
-✅ I understand proxies can be used for both legitimate and malicious purposes  
-✅ I will respect website terms of service and robots.txt  
-✅ I will implement rate limiting and respectful crawling  
-✅ I will not use this knowledge for fraud, abuse, or illegal activities  
-✅ I will consult legal counsel when uncertain about compliance  
+I understand proxies can be used for both legitimate and malicious purposes  
+I will respect website terms of service and robots.txt  
+I will implement rate limiting and respectful crawling  
+I will not use this knowledge for fraud, abuse, or illegal activities  
+I will consult legal counsel when uncertain about compliance  
 
 **With great power comes great responsibility.** Use this knowledge wisely.
 
@@ -245,8 +245,6 @@ Before proceeding, acknowledge:
 
 Start your journey with **[Network Fundamentals](./network-fundamentals.md)** to build the foundation, then progress through the modules in order. Each document builds on the previous, creating a comprehensive understanding of network architecture for automation.
 
-**This is where script kiddies become engineers. Let's begin.**
-
 ---
 
 !!! info "Documentation Status"
@@ -255,15 +253,18 @@ Start your journey with **[Network Fundamentals](./network-fundamentals.md)** to
 ## Quick Navigation
 
 **Core Protocols:**
+
 - [Network Fundamentals](./network-fundamentals.md) - TCP/IP, UDP, WebRTC
 - [HTTP/HTTPS Proxies](./http-proxies.md) - Application-layer proxying
 - [SOCKS Proxies](./socks-proxies.md) - Session-layer proxying
 
 **Advanced Topics:**
+
 - [Proxy Detection](./proxy-detection.md) - Anonymity and evasion
 - [Building Proxies](./build-proxy.md) - Implementation from scratch
 - [Legal & Ethical](./proxy-legal.md) - Compliance and responsibility
 
 **Related Modules:**
+
 - [Fingerprinting](../fingerprinting/index.md) - Detection techniques
 - [Browser Configuration](../../features/configuration/browser-options.md) - Practical setup

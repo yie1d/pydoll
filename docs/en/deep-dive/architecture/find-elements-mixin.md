@@ -35,7 +35,7 @@ Pydoll faces a specific architectural challenge:
 - **`WebElement`** needs to find elements **relative to itself** (child elements)
 - Both need **identical selector logic** (CSS, XPath, attribute building)
 
-**Option 1: Shared Base Class** ❌
+**Option 1: Shared Base Class**
 
 ```python
 class ElementLocator:
@@ -53,7 +53,7 @@ class WebElement(ElementLocator):
 - Violates Single Responsibility: `Tab` shouldn't inherit from same class as `WebElement`
 - Hard to extend: Adding new capabilities requires modifying base class
 
-**Option 2: Mixin Pattern** ✅
+**Option 2: Mixin Pattern (Chosen Approach)**
 
 ```python
 class FindElementsMixin:

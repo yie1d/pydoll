@@ -10,23 +10,17 @@ The Browser domain represents the highest level of Pydoll's automation hierarchy
 The Browser domain sits at the intersection of process management, protocol communication, and resource coordination. It orchestrates multiple specialized components to provide a unified interface for browser automation:
 
 ```mermaid
-graph TB
-    subgraph "Browser Domain"
-        Browser[Browser Instance]
-        Browser --> ConnectionHandler[Connection Handler]
-        Browser --> ProcessManager[Process Manager]
-        Browser --> ProxyManager[Proxy Manager]
-        Browser --> TempDirManager[Temp Directory Manager]
-        Browser --> TabRegistry[Tab Registry]
-        Browser --> ContextAuth[Context Proxy Auth]
-    end
+graph LR
+    Browser[Browser Instance]
+    Browser --> ProcessManager[Process Manager]
+    Browser --> ProxyManager[Proxy Manager]
+    Browser --> TempDirManager[Temp Directory Manager]
+    Browser --> TabRegistry[Tab Registry]
+    Browser --> ConnectionHandler[Connection Handler]
     
-    ConnectionHandler <--> |WebSocket| CDP[Chrome DevTools Protocol]
     ProcessManager --> |Manages| BrowserProcess[Browser Process]
-    TabRegistry --> Tab1[Tab Instance 1]
-    TabRegistry --> Tab2[Tab Instance 2]
-    TabRegistry --> Tab3[Tab Instance N]
-    
+    ConnectionHandler <--> |WebSocket| CDP[Chrome DevTools Protocol]
+    TabRegistry --> |Manages| Tabs[Tab Instances]
     CDP <--> BrowserProcess
 ```
 
@@ -143,43 +137,96 @@ class Browser:
 - **Memory efficiency**: Prevents duplicate Tab instances for same target
 - **Event routing**: Ensures events route to correct Tab instance
 
-### Proxy and Context Authentication
+### Proxy Authentication Architecture
 
-Pydoll implements **automatic proxy authentication** via the Fetch domain to avoid exposing credentials in CDP commands:
+Pydoll implements **automatic proxy authentication** via the Fetch domain to avoid exposing credentials in CDP commands. The implementation uses **two distinct mechanisms** depending on proxy scope:
+
+#### Mechanism 1: Browser-Level Proxy Auth (Global Proxy)
+
+When a proxy is configured via `ChromiumOptions` (applies to all tabs in the default context):
 
 ```python
-class Browser:
-    def __init__(self, ...):
-        # Stores proxy credentials per context
-        self._context_proxy_auth: dict[str, tuple[str, str]] = {}
+# In Browser.start() -> _configure_proxy()
+async def _configure_proxy(self, private_proxy, proxy_credentials):
+    # Enable Fetch AT BROWSER LEVEL
+    await self.enable_fetch_events(handle_auth_requests=True)
     
-    async def create_browser_context(self, proxy_server, ...):
-        # Extract credentials from proxy URL
-        sanitized_proxy, (user, pwd) = self._sanitize_proxy_and_extract_auth(proxy_server)
-        
-        # Send sanitized proxy to CDP (no credentials exposed)
-        response = await self._execute_command(
-            TargetCommands.create_browser_context(proxy_server=sanitized_proxy)
-        )
-        context_id = response['result']['browserContextId']
-        
-        # Store credentials for later authentication
-        if user and pwd:
-            self._context_proxy_auth[context_id] = (user, pwd)
-        
-        return context_id
+    # Register callbacks AT BROWSER LEVEL (affects ALL tabs)
+    await self.on(FetchEvent.REQUEST_PAUSED, self._continue_request_callback, temporary=True)
+    await self.on(FetchEvent.AUTH_REQUIRED, 
+                  partial(self._continue_request_with_auth_callback,
+                          proxy_username=credentials[0],
+                          proxy_password=credentials[1]),
+                  temporary=True)
 ```
 
-When a Tab is created in a context with stored credentials, Pydoll automatically:
+**Scope:** Browser-wide WebSocket connection → affects **all tabs in default context**
 
-1. Enables Fetch domain on the Tab
-2. Registers `Fetch.requestPaused` handler (continues normal requests)
-3. Registers `Fetch.authRequired` handler (provides credentials, then disables Fetch)
+#### Mechanism 2: Tab-Level Proxy Auth (Per-Context Proxy)
+
+When a proxy is configured per-context via `create_browser_context(proxy_server=...)`:
+
+```python
+# Store credentials per context
+async def create_browser_context(self, proxy_server, ...):
+    sanitized_proxy, extracted_auth = self._sanitize_proxy_and_extract_auth(proxy_server)
+    
+    response = await self._execute_command(
+        TargetCommands.create_browser_context(proxy_server=sanitized_proxy)
+    )
+    context_id = response['result']['browserContextId']
+    
+    if extracted_auth:
+        self._context_proxy_auth[context_id] = extracted_auth  # Store per context
+    
+    return context_id
+
+# Setup auth for EACH tab in that context
+async def _setup_context_proxy_auth_for_tab(self, tab, browser_context_id):
+    creds = self._context_proxy_auth.get(browser_context_id)
+    if not creds:
+        return
+    
+    # Enable Fetch ON THE TAB (tab-level WebSocket)
+    await tab.enable_fetch_events(handle_auth=True)
+    
+    # Register callbacks ON THE TAB (affects only this tab)
+    await tab.on(FetchEvent.REQUEST_PAUSED, 
+                 partial(self._tab_continue_request_callback, tab=tab), 
+                 temporary=True)
+    await tab.on(FetchEvent.AUTH_REQUIRED,
+                 partial(self._tab_continue_request_with_auth_callback,
+                         tab=tab,
+                         proxy_username=creds[0],
+                         proxy_password=creds[1]),
+                 temporary=True)
+```
+
+**Scope:** Tab-level WebSocket connection → affects **only that specific tab**
+
+#### Why Two Mechanisms?
+
+| Aspect | Browser-Level | Tab-Level |
+|--------|---------------|-----------|
+| **Trigger** | Proxy in `ChromiumOptions` | Proxy in `create_browser_context()` |
+| **WebSocket** | Browser-level connection | Tab-level connection |
+| **Scope** | All tabs in default context | Only tabs in that context |
+| **Efficiency** | One listener for all tabs | One listener per tab |
+| **Isolation** | No context separation | Each context has different credentials |
+
+**Design rationale for tab-level auth:**
+
+- **Context isolation**: Each context can have a **different proxy** with **different credentials**
+- **CDP limitation**: Fetch domain cannot be scoped to a specific context at browser level
+- **Tradeoff**: Slightly less efficient (one listener per tab), but necessary for per-context proxy support
 
 This architecture ensures **credentials never appear in CDP logs** and authentication is handled transparently.
 
 !!! warning "Fetch Domain Side Effects"
-    Enabling Fetch for proxy auth temporarily pauses **all requests** in that Tab until the auth callback fires. This is a CDP limitation - Fetch enables global request interception. After authentication completes, Fetch is disabled to minimize overhead.
+    - **Browser-level Fetch**: Temporarily pauses **all requests across all tabs** in the default context until auth completes
+    - **Tab-level Fetch**: Temporarily pauses **all requests in that specific tab** until auth completes
+    
+    This is a CDP limitation - Fetch enables request interception. After authentication completes, Fetch is disabled to minimize overhead.
 
 ## Initialization and Lifecycle
 
@@ -579,15 +626,26 @@ tab = await browser.new_tab()
 
 **Alternative explored:** Auto-close initial tab in `new_tab()`. Rejected because it's surprising behavior (implicit side effects).
 
-### Context-Specific Proxy Auth: Fetch Domain Overhead
+### Proxy Authentication: Two-Level Architecture Tradeoff
 
-Pydoll's proxy authentication uses Fetch domain to hide credentials:
+Pydoll's proxy authentication uses two different Fetch domain strategies:
 
+**Browser-Level (Global Proxy):**
 - **Security benefit**: Credentials never logged in CDP traces
-- **Performance cost**: Fetch pauses **all requests** until auth completes
+- **Performance cost**: Fetch pauses **all requests across all tabs** until auth completes
+- **Efficiency**: Single listener for all tabs in default context
 - **Mitigation**: Fetch is disabled after first auth, minimizing overhead
 
+**Tab-Level (Per-Context Proxy):**
+- **Security benefit**: Credentials never logged in CDP traces
+- **Performance cost**: Fetch pauses **all requests in that tab** until auth completes
+- **Efficiency**: Separate listener per tab (less efficient, but necessary for isolation)
+- **Isolation benefit**: Each context can have different proxy credentials
+- **Mitigation**: Fetch is disabled after first auth per tab
+
 **Why not use Browser.setProxyAuth?** This CDP command doesn't exist. Fetch is the only mechanism for programmatic auth.
+
+**Why tab-level for contexts?** CDP's Fetch domain cannot be scoped to a specific BrowserContext. Since each context can have a different proxy with different credentials, Pydoll must handle auth at the tab level to respect context boundaries.
 
 ### Port Randomization Strategy
 

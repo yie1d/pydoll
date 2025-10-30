@@ -181,16 +181,6 @@ async with Chrome() as browser:
 # 退出上下文时浏览器自动停止
 ```
 
-**异步迭代器**
-```python
-# 流式处理发生的网络事件
-await tab.enable_network_events()
-
-async for event in tab.network_event_stream():
-    if 'api' in event['params']['request']['url']:
-        print(f"检测到 API 调用: {event['params']['request']['url']}")
-```
-
 **操作的异步上下文管理器**
 ```python
 # 等待和处理下载
@@ -329,42 +319,21 @@ await username_field.type_text(
 
 ### 真实的点击
 
-点击不仅仅是"触发即忘"。Pydoll 模拟鼠标移动和时间：
+点击不仅仅是"触发即忘"。Pydoll 自动分发真实用户会触发的所有鼠标事件：
 
 ```python
 button = await tab.find(id='submit-button')
 
-# 使用默认行为点击（轻微延迟，自然移动）
+# 默认行为：点击元素中心
+# 自动触发：mouseover, mouseenter, mousemove, mousedown, mouseup, click
 await button.click()
 
-# 带偏移点击（对较大按钮有用）
+# 带偏移点击（用于避免在较大元素上被检测）
 await button.click(offset_x=10, offset_y=5)
-
-# 立即点击（不太像人类）
-await button.click(delay=0)
 ```
 
-### 键盘控制
-
-通过 Keys 枚举支持复杂的键盘交互：
-
-```python
-from pydoll.constants import Keys
-
-# 使用键盘快捷键
-search_field = await tab.find(id='search')
-await search_field.type_text('pydoll automation')
-await search_field.press_keyboard_key(Keys.ENTER)
-
-# 组合键
-await tab.key_down(Keys.CONTROL)
-await tab.type_text('a')  # 全选
-await tab.key_up(Keys.CONTROL)
-
-# 特殊键
-await tab.press_keyboard_key(Keys.TAB)
-await tab.press_keyboard_key(Keys.ESCAPE)
-```
+!!! info "鼠标事件"
+    Pydoll 按正确顺序分发完整的鼠标事件序列，模拟真实浏览器如何处理用户点击。这使得点击比简单的 JavaScript `.click()` 调用更真实。
 
 !!! warning "检测注意事项"
     虽然类人行为有助于避免基本的机器人检测，但复杂的反自动化系统使用许多信号。将这些功能与以下内容结合使用：

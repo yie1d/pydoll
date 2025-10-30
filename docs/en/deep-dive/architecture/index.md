@@ -1,8 +1,8 @@
 # Internal Architecture
 
-**Understand the design—then break the rules intentionally.**
+**Understand the design, then break the rules intentionally.**
 
-Most documentation shows you **what** a framework does. This section reveals **how** and **why** Pydoll is architected the way it is—the design patterns, architectural decisions, and tradeoffs that shape every line of code.
+Most documentation shows you **what** a framework does. This section reveals **how** and **why** Pydoll is architected the way it is: the design patterns, architectural decisions, and tradeoffs that shape every line of code.
 
 ## Why Architecture Matters
 
@@ -19,7 +19,7 @@ You can use Pydoll effectively without understanding its internal architecture. 
 !!! quote "Architecture as Language"
     **"Architecture is frozen music."** - Johann Wolfgang von Goethe
     
-    Good architecture isn't just about making code work—it's about making code **understandable**, **maintainable**, and **extensible**. Understanding Pydoll's architecture teaches you patterns you'll apply to every project.
+    Good architecture isn't just about making code work, it's about making code **understandable**, **maintainable**, and **extensible**. Understanding Pydoll's architecture teaches you patterns you'll apply to every project.
 
 ## The Six Architectural Domains
 
@@ -28,7 +28,7 @@ Pydoll's architecture is organized into **six cohesive domains**, each with clea
 ### 1. Browser Domain
 **[→ Explore Browser Architecture](./browser-domain.md)**
 
-**The orchestrator—managing processes, contexts, and global state.**
+**The orchestrator: managing processes, contexts, and global state.**
 
 The Browser domain sits at the top of the hierarchy, coordinating:
 
@@ -45,14 +45,14 @@ The Browser domain sits at the top of the hierarchy, coordinating:
 - **Singleton registry** for Tab instances (prevents duplicates)
 - **Context manager protocol** for automatic cleanup
 
-**Critical insight**: The Browser doesn't directly manipulate pages—it **coordinates** lower-level components. This separation of concerns enables multi-browser support and concurrent tab operations.
+**Critical insight**: The Browser doesn't directly manipulate pages, it **coordinates** lower-level components. This separation of concerns enables multi-browser support and concurrent tab operations.
 
 ---
 
 ### 2. Tab Domain
 **[→ Explore Tab Architecture](./tab-domain.md)**
 
-**The workhorse—executing commands, managing state, coordinating automation.**
+**The workhorse: executing commands, managing state, coordinating automation.**
 
 The Tab domain is Pydoll's primary interface, handling:
 
@@ -71,14 +71,14 @@ The Tab domain is Pydoll's primary interface, handling:
 - **State flags**: Track enabled domains (network_events_enabled, etc.)
 - **Lazy initialization**: Request object created on first access
 
-**Critical insight**: Each Tab owns its **own ConnectionHandler**—enabling true parallel operations across tabs without contention or state leakage.
+**Critical insight**: Each Tab owns its **own ConnectionHandler**, enabling true parallel operations across tabs without contention or state leakage.
 
 ---
 
 ### 3. WebElement Domain
 **[→ Explore WebElement Architecture](./webelement-domain.md)**
 
-**The interactor—bridging Python code and DOM elements.**
+**The interactor: bridging Python code and DOM elements.**
 
 The WebElement domain represents **individual DOM elements**, providing:
 
@@ -96,14 +96,14 @@ The WebElement domain represents **individual DOM elements**, providing:
 - **Command pattern**: Interaction methods wrap CDP commands
 - **Fallback strategies**: Multiple approaches for robustness
 
-**Critical insight**: WebElement maintains **both cached attributes** (from creation) and **dynamic state** (fetched on demand)—balancing performance with freshness.
+**Critical insight**: WebElement maintains **both cached attributes** (from creation) and **dynamic state** (fetched on demand), balancing performance with freshness.
 
 ---
 
 ### 4. FindElements Mixin
 **[→ Explore FindElements Architecture](./find-elements-mixin.md)**
 
-**The locator—translating selectors into DOM queries.**
+**The locator: translating selectors into DOM queries.**
 
 The FindElementsMixin provides element-finding capabilities to both Tab and WebElement through **composition**, not inheritance:
 
@@ -120,14 +120,14 @@ The FindElementsMixin provides element-finding capabilities to both Tab and WebE
 - **Factory function**: Late import to avoid circular dependencies
 - **Overload pattern**: Type-safe return types (WebElement vs list)
 
-**Critical insight**: The mixin uses **duck typing** (`hasattr(self, '_object_id')`) to detect Tab vs WebElement—enabling code reuse without tight coupling.
+**Critical insight**: The mixin uses **duck typing** (`hasattr(self, '_object_id')`) to detect Tab vs WebElement, enabling code reuse without tight coupling.
 
 ---
 
 ### 5. Event Architecture
 **[→ Explore Event Architecture](./event-architecture.md)**
 
-**The dispatcher—routing browser events to Python callbacks.**
+**The dispatcher: routing browser events to Python callbacks.**
 
 The Event Architecture enables reactive automation through:
 
@@ -145,14 +145,14 @@ The Event Architecture enables reactive automation through:
 - **Cleanup protocol**: Automatic callback removal on tab close
 - **Scope isolation**: Independent event contexts per tab
 
-**Critical insight**: Events are **push-based** (browser notifies Python), not poll-based—enabling low-latency reactive automation without busy-waiting.
+**Critical insight**: Events are **push-based** (browser notifies Python), not poll-based, enabling low-latency reactive automation without busy-waiting.
 
 ---
 
 ### 6. Browser Requests Architecture
 **[→ Explore Requests Architecture](./browser-requests-architecture.md)**
 
-**The hybrid—HTTP requests with browser session state.**
+**The hybrid: HTTP requests with browser session state.**
 
 The Browser Requests system bridges HTTP and browser automation:
 
@@ -168,7 +168,7 @@ The Browser Requests system bridges HTTP and browser automation:
 - **Lazy property initialization**: Request object created on first use
 - **Adapter pattern**: Requests-compatible interface to browser fetch
 
-**Critical insight**: Browser requests combine **two information sources** (JavaScript and CDP events)—JavaScript provides the response body, CDP provides headers and cookies that JavaScript security policies hide.
+**Critical insight**: Browser requests combine **two information sources** (JavaScript and CDP events). JavaScript provides the response body, CDP provides headers and cookies that JavaScript security policies hide.
 
 ---
 
@@ -205,7 +205,7 @@ All I/O operations are `async def` and must be `await`ed:
 - Event callback dispatch
 - Network requests
 
-**Benefit**: Enables true concurrency—multiple tabs, parallel operations, non-blocking I/O.
+**Benefit**: Enables true concurrency with multiple tabs, parallel operations, and non-blocking I/O.
 
 ### 4. Type Safety
 Every public API has type annotations:
@@ -257,13 +257,6 @@ graph TB
     RequestSystem --> EventSystem
     
     WebSocket --> Chrome[Chrome Browser]
-    
-    style Browser fill:#e74c3c
-    style Tab fill:#3498db
-    style Element fill:#2ecc71
-    style FindMixin fill:#f39c12
-    style EventSystem fill:#9b59b6
-    style RequestSystem fill:#1abc9c
 ```
 
 **Key interactions**:
@@ -278,10 +271,10 @@ graph TB
 
 To fully benefit from this section:
 
-✅ **[Core Fundamentals](../fundamentals/cdp.md)** - Understand CDP, async, and types  
-✅ **Python design patterns** - Familiarity with common patterns  
-✅ **OOP concepts** - Classes, inheritance, composition, interfaces  
-✅ **Async Python** - Comfortable with `async def` and `await`  
+- **[Core Fundamentals](../fundamentals/cdp.md)** - Understand CDP, async, and types
+- **Python design patterns** - Familiarity with common patterns
+- **OOP concepts** - Classes, inheritance, composition, interfaces
+- **Async Python** - Comfortable with `async def` and `await`  
 
 **If you haven't read Fundamentals**, start there first. Architecture builds on those concepts.
 
@@ -296,7 +289,7 @@ After mastering internal architecture, you'll be ready for:
 
 ## Philosophy of Design
 
-Good architecture is **invisible**—it shouldn't get in your way. Pydoll's architecture prioritizes:
+Good architecture is **invisible**, it shouldn't get in your way. Pydoll's architecture prioritizes:
 
 1. **Simplicity**: Each component does one thing well
 2. **Consistency**: Similar operations have similar patterns
@@ -304,7 +297,7 @@ Good architecture is **invisible**—it shouldn't get in your way. Pydoll's arch
 4. **Type safety**: Catch errors at design time, not runtime
 5. **Performance**: Async by default, parallelism without locks
 
-These aren't arbitrary choices—they're **battle-tested principles** from decades of software engineering.
+These aren't arbitrary choices, they're **battle-tested principles** from decades of software engineering.
 
 ---
 
@@ -317,7 +310,7 @@ Start with **[Browser Domain](./browser-domain.md)** to understand how process m
 ---
 
 !!! success "After Completing Architecture"
-    Once you understand these patterns, you'll see them everywhere in software engineering—not just Pydoll. These are **universal patterns** applied to browser automation:
+    Once you understand these patterns, you'll see them everywhere in software engineering, not just Pydoll. These are **universal patterns** applied to browser automation:
     
     - Façade (Tab simplifies CDP complexity)
     - Observer (Event system for reactive code)

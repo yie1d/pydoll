@@ -10,7 +10,7 @@ This document explores fingerprinting at the application layer (HTTP/2, JavaScri
     For practical browser configuration, see **[Browser Options](../../features/configuration/browser-options.md)** and **[Browser Preferences](../../features/configuration/browser-preferences.md)**.
 
 !!! warning "Consistency is Key"
-    Browser fingerprinting is **the primary detection layer** for most anti-bot systems. A single inconsistency—like a Chrome User-Agent with Firefox canvas artifacts—triggers immediate blocking.
+    Browser fingerprinting is **the primary detection layer** for most anti-bot systems. A single inconsistency (like a Chrome User-Agent with Firefox canvas artifacts) triggers immediate blocking.
 
 ## Browser-Level Fingerprinting
 
@@ -306,7 +306,7 @@ def generate_consistent_accept_language(primary_lang: str, timezone_str: str) ->
     expected_lang = tz_to_lang.get(timezone_str, 'en-US,en;q=0.9')
     
     if primary_lang not in expected_lang:
-        print(f"⚠️ Warning: Language {primary_lang} inconsistent with timezone {timezone_str}")
+        print(f"Warning: Language {primary_lang} inconsistent with timezone {timezone_str}")
     
     return {
         'accept_language_header': expected_lang,
@@ -406,11 +406,11 @@ navigator = {
 
 issues = validate_client_hints(headers, navigator)
 if issues:
-    print("⚠️ Inconsistencies detected:")
+    print("Inconsistencies detected:")
     for issue in issues:
         print(f"  - {issue}")
 else:
-    print("✅ Client Hints are consistent")
+    print("Client Hints are consistent")
 ```
 
 ### Header Order Fingerprinting
@@ -919,6 +919,7 @@ function hashString(str) {
 ### Canvas Fingerprint Uniqueness
 
 Research by [USENIX](https://www.usenix.org/conference/usenixsecurity12/technical-sessions/presentation/mowery) shows:
+
 - **5.5% chance** of two random users having the same canvas fingerprint
 - When combined with other techniques, uniqueness increases to **99.24%**
 
@@ -1023,7 +1024,7 @@ async def compare_canvas_consistency(tab, iterations: int = 3) -> bool:
     is_consistent = len(set(fingerprints)) == 1
     
     if not is_consistent:
-        print("⚠️ Canvas fingerprint is inconsistent (possible fake)")
+        print("Canvas fingerprint is inconsistent (possible fake)")
         print(f"  Unique values: {len(set(fingerprints))}")
     
     return is_consistent
@@ -1039,7 +1040,7 @@ async def main():
         print(f"Canvas Fingerprint: {canvas_fp}")
         
         is_consistent = await compare_canvas_consistency(tab)
-        print(f"Consistency check: {'✅ PASS' if is_consistent else '❌ FAIL'}")
+        print(f"Consistency check: {'PASS' if is_consistent else 'FAIL'}")
 
 asyncio.run(main())
 ```
@@ -1048,6 +1049,7 @@ asyncio.run(main())
     Many anti-fingerprinting tools inject **random noise** into canvas data to prevent tracking. However, this creates an **inconsistent fingerprint** that changes on every request, which is itself detectable!
     
     **Detection technique:**
+
     1. Request canvas fingerprint multiple times
     2. If values differ → noise injection detected
     3. Flag as "fingerprint blocking = suspicious behavior"

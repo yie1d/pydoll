@@ -94,7 +94,7 @@ async def example():
     
     # IDE knows this is CaptureScreenshotResponse
     # and suggests 'result' -> 'data'
-    screenshot_data = response['result']['data']  # ✅ Full autocomplete!
+    screenshot_data = response['result']['data']  # Full autocomplete!
 ```
 
 ### Optional vs Required Fields
@@ -221,11 +221,11 @@ In your code:
 ```python
 # find_all=False (default) - IDE knows return type is WebElement
 button = await tab.find(id='submit-btn')
-await button.click()  # ✅ Single element methods available!
+await button.click()  # Single element methods available!
 
 # find_all=True - IDE knows return type is list[WebElement]
 buttons = await tab.find(class_name='btn', find_all=True)
-for btn in buttons:  # ✅ IDE knows this is a list!
+for btn in buttons:  # IDE knows this is a list!
     await btn.click()
 
 # Same with query()
@@ -273,10 +273,10 @@ class Box(Generic[T]):
 
 # Now IDE knows exactly what's inside each box
 string_box: Box[str] = Box("hello")
-item1 = string_box.get()  # Type: str ✅
+item1 = string_box.get()  # Type: str
 
 number_box: Box[int] = Box(42)
-item2 = number_box.get()  # Type: int ✅
+item2 = number_box.get()  # Type: int
 
 # List is a built-in generic
 numbers: list[int] = [1, 2, 3]  # List that contains ints
@@ -304,10 +304,10 @@ class Response(Generic[T]):
 
 # Each response preserves its data type
 user_response: Response[dict] = Response({"name": "Alice"}, 200)
-user_data = user_response.get_data()  # Type: dict ✅
+user_data = user_response.get_data()  # Type: dict
 
 count_response: Response[int] = Response(42, 200)
-count = count_response.get_data()  # Type: int ✅
+count = count_response.get_data()  # Type: int
 ```
 
 ### How Pydoll Uses Generics
@@ -343,8 +343,8 @@ command = PageCommands.navigate('https://example.com')
 response = await connection_handler.execute_command(command)
 
 # IDE knows response['result'] is NavigateResult (not just "any dict")
-frame_id = response['result']['frameId']  # ✅ Autocomplete works!
-loader_id = response['result']['loaderId']  # ✅ All fields are known!
+frame_id = response['result']['frameId']  # Autocomplete works!
+loader_id = response['result']['loaderId']  # All fields are known!
 ```
 
 !!! info "Why Generics Matter in Pydoll"
@@ -414,14 +414,14 @@ element = await tab.find(id='submit-btn')  # IDE suggests: id, class_name, tag_n
 Type checkers like mypy or Pylance catch errors before runtime:
 
 ```python
-# ❌ Type checker catches this
+# Type checker catches this
 await tab.take_screenshot('file.png', quality='high')  # Error: quality must be int
 
-# ❌ Type checker catches this
+# Type checker catches this
 event = await tab.find(id='button')
 await tab.on(event, callback)  # Error: event is WebElement, not str
 
-# ✅ Correct
+# Correct
 await tab.take_screenshot('file.png', quality=90)
 await tab.on(PageEvent.LOAD_EVENT_FIRED, callback)
 ```
@@ -459,9 +459,9 @@ class GetVersionResult(TypedDict):
 version_info = await browser.get_version()
 
 # IDE suggests all available keys
-print(version_info['product'])         # ✅ Autocomplete!
-print(version_info['userAgent'])       # ✅ Autocomplete!
-print(version_info['protocolVersion']) # ✅ Autocomplete!
+print(version_info['product'])         # Autocomplete!
+print(version_info['userAgent'])       # Autocomplete!
+print(version_info['protocolVersion']) # Autocomplete!
 ```
 
 ## Type Checking Your Code
@@ -492,7 +492,7 @@ async def main():
         await tab.go_to('https://example.com', timeout=30)
         
         # Pylance warns about wrong types
-        await tab.take_screenshot(quality='high')  # ⚠️ Warning!
+        await tab.take_screenshot(quality='high')  # Warning!
 ```
 
 ### Using mypy
@@ -573,7 +573,7 @@ class Tab:
         response: CaptureScreenshotResponse = await self._execute_command(
             PageCommands.capture_screenshot(...)
         )
-        screenshot_data = response['result']['data']  # ✅ Fully typed!
+        screenshot_data = response['result']['data']  # Fully typed!
         return screenshot_data
 ```
 
@@ -583,18 +583,18 @@ Every step maintains type information, giving you autocomplete and type checking
 
 ### 1. Let Pydoll's Types Guide You
 
-Don't fight the types—they're there to help:
+Don't fight the types, they're there to help:
 
 ```python
-# ✅ Good: Use kwargs (IDE autocompletes parameter names)
+# Good: Use kwargs (IDE autocompletes parameter names)
 element = await tab.find(id='submit-btn')
 button = await tab.find(class_name='btn-primary')
 
-# ✅ Good: Use enums where applicable
+# Good: Use enums where applicable
 from pydoll.constants import Key
 await element.press_keyboard_key(Key.ENTER)
 
-# ❌ Avoid: Magic strings
+# Avoid: Magic strings
 await element.press_keyboard_key('Enter')  # No autocomplete, error-prone
 ```
 
@@ -613,20 +613,20 @@ data = response['result']['data']
 
 ### 3. Don't Over-Annotate
 
-Python's type inference is smart—don't annotate everything:
+Python's type inference is smart, don't annotate everything:
 
 ```python
-# ❌ Too much
+# Too much
 name: str = "Alice"
 count: int = 5
 is_active: bool = True
 
-# ✅ Let Python infer simple literals
+# Let Python infer simple literals
 name = "Alice"
 count = 5
 is_active = True
 
-# ✅ Annotate when type isn't obvious
+# Annotate when type isn't obvious
 from typing import Optional
 
 result: Optional[WebElement] = await tab.find(id='missing', raise_exc=False)

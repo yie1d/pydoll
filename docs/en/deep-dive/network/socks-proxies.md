@@ -1,8 +1,8 @@
 # SOCKS Protocol Architecture
 
-This document provides a comprehensive exploration of SOCKS (SOCKet Secure)—widely considered the **gold standard** for privacy-conscious network automation and secure proxying. While HTTP proxies dominate corporate environments, SOCKS proxies are favored by security professionals, privacy advocates, and advanced automation engineers for their **protocol-agnostic nature**, **reduced trust requirements**, and **superior security model**.
+This document provides a comprehensive exploration of SOCKS (SOCKet Secure), widely considered the **gold standard** for privacy-conscious network automation and secure proxying. While HTTP proxies dominate corporate environments, SOCKS proxies are favored by security professionals, privacy advocates, and advanced automation engineers for their **protocol-agnostic nature**, **reduced trust requirements**, and **superior security model**.
 
-Operating at **Layer 5 (Session Layer)** of the OSI model—below HTTP but above transport—SOCKS proxies offer capabilities that HTTP proxies fundamentally cannot: UDP tunneling, protocol flexibility, end-to-end encryption preservation, and true DNS privacy. Understanding SOCKS architecture is essential for building **undetectable, high-performance** browser automation systems.
+Operating at **Layer 5 (Session Layer)** of the OSI model (below HTTP but above transport), SOCKS proxies offer capabilities that HTTP proxies fundamentally cannot: UDP tunneling, protocol flexibility, end-to-end encryption preservation, and true DNS privacy. Understanding SOCKS architecture is essential for building **undetectable, high-performance** browser automation systems.
 
 !!! info "Module Navigation"
     - **[← HTTP/HTTPS Proxies](./http-proxies.md)** - Application-layer proxying limitations
@@ -16,13 +16,13 @@ Operating at **Layer 5 (Session Layer)** of the OSI model—below HTTP but above
 !!! tip "Why SOCKS5 is Superior for Automation"
     SOCKS5 operates **below the application layer** (Layer 5 vs HTTP's Layer 7). This positioning means:
     
-    **Cannot read HTTP traffic** - Only sees destination IPs and ports, not URLs/headers
-    **Protocol-agnostic** - Proxies HTTP, FTP, SSH, WebSocket, custom protocols
-    **Preserves end-to-end TLS** - No MITM possibility (unlike HTTP proxies)
-    **Remote DNS resolution** - Prevents DNS leaks to your ISP
-    **UDP support** - Critical for WebRTC, DNS, VoIP, gaming protocols
-    
-    This dramatically reduces the **trust surface area** compared to HTTP proxies—you only trust the proxy to forward packets correctly, not to handle sensitive application data.
+    - **Cannot read HTTP traffic**: Only sees destination IPs and ports, not URLs/headers
+    - **Protocol-agnostic**: Proxies HTTP, FTP, SSH, WebSocket, custom protocols
+    - **Preserves end-to-end TLS**: No MITM possibility (unlike HTTP proxies)
+    - **Remote DNS resolution**: Prevents DNS leaks to your ISP
+    - **UDP support**: Critical for WebRTC, DNS, VoIP, gaming protocols
+
+    This dramatically reduces the **trust surface area** compared to HTTP proxies. You only trust the proxy to forward packets correctly, not to handle sensitive application data.
 
 ## Introduction: The Session-Layer Proxy
 
@@ -42,12 +42,13 @@ SOCKS was developed in the early 1990s by **David Koblas and Michelle Koblas at 
 
 **Why "SOCKet Secure"?**
 
-Despite the name, SOCKS itself provides **no encryption**—"Secure" refers to its ability to traverse firewalls securely (from an access control perspective), not cryptographic security. For encryption, you must layer TLS/SSL on top of SOCKS, or use it within an encrypted tunnel (SSH, VPN).
+Despite the name, SOCKS itself provides **no encryption**. "Secure" refers to its ability to traverse firewalls securely (from an access control perspective), not cryptographic security. For encryption, you must layer TLS/SSL on top of SOCKS, or use it within an encrypted tunnel (SSH, VPN).
 
 !!! warning "SOCKS Does NOT Encrypt"
-    A common misconception: **SOCKS ≠ Encryption**. SOCKS is a **proxying protocol**, not an encryption protocol. It forwards packets transparently without modification—including unencrypted HTTP traffic.
+    A common misconception: **SOCKS ≠ Encryption**. SOCKS is a **proxying protocol**, not an encryption protocol. It forwards packets transparently without modification, including unencrypted HTTP traffic.
     
     For secure communication, combine SOCKS with:
+
     - **TLS/HTTPS** for web traffic
     - **SSH** for tunnel encryption
     - **VPN** for full traffic encryption
@@ -60,7 +61,7 @@ The key to understanding SOCKS is understanding **where it operates** in the net
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Layer 7: Application (HTTP, FTP, SMTP)    │ ← HTTP Proxies operate here
+│  Layer 7: Application (HTTP, FTP, SMTP)     │ ← HTTP Proxies operate here
 │  • Full protocol visibility                 │   (can read URLs, headers)
 │  • Can modify requests/responses            │
 │  • Protocol-specific (HTTP only)            │
@@ -79,7 +80,7 @@ The key to understanding SOCKS is understanding **where it operates** in the net
 │  Layer 3: Network (IP)                      │
 │  • Routing, IP addresses                    │
 ├─────────────────────────────────────────────┤
-│  Layer 2: Data Link (Ethernet, WiFi)       │
+│  Layer 2: Data Link (Ethernet, WiFi)        │
 ├─────────────────────────────────────────────┤
 │  Layer 1: Physical (cables, signals)        │
 └─────────────────────────────────────────────┘
@@ -323,25 +324,22 @@ Now that we've built the foundation, let's analyze why SOCKS5 is generally consi
 
 ### Protocol-Level Comparison
 
+**HTTP Proxy (Layer 7):**
+
 ```mermaid
-graph TD
-    subgraph HTTP_Proxy[HTTP Proxy - Layer 7]
-        A1[Client Application]
-        A2[HTTP Library]
-        A3[Proxy intercepts HTTP requests]
-        A4[Proxy can read Headers, Cookies, Methods, URLs]
-        
-        A1 --> A2 --> A3 --> A4
-    end
-    
-    subgraph SOCKS5_Proxy[SOCKS5 Proxy - Layer 5]
-        B1[Client Application]
-        B2[Any Protocol - HTTP/FTP/SMTP]
-        B3[TCP/UDP Transport]
-        B4[SOCKS5 sees only: Destination IP, Port, Packet size]
-        
-        B1 --> B2 --> B3 --> B4
-    end
+graph LR
+    A1[Client Application] --> A2[HTTP Library]
+    A2 --> A3[Proxy intercepts HTTP requests]
+    A3 --> A4[Proxy can read Headers, Cookies, Methods, URLs]
+```
+
+**SOCKS5 Proxy (Layer 5):**
+
+```mermaid
+graph LR
+    B1[Client Application] --> B2[Any Protocol]
+    B2 --> B3[TCP/UDP Transport]
+    B3 --> B4[SOCKS5 sees only: Destination IP, Port, Packet size]
 ```
 
 ### Security Advantages of SOCKS5
@@ -370,7 +368,7 @@ sequenceDiagram
     Note over Client: Client resolves DNS<br/>(uses system DNS)
     Client->>DNS: DNS Query: example.com?
     DNS->>Client: DNS Response: 93.184.216.34
-    Note over Client: ⚠️ DNS leak: ISP sees query
+    Note over Client: DNS leak: ISP sees query
     
     Client->>Proxy: Connect to 93.184.216.34
     Proxy->>Server: Forward to 93.184.216.34
@@ -391,7 +389,7 @@ sequenceDiagram
     Note over SOCKS5: Proxy resolves DNS<br/>(using its own DNS)
     SOCKS5->>DNS: DNS Query: example.com?
     DNS->>SOCKS5: DNS Response: 93.184.216.34
-    Note over SOCKS5: ✅ No DNS leak to client ISP
+    Note over SOCKS5: No DNS leak to client ISP
     
     SOCKS5->>Server: Connect to 93.184.216.34
 ```
@@ -418,7 +416,7 @@ sequenceDiagram
     Server->>Malicious_Proxy: Response
     Malicious_Proxy->>Client: Modified response
     
-    Note over Client: ⚠️ May show certificate warning
+    Note over Client: May show certificate warning
 ```
 
 **SOCKS5 cannot perform MITM:**
@@ -435,7 +433,7 @@ sequenceDiagram
     
     Note over Client,Server: End-to-end TLS tunnel
     Client->>Server: TLS Handshake + Encrypted Data
-    Note over SOCKS5: ✅ Cannot decrypt<br/>Cannot modify<br/>Only forwards packets
+    Note over SOCKS5: Cannot decrypt<br/>Cannot modify<br/>Only forwards packets
     Server->>Client: Encrypted Response
 ```
 
@@ -506,6 +504,7 @@ SOCKS5 represents the **gold standard** for privacy-conscious proxying, offering
 ### When to Use SOCKS5
 
 **Ideal Use Cases:**
+
 - **Browser automation** requiring stealth and protocol flexibility
 - **Privacy-critical applications** (journalist tools, VPNs, Tor)
 - **Multi-protocol applications** (FTP, SSH, WebSocket, custom protocols)
@@ -514,6 +513,7 @@ SOCKS5 represents the **gold standard** for privacy-conscious proxying, offering
 - **Bypassing deep packet inspection** (DPI) in restrictive networks
 
 **Poor Use Cases:**
+
 - **Corporate content filtering** (use HTTP proxy with URL-based policies)
 - **HTTP caching for bandwidth optimization** (use HTTP proxy or CDN)
 - **Simple HTTP-only scraping where stealth isn't critical**
@@ -537,7 +537,7 @@ async with Chrome(options=options) as browser:
 ```
 
 **SOCKS5 with Authentication (via Pydoll):**
-Pydoll automatically handles SOCKS5 username/password authentication through Chrome's Fetch domain—no manual implementation needed.
+Pydoll automatically handles SOCKS5 username/password authentication through Chrome's Fetch domain. No manual implementation needed.
 
 **Testing SOCKS5 Proxy:**
 ```python
@@ -568,16 +568,19 @@ socket.socket = socks.socksocket
 ### Related Documentation
 
 **Within This Module:**
+
 - **[HTTP/HTTPS Proxies](./http-proxies.md)** - Application-layer proxying comparison
 - **[Network Fundamentals](./network-fundamentals.md)** - TCP/IP, UDP, OSI model foundations
 - **[Proxy Detection](./proxy-detection.md)** - How SOCKS5 proxies can still be detected
 - **[Building Proxies](./build-proxy.md)** - Full SOCKS5 server implementation from scratch
 
 **Practical Usage:**
+
 - **[Proxy Configuration (Features)](../../features/configuration/proxy.md)** - Configuring SOCKS5 in Pydoll
 - **[Browser Options](../../features/configuration/browser-options.md)** - Chrome flags for proxy optimization
 
 **Deep Dives:**
+
 - **[Network Fingerprinting](../fingerprinting/network-fingerprinting.md)** - TCP/IP characteristics that leak through SOCKS5
 - **[Browser Fingerprinting](../fingerprinting/browser-fingerprinting.md)** - Application-level detection despite SOCKS5
 - **[Evasion Techniques](../fingerprinting/evasion-techniques.md)** - How to maximize SOCKS5 stealth
@@ -685,6 +688,7 @@ While HTTP proxies dominate corporate environments due to content filtering capa
 **Key Takeaway**: Use SOCKS5 for privacy and automation, HTTP proxies for corporate filtering.
 
 **Next Steps:**
+
 1. Read **[Proxy Detection](./proxy-detection.md)** to understand how even SOCKS5 can be detected
 2. Learn **[Building Proxies](./build-proxy.md)** to implement your own SOCKS5 server
 3. Configure SOCKS5 in Pydoll using **[Proxy Configuration](../../features/configuration/proxy.md)**

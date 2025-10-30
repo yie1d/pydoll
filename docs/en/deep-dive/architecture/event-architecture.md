@@ -151,16 +151,23 @@ When an event arrives via WebSocket:
 Callbacks can be either synchronous or asynchronous. The event system handles both:
 
 ```python
-async def callback_wrapper(event):
-    asyncio.create_task(callback(event))
-
-if asyncio.iscoroutinefunction(callback):
-    function_to_register = callback_wrapper
-else:
-    function_to_register = callback
+async def _trigger_callbacks(self, event_name: str, event_data: dict):
+    for cb_id, cb_data in self._event_callbacks.items():
+        if cb_data['event'] == event_name:
+            if asyncio.iscoroutinefunction(cb_data['callback']):
+                await cb_data['callback'](event_data)
+            else:
+                cb_data['callback'](event_data)
 ```
 
-This ensures callbacks run in background tasks to prevent blocking the event loop.
+Asynchronous callbacks are awaited sequentially. This means each callback completes before the next one executes, which is important for:
+
+- **Predictable Execution Order**: Callbacks execute in registration order
+- **Error Handling**: Exceptions in one callback don't prevent others from executing
+- **State Consistency**: Callbacks can rely on sequential state changes
+
+!!! info "Sequential vs Concurrent Execution"
+    Callbacks execute sequentially within the same event. However, different events can be processed concurrently since the event loop handles multiple connections simultaneously.
 
 ## Event Flow and Lifecycle
 
@@ -294,35 +301,45 @@ The `ConnectionHandler` is the central component managing WebSocket communicatio
 ```python
 class ConnectionHandler:
     def __init__(self, ...):
-        self._callbacks = {}  # Event name -> list of callbacks
-        self._next_callback_id = 0
+        self._events_handler = EventsManager()
         self._websocket = None
         # ... other attributes
     
     async def register_callback(self, event_name, callback, temporary):
-        callback_id = self._next_callback_id
-        self._next_callback_id += 1
-        
-        if event_name not in self._callbacks:
-            self._callbacks[event_name] = []
-        
-        self._callbacks[event_name].append((callback_id, callback, temporary))
-        return callback_id
+        return self._events_handler.register_callback(event_name, callback, temporary)
+
+class EventsManager:
+    def __init__(self):
+        self._event_callbacks = {}  # Callback ID -> callback data
+        self._callback_id = 0
     
-    async def _dispatch_event(self, event_name, event_data):
-        if event_name not in self._callbacks:
-            return
-        
+    def register_callback(self, event_name, callback, temporary):
+        self._callback_id += 1
+        self._event_callbacks[self._callback_id] = {
+            'event': event_name,
+            'callback': callback,
+            'temporary': temporary
+        }
+        return self._callback_id
+    
+    async def _trigger_callbacks(self, event_name, event_data):
         callbacks_to_remove = []
         
-        for callback_id, callback, temporary in self._callbacks[event_name]:
-            await callback(event_data)
-            
-            if temporary:
-                callbacks_to_remove.append(callback_id)
+        for cb_id, cb_data in self._event_callbacks.items():
+            if cb_data['event'] == event_name:
+                # Execute callback (await if async, call directly if sync)
+                if asyncio.iscoroutinefunction(cb_data['callback']):
+                    await cb_data['callback'](event_data)
+                else:
+                    cb_data['callback'](event_data)
+                
+                # Mark temporary callbacks for removal
+                if cb_data['temporary']:
+                    callbacks_to_remove.append(cb_id)
         
-        for callback_id in callbacks_to_remove:
-            await self.remove_callback(callback_id)
+        # Remove temporary callbacks after all callbacks executed
+        for cb_id in callbacks_to_remove:
+            self.remove_callback(cb_id)
 ```
 
 This architecture ensures:
@@ -374,8 +391,11 @@ Each tab maintains its own:
 
 - Event domain enablement state
 - Callback registry
-- WebSocket connection (or shared connection with target ID)
+- Event communication channel
 - Network logs (if network events enabled)
+
+!!! info "Communication Architecture"
+    Each tab has its own event communication channel to the browser. For technical details on how WebSocket connections and target IDs work at the protocol level, see [Browser Domain Architecture](./browser-domain.md).
 
 ### Shared Browser Context
 

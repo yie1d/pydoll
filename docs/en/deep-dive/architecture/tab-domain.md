@@ -57,8 +57,8 @@ class Tab(FindElementsMixin):
 
 | Approach | Pros | Cons | Pydoll's Choice |
 |----------|------|------|-----------------|
-| **Inheritance** | Clean API (`tab.find()`), type compatibility | Tight coupling | ✅ Used |
-| Composition | Loose coupling, flexible | Verbose (`tab.finder.find()`), wrapper overhead | ❌ Not used |
+| **Inheritance** | Clean API (`tab.find()`), type compatibility | Tight coupling | Used |
+| Composition | Loose coupling, flexible | Verbose (`tab.finder.find()`), wrapper overhead | Not used |
 
 **Rationale:** The mixin pattern is justified because:
 
@@ -152,26 +152,46 @@ The `execute_script()` method implements **context polymorphism** - same interfa
 
 ## Event System Integration
 
-The Tab acts as a **thin wrapper** over ConnectionHandler's event system:
+The Tab acts as a **thin wrapper** over ConnectionHandler's event system, but adds an important layer: **non-blocking callback execution**.
 
 ```python
 async def on(self, event_name: str, callback: Callable, temporary: bool = False) -> int:
-    # Auto-wrap async callbacks to prevent blocking
+    # Wrap async callbacks to execute in background
+    async def callback_wrapper(event):
+        asyncio.create_task(callback(event))
+    
+    if asyncio.iscoroutinefunction(callback):
+        function_to_register = callback_wrapper  # Non-blocking wrapper
+    else:
+        function_to_register = callback  # Sync callbacks execute directly
+    
     # Delegate registration to ConnectionHandler
-    return await self._connection_handler.register_callback(...)
+    return await self._connection_handler.register_callback(
+        event_name, function_to_register, temporary
+    )
 ```
 
-**Architectural role:** Tab provides tab-scoped event registration, while ConnectionHandler handles WebSocket plumbing.
+**Architectural role:** Tab provides tab-scoped event registration with non-blocking execution semantics, while ConnectionHandler handles WebSocket plumbing and sequential callback invocation.
 
 **Key features:**
 
-- Background execution via `asyncio.create_task()` (non-blocking)
-- Sync/async callback auto-detection
-- Temporary callbacks for one-shot handlers
-- Callback ID for explicit removal
+- **Background execution** via `asyncio.create_task()` for async callbacks (fire-and-forget)
+- **Sync/async callback auto-detection**
+- **Temporary callbacks** for one-shot handlers
+- **Callback ID** for explicit removal
+
+**Execution model:**
+
+| Layer | Behavior | Purpose |
+|-------|----------|---------|
+| **User callback** | Runs in background task | Never blocks other callbacks or CDP commands |
+| **Tab wrapper** | `create_task(callback())` | Launches background task, returns immediately |
+| **EventsManager** | `await wrapper()` | Sequentially invokes wrappers for the same event |
+
+**Why the wrapper?** Without it, a slow async callback would block other callbacks for the same event. The `create_task` wrapper ensures all callbacks start "simultaneously" (in separate tasks), preventing one slow callback from delaying others.
 
 !!! info "Detailed Architecture"
-    See [Event Architecture Deep Dive](./event-architecture.md) for internal event routing mechanisms.
+    See [Event Architecture Deep Dive](./event-architecture.md) for internal event routing mechanisms and EventsManager's sequential invocation pattern.
     
     **Practical usage:** [Event System Guide](../features/advanced/event-system.md)
 
@@ -303,9 +323,31 @@ async def has_dialog(self) -> bool:
 
 ### Per-Tab WebSocket Strategy
 
-**Chosen design:** Each Tab owns its ConnectionHandler with dedicated WebSocket.
+**Chosen design:** Each Tab creates its own ConnectionHandler with a dedicated WebSocket connection to `ws://localhost:port/devtools/page/{targetId}`.
 
-**Rationale:** CDP supports tab-specific WebSockets (`ws://localhost:port/devtools/page/{targetId}`), enabling true parallel operations. Alternative (shared handler) introduces contention and complex message routing.
+**Rationale:**
+
+CDP supports **two connection models**:
+
+1. **Browser-level**: Single connection to `ws://localhost:port/devtools/browser/...` (used by Browser instance)
+2. **Tab-level**: Per-tab connections to `ws://localhost:port/devtools/page/{targetId}` (used by Tab instances)
+
+Pydoll uses **both**:
+
+- **Browser** has its own ConnectionHandler for browser-wide operations (contexts, downloads, browser-level events)
+- **Each Tab** has its own ConnectionHandler for tab-specific operations (navigation, element finding, tab events)
+
+**Benefits of per-tab WebSockets:**
+
+- **True parallelism**: Multiple tabs can execute CDP commands simultaneously without waiting
+- **Independent event streams**: Each tab receives only its own events (no filtering needed)
+- **Isolated failures**: Connection issues in one tab don't affect others
+- **Simplified routing**: No need to demultiplex messages by targetId
+
+**Tradeoff:** More open connections (one per tab), but CDP and browsers handle this efficiently. For 10 tabs, this is 11 connections total (1 browser + 10 tabs), which is negligible compared to the HTTP connections the tabs themselves create.
+
+!!! info "Browser vs Tab Communication"
+    See [Browser Domain Architecture](./browser-domain.md) for details on the browser-level ConnectionHandler and how Browser/Tab coordination works.
 
 ### Browser Reference Necessity
 
@@ -361,9 +403,9 @@ The Tab domain prioritizes **API ergonomics** and **correctness** over micro-opt
 
 | Decision | Benefit | Cost | Verdict |
 |----------|---------|------|---------|
-| Per-tab WebSocket | True parallelism | More connections | ✅ Justified |
-| Inherit FindElementsMixin | Clean API | Tight coupling | ✅ Justified |
-| Lazy Request init | Memory efficiency | Property overhead | ✅ Justified |
+| Per-tab WebSocket | True parallelism | More connections | Justified |
+| Inherit FindElementsMixin | Clean API | Tight coupling | Justified |
+| Lazy Request init | Memory efficiency | Property overhead | Justified |
 
 ## Further Reading
 

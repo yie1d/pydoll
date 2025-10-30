@@ -1,12 +1,13 @@
 # Practical Guides
 
-**Theory meets practice—actionable patterns for real automation challenges.**
+**Theory meets practice, actionable patterns for real automation challenges.**
 
-While the other Deep Dive sections explore **fundamentals** and **architecture**, this section provides **practical, battle-tested guides** for common automation scenarios. These aren't academic exercises—they're patterns refined through production use.
+While the other Deep Dive sections explore **fundamentals** and **architecture**, this section provides **practical, battle-tested guides** for common automation scenarios. These aren't academic exercises, they're patterns refined through production use.
 
 ## The Purpose of Guides
 
 You've learned:
+
 - **[Fundamentals](../fundamentals/cdp.md)** - CDP, async, types
 - **[Architecture](../architecture/browser-domain.md)** - Internal design patterns
 - **[Network](../network/index.md)** - Protocols and proxies
@@ -26,9 +27,9 @@ That's what guides are for: **bridging theory and practice**.
 ### CSS Selectors vs XPath
 **[→ Read Selectors Guide](./selectors-guide.md)**
 
-**The eternal debate—solved with data and best practices.**
+**The eternal debate, solved with data and best practices.**
 
-Choosing between CSS selectors and XPath isn't about preference—it's about understanding **tradeoffs**, **performance characteristics**, and **maintainability**.
+Choosing between CSS selectors and XPath isn't about preference. It's about understanding **tradeoffs**, **performance characteristics**, and **maintainability**.
 
 **What you'll learn**:
 
@@ -45,111 +46,45 @@ Choosing between CSS selectors and XPath isn't about preference—it's about und
 
 ## Coming Soon
 
-### Concurrent Automation Patterns
+### Asyncio & Concurrent Automation
 **Coming in future releases**
 
-**True parallelism—avoiding the async footguns.**
+**Deep dive into Python's asyncio: event loop internals, practical concurrency patterns, and real-world examples.**
 
-Learn how to automate multiple tabs, browsers, or workflows concurrently without race conditions, resource contention, or state corruption.
+Understanding asyncio is fundamental to Pydoll. This guide provides a comprehensive analysis of Python's event loop, concurrency primitives, and how to apply them to browser automation without footguns.
 
 **Will cover**:
 
-- `asyncio.gather()` for parallel operations
-- `asyncio.create_task()` for fire-and-forget
-- Semaphores for rate limiting
-- Task groups and structured concurrency
-- Error handling in concurrent code
-- Shared state management
+- **Event Loop Internals**: How `asyncio.run()` works, task scheduling, and execution flow
+- **Async/Await Deep Dive**: Coroutines, futures, and the async state machine
+- **Concurrency Primitives**: `gather()`, `create_task()`, `TaskGroup`, and when to use each
+- **Rate Limiting**: Semaphores, queues, and throttling strategies
+- **Real-World Examples**: Multi-tab scraping, parallel form filling, coordinated browser instances
+- **Common Pitfalls**: Blocking the event loop, task cancellation, exception propagation
+- **Performance Analysis**: Profiling async code, identifying bottlenecks, optimizing I/O
+
+**Why this matters**: Asyncio powers Pydoll's architecture. Master it, and you unlock true concurrent automation without race conditions or state corruption.
 
 ---
 
-### Error Handling Strategies
+### Architectural Patterns & Robust Selectors
 **Coming in future releases**
 
-**Robust automation—handling the inevitable failures.**
+**PageObject pattern, maintainable selectors, and architectural approaches for scalable automation.**
 
-Real automation encounters timeouts, network errors, element state changes, and unexpected page behavior. Learn systematic error handling.
+Move beyond ad-hoc scripts to structured, maintainable automation architectures. Learn patterns that scale from simple scripts to production systems.
 
 **Will cover**:
 
-- Exception hierarchy and when to catch what
-- Retry strategies with exponential backoff
-- Timeout configuration at multiple levels
-- Graceful degradation patterns
-- Logging and debugging production errors
-- Circuit breaker pattern for flaky systems
+- **PageObject Pattern**: Encapsulating page structure, reducing duplication, improving maintainability
+- **Robust Selector Strategies**: Building selectors that survive page changes, avoiding brittle locators
+- **Component Abstraction**: Reusable components for common UI patterns (modals, dropdowns, tables)
+- **Waiting Strategies**: Smart waiting patterns beyond simple timeouts
+- **State Management**: Managing automation state across pages and flows
+- **Testing Patterns**: How to structure automation code for testability
+- **Real-World Architecture**: Production-ready project structure and organization
 
----
-
-### Performance Optimization
-**Coming in future releases**
-
-**Fast automation—from seconds to milliseconds.**
-
-Learn systematic approaches to identifying and eliminating performance bottlenecks in automation code.
-
-**Will cover**:
-
-- Profiling async Python (cProfile limitations)
-- Network latency analysis and mitigation
-- DOM operation batching
-- Parallel vs sequential operations
-- Caching strategies (element references, selectors)
-- Connection pooling and reuse
-
----
-
-### Stealth Automation Checklist
-**Coming in future releases**
-
-**Anti-detection—practical checklist for undetectable automation.**
-
-Synthesizing fingerprinting knowledge into an actionable checklist you can follow step-by-step.
-
-**Will cover**:
-
-- Configuration checklist (browser options, preferences)
-- Consistency verification (network vs browser)
-- Behavioral mimicry patterns
-- Testing your fingerprint
-- Common mistakes that trigger detection
-- Progressive enhancement (good → better → undetectable)
-
----
-
-### Data Extraction Patterns
-**Coming in future releases**
-
-**Efficient scraping—from HTML chaos to structured data.**
-
-Modern web pages are complex. Learn patterns for extracting data reliably despite dynamic rendering, infinite scroll, lazy loading, and obfuscation.
-
-**Will cover**:
-
-- Waiting strategies (element presence, network idle, custom conditions)
-- Pagination patterns (next button, infinite scroll, load more)
-- Table extraction (simple tables, nested tables, dynamic columns)
-- JSON-LD and structured data
-- Screenshot-based extraction (OCR when necessary)
-- Validation and data quality checks
-
----
-
-### Form Automation Patterns
-**Coming in future releases**
-
-**Complex forms—handling dropdowns, file uploads, multi-step flows.**
-
-Forms are deceptively complex: validation, dependencies, AJAX submission, custom controls. Master the patterns.
-
-**Will cover**:
-
-- Input types (text, select, radio, checkbox, file)
-- Custom controls (React Select, Date pickers)
-- Multi-step forms with validation
-- File uploads (direct input, drag-and-drop, file chooser)
-- Dynamic fields (conditional visibility, validation dependencies)
-- Error handling and retry strategies
+**Why this matters**: The difference between throwaway scripts and maintainable automation systems is architecture. Learn patterns that make your code resilient to change.
 
 ---
 
@@ -158,7 +93,7 @@ Forms are deceptively complex: validation, dependencies, AJAX submission, custom
 Guides follow consistent principles:
 
 ### 1. Production-Ready Code
-All examples are **complete and tested**—not pseudocode or simplified demonstrations. You can copy-paste and adapt to your needs.
+All examples are **complete and tested**, not pseudocode or simplified demonstrations. You can copy-paste and adapt to your needs.
 
 ### 2. Real-World Scenarios
 Guides address **actual problems** encountered in production automation, not contrived examples.
@@ -170,20 +105,20 @@ When multiple approaches exist, guides **compare** them objectively with pros/co
 Start simple, add complexity incrementally. Basic pattern first, then edge cases and advanced variations.
 
 ### 5. Anti-Patterns Highlighted
-Show **what NOT to do** explicitly—common mistakes caught through code review or production debugging.
+Show **what NOT to do** explicitly, common mistakes caught through code review or production debugging.
 
 ## How to Use Guides
 
 Guides are **reference material**, not sequential tutorials:
 
-✅ **Skim** for patterns relevant to your current problem  
-✅ **Bookmark** guides you'll need repeatedly  
-✅ **Adapt** examples to your specific context  
-✅ **Combine** patterns from multiple guides  
+- **Skim** for patterns relevant to your current problem  
+- **Bookmark** guides you'll need repeatedly  
+- **Adapt** examples to your specific context  
+- **Combine** patterns from multiple guides  
 
-Don't read sequentially cover-to-cover  
-Don't blindly copy without understanding tradeoffs  
-Don't use outdated patterns (check publication date)  
+Don't read sequentially cover-to-cover.  
+Don't blindly copy without understanding tradeoffs.  
+Don't use outdated patterns (check publication date).  
 
 ## Contributing Guides
 
@@ -228,7 +163,7 @@ Guides provide **immediate value**. Architecture provides **deep understanding**
 
 ## Ready for Practical Patterns?
 
-Start with **[CSS Selectors vs XPath](./selectors-guide.md)** to master element location—the foundation of all automation.
+Start with **[CSS Selectors vs XPath](./selectors-guide.md)** to master element location, the foundation of all automation.
 
 **More guides coming soon. Star the repo to stay updated!**
 
@@ -246,14 +181,12 @@ Start with **[CSS Selectors vs XPath](./selectors-guide.md)** to master element 
 ## Quick Reference
 
 **Available Now:**
-- ✅ [CSS Selectors vs XPath](./selectors-guide.md)
+
+- [CSS Selectors vs XPath](./selectors-guide.md)
 
 **Coming Soon:**
-- ⏳ Concurrent Automation Patterns
-- ⏳ Error Handling Strategies  
-- ⏳ Performance Optimization
-- ⏳ Stealth Automation Checklist
-- ⏳ Data Extraction Patterns
-- ⏳ Form Automation Patterns
 
-**Timeline**: New guides added quarterly based on community feedback and production learnings.
+- Asyncio & Concurrent Automation
+- Architectural Patterns & Robust Selectors
+
+**Timeline**: New guides added based on community feedback and production learnings.

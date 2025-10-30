@@ -304,10 +304,10 @@ The WebElement domain bridges Python automation code and browser DOM through:
 
 | Decision | Benefit | Cost | Verdict |
 |----------|---------|------|---------|
-| Mixin inheritance | Clean API | Tight coupling | ✅ Justified |
-| Cached attributes | Fast sync access | Stale data risk | ✅ Justified |
-| JavaScript fallbacks | Reliability | Performance hit | ✅ Justified |
-| Visibility pre-checks | Clear errors | Extra CDP calls | ✅ Justified |
+| Mixin inheritance | Clean API | Tight coupling | Justified |
+| Cached attributes | Fast sync access | Stale data risk | Justified |
+| JavaScript fallbacks | Reliability | Performance hit | Justified |
+| Visibility pre-checks | Clear errors | Extra CDP calls | Justified |
 
 ## Further Reading
 

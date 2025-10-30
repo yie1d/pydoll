@@ -1,6 +1,6 @@
 # Network Fundamentals
 
-This document covers the foundational network protocols that power the internet—and how they expose or protect your identity in automation scenarios. Understanding TCP, UDP, the OSI model, and WebRTC is **essential** before diving into proxy protocols.
+This document covers the foundational network protocols that power the internet and how they expose or protect your identity in automation scenarios. Understanding TCP, UDP, the OSI model, and WebRTC is **essential** before diving into proxy protocols.
 
 !!! info "Module Navigation"
     - **[← Network & Security Overview](./index.md)** - Module introduction and learning path
@@ -14,7 +14,7 @@ This document covers the foundational network protocols that power the internet�
 
 ## Introduction: The Network Stack
 
-Every HTTP request your browser makes—every proxy connection, every WebSocket message—travels through a **layered network stack**. Each layer has specific responsibilities, protocols, and security implications.
+Every HTTP request your browser makes (every proxy connection, every WebSocket message) travels through a **layered network stack**. Each layer has specific responsibilities, protocols, and security implications.
 
 **Why this matters for automation:**
 
@@ -22,7 +22,7 @@ Every HTTP request your browser makes—every proxy connection, every WebSocket 
 - Network characteristics at lower layers can **fingerprint** your real system (even through proxies)
 - Understanding the stack reveals **where identity leaks occur** and how to prevent them
 
-Before diving into proxies, we need to understand the network stack they operate within. This isn't abstract theory—every concept here has **direct implications** for stealth, performance, and reliability in browser automation.
+Before diving into proxies, we need to understand the network stack they operate within. This isn't abstract theory. Every concept here has **direct implications** for stealth, performance, and reliability in browser automation.
 
 ### The OSI Model Context
 
@@ -43,22 +43,22 @@ graph TD
 
 #### Layer-by-Layer Breakdown
 
-**Layer 7 (Application)**: Where user-facing protocols live. HTTP, HTTPS, FTP, SMTP, DNS all operate here. This layer contains the **actual data** your application cares about—HTML documents, JSON responses, file transfers. HTTP proxies operate at this layer, giving them **full visibility** into request/response content.
+**Layer 7 (Application)**: Where user-facing protocols live. HTTP, HTTPS, FTP, SMTP, DNS all operate here. This layer contains the **actual data** your application cares about: HTML documents, JSON responses, file transfers. HTTP proxies operate at this layer, giving them **full visibility** into request/response content.
 
-**Layer 6 (Presentation)**: Handles data format translation, encryption, and compression. SSL/TLS encryption occurs here (though TLS is often considered to straddle Layers 5-6). This is where **HTTPS encryption** happens—encrypting Layer 7 data before passing it down to Layer 5.
+**Layer 6 (Presentation)**: Handles data format translation, encryption, and compression. SSL/TLS encryption occurs here (though TLS is often considered to straddle Layers 5-6). This is where **HTTPS encryption** happens, encrypting Layer 7 data before passing it down to Layer 5.
 
-**Layer 5 (Session)**: Manages connections between applications. SOCKS proxies operate here, below the application layer but above transport. This position makes SOCKS **protocol-agnostic**—it can proxy any Layer 7 protocol (HTTP, FTP, SMTP, SSH) without understanding their specifics.
+**Layer 5 (Session)**: Manages connections between applications. SOCKS proxies operate here, below the application layer but above transport. This position makes SOCKS **protocol-agnostic**, it can proxy any Layer 7 protocol (HTTP, FTP, SMTP, SSH) without understanding their specifics.
 
 **Layer 4 (Transport)**: Provides end-to-end data delivery. TCP (connection-oriented, reliable) and UDP (connectionless, fast) are the dominant protocols. This layer handles **port numbers**, **flow control**, and **error correction**. All proxies ultimately rely on Layer 4 for actual data transmission.
 
-**Layer 3 (Network)**: Handles routing and addressing between networks. IP (Internet Protocol) operates here, managing **IP addresses** and **routing decisions**. This is where your **real IP address** lives—and where proxies aim to substitute it.
+**Layer 3 (Network)**: Handles routing and addressing between networks. IP (Internet Protocol) operates here, managing **IP addresses** and **routing decisions**. This is where your **real IP address** lives, and where proxies aim to substitute it.
 
 **Layer 2 (Data Link)**: Manages communication on the same physical network segment. Ethernet, Wi-Fi, and PPP operate here, handling **MAC addresses** and **frame transmission**. Network fingerprinting at this layer can reveal **physical network characteristics**.
 
-**Layer 1 (Physical)**: The actual hardware—cables, radio waves, voltage levels. While rarely relevant to software, physical-layer characteristics can be measured (signal timing, electrical properties) for **advanced fingerprinting**.
+**Layer 1 (Physical)**: The actual hardware (cables, radio waves, voltage levels). While rarely relevant to software, physical-layer characteristics can be measured (signal timing, electrical properties) for **advanced fingerprinting**.
 
 !!! tip "OSI vs TCP/IP Models"
-    The **TCP/IP model** (4 layers: Link, Internet, Transport, Application) is what networks actually use. OSI (7 layers) is a **teaching tool** and reference model. When people say "Layer 7 proxy," they're using OSI terminology—but the actual implementation uses TCP/IP.
+    The **TCP/IP model** (4 layers: Link, Internet, Transport, Application) is what networks actually use. OSI (7 layers) is a **teaching tool** and reference model. When people say "Layer 7 proxy," they're using OSI terminology, but the actual implementation uses TCP/IP.
 
 #### Why Layer Positioning Matters for Proxies
 
@@ -66,21 +66,21 @@ The layer where a proxy operates determines its **capabilities** and **limitatio
 
 **HTTP/HTTPS Proxies (Layer 7 - Application)**:
 
-- ✅ **Full HTTP visibility**: Can read/modify URLs, headers, cookies, request bodies
-- ✅ **Intelligent caching**: Can cache responses based on HTTP semantics
-- ✅ **Content filtering**: Can block specific URLs or keywords
-- ✅ **Authentication integration**: Can add authentication headers
-- ❌ **HTTP-only**: Cannot proxy FTP, SMTP, SSH, or other protocols
-- ❌ **TLS termination required**: Must decrypt HTTPS to inspect content
+- **Full HTTP visibility**: Can read/modify URLs, headers, cookies, request bodies
+- **Intelligent caching**: Can cache responses based on HTTP semantics
+- **Content filtering**: Can block specific URLs or keywords
+- **Authentication integration**: Can add authentication headers
+- **HTTP-only limitation**: Cannot proxy FTP, SMTP, SSH, or other protocols
+- **TLS termination required**: Must decrypt HTTPS to inspect content
 
 **SOCKS Proxies (Layer 5 - Session)**:
 
-- ✅ **Protocol-agnostic**: Can proxy any Layer 7 protocol (HTTP, FTP, SSH, etc.)
-- ✅ **No TLS termination**: HTTPS passes through encrypted (end-to-end security)
-- ✅ **UDP support** (SOCKS5): Can proxy DNS, VoIP, gaming protocols
-- ❌ **No content visibility**: Cannot inspect or modify application-layer data
-- ❌ **No intelligent caching**: Doesn't understand HTTP semantics
-- ❌ **No URL-based filtering**: Cannot block specific URLs, only IP:port combinations
+- **Protocol-agnostic**: Can proxy any Layer 7 protocol (HTTP, FTP, SSH, etc.)
+- **No TLS termination**: HTTPS passes through encrypted (end-to-end security)
+- **UDP support** (SOCKS5): Can proxy DNS, VoIP, gaming protocols
+- **No content visibility**: Cannot inspect or modify application-layer data
+- **No intelligent caching**: Doesn't understand HTTP semantics
+- **No URL-based filtering**: Cannot block specific URLs, only IP:port combinations
 
 !!! warning "The Fundamental Tradeoff"
     **Higher layers** (Layer 7) = More control, less flexibility
@@ -98,19 +98,19 @@ Even with a perfect Layer 7 proxy (HTTP), lower-layer characteristics can expose
 - **Layer 3 (Network)**: IP header fields (TTL, fragmentation) reveal OS and network topology
 - **Layer 2 (Data Link)**: MAC address vendor reveals hardware manufacturer
 
-**Example**: You configure a proxy to show "Windows 10" User-Agent, but your **actual Linux system's TCP fingerprint** (Layer 4) contradicts this—instant bot detection.
+**Example**: You configure a proxy to show "Windows 10" User-Agent, but your **actual Linux system's TCP fingerprint** (Layer 4) contradicts this. Instant bot detection.
 
 This is why **network-level fingerprinting** (covered in [Network Fingerprinting](../fingerprinting/network-fingerprinting.md)) is so dangerous: it operates **below the proxy layer**, exposing your real system even when application-layer proxying is perfect.
 
 ### TCP vs UDP: Transport Layer Protocols
 
-At Layer 4 (Transport), two fundamentally different protocols dominate internet communication: **TCP (Transmission Control Protocol)** and **UDP (User Datagram Protocol)**. They represent opposite design philosophies—reliability vs speed, overhead vs efficiency.
+At Layer 4 (Transport), two fundamentally different protocols dominate internet communication: **TCP (Transmission Control Protocol)** and **UDP (User Datagram Protocol)**. They represent opposite design philosophies: reliability vs speed, overhead vs efficiency.
 
 #### The Fundamental Difference
 
 **TCP** is like a phone call: you establish a connection, verify the other party is listening, exchange data reliably, then hang up. Every byte is acknowledged, ordered, and guaranteed to arrive.
 
-**UDP** is like shouting across a crowded room: you send your message and hope it arrives. No guarantees, no acknowledgments, no connection setup—just raw speed.
+**UDP** is like shouting across a crowded room: you send your message and hope it arrives. No guarantees, no acknowledgments, no connection setup. Just raw speed.
 
 | Feature | TCP | UDP |
 |---------|-----|-----|
@@ -127,7 +127,7 @@ At Layer 4 (Transport), two fundamentally different protocols dominate internet 
 
 #### Why This Matters for Proxies and Automation
 
-**All proxy protocols use TCP**—HTTP proxies, HTTPS proxies, SOCKS4, and SOCKS5 all rely on TCP for their control channel because:
+**All proxy protocols use TCP**. HTTP proxies, HTTPS proxies, SOCKS4, and SOCKS5 all rely on TCP for their control channel because:
 
 1. **Reliability**: Proxy authentication and command exchange require guaranteed delivery
 2. **Ordering**: Proxy protocols have strict command sequences (handshake → auth → data)
@@ -141,7 +141,7 @@ However, **SOCKS5 can proxy UDP traffic** (unlike SOCKS4 or HTTP proxies), makin
 - **Gaming protocols**: Low-latency game state updates
 
 !!! danger "UDP = IP Leakage Risk"
-    Most browser connections use TCP (HTTP, WebSocket, etc.). But WebRTC uses **UDP directly**, bypassing the browser's network stack and proxy configuration. This is the **#1 cause of IP leakage** in proxied browser automation—your real IP leaks through UDP while TCP traffic goes through the proxy.
+    Most browser connections use TCP (HTTP, WebSocket, etc.). But WebRTC uses **UDP directly**, bypassing the browser's network stack and proxy configuration. This is the **#1 cause of IP leakage** in proxied browser automation. Your real IP leaks through UDP while TCP traffic goes through the proxy.
 
 #### TCP Three-Way Handshake: Establishing Connections
 
@@ -214,17 +214,17 @@ Linux (Ubuntu):
     TTL: 64
 ```
 
-These differences are **burned into the kernel**—a proxy cannot change them because they're set by your **operating system**, not your browser. This is how sophisticated detection systems identify you **even through proxies**.
+These differences are **burned into the kernel**. A proxy cannot change them because they're set by your **operating system**, not your browser. This is how sophisticated detection systems identify you **even through proxies**.
 
 !!! warning "Proxy Limitation"
     HTTP and SOCKS proxies operate **above the TCP layer**. They cannot modify TCP handshake characteristics. Your OS's TCP fingerprint is **always exposed** to the proxy server (and any network observers). Only **VPN-level solutions** or **OS-level TCP stack spoofing** can address this.
 
 **Why TCP matters for proxies:**
 
-- ✅ **Reliable proxy authentication**: Credentials sent over TCP won't be lost
-- ✅ **Persistent connections**: Single TCP connection can handle multiple HTTP requests (HTTP/1.1 keep-alive, HTTP/2)
-- ✅ **Ordered delivery**: Proxy commands execute in sequence (crucial for authentication flows)
-- ❌ **Fingerprinting exposure**: TCP handshake characteristics reveal your real OS
+- **Reliable proxy authentication**: Credentials sent over TCP won't be lost
+- **Persistent connections**: Single TCP connection can handle multiple HTTP requests (HTTP/1.1 keep-alive, HTTP/2)
+- **Ordered delivery**: Proxy commands execute in sequence (crucial for authentication flows)
+- **Fingerprinting exposure**: TCP handshake characteristics reveal your real OS
 
 #### UDP Characteristics: Speed Without Guarantees
 
@@ -260,15 +260,17 @@ Unlike TCP's reliable, connection-oriented approach, UDP is a **"fire-and-forget
 
 **When to Use UDP:**
 
-✅ **Real-time communication**: Voice/video calls (WebRTC, VoIP) where old data is useless
-✅ **Gaming**: Low-latency game state updates where speed > accuracy
-✅ **Streaming**: Video/audio where occasional frame loss is acceptable
-✅ **DNS queries**: Small request/response where retransmission is handled by application
-✅ **Network discovery**: Broadcast/multicast protocols (DHCP, mDNS)
+**Good use cases:**
+- **Real-time communication**: Voice/video calls (WebRTC, VoIP) where old data is useless
+- **Gaming**: Low-latency game state updates where speed > accuracy
+- **Streaming**: Video/audio where occasional frame loss is acceptable
+- **DNS queries**: Small request/response where retransmission is handled by application
+- **Network discovery**: Broadcast/multicast protocols (DHCP, mDNS)
 
-❌ **File transfer**: Would require application-level reliability (so just use TCP)
-❌ **Web browsing**: Needs ordered, reliable delivery (HTTP/3 over QUIC is exception)
-❌ **Email, databases**: Absolutely require reliability
+**Poor use cases:**
+- **File transfer**: Would require application-level reliability (so just use TCP)
+- **Web browsing**: Needs ordered, reliable delivery (HTTP/3 over QUIC is exception)
+- **Email, databases**: Absolutely require reliability
 
 **UDP and DNS: A Critical Example**
 
@@ -290,18 +292,18 @@ Data: "google.com A?" (Query for A record)
 
 **Why UDP matters for browser automation:**
 
-- ✅ **WebRTC uses UDP** for real-time audio/video (can't be proxied by HTTP proxies)
-- ✅ **DNS queries use UDP** (can leak DNS requests if not proxied)
-- ✅ **SOCKS5 supports UDP** (unlike SOCKS4 or HTTP proxies)
-- ❌ **UDP bypasses proxies** unless explicitly configured
-- ❌ **No sequence numbers** means no fingerprinting via ISN (unlike TCP)
+- **WebRTC uses UDP** for real-time audio/video (can't be proxied by HTTP proxies)
+- **DNS queries use UDP** (can leak DNS requests if not proxied)
+- **SOCKS5 supports UDP** (unlike SOCKS4 or HTTP proxies)
+- **UDP bypasses proxies** unless explicitly configured
+- **No sequence numbers** means no fingerprinting via ISN (unlike TCP)
 
 !!! danger "The WebRTC UDP Leak"
     Here's the critical problem: Your browser makes **DNS queries over UDP** and **WebRTC connections over UDP**. Most proxy configurations only cover **TCP traffic** (HTTP, HTTPS, WebSocket).
     
     Result: Your TCP traffic (web pages, API calls) goes through the proxy with the proxy's IP, but your **UDP traffic leaks your real IP directly**.
     
-    This is why even with a proxy, websites can discover your real IP via WebRTC—it's using **UDP directly**, bypassing your proxy entirely.
+    This is why even with a proxy, websites can discover your real IP via WebRTC. It's using **UDP directly**, bypassing your proxy entirely.
 
 **UDP Proxy Support by Protocol:**
 
@@ -326,11 +328,11 @@ For **true anonymity** in browser automation, you need **either**:
 
 ## WebRTC and IP Leakage
 
-WebRTC (Web Real-Time Communication) is a browser API standardized by the W3C that enables **peer-to-peer** audio, video, and data communication directly between browsers—without requiring plugins or intermediary servers. While powerful for real-time applications, WebRTC is the **single biggest source of IP leakage** in proxied browser automation.
+WebRTC (Web Real-Time Communication) is a browser API standardized by the W3C that enables **peer-to-peer** audio, video, and data communication directly between browsers, without requiring plugins or intermediary servers. While powerful for real-time applications, WebRTC is the **single biggest source of IP leakage** in proxied browser automation.
 
 ### Why WebRTC Leaks Your IP
 
-WebRTC was designed for **direct peer-to-peer connections**, optimizing for low latency over privacy. To establish P2P connections, WebRTC must discover your **real public IP address** and share it with the remote peer—even if your browser is configured to use a proxy.
+WebRTC was designed for **direct peer-to-peer connections**, optimizing for low latency over privacy. To establish P2P connections, WebRTC must discover your **real public IP address** and share it with the remote peer, even if your browser is configured to use a proxy.
 
 **The fundamental problem:**
 1. Your browser uses a proxy for HTTP/HTTPS (TCP traffic)
@@ -342,11 +344,11 @@ WebRTC was designed for **direct peer-to-peer connections**, optimizing for low 
 !!! danger "Severity of WebRTC Leaks"
     Even with:
 
-    - ✅ HTTP proxy configured correctly
-    - ✅ HTTPS proxy working
-    - ✅ DNS queries proxied
-    - ✅ User-Agent spoofed
-    - ✅ Canvas fingerprinting mitigated
+    - HTTP proxy configured correctly
+    - HTTPS proxy working
+    - DNS queries proxied
+    - User-Agent spoofed
+    - Canvas fingerprinting mitigated
     
     **WebRTC can still leak your real IP in milliseconds**. This is because WebRTC operates **below the browser's proxy layer**, directly interfacing with the OS network stack.
 
@@ -429,7 +431,7 @@ candidate:4 1 UDP 1694498815 203.0.113.45 54321 typ srflx raddr 192.168.1.100 rp
 - Your **NAT type** and external port mapping
 - Your **ISP** (via IP geolocation/WHOIS)
 
-**This is the leak** everyone talks about—your proxy shows `198.51.100.5` but WebRTC reveals `203.0.113.45` (your real IP).
+**This is the leak** everyone talks about: your proxy shows `198.51.100.5` but WebRTC reveals `203.0.113.45` (your real IP).
 
 **3. Relay Candidates (TURN relay addresses)**
 
@@ -476,14 +478,14 @@ STUN (Session Traversal Utilities for NAT), defined in RFC 5389, is a simple req
         'XOR-MAPPED-ADDRESS': {
             'family': 'IPv4',
             'port': 54321,
-            'address': '203.0.113.45'  # ⚠️ YOUR REAL PUBLIC IP!
+            'address': '203.0.113.45'  # YOUR REAL PUBLIC IP!
         }
     }
 }
 ```
 
 **Why XOR-MAPPED-ADDRESS?**
-The IP address is XOR'ed with the magic cookie and transaction ID for **NAT compatibility**—some NAT devices incorrectly modify IP addresses in packet payloads, breaking STUN. XOR'ing obfuscates the IP, preventing NAT interference.
+The IP address is XOR'ed with the magic cookie and transaction ID for **NAT compatibility**. Some NAT devices incorrectly modify IP addresses in packet payloads, breaking STUN. XOR'ing obfuscates the IP, preventing NAT interference.
 
 **Public STUN Servers** (commonly used by browsers):
 
@@ -634,7 +636,7 @@ asyncio.run(test_webrtc_leak())
 !!! danger "Always Test WebRTC Leaks"
     **Never assume** your proxy configuration prevents WebRTC leaks. Always test with https://browserleaks.com/webrtc or https://ipleak.net to verify your real IP is not exposed.
     
-    Even a single WebRTC leak instantly **compromises your entire proxy setup**—websites now know your real location, ISP, and network topology.
+    Even a single WebRTC leak instantly **compromises your entire proxy setup**. Websites now know your real location, ISP, and network topology.
 
 ### Advanced: WebRTC Leak Detection by Websites
 
@@ -674,19 +676,19 @@ This code:
 
 ## Summary and Further Reading
 
-Understanding network fundamentals—OSI layers, TCP/UDP characteristics, and WebRTC's peer-to-peer architecture—is **essential** for implementing effective proxy-based anonymity.
+Understanding network fundamentals (OSI layers, TCP/UDP characteristics, and WebRTC's peer-to-peer architecture) is **essential** for implementing effective proxy-based anonymity.
 
 **Key Takeaways:**
 
-✅ Proxies operate at **specific layers** (HTTP at Layer 7, SOCKS at Layer 5), determining their capabilities
+- Proxies operate at **specific layers** (HTTP at Layer 7, SOCKS at Layer 5), determining their capabilities
 
-✅ **TCP fingerprints** (window size, options, TTL) leak from lower layers, revealing your real OS
+- **TCP fingerprints** (window size, options, TTL) leak from lower layers, revealing your real OS
 
-✅ **UDP traffic** (WebRTC, DNS) often bypasses proxies unless explicitly configured
+- **UDP traffic** (WebRTC, DNS) often bypasses proxies unless explicitly configured
 
-✅ **WebRTC** is the #1 source of IP leakage—always test with browserleaks.com
+- **WebRTC** is the #1 source of IP leakage. Always test with browserleaks.com
 
-✅ Only **SOCKS5** or **VPN** can proxy UDP traffic effectively
+- Only **SOCKS5** or **VPN** can proxy UDP traffic effectively
 
 **Next Steps:**
 

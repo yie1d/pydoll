@@ -32,8 +32,8 @@ options = ChromiumOptions()
 options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)...')
 
 # Result:
-# ✅ HTTP header: Mozilla/5.0 (Windows NT 10.0; Win64; x64)...
-# ❌ navigator.userAgent: Chrome/120.0.0.0 (original value!)
+# HTTP header: Mozilla/5.0 (Windows NT 10.0; Win64; x64)... (correct)
+# navigator.userAgent: Chrome/120.0.0.0 (original value - wrong!)
 # → MISMATCH DETECTED!
 ```
 
@@ -113,7 +113,7 @@ async def main():
         result = await tab.execute_script('return navigator.userAgent')
         nav_ua = result['result']['result']['value']
         print(f"navigator.userAgent: {nav_ua}")
-        # Both match! ✅
+        # Both match now!
 
 asyncio.run(main())
 ```
@@ -122,6 +122,7 @@ asyncio.run(main())
     When setting a custom User-Agent, you **must** also set consistent `userAgentMetadata` (Client Hints), otherwise modern Chromium will send **inconsistent** `Sec-CH-UA` headers!
     
     **Example inconsistency:**
+
     - User-Agent: "Chrome/120.0.0.0"
     - Sec-CH-UA: "Chrome/119" (wrong version!)
     - → Detection!
@@ -556,6 +557,108 @@ asyncio.run(main())
     - **[Chromium Emulation Source](https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/inspector/inspector_emulation_agent.cc)** - Emulation implementation in Chromium
     - **[Pydoll CDP Guide](./cdp.md)** - Using CDP with Pydoll
 
+## Behavioral Evasion Strategies
+
+Given Pydoll's CDP-based architecture, behavioral fingerprinting requires careful attention to human-like interaction patterns. For theoretical background on behavioral detection, see [Behavioral Fingerprinting](./behavioral-fingerprinting.md).
+
+### Current State: Manual Randomization Required
+
+As documented in [Human-Like Interactions](../../features/automation/human-interactions.md), Pydoll **currently requires manual implementation** of behavioral realism:
+
+- **Mouse movements**: Must be implemented with Bezier curves and randomization
+- **Typing**: Requires character-by-character input with variable intervals
+- **Scrolling**: Needs manual JavaScript with momentum simulation
+- **Event sequences**: Must ensure proper ordering (mousemove → mousedown → mouseup → click)
+
+### Future Improvements
+
+Future versions of Pydoll will include automated behavioral realism:
+
+```python
+# Future API (not yet implemented)
+await element.click(
+    realistic=True,              # Automatic Bezier curve movement
+    offset='random',             # Random offset within bounds
+    thinking_time=(1.0, 3.0)     # Random delay before action
+)
+
+await input_field.type_text(
+    "human-like text",
+    realistic=True,              # Variable typing speed with bigram timing
+    error_rate=0.05              # 5% chance of typo + backspace
+)
+
+await tab.scroll_to(
+    target_y=1000,
+    realistic=True,              # Momentum + inertia simulation
+    speed='medium'               # Human-like scroll speed
+)
+```
+
+### Practical Implementation Now
+
+Until automation is built-in, follow these practices:
+
+#### 1. Mouse Movement Before Clicks
+
+```python
+# Bad: Instant click without movement
+await element.click()  # Teleports cursor and clicks center
+
+# Good: Realistic movement first
+# (Manual implementation required)
+await move_mouse_realistically(element)
+await asyncio.sleep(random.uniform(0.1, 0.3))
+await element.click(x_offset=random.randint(-10, 10))
+```
+
+#### 2. Variable Typing Speed
+
+```python
+# Bad: Constant interval
+await input.type_text("text", interval=0.1)  # Robotic timing
+
+# Good: Variable intervals per character
+for char in "text":
+    await input.type_text(char, interval=0)
+    await asyncio.sleep(random.uniform(0.08, 0.22))
+```
+
+#### 3. Thinking Time
+
+```python
+# Bad: Instant action after page load
+await tab.go_to('https://example.com')
+await button.click()  # Too fast!
+
+# Good: Natural delay for reading/scanning
+await tab.go_to('https://example.com')
+await asyncio.sleep(random.uniform(2.0, 5.0))  # Read page
+await random_mouse_movement()  # Scan with cursor
+await button.click()  # Then act
+```
+
+#### 4. Scrolling with Momentum
+
+```python
+# Bad: Instant scroll
+await tab.execute_script("window.scrollTo(0, 1000)")
+
+# Good: Gradual scroll with deceleration
+scroll_events = simulate_human_scroll(target=1000)
+for delta, delay in scroll_events:
+    await tab.execute_script(f"window.scrollBy(0, {delta})")
+    await asyncio.sleep(delay)
+```
+
+!!! warning "Behavioral Detection is ML-Powered"
+    Modern anti-bot systems use machine learning trained on billions of interactions. They don't use simple rules—they detect **statistical patterns**. Focus on:
+    
+    1. **Variability**: No two actions should be identical
+    2. **Context**: Actions must follow natural sequences
+    3. **Timing**: Realistic intervals based on human biomechanics
+    4. **Consistency**: Don't mix bot-like and human-like patterns
+
 ## Best Practices for Fingerprint Evasion
 
 Based on all the techniques covered in this guide, here are the essential best practices for successful fingerprint evasion in web automation:
@@ -583,14 +686,14 @@ REAL_PROFILES = {
 
 **Check these consistency points:**
 
-- ✅ User-Agent matches navigator.userAgent
-- ✅ Platform matches User-Agent OS
-- ✅ Language matches timezone/geolocation
-- ✅ Screen resolution is realistic for claimed device
-- ✅ Hardware specs match claimed platform (CPU cores, RAM)
-- ✅ Canvas/WebGL fingerprints are stable (not randomized)
-- ✅ Timezone matches Accept-Language header
-- ✅ Client Hints match User-Agent
+- User-Agent matches navigator.userAgent
+- Platform matches User-Agent OS
+- Language matches timezone/geolocation
+- Screen resolution is realistic for claimed device
+- Hardware specs match claimed platform (CPU cores, RAM)
+- Canvas/WebGL fingerprints are stable (not randomized)
+- Timezone matches Accept-Language header
+- Client Hints match User-Agent
 
 ### 3. Use Browser Preferences for Stealth
 
@@ -630,7 +733,7 @@ options.browser_preferences = {
 ```python
 # Bad: New fingerprint every request
 for url in urls:
-    fingerprint = generate_random_fingerprint()  # ❌ Suspicious!
+    fingerprint = generate_random_fingerprint()  # Suspicious!
     apply_fingerprint(tab, fingerprint)
     await tab.go_to(url)
 
@@ -666,20 +769,20 @@ async def verify_fingerprint(tab):
     
     # Test 1: User-Agent consistency
     nav_ua = await tab.execute_script('return navigator.userAgent')
-    print(f"✓ User-Agent: {nav_ua[:50]}...")
+    print(f"User-Agent: {nav_ua[:50]}...")
     
     # Test 2: Timezone/Language consistency
     tz = await tab.execute_script('return Intl.DateTimeFormat().resolvedOptions().timeZone')
     lang = await tab.execute_script('return navigator.language')
-    print(f"✓ Timezone: {tz}, Language: {lang}")
+    print(f"Timezone: {tz}, Language: {lang}")
     
     # Test 3: WebDriver detection
     webdriver = await tab.execute_script('return navigator.webdriver')
     if webdriver:
-        print("❌ navigator.webdriver is true!")
+        print("navigator.webdriver is true! (DETECTED)")
         tests.append(False)
     else:
-        print("✓ navigator.webdriver is undefined")
+        print("navigator.webdriver is undefined (OK)")
         tests.append(True)
     
     # Test 4: Canvas consistency
@@ -687,15 +790,15 @@ async def verify_fingerprint(tab):
     await asyncio.sleep(0.5)
     canvas2 = await get_canvas_fingerprint(tab)
     if canvas1 == canvas2:
-        print("✓ Canvas fingerprint is consistent")
+        print("Canvas fingerprint is consistent (OK)")
         tests.append(True)
     else:
-        print("❌ Canvas fingerprint is inconsistent (noise detected)")
+        print("Canvas fingerprint is inconsistent, noise detected (DETECTED)")
         tests.append(False)
     
     # Test 5: Plugins
     plugins = await tab.execute_script('return navigator.plugins.length')
-    print(f"✓ Plugins: {plugins}")
+    print(f"Plugins: {plugins}")
     
     return all(tests)
 ```
@@ -736,7 +839,7 @@ async def monitor_detection_signals(tab):
     ''')
     
     if any(signals.values()):
-        print("⚠️ Detection signals found:")
+        print("Detection signals found:")
         for key, value in signals.items():
             if value:
                 print(f"  - {key}: detected")
@@ -759,9 +862,9 @@ Network-level fingerprinting requires proper proxy usage:
 # Bad: Random fingerprint that doesn't make sense
 fingerprint = {
     'userAgent': 'Chrome 120 on Windows',
-    'platform': 'Linux x86_64',  # ❌ Mismatch!
-    'hardwareConcurrency': random.randint(1, 32),  # ❌ Too random
-    'deviceMemory': random.choice([0.5, 128]),  # ❌ Unrealistic values
+    'platform': 'Linux x86_64',  # Mismatch!
+    'hardwareConcurrency': random.randint(1, 32),  # Too random
+    'deviceMemory': random.choice([0.5, 128]),  # Unrealistic values
 }
 ```
 
@@ -773,7 +876,7 @@ fingerprint = {
 # Bad: Setting User-Agent without Client Hints
 await tab.send_cdp_command('Emulation.setUserAgentOverride', {
     'userAgent': 'Chrome/120...',
-    # ❌ Missing userAgentMetadata!
+    # Missing userAgentMetadata!
 })
 # Result: Sec-CH-UA headers will be inconsistent
 ```
@@ -786,7 +889,7 @@ def add_canvas_noise(ctx):
     # Randomize pixel values
     imageData = ctx.getImageData(0, 0, 100, 100)
     for i in range(len(imageData.data)):
-        imageData.data[i] += random.randint(-5, 5)  # ❌ Noise
+        imageData.data[i] += random.randint(-5, 5)  # Noise injection
     ctx.putImageData(imageData, 0, 0)
 ```
 
@@ -796,7 +899,7 @@ def add_canvas_noise(ctx):
 
 ```python
 # Bad: Using old browser version
-userAgent = 'Mozilla/5.0 ... Chrome/90.0.0.0'  # ❌ 2 years old!
+userAgent = 'Mozilla/5.0 ... Chrome/90.0.0.0'  # 2 years old!
 ```
 
 **Why it fails**: Old versions missing modern features are easily detected. Use versions from the last 3-6 months.
@@ -806,7 +909,7 @@ userAgent = 'Mozilla/5.0 ... Chrome/90.0.0.0'  # ❌ 2 years old!
 ```python
 # Bad: Using headless without proper configuration
 options = ChromiumOptions()
-options.headless = True  # ❌ Detectable via window dimensions
+options.headless = True  # Detectable via window dimensions
 ```
 
 **Fix**: Use `--headless=new` with realistic window size:
@@ -849,11 +952,11 @@ Browser and network fingerprinting is a sophisticated cat-and-mouse game between
 
 **Pydoll's Advantages:**
 
-- ✅ **No `navigator.webdriver`** (unlike Selenium/Puppeteer)
-- ✅ **Direct CDP access** for deep browser control
-- ✅ **Request interception** via Fetch domain
-- ✅ **Browser preferences** for realistic history/settings
-- ✅ **Async architecture** for natural timing patterns
+- **No `navigator.webdriver`** (unlike Selenium/Puppeteer)
+- **Direct CDP access** for deep browser control
+- **Request interception** via Fetch domain
+- **Browser preferences** for realistic history/settings
+- **Async architecture** for natural timing patterns
 
 With the techniques in this guide, you can create **highly stealthy** browser automation that mimics real user behavior at every level.
 

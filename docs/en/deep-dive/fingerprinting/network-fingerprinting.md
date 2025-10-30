@@ -1,6 +1,6 @@
 # Network-Level Fingerprinting
 
-This document explores fingerprinting at the network protocol level—from TCP/IP characteristics to TLS handshake patterns. Understanding how devices are identified **before the browser even loads** is crucial for evading sophisticated detection systems.
+This document explores fingerprinting at the network protocol level, from TCP/IP characteristics to TLS handshake patterns. Understanding how devices are identified **before the browser even loads** is crucial for evading sophisticated detection systems.
 
 !!! info "Module Navigation"
     - **[← Fingerprinting Overview](./index.md)** - Module introduction and philosophy

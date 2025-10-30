@@ -1,6 +1,6 @@
 # HTTP/HTTPS Proxy Architecture
 
-This document explores HTTP and HTTPS proxies in depth—the most common but also most **limited** proxy protocol. Despite their ubiquity (nearly every corporate network uses them), HTTP proxies have fundamental security and architectural limitations that make them unsuitable for many privacy-critical use cases.
+This document explores HTTP and HTTPS proxies in depth, the most common but also most **limited** proxy protocol. Despite their ubiquity (nearly every corporate network uses them), HTTP proxies have fundamental security and architectural limitations that make them unsuitable for many privacy-critical use cases.
 
 Understanding how they work at the protocol level, their security implications, header manipulation, caching semantics, and modern protocol variations (HTTP/2, HTTP/3) is crucial for informed proxy selection and effective browser automation.
 
@@ -29,7 +29,7 @@ Understanding how they work at the protocol level, their security implications, 
 
 ## Introduction: Layer 7 Proxying
 
-HTTP proxies are **application-layer proxies**, operating at **Layer 7 of the OSI model**. Unlike SOCKS proxies (Layer 5) which blindly forward bytes, HTTP proxies **understand HTTP protocol semantics**—they parse requests, interpret headers, apply caching logic, and can modify traffic based on HTTP rules.
+HTTP proxies are **application-layer proxies**, operating at **Layer 7 of the OSI model**. Unlike SOCKS proxies (Layer 5) which blindly forward bytes, HTTP proxies **understand HTTP protocol semantics**. They parse requests, interpret headers, apply caching logic, and can modify traffic based on HTTP rules.
 
 **Historical Context:**
 
@@ -232,33 +232,35 @@ Age: 120
 
 **What HTTP Proxies CAN Do:**
 
-**Read entire HTTP request/response** (if unencrypted)
-**Modify headers** (add `Via`, `X-Forwarded-For`, remove sensitive headers)
-**Cache responses** based on HTTP semantics (`Cache-Control`, `ETag`)
-**Compress/decompress** content (gzip, deflate, br)
-**Filter content** (block URLs, scan for malware, remove ads)
-**Authenticate users** (via `Proxy-Authorization` header)
-**Log all traffic** (URLs visited, data transferred, timing)
-**Rewrite URLs** (redirect, canonicalize)
-**Inject content** (ads, tracking scripts, warnings)
+- **Read entire HTTP request/response** (if unencrypted)
+- **Modify headers** (add `Via`, `X-Forwarded-For`, remove sensitive headers)
+- **Cache responses** based on HTTP semantics (`Cache-Control`, `ETag`)
+- **Compress/decompress** content (gzip, deflate, br)
+- **Filter content** (block URLs, scan for malware, remove ads)
+- **Authenticate users** (via `Proxy-Authorization` header)
+- **Log all traffic** (URLs visited, data transferred, timing)
+- **Rewrite URLs** (redirect, canonicalize)
+- **Inject content** (ads, tracking scripts, warnings)
 
 **What HTTP Proxies CANNOT Do:**
 
-**Proxy non-HTTP protocols** (FTP, SSH, SMTP, WebSocket upgrade, custom protocols)
-**Inspect HTTPS content** without TLS termination (breaking end-to-end encryption)
-**Hide that you're using a proxy** (unless headers are carefully stripped)
-**Proxy UDP traffic** (WebRTC, DNS, QUIC)
-**Preserve end-to-end TLS** while inspecting content (fundamental incompatibility)
+- **Proxy non-HTTP protocols** (FTP, SSH, SMTP, WebSocket upgrade, custom protocols)
+- **Inspect HTTPS content** without TLS termination (breaking end-to-end encryption)
+- **Hide that you're using a proxy** (unless headers are carefully stripped)
+- **Proxy UDP traffic** (WebRTC, DNS, QUIC)
+- **Preserve end-to-end TLS** while inspecting content (fundamental incompatibility)
 
 !!! warning "The Fundamental HTTPS Dilemma"
     HTTP proxies face an impossible choice with HTTPS:
     
     **Option A: Blind tunnel (CONNECT method)**
+
     - Proxy cannot read/cache/filter HTTPS content
     - End-to-end encryption preserved
     - Proxy only sees destination IP:port, not URLs
     
     **Option B: TLS termination (MITM)**
+
     - Proxy decrypts HTTPS, inspects content, re-encrypts
     - Breaks end-to-end encryption
     - Requires installing proxy's CA certificate on client
@@ -270,7 +272,7 @@ Age: 120
 
 The `CONNECT` method (defined in RFC 7231 Section 4.3.6) solves the HTTPS problem: how can an HTTP proxy forward encrypted traffic it cannot read? Answer: **become a blind TCP tunnel**.
 
-When a client wants to access an HTTPS site through a proxy, it uses `CONNECT` to ask the proxy to establish a **raw TCP tunnel** to the destination. After the tunnel is established, the proxy simply forwards bytes in both directions without interpreting them—it becomes Layer 4 (transport) instead of Layer 7 (application).
+When a client wants to access an HTTPS site through a proxy, it uses `CONNECT` to ask the proxy to establish a **raw TCP tunnel** to the destination. After the tunnel is established, the proxy simply forwards bytes in both directions without interpreting them. It becomes Layer 4 (transport) instead of Layer 7 (application).
 
 ```mermaid
 sequenceDiagram
@@ -383,18 +385,18 @@ def handle_connect(client_socket, target_host, target_port):
 
 **What the proxy can see:**
 
-**Destination hostname and port** - From CONNECT request  
-Connection timing** - When established, how long open  
-**Data volume** - Total bytes transferred in each direction  
-**Connection close** - When either side terminates
+- **Destination hostname and port** - From CONNECT request  
+- **Connection timing** - When established, how long open  
+- **Data volume** - Total bytes transferred in each direction  
+- **Connection close** - When either side terminates
 
 **What the proxy CANNOT see:**
 
-**TLS handshake details** - Encrypted, but observable patterns exist  
-**HTTP method/URL** - Encrypted inside TLS  
-**Request/response headers** - Encrypted inside TLS  
-**Response content** - Encrypted inside TLS  
-**Cookies, session tokens** - Encrypted inside TLS
+- **TLS handshake details** - Encrypted, but observable patterns exist  
+- **HTTP method/URL** - Encrypted inside TLS  
+- **Request/response headers** - Encrypted inside TLS  
+- **Response content** - Encrypted inside TLS  
+- **Cookies, session tokens** - Encrypted inside TLS
 
 !!! tip "TLS Handshake Fingerprinting"
     While the proxy can't decrypt the TLS handshake, it can **observe its structure**. The first few packets after `CONNECT` reveal:
@@ -457,7 +459,7 @@ Host: ssh.example.com:22
 [Tunnel established, SSH traffic flows]
 ```
 
-This makes HTTP proxies with `CONNECT` support **surprisingly versatile**—they can proxy SSH, FTP-over-TLS, IMAPS, SMTPS, and other encrypted protocols, not just HTTPS.
+This makes HTTP proxies with `CONNECT` support **surprisingly versatile**. They can proxy SSH, FTP-over-TLS, IMAPS, SMTPS, and other encrypted protocols, not just HTTPS.
 
 !!! danger "CONNECT Abuse and Restrictions"
     Because `CONNECT` enables tunneling arbitrary TCP connections, many proxies:
@@ -512,11 +514,11 @@ HTTP supports multiple authentication schemes, each with different security char
 
 | Scheme | RFC | Security Level | Mechanism | Strengths | Weaknesses |
 |--------|-----|----------------|-----------|-----------|------------|
-| **Basic** | RFC 7617 | ⚠️ Low | Base64-encoded `username:password` | Simple, universal support | **Cleartext** (trivial to decode), no replay protection |
-| **Digest** | RFC 7616 | 🔒 Medium | Challenge-response with MD5/SHA-256 | Prevents cleartext transmission, replay protection | Vulnerable to rainbow tables, rarely implemented |
-| **NTLM** | Proprietary (Microsoft) | 🔒 Medium | Challenge-response (NT hash) | Windows integration, SSO | Proprietary, complex, known vulnerabilities |
-| **Negotiate** | RFC 4559 | 🔐 High | Kerberos/SPNEGO | Strong cryptography, SSO, mutual auth | Complex setup, Active Directory dependency |
-| **Bearer** | RFC 6750 | 🔐 High (if token secure) | OAuth 2.0 token | API-friendly, revocable tokens | Token theft = full access, requires token infrastructure |
+| **Basic** | RFC 7617 | Low | Base64-encoded `username:password` | Simple, universal support | **Cleartext** (trivial to decode), no replay protection |
+| **Digest** | RFC 7616 | Medium | Challenge-response with MD5/SHA-256 | Prevents cleartext transmission, replay protection | Vulnerable to rainbow tables, rarely implemented |
+| **NTLM** | Proprietary (Microsoft) | Medium | Challenge-response (NT hash) | Windows integration, SSO | Proprietary, complex, known vulnerabilities |
+| **Negotiate** | RFC 4559 | High | Kerberos/SPNEGO | Strong cryptography, SSO, mutual auth | Complex setup, Active Directory dependency |
+| **Bearer** | RFC 6750 | High (if token secure) | OAuth 2.0 token | API-friendly, revocable tokens | Token theft = full access, requires token infrastructure |
 
 #### Basic Authentication: The Simplest (and Weakest)
 
@@ -600,17 +602,19 @@ Proxy-Authorization: Digest username="user",
 3. **Proxy verifies** by computing same hash and comparing
 
 **Security Improvements over Basic:**
+
 - Password never transmitted (only hash)
 - Replay protection (nonce changes each challenge)
 - Integrity protection (hash includes method and URI)
 
 **Remaining Issues:**
+
 - MD5 is cryptographically weak (rainbow table attacks)
 - No encryption (content still visible if not using TLS)
 - Complex to implement correctly
 
 !!! tip "Digest with SHA-256"
-    RFC 7616 (2015) updated Digest to support SHA-256 instead of MD5, addressing the cryptographic weakness. However, support is still limited—many proxies only implement MD5.
+    RFC 7616 (2015) updated Digest to support SHA-256 instead of MD5, addressing the cryptographic weakness. However, support is still limited. Many proxies only implement MD5.
 
 #### NTLM: Windows-Integrated Authentication
 
@@ -672,18 +676,21 @@ Proxy-Authorization: Negotiate YIIFyQYGKwYBBQUCoIIFvTCCBbmgMDAuBgkqhkiC9xIBAgIGC
 ```
 
 **Advantages:**
+
 - **Strongest security**: AES encryption, mutual authentication
 - **True SSO**: No password prompts for domain users
 - **Ticket expiration**: Time-limited authentication
 - **Auditing**: Centralized KDC logging
 
 **Disadvantages:**
+
 - **Complex setup**: Requires Active Directory infrastructure
 - **Limited cross-platform**: Best on Windows, limited macOS/Linux support
 - **Time synchronization**: Requires accurate clocks (Kerberos tickets time-sensitive)
 
 !!! info "Kerberos in Browser Automation"
     Pydoll (and most headless browsers) have **limited Kerberos support** because:
+
     - Requires OS-level integration (ticket cache, keytab)
     - Needs domain-joined machine
     - Complex to configure programmatically
@@ -697,11 +704,7 @@ Proxy-Authorization: Negotiate YIIFyQYGKwYBBQUCoIIFvTCCBbmgMDAuBgkqhkiC9xIBAgIGC
 from pydoll import Chrome, ChromiumOptions
 
 options = ChromiumOptions()
-options.set_proxy({
-    'server': 'http://proxy.example.com:8080',
-    'username': 'myuser',
-    'password': 'mypass'  # Pydoll handles Basic auth automatically
-})
+options.add_argument('--proxy-server=http://user:pass@ip:port')
 
 async with Chrome(options=options) as browser:
     tab = await browser.start()
@@ -729,7 +732,7 @@ async def handle_auth_required(self, event):
     })
 ```
 
-This approach works for **all authentication schemes** without Pydoll needing to implement protocol-specific logic—Chrome handles Digest/NTLM/Negotiate internally.
+This approach works for **all authentication schemes** without Pydoll needing to implement protocol-specific logic. Chrome handles Digest/NTLM/Negotiate internally.
 
 !!! tip "Authentication Best Practices"
     **Use TLS-encrypted proxy connections** (HTTPS proxy or SSH tunnel)  
@@ -951,16 +954,19 @@ HTTP and HTTPS proxies are the **most common** but also most **limited** proxy p
 ### Related Documentation
 
 **Within This Module:**
+
 - **[SOCKS Proxies](./socks-proxies.md)** - Protocol-agnostic, more secure alternative to HTTP proxies
 - **[Network Fundamentals](./network-fundamentals.md)** - TCP/IP, UDP, WebRTC understanding
 - **[Proxy Detection](./proxy-detection.md)** - How proxies are detected and how to avoid it
 - **[Building Proxy Servers](./build-proxy.md)** - Implement HTTP and SOCKS5 proxies from scratch
 
 **Practical Usage:**
+
 - **[Proxy Configuration (Features)](../../features/configuration/proxy.md)** - How to configure proxies in Pydoll
 - **[Browser Options](../../features/configuration/browser-options.md)** - Relevant browser flags for proxy usage
 
 **Deep Dives:**
+
 - **[Network Fingerprinting](../fingerprinting/network-fingerprinting.md)** - How TCP/IP characteristics leak through proxies
 - **[Browser Fingerprinting](../fingerprinting/browser-fingerprinting.md)** - Application-level detection despite proxies
 
@@ -1058,7 +1064,7 @@ For **browser automation** requiring stealth and flexibility, **SOCKS5 is almost
 - You need HTTP-specific features (caching, URL filtering)
 - SOCKS5 isn't available
 
-Understanding HTTP proxy architecture—its capabilities, limitations, and security model—enables you to **make informed decisions** rather than blindly copying proxy configurations.
+Understanding HTTP proxy architecture (its capabilities, limitations, and security model) enables you to **make informed decisions** rather than blindly copying proxy configurations.
 
 **Next steps:**
 

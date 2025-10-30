@@ -1,6 +1,6 @@
 # Behavioral Fingerprinting
 
-This document explores behavioral fingerprinting—the most sophisticated layer of bot detection that analyzes **how users interact** with web applications rather than **what tools they use**. While network and browser fingerprinting can be spoofed with sufficient technical knowledge, human behavior is notoriously difficult to replicate convincingly.
+This document explores behavioral fingerprinting, the most sophisticated layer of bot detection that analyzes **how users interact** with web applications rather than **what tools they use**. While network and browser fingerprinting can be spoofed with sufficient technical knowledge, human behavior is notoriously difficult to replicate convincingly.
 
 !!! info "Module Navigation"
     - **[← Fingerprinting Overview](./index.md)** - Module introduction and philosophy
@@ -24,7 +24,7 @@ The fundamental insight: **Humans are messy, bots are precise**.
 - Humans scroll with inertia and momentum that follows physical laws
 - Humans pause, hesitate, correct mistakes, and interact organically
 
-Bots, by default, execute actions with machine precision—perfectly straight mouse movements, constant typing speeds, instant scrolling, and sequential operations without human variability.
+Bots, by default, execute actions with machine precision, perfectly straight mouse movements, constant typing speeds, instant scrolling, and sequential operations without human variability.
 
 !!! info "Industry Adoption"
     Leading anti-bot vendors have shifted focus to behavioral analysis:
@@ -305,9 +305,9 @@ V │    ████████████████
      (Constant velocity)
 
 Human (Ease-in-out):
-V │        ╱╲
-  │      ╱    ╲
-  │    ╱        ╲
+V │      ╱╲
+  │     ╱  ╲
+  │    ╱    ╲
   └────────────────────► t
    (Acceleration → Deceleration)
 ```
@@ -350,7 +350,8 @@ This three-level interpolation produces the same result but avoids high-power po
     4. **Velocity Overshoot**: Real humans often **overshoot** targets slightly, then correct. Perfectly tuned Bezier+easing combinations lack this.
     
     **Research:**
-    - **Chou, Y. et al. (2017)**: "A Study of Web Bot Detection by Analyzing Mouse Trajectories" - demonstrated that Bezier-generated movements cluster differently than organic movements in feature space.
+
+    - **Chou, Y. et al. (2017)**: "A Study of Web Bot Detection by Analyzing Mouse Trajectories": demonstrated that Bezier-generated movements cluster differently than organic movements in feature space.
 
 !!! tip "Beyond Simple Bezier"
     Production-grade mouse simulation requires:
@@ -362,6 +363,7 @@ This three-level interpolation produces the same result but avoids high-power po
     - **Randomized easing**: Don't always use the same easing function
     
     Popular tools using Bezier:
+
     - **[Puppeteer Ghost Cursor](https://github.com/Xetera/ghost-cursor)**: Combines Bezier with random overshooting
     - **[Pyautogui](https://pyautogui.readthedocs.io/)**: Basic tweening (easily detectable)
     - **[Humanize.js](https://github.com/HumanSignal/label-studio-frontend/blob/master/src/utils/utilities.js)**: Advanced composite curves
@@ -378,13 +380,14 @@ In information theory, **entropy** measures the amount of randomness or unpredic
 - **Low entropy** = Repetitive patterns, predictable movements, few direction changes → Bot-like
 
 Think of it this way:
+
 - A perfectly straight line has **zero entropy** (completely predictable)
 - A random walk has **high entropy** (hard to predict next point)
 - Human movement has **moderate-to-high entropy** (somewhat random, but not completely chaotic)
 
 **The Shannon Entropy Formula (Simplified):**
 
-Entropy measures "surprise"—if every direction is equally likely, entropy is maximized. If movements always go the same direction, entropy is zero.
+Entropy measures "surprise". If every direction is equally likely, entropy is maximized. If movements always go the same direction, entropy is zero.
 
 ```
 H = -Σ(p × log₂(p))
@@ -465,7 +468,7 @@ print(f"Bot entropy: {bot_entropy:.3f}")      # ~0.0-0.5 (low)
 
 ## Keystroke Dynamics (Typing Cadence)
 
-Keystroke dynamics—also called **typing biometrics**—analyzes the timing patterns of keyboard input. This is one of the oldest behavioral biometric techniques, dating back to telegraph operators in the 1850s who could identify each other by their "Morse code fist".
+Keystroke dynamics, also called **typing biometrics**, analyzes the timing patterns of keyboard input. This is one of the oldest behavioral biometric techniques, dating back to telegraph operators in the 1850s who could identify each other by their "Morse code fist".
 
 ### Keystroke Timing Features
 
@@ -608,17 +611,19 @@ A **bigram** (or digraph) is simply a pair of consecutive characters. In typing 
 
 **Why Bigram Timing Matters:**
 
-When you type the word "the", you're not pressing three independent keys—you're executing a memorized motor sequence. Your brain and fingers have learned that "th" and "he" are common patterns, making them faster than rare combinations like "xq" or "zp".
+When you type the word "the", you're not pressing three independent keys, you're executing a memorized motor sequence. Your brain and fingers have learned that "th" and "he" are common patterns, making them faster than rare combinations like "xq" or "zp".
 
 **The Science Behind It:**
 
 Research in motor learning shows:
+
 - **Frequently typed bigrams** (like "th", "in", "er") are stored as **motor chunks** in procedural memory
 - **Same-hand bigrams** are often faster than alternating hands (less coordination needed)
 - **Home row to home row** is faster than reaching for distant keys
 - **Awkward finger combinations** (like ring finger → pinky on same hand) are naturally slower
 
 This creates a **unique timing signature** for each person based on:
+
 1. Their typing style (touch typing vs hunt-and-peck)
 2. Keyboard layout familiarity
 3. Native language (Portuguese speakers have different bigrams than English speakers)
@@ -725,11 +730,13 @@ function detectPastedText(input_events) {
 ```
 
 **Bot patterns:**
+
 - Using `element.send_keys("text")` without individual key events
 - JavaScript `input.value = "text"` injection
 - Clipboard paste without `paste` event or preceding key events
 
 **Human patterns:**
+
 - Individual `keydown`/`keyup` events for each character
 - Occasional `paste` events (Ctrl+V) with corresponding keyboard modifiers
 - Typing errors followed by backspace
@@ -738,7 +745,7 @@ function detectPastedText(input_events) {
 
 **Why Scrolling is Hard to Fake:**
 
-When you scroll with a mouse wheel or trackpad, you're not just moving pixels—you're **applying physical force** to a mechanical or capacitive input device. This physical interaction creates natural patterns that follow the laws of physics.
+When you scroll with a mouse wheel or trackpad, you're not just moving pixels, you're **applying physical force** to a mechanical or capacitive input device. This physical interaction creates natural patterns that follow the laws of physics.
 
 **The Physics of Human Scrolling:**
 
@@ -747,7 +754,7 @@ When you scroll with a mouse wheel or trackpad, you're not just moving pixels—
 3. **Deceleration**: Speed decreases exponentially (not linearly) until it stops
 4. **Inertia**: On touchpads especially, content continues scrolling briefly after your finger lifts
 
-This is identical to sliding an object across a table—it starts fast and gradually slows down due to friction.
+This is identical to sliding an object across a table, it starts fast and gradually slows down due to friction.
 
 **Bot Scrolling Problems:**
 
@@ -1191,6 +1198,7 @@ def analyze_event_timing(events: List[Tuple[str, float]]) -> dict:
     ```
     
     **Real humans**:
+
     - Scan the page (1-3 seconds)
     - Read content (2-10 seconds)
     - Move cursor to target (0.3-1 second)
@@ -1199,12 +1207,13 @@ def analyze_event_timing(events: List[Tuple[str, float]]) -> dict:
     **Total**: 3.5-14+ seconds from page load to first click
     
     **Bots**:
+
     - Execute immediately after DOMContentLoaded
     - Total time: 0.1-0.5 seconds
 
 ## Machine Learning in Behavioral Detection
 
-Modern anti-bot systems use **machine learning models** trained on billions of interactions to classify behavior as human or bot. These systems don't rely on simple rule-based detection—they learn patterns through supervised learning on massive datasets.
+Modern anti-bot systems use **machine learning models** trained on billions of interactions to classify behavior as human or bot. These systems don't rely on simple rule-based detection, they learn patterns through supervised learning on massive datasets.
 
 ### How ML-Based Detection Works
 
@@ -1248,6 +1257,7 @@ Modern anti-bot systems use **machine learning models** trained on billions of i
     - **Cloudflare Bot Management**: Uses ensemble models (Random Forest + Neural Networks)
     
     **Common ML Architectures:**
+
     - **Random Forests**: Fast inference, interpretable features, good for tabular data
     - **Gradient Boosting (XGBoost/LightGBM)**: High accuracy, handles missing values
     - **Recurrent Neural Networks (LSTM/GRU)**: Captures temporal sequences (mouse trajectories)
@@ -1265,91 +1275,6 @@ Modern anti-bot systems use **machine learning models** trained on billions of i
 
 You **cannot** replicate ML-based detection locally. The models are proprietary, trained on massive datasets, and constantly retrained. Your best approach is to **focus on realistic behavior** rather than trying to reverse-engineer their models.
 
-## Evasion Strategies for Behavioral Fingerprinting
-
-Given Pydoll's CDP-based architecture, how can you evade behavioral fingerprinting?
-
-### Current State: Manual Randomization Required
-
-As documented in [Human-Like Interactions](../../features/automation/human-interactions.md), Pydoll **currently requires manual implementation** of behavioral realism:
-
-- **Mouse movements**: Must be implemented with Bezier curves and randomization
-- **Typing**: Requires character-by-character input with variable intervals
-- **Scrolling**: Needs manual JavaScript with momentum simulation
-- **Event sequences**: Must ensure proper ordering (mousemove → mousedown → mouseup → click)
-
-### Future Improvements
-
-Future versions of Pydoll will include:
-
-```python
-# Future API (not yet implemented)
-await element.click(
-    realistic=True,              # Automatic Bezier curve movement
-    offset='random',             # Random offset within bounds
-    thinking_time=(1.0, 3.0)     # Random delay before action
-)
-
-await input_field.type_text(
-    "human-like text",
-    realistic=True,              # Variable typing speed with bigram timing
-    error_rate=0.05              # 5% chance of typo + backspace
-)
-
-await tab.scroll_to(
-    target_y=1000,
-    realistic=True,              # Momentum + inertia simulation
-    speed='medium'               # Human-like scroll speed
-)
-```
-
-### Best Practices Now
-
-Until automation is built-in, follow these practices:
-
-1. **Always add mouse movement before clicks**
-   ```python
-   # Bad
-   await element.click()  # Instant click at center
-   
-   # Good
-   # (Manual implementation required)
-   await move_mouse_realistically(element)
-   await asyncio.sleep(random.uniform(0.1, 0.3))
-   await element.click(x_offset=random.randint(-10, 10))
-   ```
-
-2. **Type character-by-character with variable intervals**
-   ```python
-   # Bad
-   await input.type_text("text", interval=0.1)  # Constant interval
-   
-   # Good
-   for char in "text":
-       await input.type_text(char, interval=0)
-       await asyncio.sleep(random.uniform(0.08, 0.22))
-   ```
-
-3. **Add "thinking time" before actions**
-   ```python
-   # Humans don't act instantly after page load
-   await asyncio.sleep(random.uniform(2.0, 5.0))  # Read page
-   await random_mouse_movement()  # Scan with cursor
-   await element.click()  # Then act
-   ```
-
-4. **Simulate scrolling with momentum**
-   ```python
-   # Current: Instant scroll (detectable)
-   await tab.execute_script("window.scrollTo(0, 1000)")
-   
-   # Better: Gradual scroll with deceleration
-   scroll_events = simulate_human_scroll(target=1000)
-   for delta, delay in scroll_events:
-       await tab.execute_script(f"window.scrollBy(0, {delta})")
-       await asyncio.sleep(delay)
-   ```
-
 ## Conclusion
 
 Behavioral fingerprinting represents the **cutting edge** of bot detection. It's the final line of defense that even sophisticated bots struggle to overcome convincingly.
@@ -1360,18 +1285,18 @@ Behavioral fingerprinting represents the **cutting edge** of bot detection. It's
 2. **Bots are precise**: Constant timing, straight lines, and perfect execution are red flags
 3. **Physics matters**: Movement follows biomechanical laws (Fitts's Law, inertia, momentum)
 4. **Context matters**: Actions must occur in natural sequences with realistic timing
-5. **ML is everywhere**: Modern systems don't use rule-based detection—they learn patterns
+5. **ML is everywhere**: Modern systems don't use rule-based detection, they learn patterns
 
 **Pydoll's Advantage:**
 
 Unlike Selenium/Puppeteer which expose `navigator.webdriver` and have detectable CDP characteristics, Pydoll provides:
 
-✅ **No webdriver flag** (cleaner fingerprint)  
-✅ **Full CDP control** (deep browser manipulation)  
-✅ **Async architecture** (natural timing patterns)  
-✅ **Request interception** (header consistency)
+- **No webdriver flag** (cleaner fingerprint)
+- **Full CDP control** (deep browser manipulation)
+- **Async architecture** (natural timing patterns)
+- **Request interception** (header consistency)
 
-But behavioral realism is **your responsibility** (for now). Master the techniques in this guide, combine them with network/browser fingerprint evasion, and you'll create automation that's virtually indistinguishable from human behavior.
+For practical evasion techniques and implementation strategies, see the [Evasion Techniques](./evasion-techniques.md) guide.
 
 ## Further Reading
 
