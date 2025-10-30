@@ -590,7 +590,11 @@ class Tab(FindElementsMixin):
             output_extension = ScreenshotFormat.JPEG
 
         # Normalize jpg to jpeg (CDP only accepts jpeg)
-        output_extension = output_extension.replace('jpg', 'jpeg') if output_extension == 'jpg' else output_extension
+        output_extension = (
+            output_extension.replace('jpg', 'jpeg')
+            if output_extension == 'jpg'
+            else output_extension
+        )
 
         if not ScreenshotFormat.has_value(output_extension):
             raise InvalidFileExtension(f'{output_extension} extension is not supported.')
@@ -651,7 +655,7 @@ class Tab(FindElementsMixin):
 
         Returns:
             Base64 PDF data if as_base64=True, None otherwise.
-        
+
         Raises:
             ValueError: If path is not provided when as_base64=False.
         """
@@ -674,7 +678,7 @@ class Tab(FindElementsMixin):
             return pdf_data
 
         if path is None:
-            raise ValueError("path is required when as_base64=False")
+            raise ValueError('path is required when as_base64=False')
 
         pdf_bytes = decode_base64_to_bytes(pdf_data)
         async with aiofiles.open(path, 'wb') as file:

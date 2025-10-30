@@ -285,9 +285,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         )
 
         screenshot: CaptureScreenshotResponse = await self._connection_handler.execute_command(
-            PageCommands.capture_screenshot(
-                format=file_format, clip=clip, quality=quality
-            )
+            PageCommands.capture_screenshot(format=file_format, clip=clip, quality=quality)
         )
 
         screenshot_data = screenshot['result']['data']
