@@ -464,7 +464,7 @@ class TestTabScreenshotAndPDF:
             'result': {'data': pdf_data}
         }
         
-        result = await tab.print_to_pdf('', as_base64=True)
+        result = await tab.print_to_pdf(as_base64=True)
         
         assert result == pdf_data
         assert_mock_called_at_least_once(tab._connection_handler)
@@ -1779,17 +1779,15 @@ class TestTabEdgeCases:
 
     @pytest.mark.asyncio
     async def test_print_to_pdf_with_invalid_path(self, tab):
-        """Test print_to_pdf with invalid path handling."""
+        """Test print_to_pdf with missing path when not using base64."""
         # Mock the response
         tab._connection_handler.execute_command.return_value = {
             'result': {'data': 'JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwo+PgplbmRvYmoKdHJhaWxlcgo8PAovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKMTgKJSVFT0Y='}
         }
         
-        # Should not raise exception - print_to_pdf doesn't validate extensions
-        result = await tab.print_to_pdf('document.txt', as_base64=True)
-        
-        assert result is not None
-        assert_mock_called_at_least_once(tab._connection_handler)
+        # Should raise ValueError when path is not provided and as_base64=False
+        with pytest.raises(ValueError, match="path is required when as_base64=False"):
+            await tab.print_to_pdf(as_base64=False)
 
     @pytest.mark.asyncio
     async def test_execute_script_with_none_element(self, tab):

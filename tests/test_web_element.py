@@ -631,7 +631,7 @@ class TestWebElementScreenshot:
             {'result': {'data': screenshot_data}},  # capture_screenshot
         ]
 
-        screenshot_path = tmp_path / 'element.jpg'
+        screenshot_path = tmp_path / 'element.jpeg'
 
         # Mock aiofiles.open properly for async context manager
         mock_file = AsyncMock()
@@ -654,7 +654,7 @@ class TestWebElementScreenshot:
             {'result': {'data': screenshot_data}},
         ]
 
-        screenshot_path = tmp_path / 'element_default.jpg'
+        screenshot_path = tmp_path / 'element_default.jpeg'
 
         # Mock aiofiles.open properly for async context manager
         mock_file = AsyncMock()
@@ -665,6 +665,57 @@ class TestWebElementScreenshot:
             await web_element.take_screenshot(str(screenshot_path))
 
         # Should call get_bounds_using_js and capture_screenshot
+        assert web_element._connection_handler.execute_command.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_take_screenshot_as_base64(self, web_element):
+        """Test screenshot returned as base64 string."""
+        bounds = {'x': 10, 'y': 20, 'width': 100, 'height': 50}
+        screenshot_data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
+
+        web_element._connection_handler.execute_command.side_effect = [
+            {'result': {'result': {'value': json.dumps(bounds)}}},  # get_bounds_using_js
+            {'result': {'data': screenshot_data}},  # capture_screenshot
+        ]
+
+        # Take screenshot as base64
+        result = await web_element.take_screenshot(as_base64=True)
+
+        # Should return the base64 data
+        assert result == screenshot_data
+        # Should call get_bounds_using_js and capture_screenshot
+        assert web_element._connection_handler.execute_command.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_take_screenshot_missing_path_without_base64(self, web_element):
+        """Test screenshot raises error when no path and as_base64=False."""
+        from pydoll.exceptions import MissingScreenshotPath
+
+        with pytest.raises(MissingScreenshotPath):
+            await web_element.take_screenshot(as_base64=False)
+
+    @pytest.mark.asyncio
+    async def test_take_screenshot_jpg_alias(self, web_element, tmp_path):
+        """Test that .jpg extension works as alias for .jpeg."""
+        bounds = {'x': 10, 'y': 20, 'width': 100, 'height': 50}
+        screenshot_data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAgAB/edzE+oAAAAASUVORK5CYII='
+
+        web_element._connection_handler.execute_command.side_effect = [
+            {'result': {'result': {'value': json.dumps(bounds)}}},  # get_bounds_using_js
+            {'result': {'data': screenshot_data}},  # capture_screenshot
+        ]
+
+        screenshot_path = tmp_path / 'element.jpg'
+
+        # Mock aiofiles.open properly for async context manager
+        mock_file = AsyncMock()
+        mock_file.write = AsyncMock()
+
+        with patch('aiofiles.open') as mock_aiofiles_open:
+            mock_aiofiles_open.return_value.__aenter__.return_value = mock_file
+            await web_element.take_screenshot(str(screenshot_path), quality=90)
+
+        # Should work without raising InvalidFileExtension
         assert web_element._connection_handler.execute_command.call_count == 2
 
 
