@@ -1,3 +1,10 @@
+## 2.9.3 (2025-10-30)
+
+### Refactor
+
+- keep take_screenshot consistent
+- refactor type hints for better clarity and future compatibility
+
 ## 2.9.2 (2025-10-19)
 
 ### Fix
