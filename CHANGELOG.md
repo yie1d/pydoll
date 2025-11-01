@@ -1,3 +1,9 @@
+## 2.10.0 (2025-11-01)
+
+### Feat
+
+- add ScrollAPI for enhanced page scrolling capabilities
+
 ## 2.9.3 (2025-10-30)
 
 ### Refactor
