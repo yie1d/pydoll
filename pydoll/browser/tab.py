@@ -50,6 +50,7 @@ from pydoll.exceptions import (
     TopLevelTargetRequired,
     WaitElementTimeout,
 )
+from pydoll.interactions.scroll import ScrollAPI
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
 from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.types import ScreenshotFormat
@@ -131,6 +132,7 @@ class Tab(FindElementsMixin):
         self._intercept_file_chooser_dialog_enabled = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._request: Optional[Request] = None
+        self._scroll: Optional[ScrollAPI] = None
         logger.debug(
             (
                 f'Tab initialized: target_id={self._target_id}, '
@@ -175,6 +177,18 @@ class Tab(FindElementsMixin):
         if self._request is None:
             self._request = Request(self)
         return self._request
+
+    @property
+    def scroll(self) -> ScrollAPI:
+        """
+        Get the scroll API for controlling page scroll behavior.
+
+        Returns:
+            ScrollAPI: An instance of the ScrollAPI class for scroll operations.
+        """
+        if self._scroll is None:
+            self._scroll = ScrollAPI(self)
+        return self._scroll
 
     @property
     def intercept_file_chooser_dialog_enabled(self) -> bool:
