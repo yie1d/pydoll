@@ -49,6 +49,26 @@ Pydoll 采用全新设计理念，从零构建，直接对接 Chrome DevTools Pr
 
 ## 最新功能
 
+### 类人页面滚动 —— 像真实用户一样滚动！
+
+现在你可以控制页面滚动，支持平滑动画并自动等待完成：
+
+```python
+from pydoll.constants import ScrollPosition
+
+# 带平滑动画向下滚动（等待完成）
+await tab.scroll.by(ScrollPosition.DOWN, 500, smooth=True)
+
+# 导航至特定位置
+await tab.scroll.to_bottom(smooth=True)
+await tab.scroll.to_top(smooth=True)
+
+# 需要速度时的即时滚动
+await tab.scroll.by(ScrollPosition.UP, 300, smooth=False)
+```
+
+不同于立即返回的 `execute_script("window.scrollBy(...)")`，滚动API使用CDP的`awaitPromise`等待浏览器的`scrollend`事件，确保后续操作仅在滚动完全完成后执行。非常适合截取屏幕截图、加载延迟内容或创建真实的阅读模式。
+
 ### 通过 WebSocket 进行远程连接 —— 随时随地控制浏览器！
 
 现在你可以使用浏览器的 WebSocket 地址直接连接到已运行的实例，并立即使用完整的 Pydoll API：
