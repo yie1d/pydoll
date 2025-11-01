@@ -15,6 +15,13 @@ class PageLoadState(str, Enum):
     INTERACTIVE = 'interactive'
 
 
+class ScrollPosition(str, Enum):
+    UP = 'up'
+    DOWN = 'down'
+    LEFT = 'left'
+    RIGHT = 'right'
+
+
 class Scripts:
     ELEMENT_VISIBLE = """
     function() {
@@ -266,6 +273,87 @@ class Scripts:
     const options = {options};
     return await makeRequest(url, options);
 }})();
+"""
+
+    SCROLL_BY = """
+new Promise((resolve) => {{
+    const behavior = '{behavior}';
+    if (behavior === 'auto') {{
+        window.scrollBy({{
+            {axis}: {distance},
+            behavior: 'auto'
+        }});
+        resolve();
+    }} else {{
+        const onScrollEnd = () => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }};
+        window.addEventListener('scrollend', onScrollEnd);
+        window.scrollBy({{
+            {axis}: {distance},
+            behavior: 'smooth'
+        }});
+        setTimeout(() => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }}, 2000);
+    }}
+}});
+"""
+
+    SCROLL_TO_TOP = """
+new Promise((resolve) => {{
+    const behavior = '{behavior}';
+    if (behavior === 'auto') {{
+        window.scrollTo({{
+            top: 0,
+            behavior: 'auto'
+        }});
+        resolve();
+    }} else {{
+        const onScrollEnd = () => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }};
+        window.addEventListener('scrollend', onScrollEnd);
+        window.scrollTo({{
+            top: 0,
+            behavior: 'smooth'
+        }});
+        setTimeout(() => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }}, 2000);
+    }}
+}});
+"""
+
+    SCROLL_TO_BOTTOM = """
+new Promise((resolve) => {{
+    const behavior = '{behavior}';
+    if (behavior === 'auto') {{
+        window.scrollTo({{
+            top: document.body.scrollHeight,
+            behavior: 'auto'
+        }});
+        resolve();
+    }} else {{
+        const onScrollEnd = () => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }};
+        window.addEventListener('scrollend', onScrollEnd);
+        window.scrollTo({{
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        }});
+        setTimeout(() => {{
+            window.removeEventListener('scrollend', onScrollEnd);
+            resolve();
+        }}, 2000);
+    }}
+}});
 """
 
 

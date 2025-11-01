@@ -11,7 +11,6 @@ Um dos principais diferenciais entre uma automação bem-sucedida e bots facilme
     - **Simulação de movimento do mouse**: Trajetórias de cursor realistas com curvas de bezier
     - **Eventos delta do mouse**: Padrões naturais de aceleração e desaceleração
     - **Comportamento de hover (passar o mouse)**: Atrasos e movimentos realistas ao passar o mouse
-    - **Padrões de rolagem (scroll)**: Velocidades de rolagem e momentum semelhantes aos humanos com um método `scroll()` dedicado
     - **Variações de tempo**: Atrasos aleatórios para evitar padrões previsíveis
     
     Essas funcionalidades aproveitam as capacidades do CDP e do JavaScript para máximo realismo.
@@ -223,6 +222,202 @@ asyncio.run(fast_vs_realistic_input())
 !!! info "Controle Avançado de Teclado"
     Para documentação abrangente sobre controle de teclado, incluindo teclas especiais, combinações de teclas, modificadores e tabelas de referência completas de teclas, veja **[Controle de Teclado](keyboard-control.md)**.
 
+## Rolagem Realista da Página
+
+O Pydoll fornece uma API dedicada de scroll que aguarda a conclusão da rolagem antes de prosseguir, tornando suas automações mais realistas e confiáveis.
+
+### Rolagem Básica por Direção
+
+Use o método `scroll.by()` para rolar a página em qualquer direção com controle preciso:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def basic_scrolling():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/long-page')
+        
+        # Rolar para baixo 500 pixels (com animação suave)
+        await tab.scroll.by(ScrollPosition.DOWN, 500, smooth=True)
+        
+        # Rolar para cima 300 pixels
+        await tab.scroll.by(ScrollPosition.UP, 300, smooth=True)
+        
+        # Rolar para a direita (útil para páginas com scroll horizontal)
+        await tab.scroll.by(ScrollPosition.RIGHT, 200, smooth=True)
+        
+        # Rolar para a esquerda
+        await tab.scroll.by(ScrollPosition.LEFT, 200, smooth=True)
+        
+        # Scroll instantâneo (sem animação)
+        await tab.scroll.by(ScrollPosition.DOWN, 1000, smooth=False)
+
+asyncio.run(basic_scrolling())
+```
+
+### Rolagem para Posições Específicas
+
+Navegue rapidamente para o topo ou o final da página:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_to_positions():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # Ler o início do artigo
+        await asyncio.sleep(2.0)
+        
+        # Rolar suavemente até o final
+        await tab.scroll.to_bottom(smooth=True)
+        
+        # Pausar no final
+        await asyncio.sleep(1.5)
+        
+        # Voltar ao topo
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(scroll_to_positions())
+```
+
+!!! tip "Smooth vs Instant"
+    - **smooth=True**: Usa animação suave do navegador e aguarda o evento `scrollend`
+    - **smooth=False**: Rolagem instantânea para máxima velocidade quando o realismo não é crítico
+
+### Padrões de Rolagem Semelhantes a Humanos
+
+!!! info "Melhoria Futura: Rolagem Realista Integrada"
+    Atualmente, você deve implementar manualmente padrões de rolagem aleatórios. Versões futuras incluirão um parâmetro `realistic=True` que adiciona automaticamente variações naturais nas distâncias de rolagem, velocidades e pausas para imitar o comportamento humano de leitura.
+
+Simule comportamento natural de leitura e navegação:
+
+```python
+import asyncio
+import random
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def human_like_scrolling():
+    """Simular padrões de rolagem naturais ao ler um artigo."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # Usuário começa a ler do topo
+        await asyncio.sleep(random.uniform(2.0, 4.0))
+        
+        # Rolar gradualmente enquanto lê
+        for _ in range(random.randint(5, 8)):
+            # Distâncias de rolagem variadas (simula velocidade de leitura)
+            scroll_distance = random.randint(300, 600)
+            await tab.scroll.by(
+                ScrollPosition.DOWN, 
+                scroll_distance, 
+                smooth=True
+            )
+            
+            # Pausar para "ler" o conteúdo
+            await asyncio.sleep(random.uniform(2.0, 5.0))
+        
+        # Rolar rapidamente para verificar o final
+        await tab.scroll.to_bottom(smooth=True)
+        await asyncio.sleep(random.uniform(1.0, 2.0))
+        
+        # Voltar ao topo para reler algo
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(human_like_scrolling())
+```
+
+### Rolando Elementos para a Visão
+
+Use `scroll_into_view()` para garantir que elementos estejam visíveis antes de capturar screenshots da página:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_for_screenshots():
+    """Rolar elementos para a visão antes de capturar screenshots da página."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/product')
+        
+        # Rolar para seção de preços antes de tirar screenshot da página completa
+        pricing_section = await tab.find(id="pricing")
+        await pricing_section.scroll_into_view()
+        await tab.take_screenshot(path="page_with_pricing.png")
+        
+        # Rolar para seção de avaliações antes do screenshot
+        reviews = await tab.find(class_name="reviews")
+        await reviews.scroll_into_view()
+        await tab.take_screenshot(path="page_with_reviews.png")
+        
+        # Rolar para rodapé para capturar estado completo da página
+        footer = await tab.find(tag_name="footer")
+        await footer.scroll_into_view()
+        await tab.take_screenshot(path="page_with_footer.png")
+        
+        # Nota: click() já rola automaticamente, então não é necessário:
+        # await button.scroll_into_view()  # Desnecessário!
+        # await button.click()  # Isso já rola o botão para a visão
+
+asyncio.run(scroll_for_screenshots())
+```
+
+### Detectando Conteúdo de Scroll Infinito
+
+Implemente padrões de rolagem para carregar conteúdo lazy-loaded:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def infinite_scroll_loading():
+    """Carregar conteúdo em páginas com scroll infinito."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/feed')
+        
+        items_loaded = 0
+        max_scrolls = 10
+        
+        for scroll_num in range(max_scrolls):
+            # Rolar até o final para acionar carregamento
+            await tab.scroll.to_bottom(smooth=True)
+            
+            # Aguardar o conteúdo carregar
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            
+            # Verificar se novos itens foram carregados
+            items = await tab.find(class_name="feed-item", find_all=True)
+            new_count = len(items)
+            
+            if new_count == items_loaded:
+                print("Sem mais conteúdo para carregar")
+                break
+            
+            items_loaded = new_count
+            print(f"Rolagem {scroll_num + 1}: {items_loaded} itens carregados")
+            
+            # Pequena rolagem para cima (comportamento humano)
+            if random.random() > 0.7:
+                await tab.scroll.by(ScrollPosition.UP, 200, smooth=True)
+                await asyncio.sleep(random.uniform(0.5, 1.0))
+
+asyncio.run(infinite_scroll_loading())
+```
+
+!!! success "Aguarda Automático da Conclusão"
+    Diferentemente de `execute_script("window.scrollBy(...)")` que retorna imediatamente, a API `scroll` usa o parâmetro `awaitPromise` do CDP para aguardar o evento `scrollend` do navegador. Isso garante que suas ações subsequentes só executem após a rolagem terminar completamente.
+
 ## Combinando Técnicas para Máximo Realismo
 
 ### Exemplo Completo de Preenchimento de Formulário
@@ -371,9 +566,7 @@ async def natural_user_simulation(tab):
     await asyncio.sleep(random.uniform(1.0, 3.0))
     
     # Usuário rola para baixo para ver mais
-    # Atualmente: Rolagem manual com JavaScript (instantâneo, não realista)
-    # Futuro: Método scroll() dedicado com momentum e aceleração humanos
-    await tab.execute_script("window.scrollBy(0, 300)")
+    await tab.scroll.by(ScrollPosition.DOWN, 300, smooth=True)
     await asyncio.sleep(random.uniform(0.5, 1.5))
     
     # Usuário encontra e clica no botão
@@ -403,11 +596,10 @@ async def advanced_stealth_automation():
         await tab.go_to('https://example.com/sensitive-page')
         await asyncio.sleep(random.uniform(2.0, 4.0))
         
-        # Rolar realisticamente (abordagem manual atual)
-        # Versões futuras terão um método scroll() dedicado com momentum
+        # Rolar realisticamente com a API dedicada
         for _ in range(random.randint(2, 4)):
             scroll_amount = random.randint(200, 500)
-            await tab.execute_script(f"window.scrollBy(0, {scroll_amount})")
+            await tab.scroll.by(ScrollPosition.DOWN, scroll_amount, smooth=True)
             await asyncio.sleep(random.uniform(0.8, 2.0))
         
         # Encontrar elemento com timeout (simulando busca do usuário)

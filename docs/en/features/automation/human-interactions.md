@@ -11,7 +11,6 @@ One of the key differentiators between successful automation and easily-detected
     - **Mouse movement simulation**: Realistic cursor paths with bezier curves
     - **Mouse delta events**: Natural acceleration and deceleration patterns
     - **Hover behavior**: Realistic delays and movement when hovering
-    - **Scroll patterns**: Human-like scroll speeds and momentum with a dedicated `scroll()` method
     - **Timing variations**: Randomized delays to avoid predictable patterns
     
     These features leverage CDP and JavaScript capabilities for maximum realism.
@@ -223,6 +222,202 @@ asyncio.run(fast_vs_realistic_input())
 !!! info "Advanced Keyboard Control"
     For comprehensive keyboard control documentation, including special keys, key combinations, modifiers, and complete key reference tables, see **[Keyboard Control](keyboard-control.md)**.
 
+## Realistic Page Scrolling
+
+Pydoll provides a dedicated scroll API that waits for scroll completion before proceeding, making your automations more realistic and reliable.
+
+### Basic Directional Scrolling
+
+Use the `scroll.by()` method to scroll the page in any direction with precise control:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def basic_scrolling():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/long-page')
+        
+        # Scroll down 500 pixels (with smooth animation)
+        await tab.scroll.by(ScrollPosition.DOWN, 500, smooth=True)
+        
+        # Scroll up 300 pixels
+        await tab.scroll.by(ScrollPosition.UP, 300, smooth=True)
+        
+        # Scroll right (useful for horizontal scroll pages)
+        await tab.scroll.by(ScrollPosition.RIGHT, 200, smooth=True)
+        
+        # Scroll left
+        await tab.scroll.by(ScrollPosition.LEFT, 200, smooth=True)
+        
+        # Instant scroll (no animation)
+        await tab.scroll.by(ScrollPosition.DOWN, 1000, smooth=False)
+
+asyncio.run(basic_scrolling())
+```
+
+### Scrolling to Specific Positions
+
+Navigate quickly to the top or bottom of the page:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_to_positions():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # Read the beginning of the article
+        await asyncio.sleep(2.0)
+        
+        # Smoothly scroll to the bottom
+        await tab.scroll.to_bottom(smooth=True)
+        
+        # Pause at the bottom
+        await asyncio.sleep(1.5)
+        
+        # Return to the top
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(scroll_to_positions())
+```
+
+!!! tip "Smooth vs Instant"
+    - **smooth=True**: Uses browser's smooth animation and waits for `scrollend` event
+    - **smooth=False**: Instant scrolling for maximum speed when realism isn't critical
+
+### Human-Like Scrolling Patterns
+
+!!! info "Future Enhancement: Built-in Realistic Scrolling"
+    Currently, you must manually implement random scrolling patterns. Future versions will include a `realistic=True` parameter that automatically adds natural variations in scroll distances, speeds, and pauses to mimic human reading behavior.
+
+Simulate natural reading and navigation behavior:
+
+```python
+import asyncio
+import random
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def human_like_scrolling():
+    """Simulate natural scrolling patterns while reading an article."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # User starts reading from top
+        await asyncio.sleep(random.uniform(2.0, 4.0))
+        
+        # Gradually scroll while reading
+        for _ in range(random.randint(5, 8)):
+            # Varied scroll distances (simulates reading speed)
+            scroll_distance = random.randint(300, 600)
+            await tab.scroll.by(
+                ScrollPosition.DOWN, 
+                scroll_distance, 
+                smooth=True
+            )
+            
+            # Pause to "read" content
+            await asyncio.sleep(random.uniform(2.0, 5.0))
+        
+        # Quick scroll to check the end
+        await tab.scroll.to_bottom(smooth=True)
+        await asyncio.sleep(random.uniform(1.0, 2.0))
+        
+        # Scroll back to top to re-read something
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(human_like_scrolling())
+```
+
+### Scrolling Elements into View
+
+Use `scroll_into_view()` to ensure elements are visible before taking page screenshots:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_for_screenshots():
+    """Scroll elements into view before capturing page screenshots."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/product')
+        
+        # Scroll to pricing section before taking full page screenshot
+        pricing_section = await tab.find(id="pricing")
+        await pricing_section.scroll_into_view()
+        await tab.take_screenshot(path="page_with_pricing.png")
+        
+        # Scroll to reviews section before screenshot
+        reviews = await tab.find(class_name="reviews")
+        await reviews.scroll_into_view()
+        await tab.take_screenshot(path="page_with_reviews.png")
+        
+        # Scroll to footer to capture complete page state
+        footer = await tab.find(tag_name="footer")
+        await footer.scroll_into_view()
+        await tab.take_screenshot(path="page_with_footer.png")
+        
+        # Note: click() already scrolls automatically, so no need for:
+        # await button.scroll_into_view()  # Unnecessary!
+        # await button.click()  # This already scrolls the button into view
+
+asyncio.run(scroll_for_screenshots())
+```
+
+### Handling Infinite Scroll Content
+
+Implement scrolling patterns to load lazy-loaded content:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def infinite_scroll_loading():
+    """Load content on infinite scroll pages."""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/feed')
+        
+        items_loaded = 0
+        max_scrolls = 10
+        
+        for scroll_num in range(max_scrolls):
+            # Scroll to bottom to trigger loading
+            await tab.scroll.to_bottom(smooth=True)
+            
+            # Wait for content to load
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            
+            # Check if new items were loaded
+            items = await tab.find(class_name="feed-item", find_all=True)
+            new_count = len(items)
+            
+            if new_count == items_loaded:
+                print("No more content to load")
+                break
+            
+            items_loaded = new_count
+            print(f"Scroll {scroll_num + 1}: {items_loaded} items loaded")
+            
+            # Small scroll up (human behavior)
+            if random.random() > 0.7:
+                await tab.scroll.by(ScrollPosition.UP, 200, smooth=True)
+                await asyncio.sleep(random.uniform(0.5, 1.0))
+
+asyncio.run(infinite_scroll_loading())
+```
+
+!!! success "Automatic Completion Waiting"
+    Unlike `execute_script("window.scrollBy(...)")` which returns immediately, the `scroll` API uses CDP's `awaitPromise` parameter to wait for the browser's `scrollend` event. This ensures your subsequent actions only execute after scrolling completely finishes.
+
 ## Combining Techniques for Maximum Realism
 
 ### Complete Form Filling Example
@@ -371,9 +566,7 @@ async def natural_user_simulation(tab):
     await asyncio.sleep(random.uniform(1.0, 3.0))
     
     # User scrolls down to see more
-    # Currently: Manual JavaScript scroll (instant, not realistic)
-    # Future: Dedicated scroll() method with human-like momentum and acceleration
-    await tab.execute_script("window.scrollBy(0, 300)")
+    await tab.scroll.by(ScrollPosition.DOWN, 300, smooth=True)
     await asyncio.sleep(random.uniform(0.5, 1.5))
     
     # User finds and clicks button
@@ -403,11 +596,10 @@ async def advanced_stealth_automation():
         await tab.go_to('https://example.com/sensitive-page')
         await asyncio.sleep(random.uniform(2.0, 4.0))
         
-        # Scroll realistically (current manual approach)
-        # Future versions will have a dedicated scroll() method with momentum
+        # Scroll realistically with the dedicated API
         for _ in range(random.randint(2, 4)):
             scroll_amount = random.randint(200, 500)
-            await tab.execute_script(f"window.scrollBy(0, {scroll_amount})")
+            await tab.scroll.by(ScrollPosition.DOWN, scroll_amount, smooth=True)
             await asyncio.sleep(random.uniform(0.8, 2.0))
         
         # Find element with timeout (simulating user search)
