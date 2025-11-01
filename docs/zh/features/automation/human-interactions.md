@@ -2,7 +2,7 @@
 
 成功自动化与易被识破的机器人之间的关键区别之一在于交互的逼真程度。Pydoll提供精密工具，使您的自动化操作几乎与人类行为无异。
 
-!!! 警告 “未来增强功能”
+!!! 警告 "未来增强功能"
     Pydoll正持续提升其类人交互能力。未来版本将包含：
     
     - **可变输入速度**：键盘敲击间隔内置随机化，免除手动调整需求
@@ -11,7 +11,6 @@
     - **鼠标移动模拟**：贝塞尔曲线生成真实光标轨迹
     - **鼠标位移事件**：自然的加速与减速模式
     - **悬停行为**：悬停时的真实延迟与移动效果
-    - **滚动模式**：拟人化滚动速度与惯性，配备专用`scroll()`方法
     - **时间变异性**：随机延迟避免可预测模式
     
     这些功能通过CDP与JavaScript技术实现极致逼真效果。
@@ -223,6 +222,202 @@ asyncio.run(fast_vs_realistic_input())
 !!! info “高级键盘控制”
     有关全面的键盘控制文档（包括特殊键、组合键、修饰键及完整键位参考表），请参阅**[键盘控制](keyboard-control.md)**。
 
+## 逼真页面滚动
+
+Pydoll提供专用滚动API，在继续执行前等待滚动完成，使您的自动化更加真实可靠。
+
+### 基础方向滚动
+
+使用`scroll.by()`方法精确控制页面任意方向的滚动：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def basic_scrolling():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/long-page')
+        
+        # 向下滚动500像素（平滑动画）
+        await tab.scroll.by(ScrollPosition.DOWN, 500, smooth=True)
+        
+        # 向上滚动300像素
+        await tab.scroll.by(ScrollPosition.UP, 300, smooth=True)
+        
+        # 向右滚动（适用于横向滚动页面）
+        await tab.scroll.by(ScrollPosition.RIGHT, 200, smooth=True)
+        
+        # 向左滚动
+        await tab.scroll.by(ScrollPosition.LEFT, 200, smooth=True)
+        
+        # 即时滚动（无动画）
+        await tab.scroll.by(ScrollPosition.DOWN, 1000, smooth=False)
+
+asyncio.run(basic_scrolling())
+```
+
+### 滚动至特定位置
+
+快速导航至页面顶部或底部：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_to_positions():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # 阅读文章开头
+        await asyncio.sleep(2.0)
+        
+        # 平滑滚动至底部
+        await tab.scroll.to_bottom(smooth=True)
+        
+        # 在底部停顿
+        await asyncio.sleep(1.5)
+        
+        # 返回顶部
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(scroll_to_positions())
+```
+
+!!! tip "平滑 vs 即时"
+    - **smooth=True**：使用浏览器平滑动画并等待`scrollend`事件
+    - **smooth=False**：即时滚动，在逼真度非关键时实现最大速度
+
+### 类人滚动模式
+
+!!! info "未来增强：内置真实滚动"
+    目前需手动实现随机滚动模式。未来版本将提供`realistic=True`参数，自动添加滚动距离、速度及停顿的自然变化，模拟人类阅读行为。
+
+模拟自然阅读与导航行为：
+
+```python
+import asyncio
+import random
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def human_like_scrolling():
+    """模拟阅读文章时的自然滚动模式。"""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/article')
+        
+        # 用户从顶部开始阅读
+        await asyncio.sleep(random.uniform(2.0, 4.0))
+        
+        # 阅读时逐步滚动
+        for _ in range(random.randint(5, 8)):
+            # 变化滚动距离（模拟阅读速度）
+            scroll_distance = random.randint(300, 600)
+            await tab.scroll.by(
+                ScrollPosition.DOWN, 
+                scroll_distance, 
+                smooth=True
+            )
+            
+            # 停顿"阅读"内容
+            await asyncio.sleep(random.uniform(2.0, 5.0))
+        
+        # 快速滚动查看末尾
+        await tab.scroll.to_bottom(smooth=True)
+        await asyncio.sleep(random.uniform(1.0, 2.0))
+        
+        # 滚回顶部重读某处
+        await tab.scroll.to_top(smooth=True)
+
+asyncio.run(human_like_scrolling())
+```
+
+### 将元素滚动至可见区
+
+使用`scroll_into_view()`确保元素在截取页面屏幕截图前可见：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+
+async def scroll_for_screenshots():
+    """截取页面屏幕截图前将元素滚动至可见区。"""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/product')
+        
+        # 截取完整页面屏幕截图前滚动至价格部分
+        pricing_section = await tab.find(id="pricing")
+        await pricing_section.scroll_into_view()
+        await tab.take_screenshot(path="page_with_pricing.png")
+        
+        # 截图前滚动至评论区
+        reviews = await tab.find(class_name="reviews")
+        await reviews.scroll_into_view()
+        await tab.take_screenshot(path="page_with_reviews.png")
+        
+        # 滚动至页脚以捕获完整页面状态
+        footer = await tab.find(tag_name="footer")
+        await footer.scroll_into_view()
+        await tab.take_screenshot(path="page_with_footer.png")
+        
+        # 注意：click()已自动滚动，因此无需：
+        # await button.scroll_into_view()  # 多余！
+        # await button.click()  # 此操作已将按钮滚动至可见区
+
+asyncio.run(scroll_for_screenshots())
+```
+
+### 处理无限滚动内容
+
+实现滚动模式加载延迟加载的内容：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.constants import ScrollPosition
+
+async def infinite_scroll_loading():
+    """在无限滚动页面上加载内容。"""
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/feed')
+        
+        items_loaded = 0
+        max_scrolls = 10
+        
+        for scroll_num in range(max_scrolls):
+            # 滚动至底部触发加载
+            await tab.scroll.to_bottom(smooth=True)
+            
+            # 等待内容加载
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            
+            # 检查是否加载新项目
+            items = await tab.find(class_name="feed-item", find_all=True)
+            new_count = len(items)
+            
+            if new_count == items_loaded:
+                print("无更多内容可加载")
+                break
+            
+            items_loaded = new_count
+            print(f"滚动 {scroll_num + 1}：已加载 {items_loaded} 项")
+            
+            # 小幅向上滚动（人类行为）
+            if random.random() > 0.7:
+                await tab.scroll.by(ScrollPosition.UP, 200, smooth=True)
+                await asyncio.sleep(random.uniform(0.5, 1.0))
+
+asyncio.run(infinite_scroll_loading())
+```
+
+!!! success "自动等待完成"
+    不同于立即返回的`execute_script("window.scrollBy(...)")`，`scroll` API使用CDP的`awaitPromise`参数等待浏览器的`scrollend`事件。这确保后续操作仅在滚动完全完成后执行。
+
 ## 组合技术实现最高逼真度
 
 ### 完整表单填写示例
@@ -372,9 +567,7 @@ async def natural_user_simulation(tab):
     await asyncio.sleep(random.uniform(1.0, 3.0))
     
     # 用户向下滚动查看更多内容
-    # 当前实现：手动JavaScript滚动（即时完成，不够真实）
-    # 未来规划：专属scroll()方法，具备类人惯性与加速度
-    await tab.execute_script(“window.scrollBy(0, 300)”)
+    await tab.scroll.by(ScrollPosition.DOWN, 300, smooth=True)
     await asyncio.sleep(random.uniform(0.5, 1.5))
     
     # 用户找到并点击按钮
