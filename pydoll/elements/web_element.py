@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -36,6 +37,7 @@ from pydoll.protocol.input.types import (
     MouseEventType,
 )
 from pydoll.protocol.page.types import ScreenshotFormat, Viewport
+from pydoll.protocol.runtime.types import CallArgument
 from pydoll.utils import (
     decode_base64_to_bytes,
     extract_text_from_html,
@@ -457,13 +459,31 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def insert_text(self, text: str):
         """
-        Insert text in single operation (faster but less realistic than typing).
+        Insert text into element using JavaScript.
+
+        Supports standard inputs, textareas, contenteditable elements, and rich text editors.
+        Inserts text at cursor position or replaces selected text.
+
+        Args:
+            text: Text to insert.
+
+        Raises:
+            ElementNotInteractable: If element does not accept text input.
 
         Note:
-            Element should already be focused for text to be inserted correctly.
+            Uses JavaScript for maximum compatibility with all input types.
+            Automatically handles input/textarea and contenteditable elements.
         """
-        logger.info(f'Inserting text on element (length={len(text)})')
-        await self._execute_command(InputCommands.insert_text(text))
+        logger.info(f'Inserting text (length={len(text)})')
+        result = await self.execute_script(
+            Scripts.INSERT_TEXT, return_by_value=True, arguments=[CallArgument(value=text)]
+        )
+        logger.debug(f'Insert text result: {result}')
+        success = result['result'].get('result', {}).get('value', False)
+
+        if not success:
+            logger.error('Element does not accept text input')
+            raise ElementNotInteractable('Element does not accept text input')
 
     async def set_input_files(self, files: str | Path | list[str | Path]):
         """
@@ -507,9 +527,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         Send key down event.
 
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.down()`` instead.
+
         Note:
             Only sends key down without release. Pair with key_up() for complete keypress.
         """
+        warnings.warn(
+            'WebElement.key_down() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.down(key, modifiers)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         key_name, code = key
         logger.info(f'Key down: key={key_name} code={code} modifiers={modifiers}')
         await self._execute_command(
@@ -523,7 +552,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         )
 
     async def key_up(self, key: Key):
-        """Send key up event (should follow corresponding key_down())."""
+        """
+        Send key up event (should follow corresponding key_down()).
+
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.up()`` instead.
+        """
+        warnings.warn(
+            'WebElement.key_up() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.up(key)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         key_name, code = key
         logger.info(f'Key up: key={key_name} code={code}')
         await self._execute_command(
@@ -544,11 +584,32 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         Press and release keyboard key with configurable timing.
 
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.press()`` instead.
+
         Better for special keys (Enter, Tab, etc.) than type_text().
         """
+        warnings.warn(
+            'WebElement.press_keyboard_key() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.press(key, modifiers, interval)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         await self.key_down(key, modifiers)
         await asyncio.sleep(interval)
         await self.key_up(key)
+
+    async def is_editable(self) -> bool:
+        """
+        Check if element can accept text input.
+
+        Returns:
+            True if element is editable (input, textarea, or contenteditable).
+        """
+        result = await self.execute_script(Scripts.IS_EDITABLE, return_by_value=True)
+        is_editable = result['result']['result']['value']
+        logger.debug(f'Element editable check: {is_editable}')
+        return is_editable
 
     async def _click_option_tag(self):
         """Specialized method for clicking <option> elements in dropdowns."""
@@ -575,20 +636,34 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         result = await self.execute_script(Scripts.ELEMENT_INTERACTIVE, return_by_value=True)
         return result['result']['result']['value']
 
-    async def execute_script(self, script: str, return_by_value: bool = False):
+    async def execute_script(
+        self,
+        script: str,
+        return_by_value: bool = False,
+        arguments: Optional[list[CallArgument]] = None,
+    ):
         """
         Execute JavaScript in element context.
 
-        Element is available as 'this' within the script.
+        Args:
+            script: JavaScript function to execute.
+            return_by_value: Whether to return result by value.
+            arguments: Optional list of arguments to pass to the function.
+
+        Note:
+            Element is available as 'this' within the script.
+            Arguments are accessible via 'arguments' array in JavaScript.
         """
         logger.debug(
-            f'Executing script on element: return_by_value={return_by_value}, length={len(script)}'
+            f'Executing script on element: return_by_value={return_by_value}, '
+            f'length={len(script)}, args={len(arguments) if arguments else 0}'
         )
         return await self._execute_command(
             RuntimeCommands.call_function_on(
                 object_id=self._object_id,
                 function_declaration=script,
                 return_by_value=return_by_value,
+                arguments=arguments,
             )
         )
 
