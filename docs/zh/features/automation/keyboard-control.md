@@ -9,12 +9,14 @@
     **已知问题**：通过 Chrome DevTools Protocol 注入的事件被标记为"不可信"，**不会**触发浏览器 UI 操作或创建用户手势。
     
     **不起作用的功能：**
+
     - 浏览器快捷键（Ctrl+T、Ctrl+W、Ctrl+N）
     - 开发者工具快捷键（F12、Ctrl+Shift+I）
     - 浏览器导航（Ctrl+Shift+T 重新打开标签）
     - 任何修改浏览器 UI 或窗口的快捷键
     
     **完美工作的功能：**
+
     - 页面级快捷键（Ctrl+A、Ctrl+C、Ctrl+V、Ctrl+F）
     - 文本选择和操作
     - 表单导航（Tab、Enter、方向键）
@@ -71,6 +73,7 @@ await tab.keyboard.press(Key.SPACE, interval=0.5)  # 按住 500 毫秒
 ```
 
 **参数:**
+
 - `key`: 要按下的键（来自 `Key` 枚举）
 - `modifiers` (可选): 修饰符标志（Alt=1, Ctrl=2, Meta=4, Shift=8）
 - `interval` (可选): 按住键的时长（秒）（默认: 0.1）
@@ -93,6 +96,7 @@ await tab.keyboard.down(Key.A, modifiers=2)  # Ctrl+A（全选）
 ```
 
 **参数:**
+
 - `key`: 要按下的键
 - `modifiers` (可选): 要应用的修饰符标志
 
@@ -112,9 +116,11 @@ await tab.keyboard.up(Key.CONTROL)
 ```
 
 **参数:**
+
 - `key`: 要释放的键
 
 !!! tip "何时使用每种方法"
+
     - **`press()`**: 单个按键操作（Enter、Tab、字母）
     - **`hotkey()`**: 键盘快捷键（Ctrl+C、Ctrl+Shift+T）
     - **`down()`/`up()`**: 复杂序列、按住修饰键、自定义时序
@@ -189,6 +195,7 @@ from pydoll.constants import Key
 
 !!! tip "修饰符值"
     手动使用 `modifiers` 参数时:
+
     - Alt = 1
     - Ctrl = 2
     - Meta/Command = 4
@@ -516,6 +523,7 @@ await tab.keyboard.press(Key.ENTER)
 
 !!! warning "弃用通知"
     以下 `WebElement` 方法已弃用:
+
     - `key_down()` → 使用 `tab.keyboard.down()`
     - `key_up()` → 使用 `tab.keyboard.up()`
     - `press_keyboard_key()` → 使用 `tab.keyboard.press()`

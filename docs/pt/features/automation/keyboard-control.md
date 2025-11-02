@@ -9,12 +9,14 @@ A API de Teclado fornece controle completo sobre a entrada de teclado no nível 
     **Problema Conhecido**: Eventos injetados via Chrome DevTools Protocol são marcados como "não confiáveis" e **não** acionam ações da UI do navegador ou criam gestos de usuário.
     
     **O que NÃO funciona:**
+
     - Atalhos do navegador (Ctrl+T, Ctrl+W, Ctrl+N)
     - Atalhos de DevTools (F12, Ctrl+Shift+I)
     - Navegação do navegador (Ctrl+Shift+T para reabrir abas)
     - Qualquer atalho que modifica a UI ou janelas do navegador
     
     **O que funciona perfeitamente:**
+
     - Atalhos em nível de página (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+F)
     - Seleção e manipulação de texto
     - Navegação em formulários (Tab, Enter, teclas de seta)
@@ -71,6 +73,7 @@ await tab.keyboard.press(Key.SPACE, interval=0.5)  # Manter por 500ms
 ```
 
 **Parâmetros:**
+
 - `key`: Tecla a ser pressionada (do enum `Key`)
 - `modifiers` (opcional): Flags de modificadores (Alt=1, Ctrl=2, Meta=4, Shift=8)
 - `interval` (opcional): Duração para manter a tecla em segundos (padrão: 0.1)
@@ -115,6 +118,7 @@ await tab.keyboard.up(Key.CONTROL)
 - `key`: Tecla a ser solta
 
 !!! tip "Quando Usar Cada Método"
+
     - **`press()`**: Ações de tecla única (Enter, Tab, letras)
     - **`hotkey()`**: Atalhos de teclado (Ctrl+C, Ctrl+Shift+T)
     - **`down()`/`up()`**: Sequências complexas, manter modificadores, temporização personalizada
@@ -189,6 +193,7 @@ from pydoll.constants import Key
 
 !!! tip "Valores de Modificador"
     Ao usar o parâmetro `modifiers` manualmente:
+
     - Alt = 1
     - Ctrl = 2
     - Meta/Command = 4
@@ -516,6 +521,7 @@ await tab.keyboard.press(Key.ENTER)
 
 !!! warning "Aviso de Depreciação"
     Os seguintes métodos de `WebElement` estão depreciados:
+
     - `key_down()` → Use `tab.keyboard.down()`
     - `key_up()` → Use `tab.keyboard.up()`
     - `press_keyboard_key()` → Use `tab.keyboard.press()`

@@ -9,12 +9,14 @@ The Keyboard API provides complete control over keyboard input at the page level
     **Known Issue**: Events injected via Chrome DevTools Protocol are marked as "untrusted" and do **not** trigger browser UI actions or create user gestures.
     
     **What DOESN'T work:**
+
     - Browser shortcuts (Ctrl+T, Ctrl+W, Ctrl+N)
     - DevTools shortcuts (F12, Ctrl+Shift+I)
     - Browser navigation (Ctrl+Shift+T to reopen tabs)
     - Any shortcut that modifies browser UI or windows
     
     **What WORKS perfectly:**
+
     - Page-level shortcuts (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+F)
     - Text selection and manipulation
     - Form navigation (Tab, Enter, Arrow keys)
@@ -71,6 +73,7 @@ await tab.keyboard.press(Key.SPACE, interval=0.5)  # Hold for 500ms
 ```
 
 **Parameters:**
+
 - `key`: Key to press (from `Key` enum)
 - `modifiers` (optional): Modifier flags (Alt=1, Ctrl=2, Meta=4, Shift=8)
 - `interval` (optional): Duration to hold key in seconds (default: 0.1)
@@ -93,6 +96,7 @@ await tab.keyboard.down(Key.A, modifiers=2)  # Ctrl+A (select all)
 ```
 
 **Parameters:**
+
 - `key`: Key to press down
 - `modifiers` (optional): Modifier flags to apply
 
@@ -112,9 +116,11 @@ await tab.keyboard.up(Key.CONTROL)
 ```
 
 **Parameters:**
+
 - `key`: Key to release
 
 !!! tip "When to Use Each Method"
+
     - **`press()`**: Single key actions (Enter, Tab, letters)
     - **`hotkey()`**: Keyboard shortcuts (Ctrl+C, Ctrl+Shift+T)
     - **`down()`/`up()`**: Complex sequences, holding modifiers, custom timing
@@ -189,6 +195,7 @@ from pydoll.constants import Key
 
 !!! tip "Modifier Values"
     When using `modifiers` parameter manually:
+
     - Alt = 1
     - Ctrl = 2
     - Meta/Command = 4
@@ -516,6 +523,7 @@ await tab.keyboard.press(Key.ENTER)
 
 !!! warning "Deprecation Notice"
     The following `WebElement` methods are deprecated:
+
     - `key_down()` → Use `tab.keyboard.down()`
     - `key_up()` → Use `tab.keyboard.up()`
     - `press_keyboard_key()` → Use `tab.keyboard.press()`
