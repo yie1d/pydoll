@@ -1,3 +1,15 @@
+## 2.11.0 (2025-11-02)
+
+### Feat
+
+- add input handling functions and key constants for editing
+- add KeyboardAPI for simulating keyboard input actions
+- add KeyboardAPI integration for enhanced keyboard control
+
+### Fix
+
+- enhance text insertion and deprecate legacy key methods
+
 ## 2.10.0 (2025-11-01)
 
 ### Feat
