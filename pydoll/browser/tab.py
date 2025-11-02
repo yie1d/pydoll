@@ -50,7 +50,7 @@ from pydoll.exceptions import (
     TopLevelTargetRequired,
     WaitElementTimeout,
 )
-from pydoll.interactions.scroll import ScrollAPI
+from pydoll.interactions import KeyboardAPI, ScrollAPI
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
 from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.types import ScreenshotFormat
@@ -133,6 +133,7 @@ class Tab(FindElementsMixin):
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._request: Optional[Request] = None
         self._scroll: Optional[ScrollAPI] = None
+        self._keyboard: Optional[KeyboardAPI] = None
         logger.debug(
             (
                 f'Tab initialized: target_id={self._target_id}, '
@@ -189,6 +190,18 @@ class Tab(FindElementsMixin):
         if self._scroll is None:
             self._scroll = ScrollAPI(self)
         return self._scroll
+
+    @property
+    def keyboard(self) -> KeyboardAPI:
+        """
+        Get the keyboard API for controlling keyboard input at page level.
+
+        Returns:
+            KeyboardAPI: An instance of the KeyboardAPI class for keyboard operations.
+        """
+        if self._keyboard is None:
+            self._keyboard = KeyboardAPI(self)
+        return self._keyboard
 
     @property
     def intercept_file_chooser_dialog_enabled(self) -> bool:
