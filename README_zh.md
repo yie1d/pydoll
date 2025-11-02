@@ -69,6 +69,36 @@ await tab.scroll.by(ScrollPosition.UP, 300, smooth=False)
 
 不同于立即返回的 `execute_script("window.scrollBy(...)")`，滚动API使用CDP的`awaitPromise`等待浏览器的`scrollend`事件，确保后续操作仅在滚动完全完成后执行。非常适合截取屏幕截图、加载延迟内容或创建真实的阅读模式。
 
+### 键盘 API —— 完全控制键盘输入
+
+全新的 `KeyboardAPI` 为页面级别的所有键盘交互提供了简洁、集中的接口：
+
+```python
+from pydoll.constants import Key
+
+# 按单个键
+await tab.keyboard.press(Key.ENTER)
+await tab.keyboard.press(Key.TAB)
+
+# 使用快捷键/组合键（最多3个键）
+await tab.keyboard.hotkey(Key.CONTROL, Key.A)  # 全选（有效！）
+await tab.keyboard.hotkey(Key.CONTROL, Key.C)  # 复制（有效！）
+await tab.keyboard.hotkey(Key.CONTROL, Key.SHIFT, Key.ARROWRIGHT)  # 向右选择单词
+
+# 复杂序列的手动控制
+await tab.keyboard.down(Key.SHIFT)
+await tab.keyboard.press(Key.ARROWRIGHT)  # 按住 Shift 选择文本
+await tab.keyboard.up(Key.SHIFT)
+```
+
+**主要改进：**
+- **集中化**：所有键盘操作通过 `tab.keyboard` 访问
+- **智能修饰键检测**：快捷键自动检测并应用修饰键（Ctrl、Shift、Alt、Meta）
+- **完整按键支持**：26个字母（A-Z）、10个数字（0-9）、所有功能键、数字键盘和特殊键
+- **页面级快捷键**：适用于 Ctrl+C、Ctrl+V、Ctrl+A 等（由于 CDP 限制，浏览器 UI 快捷键不起作用）
+
+> **⚠️ CDP 限制：** 浏览器 UI 快捷键（如 Ctrl+T 打开新标签，F12 打开开发者工具）通过 CDP 无法使用。请改用 Pydoll 的方法：`await browser.new_tab()`、`await tab.close()`。
+
 ### 通过 WebSocket 进行远程连接 —— 随时随地控制浏览器！
 
 现在你可以使用浏览器的 WebSocket 地址直接连接到已运行的实例，并立即使用完整的 Pydoll API：

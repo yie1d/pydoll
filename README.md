@@ -62,6 +62,36 @@ await tab.scroll.by(ScrollPosition.UP, 300, smooth=False)
 
 Unlike `execute_script("window.scrollBy(...)")` which returns immediately, the scroll API uses CDP's `awaitPromise` to wait for the browser's `scrollend` event, ensuring your next actions only execute after scrolling completely finishes. Perfect for taking screenshots, loading lazy content, or creating realistic reading patterns.
 
+### Keyboard API: Complete Control Over Keyboard Input
+
+The new `KeyboardAPI` provides a clean, centralized interface for all keyboard interactions at the page level:
+
+```python
+from pydoll.constants import Key
+
+# Press individual keys
+await tab.keyboard.press(Key.ENTER)
+await tab.keyboard.press(Key.TAB)
+
+# Use hotkeys/shortcuts with up to 3 keys  
+await tab.keyboard.hotkey(Key.CONTROL, Key.A)  # Select all (works!)
+await tab.keyboard.hotkey(Key.CONTROL, Key.C)  # Copy (works!)
+await tab.keyboard.hotkey(Key.CONTROL, Key.SHIFT, Key.ARROWRIGHT)  # Select word right
+
+# Manual control for complex sequences
+await tab.keyboard.down(Key.SHIFT)
+await tab.keyboard.press(Key.ARROWRIGHT)  # Select text while holding Shift
+await tab.keyboard.up(Key.SHIFT)
+```
+
+**Key improvements:**
+- **Centralized**: All keyboard operations accessible via `tab.keyboard`
+- **Smart modifier detection**: Hotkeys automatically detect and apply modifiers (Ctrl, Shift, Alt, Meta)
+- **Complete key support**: 26 letters (A-Z), 10 digits (0-9), all function keys, numpad, and special keys
+- **Page-level shortcuts**: Works for Ctrl+C, Ctrl+V, Ctrl+A, etc.
+
+> **⚠️ CDP Limitation:** Browser UI shortcuts (like Ctrl+T for new tab, F12 for DevTools) don't work via CDP. Use Pydoll's methods instead: `await browser.new_tab()`, `await tab.close()`.
+
 ## 📦 Installation
 
 ```bash
