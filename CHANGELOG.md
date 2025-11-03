@@ -1,3 +1,28 @@
+## 2.11.0 (2025-11-02)
+
+### Feat
+
+- add input handling functions and key constants for editing
+- add KeyboardAPI for simulating keyboard input actions
+- add KeyboardAPI integration for enhanced keyboard control
+
+### Fix
+
+- enhance text insertion and deprecate legacy key methods
+
+## 2.10.0 (2025-11-01)
+
+### Feat
+
+- add ScrollAPI for enhanced page scrolling capabilities
+
+## 2.9.3 (2025-10-30)
+
+### Refactor
+
+- keep take_screenshot consistent
+- refactor type hints for better clarity and future compatibility
+
 ## 2.9.2 (2025-10-19)
 
 ### Fix

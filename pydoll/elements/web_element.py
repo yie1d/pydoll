@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiofiles
@@ -24,6 +26,8 @@ from pydoll.exceptions import (
     ElementNotFound,
     ElementNotInteractable,
     ElementNotVisible,
+    InvalidFileExtension,
+    MissingScreenshotPath,
     WaitElementTimeout,
 )
 from pydoll.protocol.input.types import (
@@ -233,12 +237,48 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         logger.debug(f'Siblings found: {len(siblings)}')
         return siblings
 
-    async def take_screenshot(self, path: str, quality: int = 100):
+    async def take_screenshot(
+        self,
+        path: Optional[str | Path] = None,
+        quality: int = 100,
+        as_base64: bool = False,
+    ) -> Optional[str]:
         """
         Capture screenshot of this element only.
 
         Automatically scrolls element into view before capturing.
+
+        Args:
+            path: File path for screenshot (extension determines format).
+            quality: Image quality 0-100 (default 100).
+            as_base64: Return as base64 string instead of saving file.
+
+        Returns:
+            Base64 screenshot data if as_base64=True, None otherwise.
+
+        Raises:
+            InvalidFileExtension: If file extension not supported.
+            MissingScreenshotPath: If path is None and as_base64 is False.
         """
+        if not path and not as_base64:
+            raise MissingScreenshotPath()
+
+        if path and isinstance(path, str):
+            output_extension = path.split('.')[-1]
+        elif path and isinstance(path, Path):
+            output_extension = path.suffix.lstrip('.')
+        else:
+            output_extension = ScreenshotFormat.JPEG
+
+        # Normalize jpg to jpeg (CDP only accepts jpeg)
+        if output_extension == 'jpg':
+            output_extension = 'jpeg'
+
+        if not ScreenshotFormat.has_value(output_extension):
+            raise InvalidFileExtension(f'{output_extension} extension is not supported.')
+
+        file_format = ScreenshotFormat.get_value(output_extension)
+
         bounds = await self.get_bounds_using_js()
         clip = Viewport(
             x=bounds['x'],
@@ -248,18 +288,27 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             scale=1,
         )
         logger.debug(
-            f'Taking element screenshot: path={path}, quality={quality}, '
+            f'Taking element screenshot: path={path}, quality={quality}, as_base64={as_base64}, '
             f'clip={{x: {clip["x"]}, y: {clip["y"]}, w: {clip["width"]}, h: {clip["height"]}}}'
         )
+
         screenshot: CaptureScreenshotResponse = await self._connection_handler.execute_command(
-            PageCommands.capture_screenshot(
-                format=ScreenshotFormat.JPEG, clip=clip, quality=quality
-            )
+            PageCommands.capture_screenshot(format=file_format, clip=clip, quality=quality)
         )
-        async with aiofiles.open(path, 'wb') as file:
-            image_bytes = decode_base64_to_bytes(screenshot['result']['data'])
-            await file.write(image_bytes)
-        logger.info(f'Element screenshot saved: {path}')
+
+        screenshot_data = screenshot['result']['data']
+
+        if as_base64:
+            logger.info('Element screenshot captured and returned as base64')
+            return screenshot_data
+
+        if path:
+            image_bytes = decode_base64_to_bytes(screenshot_data)
+            async with aiofiles.open(str(path), 'wb') as file:
+                await file.write(image_bytes)
+            logger.info(f'Element screenshot saved: {path}')
+
+        return None
 
     def get_attribute(self, name: str) -> Optional[str]:
         """
@@ -416,15 +465,33 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     async def insert_text(self, text: str):
         """
-        Insert text in single operation (faster but less realistic than typing).
+        Insert text into element using JavaScript.
+
+        Supports standard inputs, textareas, contenteditable elements, and rich text editors.
+        Inserts text at cursor position or replaces selected text.
+
+        Args:
+            text: Text to insert.
+
+        Raises:
+            ElementNotInteractable: If element does not accept text input.
 
         Note:
-            Element should already be focused for text to be inserted correctly.
+            Uses JavaScript for maximum compatibility with all input types.
+            Automatically handles input/textarea and contenteditable elements.
         """
-        logger.info(f'Inserting text on element (length={len(text)})')
-        await self._execute_command(InputCommands.insert_text(text))
+        logger.info(f'Inserting text (length={len(text)})')
+        result = await self.execute_script(
+            Scripts.INSERT_TEXT, return_by_value=True, arguments=[CallArgument(value=text)]
+        )
+        logger.debug(f'Insert text result: {result}')
+        success = result['result'].get('result', {}).get('value', False)
 
-    async def set_input_files(self, files: list[str]):
+        if not success:
+            logger.error('Element does not accept text input')
+            raise ElementNotInteractable('Element does not accept text input')
+
+    async def set_input_files(self, files: str | Path | list[str | Path]):
         """
         Set file paths for file input element.
 
@@ -439,9 +506,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             or self._attributes.get('type', '').lower() != 'file'
         ):
             raise ElementNotAFileInput()
-        logger.info(f'Setting input files: count={len(files)}')
+        files_list = [str(file) for file in files] if isinstance(files, list) else [str(files)]
+        logger.info(f'Setting input files: count={len(files_list)}')
         await self._execute_command(
-            DomCommands.set_file_input_files(files=files, object_id=self._object_id)
+            DomCommands.set_file_input_files(files=files_list, object_id=self._object_id)
         )
 
     async def type_text(self, text: str, interval: float = 0.1):
@@ -465,9 +533,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         Send key down event.
 
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.down()`` instead.
+
         Note:
             Only sends key down without release. Pair with key_up() for complete keypress.
         """
+        warnings.warn(
+            'WebElement.key_down() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.down(key, modifiers)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         key_name, code = key
         logger.info(f'Key down: key={key_name} code={code} modifiers={modifiers}')
         await self._execute_command(
@@ -481,7 +558,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         )
 
     async def key_up(self, key: Key):
-        """Send key up event (should follow corresponding key_down())."""
+        """
+        Send key up event (should follow corresponding key_down()).
+
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.up()`` instead.
+        """
+        warnings.warn(
+            'WebElement.key_up() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.up(key)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         key_name, code = key
         logger.info(f'Key up: key={key_name} code={code}')
         await self._execute_command(
@@ -502,11 +590,32 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         Press and release keyboard key with configurable timing.
 
+        .. deprecated::
+            This method is deprecated. Use ``tab.keyboard.press()`` instead.
+
         Better for special keys (Enter, Tab, etc.) than type_text().
         """
+        warnings.warn(
+            'WebElement.press_keyboard_key() is deprecated. '
+            'Use tab.keyboard API instead: await tab.keyboard.press(key, modifiers, interval)',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         await self.key_down(key, modifiers)
         await asyncio.sleep(interval)
         await self.key_up(key)
+
+    async def is_editable(self) -> bool:
+        """
+        Check if element can accept text input.
+
+        Returns:
+            True if element is editable (input, textarea, or contenteditable).
+        """
+        result = await self.execute_script(Scripts.IS_EDITABLE, return_by_value=True)
+        is_editable = result['result']['result']['value']
+        logger.debug(f'Element editable check: {is_editable}')
+        return is_editable
 
     async def _click_option_tag(self):
         """Specialized method for clicking <option> elements in dropdowns."""
@@ -596,7 +705,8 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             script = f'function(){{ {script} }}'
 
         logger.debug(
-            f'Executing script on element: return_by_value={return_by_value}, length={len(script)}'
+            f'Executing script on element: return_by_value={return_by_value}, '
+            f'length={len(script)}, args={len(arguments) if arguments else 0}'
         )
         command = RuntimeCommands.call_function_on(
             function_declaration=script,
