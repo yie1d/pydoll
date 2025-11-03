@@ -884,7 +884,9 @@ class Tab(FindElementsMixin):
             serialization_options=serialization_options,
         )
         logger.debug(f'Executing script without element: length={len(script)}')
-        result = await self._execute_command(command)
+        result: Union[EvaluateResponse, CallFunctionOnResponse] = await self._execute_command(
+            command
+        )
         self._validate_argument_error(result)
         return result
 
@@ -1318,11 +1320,11 @@ class Tab(FindElementsMixin):
         Raises:
             InvalidScriptWithElement: If script uses 'argument' keyword but no element was provided.
         """
-        result = response.get('result')
-        if not isinstance(result, dict):
+        evaluate_result = response.get('result')
+        if not isinstance(evaluate_result, dict):
             return
 
-        remote_object = result.get('result')
+        remote_object = evaluate_result.get('result')
         if not isinstance(remote_object, dict):
             return
 

@@ -27,6 +27,7 @@ from pydoll.exceptions import (
     WaitElementTimeout,
     NetworkEventsNotEnabled,
     TopLevelTargetRequired,
+    InvalidScriptWithElement,
 )
 
 @pytest_asyncio.fixture
@@ -725,6 +726,57 @@ class TestTabScriptExecution:
         )
         
         assert result == {'result': {'value': 'element result'}}
+
+    @pytest.mark.parametrize('response', [
+        {},
+        {'result': 'not a dict'},
+        {'result': {}},
+        {'result': {'result': 'not a dict'}},
+        {'result': {'result': {'type': 'string', 'subtype': 'error', 'className': 'ReferenceError', 'description': 'argument is not defined'}}},
+        {'result': {'result': {'type': 'object', 'subtype': 'not_error', 'className': 'ReferenceError', 'description': 'argument is not defined'}}},
+        {'result': {'result': {'type': 'object', 'subtype': 'error', 'className': 'TypeError', 'description': 'argument is not defined'}}},
+        {'result': {'result': {'type': 'object', 'subtype': 'error', 'className': 'ReferenceError', 'description': 'some other error'}}},
+        {'result': {'result': {'type': 'object', 'subtype': 'error', 'className': 'ReferenceError', 'description': ''}}},
+        {'result': {'result': {'type': 'object', 'subtype': 'error', 'className': 'ReferenceError'}}},
+    ])
+    def test_validate_argument_error_early_returns(self, tab, response):
+        """Test _validate_argument_error returns early for invalid responses."""
+        tab._validate_argument_error(response)
+
+    @pytest.mark.parametrize('description', [
+        'argument is not defined',
+        'Error: argument is not defined at line 1',
+    ])
+    def test_validate_argument_error_raises_on_match(self, tab, description):
+        """Test _validate_argument_error raises InvalidScriptWithElement when all conditions match."""
+        response = {
+            'result': {
+                'result': {
+                    'type': 'object',
+                    'subtype': 'error',
+                    'className': 'ReferenceError',
+                    'description': description,
+                }
+            }
+        }
+        with pytest.raises(InvalidScriptWithElement, match='Script contains "argument" but no element was provided'):
+            tab._validate_argument_error(response)
+
+    @pytest.mark.asyncio
+    async def test_execute_script_triggers_validation(self, tab):
+        """Test that execute_script calls _validate_argument_error when script fails with ReferenceError."""
+        tab._connection_handler.execute_command.return_value = {
+            'result': {
+                'result': {
+                    'type': 'object',
+                    'subtype': 'error',
+                    'className': 'ReferenceError',
+                    'description': 'argument is not defined'
+                }
+            }
+        }
+        with pytest.raises(InvalidScriptWithElement, match='Script contains "argument" but no element was provided'):
+            await tab.execute_script('argument.click()')
 
 
 class TestTabEventCallbacks:
