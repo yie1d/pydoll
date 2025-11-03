@@ -41,6 +41,7 @@ from pydoll.exceptions import (
     IFrameNotFound,
     InvalidFileExtension,
     InvalidIFrame,
+    InvalidScriptWithElement,
     InvalidTabInitialization,
     MissingScreenshotPath,
     NetworkEventsNotEnabled,
@@ -821,9 +822,21 @@ class Tab(FindElementsMixin):
         Returns:
             Union[EvaluateResponse, CallFunctionOnResponse]: The result of the script execution.
 
+        Raises:
+            InvalidScriptWithElement: If script uses 'argument' keyword but no element is provided.
+
         Examples:
+            # Execute a simple script to log a message
             await page.execute_script('console.log("Hello World")')
+
+            # Execute a script that returns the page title
             await page.execute_script('return document.title')
+
+            # Execute a script on an element to click it
+            await page.execute_script('argument.click()', element)
+
+            # Execute a script on an element to set its value
+            await page.execute_script('argument.value = "Hello"', element)
         """
         logger.debug(f'Executing script: with_element={bool(element)}, length={len(script)}')
         if element is not None:
@@ -852,8 +865,8 @@ class Tab(FindElementsMixin):
         if has_return_outside_function(script):
             script = f'(function(){{ {script} }})()'
 
-        command = RuntimeCommands.evaluate(
-            expression=script,
+        command = self._get_evaluate_command(
+            script,
             object_group=object_group,
             include_command_line_api=include_command_line_api,
             silent=silent,
@@ -871,7 +884,9 @@ class Tab(FindElementsMixin):
             serialization_options=serialization_options,
         )
         logger.debug(f'Executing script without element: length={len(script)}')
-        return await self._execute_command(command)
+        result = await self._execute_command(command)
+        self._validate_argument_error(result)
+        return result
 
     # TODO: think about how to remove these duplications with the base class
     async def continue_request(
@@ -1247,6 +1262,46 @@ class Tab(FindElementsMixin):
         )
         return ConnectionHandler(self._connection_port, self._target_id)
 
+    @staticmethod
+    def _get_evaluate_command(
+        script: str,
+        *,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ):
+        """Create an evaluate command with the given parameters."""
+        return RuntimeCommands.evaluate(
+            expression=script,
+            object_group=object_group,
+            include_command_line_api=include_command_line_api,
+            silent=silent,
+            context_id=context_id,
+            return_by_value=return_by_value,
+            generate_preview=generate_preview,
+            user_gesture=user_gesture,
+            await_promise=await_promise,
+            throw_on_side_effect=throw_on_side_effect,
+            timeout=timeout,
+            disable_breaks=disable_breaks,
+            repl_mode=repl_mode,
+            allow_unsafe_eval_blocked_by_csp=allow_unsafe_eval_blocked_by_csp,
+            unique_context_id=unique_context_id,
+            serialization_options=serialization_options,
+        )
+
     async def _refresh_if_url_not_changed(self, url: str) -> bool:
         """Refresh page if URL hasn't changed."""
         current_url = await self.current_url
@@ -1254,6 +1309,33 @@ class Tab(FindElementsMixin):
             await self.refresh()
             return True
         return False
+
+    @staticmethod
+    def _validate_argument_error(response: EvaluateResponse) -> None:
+        """
+        Validate that script didn't fail with ReferenceError about 'argument' being undefined.
+
+        Raises:
+            InvalidScriptWithElement: If script uses 'argument' keyword but no element was provided.
+        """
+        result = response.get('result')
+        if not isinstance(result, dict):
+            return
+
+        remote_object = result.get('result')
+        if not isinstance(remote_object, dict):
+            return
+
+        if not (
+            remote_object.get('type') == 'object'
+            and remote_object.get('subtype') == 'error'
+            and remote_object.get('className') == 'ReferenceError'
+        ):
+            return
+
+        description = remote_object.get('description', '')
+        if 'argument is not defined' in description:
+            raise InvalidScriptWithElement('Script contains "argument" but no element was provided')
 
     async def _wait_page_load(self, timeout: int = 300):
         """
