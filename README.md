@@ -32,11 +32,6 @@ Built from scratch with a different philosophy, Pydoll connects directly to the 
 
 We believe that powerful automation shouldn't require you to become an expert in configuration or constantly fight with bot protection systems. With Pydoll, you can focus on what really matters: your automation logic, not the underlying complexity or protection systems.
 
-<div>
-  <h4>Be a good human. Give it a star ⭐</h4> 
-    No stars, no bugs fixed. Just kidding (maybe)
-</div>
-
 ## 🌟 What makes Pydoll special?
 
 - **Zero Webdrivers**: Say goodbye to webdriver compatibility issues
@@ -44,6 +39,58 @@ We believe that powerful automation shouldn't require you to become an expert in
 - **Asynchronous Performance**: For high-speed automation and multiple simultaneous tasks
 - **Humanized Interactions**: Mimic real user behavior
 - **Simplicity**: With Pydoll, you install and you're ready to automate.
+
+## 🆕 What's New
+
+### Human-Like Page Scrolling: Scroll Like a Real User!
+
+Now you can control page scrolling with smooth animations and automatic completion waiting:
+
+```python
+from pydoll.constants import ScrollPosition
+
+# Scroll down with smooth animation (waits for completion)
+await tab.scroll.by(ScrollPosition.DOWN, 500, smooth=True)
+
+# Navigate to specific positions
+await tab.scroll.to_bottom(smooth=True)
+await tab.scroll.to_top(smooth=True)
+
+# Instant scroll for speed when realism isn't critical
+await tab.scroll.by(ScrollPosition.UP, 300, smooth=False)
+```
+
+Unlike `execute_script("window.scrollBy(...)")` which returns immediately, the scroll API uses CDP's `awaitPromise` to wait for the browser's `scrollend` event, ensuring your next actions only execute after scrolling completely finishes. Perfect for taking screenshots, loading lazy content, or creating realistic reading patterns.
+
+### Keyboard API: Complete Control Over Keyboard Input
+
+The new `KeyboardAPI` provides a clean, centralized interface for all keyboard interactions at the page level:
+
+```python
+from pydoll.constants import Key
+
+# Press individual keys
+await tab.keyboard.press(Key.ENTER)
+await tab.keyboard.press(Key.TAB)
+
+# Use hotkeys/shortcuts with up to 3 keys  
+await tab.keyboard.hotkey(Key.CONTROL, Key.A)  # Select all (works!)
+await tab.keyboard.hotkey(Key.CONTROL, Key.C)  # Copy (works!)
+await tab.keyboard.hotkey(Key.CONTROL, Key.SHIFT, Key.ARROWRIGHT)  # Select word right
+
+# Manual control for complex sequences
+await tab.keyboard.down(Key.SHIFT)
+await tab.keyboard.press(Key.ARROWRIGHT)  # Select text while holding Shift
+await tab.keyboard.up(Key.SHIFT)
+```
+
+**Key improvements:**
+- **Centralized**: All keyboard operations accessible via `tab.keyboard`
+- **Smart modifier detection**: Hotkeys automatically detect and apply modifiers (Ctrl, Shift, Alt, Meta)
+- **Complete key support**: 26 letters (A-Z), 10 digits (0-9), all function keys, numpad, and special keys
+- **Page-level shortcuts**: Works for Ctrl+C, Ctrl+V, Ctrl+A, etc.
+
+> **⚠️ CDP Limitation:** Browser UI shortcuts (like Ctrl+T for new tab, F12 for DevTools) don't work via CDP. Use Pydoll's methods instead: `await browser.new_tab()`, `await tab.close()`.
 
 ## 📦 Installation
 

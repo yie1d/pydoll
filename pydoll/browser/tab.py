@@ -51,6 +51,7 @@ from pydoll.exceptions import (
     TopLevelTargetRequired,
     WaitElementTimeout,
 )
+from pydoll.interactions import KeyboardAPI, ScrollAPI
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
 from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.types import ScreenshotFormat
@@ -138,6 +139,8 @@ class Tab(FindElementsMixin):
         self._intercept_file_chooser_dialog_enabled = False
         self._cloudflare_captcha_callback_id: Optional[int] = None
         self._request: Optional[Request] = None
+        self._scroll: Optional[ScrollAPI] = None
+        self._keyboard: Optional[KeyboardAPI] = None
         logger.debug(
             (
                 f'Tab initialized: target_id={self._target_id}, '
@@ -182,6 +185,30 @@ class Tab(FindElementsMixin):
         if self._request is None:
             self._request = Request(self)
         return self._request
+
+    @property
+    def scroll(self) -> ScrollAPI:
+        """
+        Get the scroll API for controlling page scroll behavior.
+
+        Returns:
+            ScrollAPI: An instance of the ScrollAPI class for scroll operations.
+        """
+        if self._scroll is None:
+            self._scroll = ScrollAPI(self)
+        return self._scroll
+
+    @property
+    def keyboard(self) -> KeyboardAPI:
+        """
+        Get the keyboard API for controlling keyboard input at page level.
+
+        Returns:
+            KeyboardAPI: An instance of the KeyboardAPI class for keyboard operations.
+        """
+        if self._keyboard is None:
+            self._keyboard = KeyboardAPI(self)
+        return self._keyboard
 
     @property
     def intercept_file_chooser_dialog_enabled(self) -> bool:
@@ -564,7 +591,7 @@ class Tab(FindElementsMixin):
 
     async def take_screenshot(
         self,
-        path: Optional[str] = None,
+        path: Optional[str | Path] = None,
         quality: int = 100,
         beyond_viewport: bool = False,
         as_base64: bool = False,
@@ -589,9 +616,24 @@ class Tab(FindElementsMixin):
         if not path and not as_base64:
             raise MissingScreenshotPath()
 
-        output_extension = path.split('.')[-1] if path else ScreenshotFormat.PNG
+        if path and isinstance(path, str):
+            output_extension = path.split('.')[-1]
+        elif path and isinstance(path, Path):
+            output_extension = path.suffix.lstrip('.')
+        else:
+            output_extension = ScreenshotFormat.JPEG
+
+        # Normalize jpg to jpeg (CDP only accepts jpeg)
+        output_extension = (
+            output_extension.replace('jpg', 'jpeg')
+            if output_extension == 'jpg'
+            else output_extension
+        )
+
         if not ScreenshotFormat.has_value(output_extension):
             raise InvalidFileExtension(f'{output_extension} extension is not supported.')
+
+        output_format = ScreenshotFormat.get_value(output_extension)
 
         logger.info(
             f'Taking screenshot: path={path}, quality={quality}, '
@@ -599,7 +641,7 @@ class Tab(FindElementsMixin):
         )
         response: CaptureScreenshotResponse = await self._execute_command(
             PageCommands.capture_screenshot(
-                format=ScreenshotFormat.get_value(output_extension),
+                format=output_format,
                 quality=quality,
                 capture_beyond_viewport=beyond_viewport,
             )
@@ -619,7 +661,7 @@ class Tab(FindElementsMixin):
 
         if path:
             screenshot_bytes = decode_base64_to_bytes(screenshot_data)
-            async with aiofiles.open(path, 'wb') as file:
+            async with aiofiles.open(str(path), 'wb') as file:
                 await file.write(screenshot_bytes)
             logger.info(f'Screenshot saved to: {path}')
 
@@ -627,7 +669,7 @@ class Tab(FindElementsMixin):
 
     async def print_to_pdf(
         self,
-        path: str,
+        path: Optional[str | Path] = None,
         landscape: bool = False,
         display_header_footer: bool = False,
         print_background: bool = True,
@@ -638,7 +680,7 @@ class Tab(FindElementsMixin):
         Generate PDF of current page.
 
         Args:
-            path: File path for PDF output.
+            path: File path for PDF output. Required if as_base64=False.
             landscape: Use landscape orientation.
             display_header_footer: Include header/footer.
             print_background: Include background graphics.
@@ -647,6 +689,9 @@ class Tab(FindElementsMixin):
 
         Returns:
             Base64 PDF data if as_base64=True, None otherwise.
+
+        Raises:
+            ValueError: If path is not provided when as_base64=False.
         """
         logger.info(
             f'Generating PDF: path={path}, landscape={landscape}, '
@@ -665,6 +710,9 @@ class Tab(FindElementsMixin):
         if as_base64:
             logger.info('PDF generated and returned as base64')
             return pdf_data
+
+        if path is None:
+            raise ValueError('path is required when as_base64=False')
 
         pdf_bytes = decode_base64_to_bytes(pdf_data)
         async with aiofiles.open(path, 'wb') as file:
@@ -968,7 +1016,7 @@ class Tab(FindElementsMixin):
 
     @asynccontextmanager
     async def expect_file_chooser(
-        self, files: Union[str, Path, list[Union[str, Path]]]
+        self, files: str | Path | list[str | Path]
     ) -> AsyncGenerator[None, None]:
         """
         Context manager for automatic file upload handling.
