@@ -111,7 +111,8 @@ def retry(
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             last_exception: Optional[Exception] = None
             caller_instance = args[0] if args else None
-            for attempt in range(config.max_retries):
+
+            for attempt in range(config.max_retries + 1):
                 try:
                     return await func(*args, **kwargs)
                 except Exception as exc:
@@ -123,8 +124,10 @@ def retry(
                         raise exc
 
                     last_exception = exc
-                    await config.handle_delay(attempt + 1)
-                    await config.call_callback(caller_instance)
+
+                    if attempt < config.max_retries:
+                        await config.handle_delay(attempt + 1)
+                        await config.call_callback(caller_instance)
                     continue
 
             if last_exception is not None:
