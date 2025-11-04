@@ -92,6 +92,58 @@ await tab.keyboard.up(Key.SHIFT)
 
 > **⚠️ CDP Limitation:** Browser UI shortcuts (like Ctrl+T for new tab, F12 for DevTools) don't work via CDP. Use Pydoll's methods instead: `await browser.new_tab()`, `await tab.close()`.
 
+### Retry Decorator: Production-Ready Error Recovery
+
+Transform fragile scripts into robust production scrapers with the `@retry` decorator. Automatically recover from network failures, timeouts, and transient errors with exponential backoff and custom recovery strategies:
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.decorators import retry
+from pydoll.exceptions import ElementNotFound, NetworkError
+
+class ProductScraper:
+    def __init__(self):
+        self.tab = None
+        self.retry_count = 0
+    
+    # Recovery callback executed before each retry
+    async def recover_from_failure(self):
+        self.retry_count += 1
+        print(f"Attempt {self.retry_count} failed. Recovering...")
+        
+        # Refresh page and restore state
+        if self.tab:
+            await self.tab.refresh()
+            await asyncio.sleep(2)
+    
+    @retry(
+        max_retries=3,
+        exceptions=[ElementNotFound, NetworkError],
+        on_retry=recover_from_failure,  # Execute recovery logic
+        delay=2.0,
+        exponential_backoff=True
+    )
+    async def scrape_product(self, url: str):
+        if not self.tab:
+            browser = Chrome()
+            self.tab = await browser.start()
+        
+        await self.tab.go_to(url)
+        title = await self.tab.find(class_name='product-title', timeout=5)
+        return await title.text
+```
+
+**Powerful features:**
+- **Smart retry logic**: Only retry on specific exceptions you define
+- **Exponential backoff**: Progressively increase wait times (1s → 2s → 4s → 8s)
+- **Recovery callbacks**: Execute custom logic between retries (refresh page, switch proxy, restart browser)
+- **Production-tested**: Handle the chaos of real-world scraping with confidence
+
+Perfect for handling rate limits, network instability, dynamic content loading, and CAPTCHA detection. Turn unreliable scrapers into bulletproof automation.
+
+[**📖 Full Documentation**](https://pydoll.tech/docs/features/advanced/decorators/)
+
 ## 📦 Installation
 
 ```bash

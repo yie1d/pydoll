@@ -99,6 +99,58 @@ await tab.keyboard.up(Key.SHIFT)
 
 > **⚠️ CDP 限制：** 浏览器 UI 快捷键（如 Ctrl+T 打开新标签，F12 打开开发者工具）通过 CDP 无法使用。请改用 Pydoll 的方法：`await browser.new_tab()`、`await tab.close()`。
 
+### Retry 装饰器：生产级错误恢复
+
+使用 `@retry` 装饰器将脆弱的脚本转变为强大的生产级爬虫。通过指数退避和自定义恢复策略，自动从网络故障、超时和临时错误中恢复：
+
+```python
+import asyncio
+from pydoll.browser.chromium import Chrome
+from pydoll.decorators import retry
+from pydoll.exceptions import ElementNotFound, NetworkError
+
+class ProductScraper:
+    def __init__(self):
+        self.tab = None
+        self.retry_count = 0
+    
+    # 在每次重试前执行的恢复回调
+    async def recover_from_failure(self):
+        self.retry_count += 1
+        print(f"尝试 {self.retry_count} 失败。恢复中...")
+        
+        # 刷新页面并恢复状态
+        if self.tab:
+            await self.tab.refresh()
+            await asyncio.sleep(2)
+    
+    @retry(
+        max_retries=3,
+        exceptions=[ElementNotFound, NetworkError],
+        on_retry=recover_from_failure,  # 执行恢复逻辑
+        delay=2.0,
+        exponential_backoff=True
+    )
+    async def scrape_product(self, url: str):
+        if not self.tab:
+            browser = Chrome()
+            self.tab = await browser.start()
+        
+        await self.tab.go_to(url)
+        title = await self.tab.find(class_name='product-title', timeout=5)
+        return await title.text
+```
+
+**强大功能：**
+- **智能重试逻辑**：仅对您定义的特定异常重试
+- **指数退避**：逐步增加等待时间（1秒 → 2秒 → 4秒 → 8秒）
+- **恢复回调**：在重试之间执行自定义逻辑（刷新页面、切换代理、重启浏览器）
+- **生产验证**：自信地处理真实世界爬虫的混乱情况
+
+非常适合处理速率限制、网络不稳定、动态内容加载和验证码检测。将不可靠的爬虫转变为防弹自动化。
+
+[**📖 完整文档**](https://pydoll.tech/docs/zh/features/advanced/decorators/)
+
 ### 通过 WebSocket 进行远程连接 —— 随时随地控制浏览器！
 
 现在你可以使用浏览器的 WebSocket 地址直接连接到已运行的实例，并立即使用完整的 Pydoll API：
