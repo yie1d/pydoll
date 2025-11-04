@@ -4,6 +4,7 @@ import asyncio
 import base64 as _b64
 import logging
 import shutil
+import warnings
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
@@ -54,10 +55,16 @@ from pydoll.interactions import KeyboardAPI, ScrollAPI
 from pydoll.protocol.browser.types import DownloadBehavior, DownloadProgressState
 from pydoll.protocol.page.events import PageEvent
 from pydoll.protocol.page.types import ScreenshotFormat
+from pydoll.protocol.runtime.methods import (
+    CallFunctionOnResponse,
+    EvaluateResponse,
+    SerializationOptions,
+)
+from pydoll.protocol.runtime.types import CallArgument
+from pydoll.protocol.storage.methods import GetCookiesResponse
 from pydoll.utils import (
     decode_base64_to_bytes,
     has_return_outside_function,
-    is_script_already_function,
 )
 
 if TYPE_CHECKING:
@@ -762,37 +769,174 @@ class Tab(FindElementsMixin):
         )
 
     @overload
-    async def execute_script(self, script: str) -> EvaluateResponse: ...
+    async def execute_script(
+        self,
+        script: str,
+        *,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ) -> EvaluateResponse: ...
 
     @overload
     async def execute_script(
-        self, script: str, element: 'WebElement'
+        self,
+        script: str,
+        element: WebElement,
+        *,
+        arguments: Optional[list[CallArgument]] = None,
+        silent: Optional[bool] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        execution_context_id: Optional[int] = None,
+        object_group: Optional[str] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
     ) -> CallFunctionOnResponse: ...
 
     async def execute_script(
-        self, script: str, element: Optional['WebElement'] = None
+        self,
+        script: str,
+        element: Optional[WebElement] = None,
+        *,
+        arguments: Optional[list[CallArgument]] = None,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        execution_context_id: Optional[int] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
     ) -> Union[EvaluateResponse, CallFunctionOnResponse]:
         """
         Execute JavaScript in page context.
 
         Args:
-            script: JavaScript code to execute.
-            element: Element context (use 'argument' in script to reference).
+            script (str): JavaScript code to execute.
+            element (Optional[WebElement]): Optional WebElement to execute script on.
+            arguments (Optional[list[CallArgument]]): Arguments to pass to the function.
+            object_group (Optional[str]): Symbolic group name for the result (Runtime.evaluate).
+            include_command_line_api (Optional[bool]): Whether to include command line API
+                (Runtime.evaluate).
+            silent (Optional[bool]): Whether to silence exceptions (Runtime.evaluate).
+            context_id (Optional[int]): ID of the execution context to evaluate in
+                (Runtime.evaluate).
+            return_by_value (Optional[bool]): Whether to return the result by value instead of
+                reference (Runtime.evaluate).
+            generate_preview (Optional[bool]): Whether to generate a preview for the result
+                (Runtime.evaluate).
+            user_gesture (Optional[bool]): Whether to treat evaluation as initiated by user
+                gesture (Runtime.evaluate).
+            await_promise (Optional[bool]): Whether to await promise result (Runtime.evaluate).
+            execution_context_id (Optional[int]): ID of the execution context to call the
+                function in.
+            throw_on_side_effect (Optional[bool]): Whether to throw if side effect cannot be
+                ruled out (Runtime.evaluate).
+            timeout (Optional[float]): Timeout in milliseconds (Runtime.evaluate).
+            disable_breaks (Optional[bool]): Whether to disable breakpoints during evaluation
+                (Runtime.evaluate).
+            repl_mode (Optional[bool]): Whether to execute in REPL mode (Runtime.evaluate).
+            allow_unsafe_eval_blocked_by_csp (Optional[bool]): Allow unsafe evaluation
+                (Runtime.evaluate).
+            unique_context_id (Optional[str]): Unique context ID for evaluation
+                (Runtime.evaluate).
+            serialization_options (Optional[SerializationOptions]): Serialization options for
+                the result (Runtime.evaluate).
 
-        Examples:
-            await page.execute_script('argument.click()', element)
-            await page.execute_script('argument.value = "Hello"', element)
+        Returns:
+            Union[EvaluateResponse, CallFunctionOnResponse]: The result of the script execution.
 
         Raises:
-            InvalidScriptWithElement: If script contains 'argument' but no element is provided.
-        """
-        if 'argument' in script and element is None:
-            raise InvalidScriptWithElement('Script contains "argument" but no element was provided')
+            InvalidScriptWithElement: If script uses 'argument' keyword but no element is provided.
 
+        Examples:
+            # Execute a simple script to log a message
+            await page.execute_script('console.log("Hello World")')
+
+            # Execute a script that returns the page title
+            await page.execute_script('return document.title')
+
+            # Execute a script on an element to click it
+            await page.execute_script('argument.click()', element)
+
+            # Execute a script on an element to set its value
+            await page.execute_script('argument.value = "Hello"', element)
+        """
         logger.debug(f'Executing script: with_element={bool(element)}, length={len(script)}')
-        if element:
-            return await self._execute_script_with_element(script, element)
-        return await self._execute_script_without_element(script)
+        if element is not None:
+            warnings.warn(
+                'Passing a WebElement to Tab.execute_script() is deprecated. '
+                'Use WebElement.execute_script() instead.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+            return await element.execute_script(
+                script,
+                arguments=arguments,
+                silent=silent,
+                return_by_value=return_by_value,
+                generate_preview=generate_preview,
+                user_gesture=user_gesture,
+                await_promise=await_promise,
+                execution_context_id=execution_context_id,
+                object_group=object_group,
+                throw_on_side_effect=throw_on_side_effect,
+                unique_context_id=unique_context_id,
+                serialization_options=serialization_options,
+            )
+
+        if has_return_outside_function(script):
+            script = f'(function(){{ {script} }})()'
+
+        command = self._get_evaluate_command(
+            script,
+            object_group=object_group,
+            include_command_line_api=include_command_line_api,
+            silent=silent,
+            context_id=context_id,
+            return_by_value=return_by_value,
+            generate_preview=generate_preview,
+            user_gesture=user_gesture,
+            await_promise=await_promise,
+            throw_on_side_effect=throw_on_side_effect,
+            timeout=timeout,
+            disable_breaks=disable_breaks,
+            repl_mode=repl_mode,
+            allow_unsafe_eval_blocked_by_csp=allow_unsafe_eval_blocked_by_csp,
+            unique_context_id=unique_context_id,
+            serialization_options=serialization_options,
+        )
+        logger.debug(f'Executing script without element: length={len(script)}')
+        result: Union[EvaluateResponse, CallFunctionOnResponse] = await self._execute_command(
+            command
+        )
+        self._validate_argument_error(result)
+        return result
 
     # TODO: think about how to remove these duplications with the base class
     async def continue_request(
@@ -1168,46 +1312,45 @@ class Tab(FindElementsMixin):
         )
         return ConnectionHandler(self._connection_port, self._target_id)
 
-    async def _execute_script_with_element(self, script: str, element: 'WebElement'):
-        """
-        Execute script with element context.
-
-        Args:
-            script: JavaScript code to execute.
-            element: Element context (use 'argument' in script to reference).
-
-        Returns:
-            The result of the script execution.
-        """
-        if 'argument' not in script:
-            raise InvalidScriptWithElement('Script does not contain "argument"')
-
-        script = script.replace('argument', 'this')
-
-        if not is_script_already_function(script):
-            script = f'function(){{ {script} }}'
-
-        command = RuntimeCommands.call_function_on(
-            object_id=element._object_id, function_declaration=script, return_by_value=True
+    @staticmethod
+    def _get_evaluate_command(
+        script: str,
+        *,
+        object_group: Optional[str] = None,
+        include_command_line_api: Optional[bool] = None,
+        silent: Optional[bool] = None,
+        context_id: Optional[int] = None,
+        return_by_value: Optional[bool] = None,
+        generate_preview: Optional[bool] = None,
+        user_gesture: Optional[bool] = None,
+        await_promise: Optional[bool] = None,
+        throw_on_side_effect: Optional[bool] = None,
+        timeout: Optional[float] = None,
+        disable_breaks: Optional[bool] = None,
+        repl_mode: Optional[bool] = None,
+        allow_unsafe_eval_blocked_by_csp: Optional[bool] = None,
+        unique_context_id: Optional[str] = None,
+        serialization_options: Optional[SerializationOptions] = None,
+    ):
+        """Create an evaluate command with the given parameters."""
+        return RuntimeCommands.evaluate(
+            expression=script,
+            object_group=object_group,
+            include_command_line_api=include_command_line_api,
+            silent=silent,
+            context_id=context_id,
+            return_by_value=return_by_value,
+            generate_preview=generate_preview,
+            user_gesture=user_gesture,
+            await_promise=await_promise,
+            throw_on_side_effect=throw_on_side_effect,
+            timeout=timeout,
+            disable_breaks=disable_breaks,
+            repl_mode=repl_mode,
+            allow_unsafe_eval_blocked_by_csp=allow_unsafe_eval_blocked_by_csp,
+            unique_context_id=unique_context_id,
+            serialization_options=serialization_options,
         )
-        return await self._execute_command(command)
-
-    async def _execute_script_without_element(self, script: str):
-        """
-        Execute script without element context.
-
-        Args:
-            script: JavaScript code to execute.
-
-        Returns:
-            The result of the script execution.
-        """
-        if has_return_outside_function(script):
-            script = f'(function(){{ {script} }})()'
-
-        command = RuntimeCommands.evaluate(expression=script)
-        logger.debug(f'Executing script without element: length={len(script)}')
-        return await self._execute_command(command)
 
     async def _refresh_if_url_not_changed(self, url: str) -> bool:
         """Refresh page if URL hasn't changed."""
@@ -1216,6 +1359,33 @@ class Tab(FindElementsMixin):
             await self.refresh()
             return True
         return False
+
+    @staticmethod
+    def _validate_argument_error(response: EvaluateResponse) -> None:
+        """
+        Validate that script didn't fail with ReferenceError about 'argument' being undefined.
+
+        Raises:
+            InvalidScriptWithElement: If script uses 'argument' keyword but no element was provided.
+        """
+        evaluate_result = response.get('result')
+        if not isinstance(evaluate_result, dict):
+            return
+
+        remote_object = evaluate_result.get('result')
+        if not isinstance(remote_object, dict):
+            return
+
+        if not (
+            remote_object.get('type') == 'object'
+            and remote_object.get('subtype') == 'error'
+            and remote_object.get('className') == 'ReferenceError'
+        ):
+            return
+
+        description = remote_object.get('description', '')
+        if 'argument is not defined' in description:
+            raise InvalidScriptWithElement('Script contains "argument" but no element was provided')
 
     async def _wait_page_load(self, timeout: int = 300):
         """
@@ -1253,7 +1423,7 @@ class Tab(FindElementsMixin):
             element = cast('WebElement', element)
             if element:
                 # adjust the external div size to shadow root width (usually 300px)
-                await self.execute_script('argument.style="width: 300px"', element)
+                await element.execute_script('this.style="width: 300px"')
                 await asyncio.sleep(time_before_click)
                 await element.click()
         except Exception as exc:
