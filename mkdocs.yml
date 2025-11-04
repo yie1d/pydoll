@@ -34,6 +34,7 @@ nav:
           - Behavioral Captcha Bypass: features/advanced/behavioral-captcha-bypass.md
           - Event System: features/advanced/event-system.md
           - Remote Connections: features/advanced/remote-connections.md
+          - Retry Decorator: features/advanced/decorators.md
   - Deep Dive:
       - Overview: deep-dive/index.md
       - Core Fundamentals:
@@ -193,6 +194,7 @@ plugins:
             Behavioral Captcha Bypass: 行为验证码绕过
             Event System: 事件系统
             Remote Connections: 远程连接
+            Retry Decorator: Retry 装饰器
             Deep Dive: 深入了解
             Core Fundamentals: 核心基础
             Chrome DevTools Protocol: Chrome DevTools 协议
@@ -290,6 +292,7 @@ plugins:
             Behavioral Captcha Bypass: Bypass de Captcha Comportamental
             Event System: Sistema de Eventos
             Remote Connections: Conexões Remotas
+            Retry Decorator: Decorator Retry
             Deep Dive: Análise Profunda
             Core Fundamentals: Fundamentos Centrais
             Chrome DevTools Protocol: Protocolo Chrome DevTools
