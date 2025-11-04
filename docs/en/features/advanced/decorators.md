@@ -219,32 +219,27 @@ When using the decorator inside a class, the callback can be a class method. It 
 
 ```python
 import asyncio
-from pydoll.browser.chromium import Chrome
 from pydoll.decorators import retry
-from pydoll.exceptions import ElementNotFound
+from pydoll.exceptions import WaitElementTimeout
 
-class ProductScraper:
+class DataCollector:
     def __init__(self):
         self.retry_count = 0
     
     # IMPORTANT: Define callback BEFORE the decorated method
-    async def handle_retry(self):
+    async def log_retry(self):
         self.retry_count += 1
-        print(f"Attempt {self.retry_count} failed, recovering...")
-        
-        # Recovery logic here
-        await asyncio.sleep(2)
+        print(f"Attempt {self.retry_count} failed, retrying...")
+        await asyncio.sleep(1)
     
     @retry(
         max_retries=3,
-        exceptions=[ElementNotFound],
-        on_retry=handle_retry  # No 'self.' prefix needed
+        exceptions=[WaitElementTimeout],
+        on_retry=log_retry  # No 'self.' prefix needed
     )
-    async def scrape_product(self, url: str):
-        async with Chrome() as browser:
-            tab = await browser.start()
-            await tab.go_to(url)
-            return await tab.find(class_name='product-title')
+    async def fetch_data(self):
+        # Your scraping logic here
+        pass
 ```
 
 !!! warning "Method Definition Order Matters"
@@ -278,12 +273,12 @@ class ProductScraper:
 
 ### 1. Page Refresh and State Recovery
 
-One of the most common scenarios: an element becomes stale or the page enters a bad state. Refresh the page and navigate back to where you were.
+**This is the most powerful use of `on_retry`**: recovering from failures by refreshing the page and restoring your application state. This example demonstrates why the retry decorator is so valuable for production scraping.
 
 ```python
 from pydoll.browser.chromium import Chrome
 from pydoll.decorators import retry
-from pydoll.exceptions import ElementNotFound, TimeoutException
+from pydoll.exceptions import ElementNotFound, WaitElementTimeout
 from pydoll.constants import Key
 import asyncio
 
@@ -298,10 +293,11 @@ class DataScraper:
         print(f"Recovering... refreshing page {self.current_page}")
         
         if self.tab:
+            # Refresh the page to recover from stale elements or bad state
             await self.tab.refresh()
             await asyncio.sleep(2)  # Wait for page to load
             
-            # Restore state: navigate back to correct page
+            # Restore state: navigate back to the correct page
             if self.current_page > 1:
                 page_input = await self.tab.find(id='page-number')
                 await page_input.insert_text(str(self.current_page))
@@ -314,9 +310,8 @@ class DataScraper:
         on_retry=recover_from_failure,
         delay=1.0
     )
-    async def scrape_page_data(self, page: int):
-        self.current_page = page
-        
+    async def scrape_page_data(self):
+        """Scrape data from the current page"""
         if not self.browser:
             self.browser = Chrome()
             self.tab = await self.browser.start()
@@ -324,14 +319,41 @@ class DataScraper:
         
         # Navigate to specific page
         page_input = await self.tab.find(id='page-number')
-        await page_input.insert_text(str(page))
+        await page_input.insert_text(str(self.current_page))
         await self.tab.keyboard.press(Key.ENTER)
         await asyncio.sleep(1)
         
-        # Scrape data
+        # Scrape data (might fail if elements become stale)
         items = await self.tab.find(class_name='data-item', find_all=True)
         return [await item.text for item in items]
+    
+    async def scrape_multiple_pages(self, start_page: int, end_page: int):
+        """Scrape multiple pages with automatic retry on failures"""
+        results = []
+        for page_num in range(start_page, end_page + 1):
+            self.current_page = page_num
+            data = await self.scrape_page_data()
+            results.extend(data)
+        return results
+
+# Usage
+async def main():
+    scraper = DataScraper()
+    try:
+        # Scrape pages 1-10 with automatic recovery on failures
+        all_data = await scraper.scrape_multiple_pages(1, 10)
+        print(f"Scraped {len(all_data)} items")
+    finally:
+        if scraper.browser:
+            await scraper.browser.stop()
 ```
+
+**What makes this powerful:**
+
+- `recover_from_failure()` actually **restores the state** by refreshing and navigating back
+- The `scrape_page_data()` method stays clean, focused only on scraping logic
+- If elements become stale or disappear, the retry mechanism handles recovery automatically
+- The browser persists across retries via `self.browser` and `self.tab`
 
 ### 2. Modal Dialog Recovery
 

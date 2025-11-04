@@ -219,32 +219,27 @@ async def scrape_page():
 
 ```python
 import asyncio
-from pydoll.browser.chromium import Chrome
 from pydoll.decorators import retry
-from pydoll.exceptions import ElementNotFound
+from pydoll.exceptions import WaitElementTimeout
 
-class ProductScraper:
+class DataCollector:
     def __init__(self):
         self.retry_count = 0
     
     # 重要：在装饰方法之前定义回调
-    async def handle_retry(self):
+    async def log_retry(self):
         self.retry_count += 1
-        print(f"尝试 {self.retry_count} 失败，恢复中...")
-        
-        # 恢复逻辑
-        await asyncio.sleep(2)
+        print(f"尝试 {self.retry_count} 失败，正在重试...")
+        await asyncio.sleep(1)
     
     @retry(
         max_retries=3,
-        exceptions=[ElementNotFound],
-        on_retry=handle_retry  # 不需要 'self.' 前缀
+        exceptions=[WaitElementTimeout],
+        on_retry=log_retry  # 不需要 'self.' 前缀
     )
-    async def scrape_product(self, url: str):
-        async with Chrome() as browser:
-            tab = await browser.start()
-            await tab.go_to(url)
-            return await tab.find(class_name='product-title')
+    async def fetch_data(self):
+        # 您的爬取逻辑
+        pass
 ```
 
 !!! warning "方法定义顺序很重要"
@@ -278,7 +273,7 @@ class ProductScraper:
 
 ### 1. 页面刷新和状态恢复
 
-最常见的场景之一：元素变得陈旧或页面进入错误状态。刷新页面并导航回原位置。
+**这是 `on_retry` 最强大的用法**：通过刷新页面并恢复应用程序状态来从故障中恢复。此示例演示了为什么 retry 装饰器对生产爬虫如此有价值。
 
 ```python
 from pydoll.browser.chromium import Chrome
@@ -298,6 +293,7 @@ class DataScraper:
         print(f"恢复中... 刷新第 {self.current_page} 页")
         
         if self.tab:
+            # 刷新页面以从陈旧元素或错误状态中恢复
             await self.tab.refresh()
             await asyncio.sleep(2)  # 等待页面加载
             
@@ -314,9 +310,8 @@ class DataScraper:
         on_retry=recover_from_failure,
         delay=1.0
     )
-    async def scrape_page_data(self, page: int):
-        self.current_page = page
-        
+    async def scrape_page_data(self):
+        """从当前页面抓取数据"""
         if not self.browser:
             self.browser = Chrome()
             self.tab = await self.browser.start()
@@ -324,14 +319,41 @@ class DataScraper:
         
         # 导航到特定页面
         page_input = await self.tab.find(id='page-number')
-        await page_input.insert_text(str(page))
+        await page_input.insert_text(str(self.current_page))
         await self.tab.keyboard.press(Key.ENTER)
         await asyncio.sleep(1)
         
-        # 抓取数据
+        # 抓取数据（如果元素变陈旧可能会失败）
         items = await self.tab.find(class_name='data-item', find_all=True)
         return [await item.text for item in items]
+    
+    async def scrape_multiple_pages(self, start_page: int, end_page: int):
+        """抓取多个页面，失败时自动重试"""
+        results = []
+        for page_num in range(start_page, end_page + 1):
+            self.current_page = page_num
+            data = await self.scrape_page_data()
+            results.extend(data)
+        return results
+
+# 用法
+async def main():
+    scraper = DataScraper()
+    try:
+        # 抓取第 1-10 页，失败时自动恢复
+        all_data = await scraper.scrape_multiple_pages(1, 10)
+        print(f"已抓取 {len(all_data)} 个项目")
+    finally:
+        if scraper.browser:
+            await scraper.browser.stop()
 ```
+
+**这为什么强大：**
+
+- `recover_from_failure()` 真正**恢复状态**：刷新并导航回来
+- `scrape_page_data()` 方法保持简洁，只专注于爬取逻辑
+- 如果元素变陈旧或消失，重试机制会自动处理恢复
+- 浏览器通过 `self.browser` 和 `self.tab` 在重试之间保持
 
 ### 2. 模态对话框恢复
 

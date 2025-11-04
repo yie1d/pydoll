@@ -219,32 +219,27 @@ Ao usar o decorator dentro de uma classe, o callback pode ser um método de clas
 
 ```python
 import asyncio
-from pydoll.browser.chromium import Chrome
 from pydoll.decorators import retry
-from pydoll.exceptions import ElementNotFound
+from pydoll.exceptions import WaitElementTimeout
 
-class ProductScraper:
+class DataCollector:
     def __init__(self):
         self.retry_count = 0
     
     # IMPORTANTE: Defina o callback ANTES do método decorado
-    async def handle_retry(self):
+    async def log_retry(self):
         self.retry_count += 1
-        print(f"Tentativa {self.retry_count} falhou, recuperando...")
-        
-        # Lógica de recuperação aqui
-        await asyncio.sleep(2)
+        print(f"Tentativa {self.retry_count} falhou, tentando novamente...")
+        await asyncio.sleep(1)
     
     @retry(
         max_retries=3,
-        exceptions=[ElementNotFound],
-        on_retry=handle_retry  # Sem prefixo 'self.' necessário
+        exceptions=[WaitElementTimeout],
+        on_retry=log_retry  # Sem prefixo 'self.' necessário
     )
-    async def scrape_product(self, url: str):
-        async with Chrome() as browser:
-            tab = await browser.start()
-            await tab.go_to(url)
-            return await tab.find(class_name='product-title')
+    async def fetch_data(self):
+        # Sua lógica de scraping aqui
+        pass
 ```
 
 !!! warning "Ordem de Definição de Métodos Importa"
@@ -278,7 +273,7 @@ class ProductScraper:
 
 ### 1. Atualização de Página e Recuperação de Estado
 
-Um dos cenários mais comuns: um elemento fica obsoleto ou a página entra em um estado ruim. Atualize a página e navegue de volta para onde você estava.
+**Este é o uso mais poderoso do `on_retry`**: recuperar de falhas atualizando a página e restaurando o estado da sua aplicação. Este exemplo demonstra por que o decorator retry é tão valioso para scraping em produção.
 
 ```python
 from pydoll.browser.chromium import Chrome
@@ -298,6 +293,7 @@ class DataScraper:
         print(f"Recuperando... atualizando página {self.current_page}")
         
         if self.tab:
+            # Atualiza a página para recuperar de elementos obsoletos ou estado ruim
             await self.tab.refresh()
             await asyncio.sleep(2)  # Esperar a página carregar
             
@@ -314,9 +310,8 @@ class DataScraper:
         on_retry=recover_from_failure,
         delay=1.0
     )
-    async def scrape_page_data(self, page: int):
-        self.current_page = page
-        
+    async def scrape_page_data(self):
+        """Fazer scraping dos dados da página atual"""
         if not self.browser:
             self.browser = Chrome()
             self.tab = await self.browser.start()
@@ -324,14 +319,41 @@ class DataScraper:
         
         # Navegar para página específica
         page_input = await self.tab.find(id='page-number')
-        await page_input.insert_text(str(page))
+        await page_input.insert_text(str(self.current_page))
         await self.tab.keyboard.press(Key.ENTER)
         await asyncio.sleep(1)
         
-        # Fazer scraping dos dados
+        # Fazer scraping dos dados (pode falhar se elementos ficarem obsoletos)
         items = await self.tab.find(class_name='data-item', find_all=True)
         return [await item.text for item in items]
+    
+    async def scrape_multiple_pages(self, start_page: int, end_page: int):
+        """Fazer scraping de múltiplas páginas com retry automático em falhas"""
+        results = []
+        for page_num in range(start_page, end_page + 1):
+            self.current_page = page_num
+            data = await self.scrape_page_data()
+            results.extend(data)
+        return results
+
+# Uso
+async def main():
+    scraper = DataScraper()
+    try:
+        # Fazer scraping das páginas 1-10 com recuperação automática em falhas
+        all_data = await scraper.scrape_multiple_pages(1, 10)
+        print(f"Coletados {len(all_data)} itens")
+    finally:
+        if scraper.browser:
+            await scraper.browser.stop()
 ```
+
+**O que torna isso poderoso:**
+
+- `recover_from_failure()` realmente **restaura o estado** atualizando e navegando de volta
+- O método `scrape_page_data()` fica limpo, focado apenas na lógica de scraping
+- Se elementos ficarem obsoletos ou desaparecerem, o mecanismo de retry lida com a recuperação automaticamente
+- O navegador persiste entre as tentativas via `self.browser` e `self.tab`
 
 ### 2. Recuperação de Modal de Diálogo
 
