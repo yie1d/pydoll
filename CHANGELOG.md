@@ -1,3 +1,22 @@
+## 2.12.0 (2025-11-04)
+
+### Feat
+
+- **execute_script**: validate element argument usage
+- **tab,element,chrome**: revert arguments and add Chromium paths
+- add a retry decorator for handling function execution failures
+
+### Fix
+
+- import TopLevelTargetRequired in test_browser_tab.py
+- allow one additional retry attempt in the retry decorator
+
+### Refactor
+
+- **tab,element**: simplify execute_script parameters
+- **element**: move and enhance execute_script from tab
+- **tab**: separate execute_script concerns and enhance with comprehensive options
+
 ## 2.11.0 (2025-11-02)
 
 ### Feat
