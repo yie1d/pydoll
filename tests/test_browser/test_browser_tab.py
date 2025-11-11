@@ -1469,7 +1469,8 @@ class TestTabFrameHandling:
             {'targetId': 'iframe-target-id', 'url': 'https://example.com/iframe'}
         ])
 
-        frame = await tab.get_frame(mock_iframe_element)
+        with pytest.warns(DeprecationWarning):
+            frame = await tab.get_frame(mock_iframe_element)
         
         assert isinstance(frame, Tab)
         mock_browser.get_targets.assert_called_once()
@@ -1489,9 +1490,11 @@ class TestTabFrameHandling:
         tab._browser._tabs_opened = {}
 
         with patch('pydoll.browser.tab.ConnectionHandler', autospec=True):
-            frame1 = await tab.get_frame(mock_iframe_element)
+            with pytest.warns(DeprecationWarning):
+                frame1 = await tab.get_frame(mock_iframe_element)
             # Second call should reuse from cache and not create a new Tab
-            frame2 = await tab.get_frame(mock_iframe_element)
+            with pytest.warns(DeprecationWarning):
+                frame2 = await tab.get_frame(mock_iframe_element)
 
         assert isinstance(frame1, Tab)
         assert frame1 is frame2
@@ -1503,8 +1506,9 @@ class TestTabFrameHandling:
         mock_element = MagicMock()
         mock_element.tag_name = 'div'  # Mock the property directly
         
-        with pytest.raises(NotAnIFrame):
-            await tab.get_frame(mock_element)
+        with pytest.warns(DeprecationWarning):
+            with pytest.raises(NotAnIFrame):
+                await tab.get_frame(mock_element)
 
     @pytest.mark.asyncio
     async def test_get_frame_no_frame_id(self, tab, mock_browser):
@@ -1516,8 +1520,9 @@ class TestTabFrameHandling:
 
         mock_browser.get_targets = AsyncMock(return_value=[])
         
-        with pytest.raises(IFrameNotFound):
-            await tab.get_frame(mock_iframe_element)
+        with pytest.warns(DeprecationWarning):
+            with pytest.raises(IFrameNotFound):
+                await tab.get_frame(mock_iframe_element)
 
 
 class TestTabUtilityMethods:

@@ -117,6 +117,19 @@ def disabled_element(mock_connection_handler):
 
 
 @pytest.fixture
+def iframe_element(mock_connection_handler):
+    """Iframe element fixture for iframe-related tests."""
+    attributes_list = ['id', 'iframe-id', 'tag_name', 'iframe']
+    return WebElement(
+        object_id='iframe-object-id',
+        connection_handler=mock_connection_handler,
+        method='css',
+        selector='iframe#iframe-id',
+        attributes_list=attributes_list,
+    )
+
+
+@pytest.fixture
 def ci_chrome_options():
     """Chrome options optimized for CI environments."""
     options = Options()
@@ -262,6 +275,13 @@ class TestWebElementProperties:
         html = await web_element.inner_html
         assert html == expected_html
 
+    @pytest.mark.asyncio
+    async def test_iframe_context_non_iframe_returns_none(self, web_element):
+        """Non-iframe elements should not produce iframe context."""
+        result = await web_element.iframe_context
+        assert result is None
+        web_element._connection_handler.execute_command.assert_not_awaited()
+
 
 class TestWebElementMethods:
     """Test WebElement methods and interactions."""
@@ -323,6 +343,185 @@ class TestWebElementMethods:
 
         mock_sleep.assert_called_with(0.1)  # Default interval
         assert input_element.click.call_count == 1
+
+
+class TestWebElementIFrame:
+    """Tests for iframe-specific WebElement behaviour."""
+
+    @pytest.mark.asyncio
+    async def test_iframe_context_initialization(self, iframe_element):
+        """Iframe context should be created via CDP commands."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'DOM.describeNode':
+                return {
+                    'result': {
+                        'node': {
+                            'frameId': 'frame-123',
+                            'contentDocument': {
+                                'frameId': 'frame-123',
+                                'documentURL': 'https://example.com/frame.html',
+                                'baseURL': 'https://example.com/frame.html',
+                            },
+                        }
+                    }
+                }
+            if method == 'Page.createIsolatedWorld':
+                return {'result': {'executionContextId': 42}}
+            if method == 'Runtime.evaluate':
+                return {
+                    'result': {
+                        'result': {
+                            'type': 'object',
+                            'objectId': 'document-object-id',
+                        }
+                    }
+                }
+            raise AssertionError(f'Unexpected method {method}')
+
+        iframe_element._connection_handler.execute_command.side_effect = side_effect
+
+        ctx = await iframe_element.iframe_context
+        assert ctx is not None
+        assert ctx.frame_id == 'frame-123'
+        assert ctx.document_url == 'https://example.com/frame.html'
+        assert ctx.execution_context_id == 42
+        assert ctx.document_object_id == 'document-object-id'
+
+        # Subsequent access should not trigger additional CDP calls
+        iframe_element._connection_handler.execute_command.reset_mock()
+        cached_ctx = await iframe_element.iframe_context
+        assert cached_ctx is ctx
+        iframe_element._connection_handler.execute_command.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_iframe_inner_html_uses_runtime_evaluate(self, iframe_element):
+        """inner_html should read from iframe execution context."""
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'DOM.describeNode':
+                return {
+                    'result': {
+                        'node': {
+                            'frameId': 'frame-123',
+                            'contentDocument': {
+                                'frameId': 'frame-123',
+                                'documentURL': 'https://example.com/frame.html',
+                                'baseURL': 'https://example.com/frame.html',
+                            },
+                        }
+                    }
+                }
+            if method == 'Page.createIsolatedWorld':
+                return {'result': {'executionContextId': 77}}
+            if method == 'Runtime.evaluate':
+                expression = command['params']['expression']
+                if expression == 'document.documentElement':
+                    return {
+                        'result': {
+                            'result': {
+                                'type': 'object',
+                                'objectId': 'document-object-id',
+                            }
+                        }
+                    }
+                if expression == 'document.documentElement.outerHTML':
+                    assert command['params']['contextId'] == 77
+                    return {
+                        'result': {
+                            'result': {
+                                'type': 'string',
+                                'value': '<html>iframe content</html>',
+                            }
+                        }
+                    }
+            raise AssertionError(f'Unexpected method {method}')
+
+        iframe_element._connection_handler.execute_command.side_effect = side_effect
+
+        html = await iframe_element.inner_html
+        assert html == '<html>iframe content</html>'
+
+        methods = [
+            call.args[0]['method']
+            for call in iframe_element._connection_handler.execute_command.await_args_list
+        ]
+        assert methods.count('DOM.describeNode') == 1
+        assert methods.count('Page.createIsolatedWorld') == 1
+        assert methods.count('Runtime.evaluate') == 2
+
+    @pytest.mark.asyncio
+    async def test_find_within_iframe_uses_document_context(self, iframe_element):
+        """find() should query against the iframe's document element."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'DOM.describeNode':
+                object_id = command['params'].get('objectId')
+                if object_id == 'iframe-object-id':
+                    return {
+                        'result': {
+                            'node': {
+                                'frameId': 'frame-123',
+                                'contentDocument': {
+                                    'frameId': 'frame-123',
+                                    'documentURL': 'https://example.com/frame.html',
+                                    'baseURL': 'https://example.com/frame.html',
+                                },
+                            }
+                        }
+                    }
+                if object_id == 'element-object-id':
+                    return {
+                        'result': {
+                            'node': {
+                                'nodeName': 'DIV',
+                                'attributes': ['id', 'child', 'data-test', 'value'],
+                            }
+                        }
+                    }
+                raise AssertionError('Unexpected objectId in describeNode')
+            if method == 'Page.createIsolatedWorld':
+                return {'result': {'executionContextId': 88}}
+            if method == 'Runtime.evaluate':
+                expression = command['params']['expression']
+                if expression == 'document.documentElement':
+                    return {
+                        'result': {
+                            'result': {
+                                'type': 'object',
+                                'objectId': 'document-object-id',
+                            }
+                        }
+                    }
+                raise AssertionError(f'Unexpected evaluate expression: {expression}')
+            if method == 'Runtime.callFunctionOn':
+                assert command['params']['objectId'] == 'document-object-id'
+                return {
+                    'result': {
+                        'result': {
+                            'type': 'object',
+                            'objectId': 'element-object-id',
+                        }
+                    }
+                }
+            raise AssertionError(f'Unexpected method {method}')
+
+        iframe_element._connection_handler.execute_command.side_effect = side_effect
+
+        result = await iframe_element.find(tag_name='div')
+
+        assert isinstance(result, WebElement)
+        assert result._object_id == 'element-object-id'
+
+        runtime_calls = [
+            call.args[0]
+            for call in iframe_element._connection_handler.execute_command.await_args_list
+            if call.args[0]['method'] == 'Runtime.callFunctionOn'
+        ]
+        assert runtime_calls, 'Runtime.callFunctionOn should be used for iframe queries'
+        assert runtime_calls[0]['params']['objectId'] == 'document-object-id'
 
     @pytest.mark.asyncio
     async def test_get_parent_element_success(self, web_element):
