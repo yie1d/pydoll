@@ -32,12 +32,12 @@
 键盘 API 提供三种主要方法:
 
 ```python
-from pydoll import Chromium
+from pydoll.browser import Chrome
 from pydoll.constants import Key
 
-async with Chromium() as browser:
-    tab = await browser.get_tab()
-    await tab.goto('https://example.com')
+async with Chrome() as browser:
+    tab = await browser.start()
+    await tab.go_to('https://example.com')
     
     # 按下并释放一个键
     await tab.keyboard.press(Key.ENTER)
@@ -286,13 +286,13 @@ await tab.keyboard.press(Key.INSERT)
 ### 表单导航
 
 ```python
-from pydoll import Chromium
+from pydoll.browser import Chrome
 from pydoll.constants import Key
 
 async def fill_form_with_keyboard():
-    async with Chromium() as browser:
-        tab = await browser.get_tab()
-        await tab.goto('https://example.com/form')
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/form')
         
         # 聚焦第一个字段并输入
         first_field = await tab.find(id='name')

@@ -520,14 +520,13 @@ SOCKS5 representa o **padrão ouro** para proxying consciente da privacidade, of
 
 **Proxy SOCKS5 Básico:**
 ```python
-from pydoll import Chrome, ChromiumOptions
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 options = ChromiumOptions()
-options.set_proxy({
-    'server': 'socks5://proxy.example.com:1080',
-    'username': 'user',      # Opcional
-    'password': 'pass'       # Opcional
-})
+options.add_argument('--proxy-server=socks5://proxy.example.com:1080')
+# Para proxies autenticados, inclua as credenciais na URL:
+# options.add_argument('--proxy-server=socks5://usuario:senha@proxy.example.com:1080')
 
 async with Chrome(options=options) as browser:
     tab = await browser.start()

@@ -529,7 +529,8 @@ Pydoll 提供了多种策略来防止 WebRTC IP 泄露：
 **方法 1：强制 WebRTC 仅使用代理路由 (推荐)**
 
 ```python
-from pydoll import Chrome, ChromiumOptions
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 options = ChromiumOptions()
 options.add_argument('--force-webrtc-ip-handling-policy=disable_non_proxied_udp')
@@ -576,11 +577,9 @@ options.browser_preferences = {
 **方法 4：使用支持 UDP 的 SOCKS5 代理**
 
 ```python
-options.set_proxy({
-    'server': 'socks5://proxy.example.com:1080',
-    'username': 'user',
-    'password': 'pass'
-})
+options.add_argument('--proxy-server=socks5://proxy.example.com:1080')
+# 如果代理需要认证，请在 URL 中包含凭证：
+# options.add_argument('--proxy-server=socks5://user:pass@proxy.example.com:1080')
 options.add_argument('--force-webrtc-ip-handling-policy=default_public_interface_only')
 ```
 
@@ -602,11 +601,12 @@ options.add_argument('--force-webrtc-ip-handling-policy=default_public_interface
 
 ```python
 import asyncio
-from pydoll import Chrome, ChromiumOptions
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 async def test_webrtc_leak():
     options = ChromiumOptions()
-    options.set_proxy({'server': 'http://proxy.example.com:8080'})
+    options.add_argument('--proxy-server=http://proxy.example.com:8080')
     options.add_argument('--force-webrtc-ip-handling-policy=disable_non_proxied_udp')
     
     async with Chrome(options=options) as browser:

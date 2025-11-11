@@ -286,13 +286,13 @@ await tab.keyboard.press(Key.INSERT)
 ### Form Navigation
 
 ```python
-from pydoll import Chromium
+from pydoll.browser import Chrome
 from pydoll.constants import Key
 
 async def fill_form_with_keyboard():
-    async with Chromium() as browser:
-        tab = await browser.get_tab()
-        await tab.goto('https://example.com/form')
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/form')
         
         # Focus first field and type
         first_field = await tab.find(id='name')

@@ -522,14 +522,13 @@ SOCKS5 是注重隐私的代理的 **黄金标准**，与应用层替代方案�
 
 **基本 SOCKS5 代理：**
 ```python
-from pydoll import Chrome, ChromiumOptions
+from pydoll.browser import Chrome
+from pydoll.browser.options import ChromiumOptions
 
 options = ChromiumOptions()
-options.set_proxy({
-    'server': 'socks5://proxy.example.com:1080',
-    'username': 'user',      # 可选
-    'password': 'pass'       # 可选
-})
+options.add_argument('--proxy-server=socks5://proxy.example.com:1080')
+# 对于需要认证的代理，请在 URL 中包含凭证：
+# options.add_argument('--proxy-server=socks5://user:pass@proxy.example.com:1080')
 
 async with Chrome(options=options) as browser:
     tab = await browser.start()

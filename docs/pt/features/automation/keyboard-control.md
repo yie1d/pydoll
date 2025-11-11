@@ -32,12 +32,12 @@ A API de Teclado fornece controle completo sobre a entrada de teclado no nível 
 A API de Teclado fornece três métodos principais:
 
 ```python
-from pydoll import Chromium
+from pydoll.browser import Chrome
 from pydoll.constants import Key
 
-async with Chromium() as browser:
-    tab = await browser.get_tab()
-    await tab.goto('https://example.com')
+async with Chrome() as browser:
+    tab = await browser.start()
+    await tab.go_to('https://example.com')
     
     # Pressionar e soltar uma tecla
     await tab.keyboard.press(Key.ENTER)
@@ -284,13 +284,13 @@ await tab.keyboard.press(Key.INSERT)
 ### Navegação em Formulários
 
 ```python
-from pydoll import Chromium
+from pydoll.browser import Chrome
 from pydoll.constants import Key
 
 async def fill_form_with_keyboard():
-    async with Chromium() as browser:
-        tab = await browser.get_tab()
-        await tab.goto('https://example.com/form')
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com/form')
         
         # Focar no primeiro campo e digitar
         first_field = await tab.find(id='name')
