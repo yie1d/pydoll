@@ -596,24 +596,13 @@ iFrame 在浏览器自动化中提出了特殊的挑战，因为它们具有单�
 
 ```mermaid
 flowchart TB
-    subgraph MainPage[主页面上下文]
-        MainDOM[主页面 DOM]
-        IFrameTag[iframe 元素]
-        MainDOM --> IFrameTag
-    end
-    
-    subgraph IFrameContext[iFrame - 单独的 DOM]
-        IFrameDOM[iFrame DOM]
-        IFrameElements[iFrame 内的元素]
-        IFrameDOM --> IFrameElements
-    end
-    
-    IFrameTag -.->|get_frame 方法| IFrameContext
-    
-    MainPage --> MainSearch[tab.find - 主 DOM]
-    IFrameContext --> IFrameSearch[frame.find - iFrame DOM]
-```
+    Main[tab]
+    Frame["iframe WebElement"]
+    Content["iframe 内部元素"]
 
+    Main -->|"find('iframe')"| Frame
+    Frame -->|"find('button#submit')"| Content
+```
 ```python
 import asyncio
 from pydoll.browser.chromium import Chrome
@@ -622,29 +611,25 @@ async def iframe_interaction():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/page-with-iframe')
-        
-        # 查找 iframe 元素
-        iframe_element = await tab.query("iframe.embedded-content", timeout=10)
-        
-        # 获取 iframe 内容的 Tab 实例
-        frame = await tab.get_frame(iframe_element)
-        
-        # 现在在 iframe 上下文中使用所有 Tab 方法
-        iframe_button = await frame.find(tag_name="button", class_name="submit")
+
+        iframe = await tab.query("iframe.embedded-content", timeout=10)
+
+        # WebElement 辅助方法会自动在 iframe 内执行
+        iframe_button = await iframe.find(tag_name="button", class_name="submit")
         await iframe_button.click()
-        
-        iframe_input = await frame.find(id="captcha-input")
+
+        iframe_input = await iframe.find(id="captcha-input")
         await iframe_input.type_text("verification-code")
-        
-        # 在 iframe 内查询
-        iframe_links = await frame.query("a", find_all=True)
-        print(f"在 iframe 中找到 {len(iframe_links)} 个链接")
+
+        # 如果还有内层 iframe，继续链式查找
+        inner_iframe = await iframe.find(tag_name="iframe")
+        download_link = await inner_iframe.find(text="下载 PDF")
+        await download_link.click()
 
 asyncio.run(iframe_interaction())
 ```
-
-!!! note "iFrame 目标和截图"
-    在 iframe 内工作时，某些方法如 `tab.take_screenshot()` 将不起作用，因为 Chrome 的 CDP 无法直接捕获子目标的截图。请改用 `element.take_screenshot()`，它在 iframe 内工作。
+!!! note "iframe 中的截图"
+    `tab.take_screenshot()` 只能作用于顶层 target。想要截取 iframe 内容，请锁定 iframe 内部的某个元素，使用 `element.take_screenshot()`。
 
 ## 错误处理策略
 

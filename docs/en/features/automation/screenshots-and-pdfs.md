@@ -301,17 +301,13 @@ async def safe_screenshot():
         
         # IFrame screenshot limitation
         iframe_element = await tab.find(tag_name='iframe')
-        frame = await tab.get_frame(iframe_element)
-        
-        try:
-            # Won't work for iframes
-            await frame.take_screenshot('iframe.png')
-        except TopLevelTargetRequired:
-            print("Use element.take_screenshot() for iframe content")
-            
-            # Correct approach
-            content = await frame.find(id='content')
-            await content.take_screenshot('iframe-content.jpeg')
+
+        # This still won't work: top-level screenshots ignore iframe content
+        # await tab.take_screenshot('frame.png')
+
+        # Screenshot an element inside the iframe WebElement
+        content = await iframe_element.find(id='content')
+        await content.take_screenshot('iframe-content.png')
 ```
 
 ## Learn More
