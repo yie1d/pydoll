@@ -345,7 +345,18 @@ class FindElementsMixin:
             ElementNotFound: If element not found and raise_exc=True.
         """
         logger.debug(f'_find_element(): by={by}, value={value}, raise_exc={raise_exc}')
-        if hasattr(self, '_object_id'):
+        iframe_context = None
+        if getattr(self, 'is_iframe', False):
+            iframe_context = await self.iframe_context  # type: ignore[attr-defined]
+
+        if iframe_context:
+            command = self._get_find_element_command(
+                by,
+                value,
+                object_id=iframe_context.document_object_id or '',
+                execution_context_id=iframe_context.execution_context_id,
+            )
+        elif hasattr(self, '_object_id'):
             command = self._get_find_element_command(by, value, self._object_id)
         else:
             command = self._get_find_element_command(by, value)
@@ -385,7 +396,18 @@ class FindElementsMixin:
             ElementNotFound: If no elements found and raise_exc=True.
         """
         logger.debug(f'_find_elements(): by={by}, value={value}, raise_exc={raise_exc}')
-        if hasattr(self, '_object_id'):
+        iframe_context = None
+        if getattr(self, 'is_iframe', False):
+            iframe_context = await self.iframe_context  # type: ignore[attr-defined]
+
+        if iframe_context:
+            command = self._get_find_elements_command(
+                by,
+                value,
+                object_id=iframe_context.document_object_id or '',
+                execution_context_id=iframe_context.execution_context_id,
+            )
+        elif hasattr(self, '_object_id'):
             command = self._get_find_elements_command(by, value, self._object_id)
         else:
             command = self._get_find_elements_command(by, value)
@@ -549,7 +571,13 @@ class FindElementsMixin:
         """Execute CDP command via connection handler (60s timeout)."""
         return await self._connection_handler.execute_command(command, timeout=60)
 
-    def _get_find_element_command(self, by: By, value: str, object_id: str = ''):
+    def _get_find_element_command(
+        self,
+        by: By,
+        value: str,
+        object_id: str = '',
+        execution_context_id: Optional[int] = None,
+    ):
         """
         Create CDP command for finding single element.
 
@@ -579,18 +607,29 @@ class FindElementsMixin:
                 return_by_value=False,
             )
         elif by == By.XPATH:
-            command = self._get_find_element_by_xpath_command(value, object_id)
+            command = self._get_find_element_by_xpath_command(
+                value, object_id=object_id, execution_context_id=execution_context_id
+            )
         elif by == By.NAME:
             command = self._get_find_element_by_xpath_command(
-                f'//*[@name="{escaped_value}"]', object_id
+                f'//*[@name="{escaped_value}"]',
+                object_id=object_id,
+                execution_context_id=execution_context_id,
             )
         else:
             command = RuntimeCommands.evaluate(
-                expression=Scripts.QUERY_SELECTOR.replace('{selector}', selector)
+                expression=Scripts.QUERY_SELECTOR.replace('{selector}', selector),
+                context_id=execution_context_id,
             )
         return command
 
-    def _get_find_elements_command(self, by: By, value: str, object_id: str = ''):
+    def _get_find_elements_command(
+        self,
+        by: By,
+        value: str,
+        object_id: str = '',
+        execution_context_id: Optional[int] = None,
+    ):
         """
         Create CDP command for finding multiple elements.
 
@@ -617,14 +656,22 @@ class FindElementsMixin:
                 return_by_value=False,
             )
         elif by == By.XPATH:
-            command = self._get_find_elements_by_xpath_command(value, object_id)
+            command = self._get_find_elements_by_xpath_command(
+                value, object_id=object_id, execution_context_id=execution_context_id
+            )
         else:
             command = RuntimeCommands.evaluate(
-                expression=Scripts.QUERY_SELECTOR_ALL.replace('{selector}', selector)
+                expression=Scripts.QUERY_SELECTOR_ALL.replace('{selector}', selector),
+                context_id=execution_context_id,
             )
         return command
 
-    def _get_find_element_by_xpath_command(self, xpath: str, object_id: str):
+    def _get_find_element_by_xpath_command(
+        self,
+        xpath: str,
+        object_id: str,
+        execution_context_id: Optional[int] = None,
+    ):
         """
         Create CDP command specifically for XPath single element finding.
 
@@ -646,10 +693,15 @@ class FindElementsMixin:
             )
         else:
             script = Scripts.FIND_XPATH_ELEMENT.replace('{escaped_value}', escaped_value)
-            command = RuntimeCommands.evaluate(expression=script)
+            command = RuntimeCommands.evaluate(expression=script, context_id=execution_context_id)
         return command
 
-    def _get_find_elements_by_xpath_command(self, xpath: str, object_id: str):
+    def _get_find_elements_by_xpath_command(
+        self,
+        xpath: str,
+        object_id: str,
+        execution_context_id: Optional[int] = None,
+    ):
         """
         Create CDP command specifically for XPath multiple element finding.
 
@@ -671,7 +723,7 @@ class FindElementsMixin:
             )
         else:
             script = Scripts.FIND_XPATH_ELEMENTS.replace('{escaped_value}', escaped_value)
-            command = RuntimeCommands.evaluate(expression=script)
+            command = RuntimeCommands.evaluate(expression=script, context_id=execution_context_id)
         return command
 
     @staticmethod

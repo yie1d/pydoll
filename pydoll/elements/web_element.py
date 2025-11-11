@@ -4,8 +4,9 @@ import asyncio
 import json
 import logging
 import warnings
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import aiofiles
 
@@ -27,6 +28,7 @@ from pydoll.exceptions import (
     ElementNotInteractable,
     ElementNotVisible,
     InvalidFileExtension,
+    InvalidIFrame,
     MissingScreenshotPath,
     WaitElementTimeout,
 )
@@ -36,9 +38,11 @@ from pydoll.protocol.input.types import (
     MouseButton,
     MouseEventType,
 )
+from pydoll.protocol.page.methods import CreateIsolatedWorldResponse
 from pydoll.protocol.page.types import ScreenshotFormat, Viewport
 from pydoll.protocol.runtime.methods import (
     CallFunctionOnResponse,
+    EvaluateResponse,
     GetPropertiesResponse,
     SerializationOptions,
 )
@@ -49,9 +53,16 @@ from pydoll.utils import (
     is_script_already_function,
 )
 
-if TYPE_CHECKING:
-    from typing import Optional
 
+@dataclass
+class _IFrameContext:
+    frame_id: str
+    document_url: Optional[str] = None
+    execution_context_id: Optional[int] = None
+    document_object_id: Optional[str] = None
+
+
+if TYPE_CHECKING:
     from pydoll.protocol.dom.methods import (
         GetBoxModelResponse,
         GetOuterHTMLResponse,
@@ -95,6 +106,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         self._connection_handler = connection_handler
         self._attributes: dict[str, str] = {}
         self._def_attributes(attributes_list)
+        self._iframe_context: Optional[_IFrameContext] = None
         logger.debug(
             f'WebElement initialized: object_id={self._object_id}, '
             f'method={self._search_method}, selector={self._selector}, '
@@ -120,6 +132,11 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     def tag_name(self) -> Optional[str]:
         """Element's HTML tag name."""
         return self._attributes.get('tag_name')
+
+    @property
+    def is_iframe(self) -> bool:
+        """Whether the element represents an iframe."""
+        return self.tag_name == 'iframe'
 
     @property
     def is_enabled(self) -> bool:
@@ -150,11 +167,22 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     @property
     async def inner_html(self) -> str:
         """Element's HTML content (actually returns outerHTML)."""
+        if self.is_iframe:
+            iframe_context = await self.iframe_context
+            if iframe_context is None:
+                raise InvalidIFrame('Unable to resolve iframe context')
+            response_evaluate: EvaluateResponse = await self._execute_command(
+                RuntimeCommands.evaluate(
+                    expression='document.documentElement.outerHTML',
+                    context_id=iframe_context.execution_context_id,
+                    return_by_value=True,
+                )
+            )
+            return response_evaluate['result']['result'].get('value', '')
+
         command = DomCommands.get_outer_html(object_id=self._object_id)
-        response: GetOuterHTMLResponse = await self._execute_command(command)
-        html = response['result']['outerHTML']
-        logger.debug(f'Inner HTML length: {len(html)})')
-        return html
+        response_get_outer_html: GetOuterHTMLResponse = await self._execute_command(command)
+        return response_get_outer_html['result']['outerHTML']
 
     async def get_bounds_using_js(self) -> dict[str, int]:
         """
@@ -626,6 +654,62 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 return_by_value=True,
             )
         )
+
+    @property
+    async def iframe_context(self) -> Optional[_IFrameContext]:
+        """Cached iframe context information, if available."""
+        if not self.is_iframe:
+            return None
+
+        if self._iframe_context:
+            return self._iframe_context
+
+        await self._ensure_iframe_context()
+        return self._iframe_context
+
+    async def _ensure_iframe_context(self) -> None:
+        """
+        Initialize and cache context information for iframe elements.
+
+        Populates frame id, document URL, execution context and document object id.
+        """
+        node_description = await self._describe_node(object_id=self._object_id)
+        content_document = node_description.get('contentDocument') or {}
+        frame_id = content_document.get('frameId') or node_description.get('frameId')
+        document_url = (
+            content_document.get('documentURL')
+            or content_document.get('baseURL')
+            or node_description.get('documentURL')
+            or node_description.get('baseURL')
+        )
+
+        if not frame_id:
+            raise InvalidIFrame('Unable to resolve frameId for the iframe element')
+
+        self._iframe_context = _IFrameContext(frame_id=frame_id, document_url=document_url)
+
+        if self._iframe_context.execution_context_id is None:
+            response: CreateIsolatedWorldResponse = await self._execute_command(
+                PageCommands.create_isolated_world(
+                    frame_id=frame_id,
+                    world_name=f'pydoll::iframe::{frame_id}',
+                    grant_universal_access=True,
+                )
+            )
+            self._iframe_context.execution_context_id = response['result']['executionContextId']
+
+        if self._iframe_context.document_object_id is None:
+            document_response: EvaluateResponse = await self._execute_command(
+                RuntimeCommands.evaluate(
+                    expression='document.documentElement',
+                    context_id=self._iframe_context.execution_context_id,
+                )
+            )
+            result_payload = document_response.get('result', {}).get('result', {})
+            object_id = result_payload.get('objectId')
+            if not object_id:
+                raise InvalidIFrame('Unable to obtain document reference for iframe')
+            self._iframe_context.document_object_id = object_id
 
     async def is_visible(self):
         """Check if element is visible using comprehensive JavaScript visibility test."""
