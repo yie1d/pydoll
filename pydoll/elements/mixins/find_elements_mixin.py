@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Optional, Union, cast, overload
 
 from pydoll.commands import (
     DomCommands,
@@ -15,7 +15,7 @@ from pydoll.exceptions import ElementNotFound, WaitElementTimeout
 if TYPE_CHECKING:
     from typing import Literal, Optional, Union
 
-    from pydoll.elements.web_element import WebElement
+    from pydoll.elements.web_element import WebElement, _IFrameContext
     from pydoll.protocol.base import Command, T_CommandParams, T_CommandResponse
     from pydoll.protocol.dom.methods import DescribeNodeResponse
     from pydoll.protocol.dom.types import Node
@@ -347,7 +347,8 @@ class FindElementsMixin:
         logger.debug(f'_find_element(): by={by}, value={value}, raise_exc={raise_exc}')
         iframe_context = None
         if getattr(self, 'is_iframe', False):
-            iframe_context = await self.iframe_context  # type: ignore[attr-defined]
+            element_self = cast('WebElement', self)
+            iframe_context = await element_self.iframe_context
 
         if iframe_context:
             command = self._get_find_element_command(
@@ -375,13 +376,7 @@ class FindElementsMixin:
         attributes = await self._get_object_attributes(object_id=object_id)
         logger.debug(f'_find_element() found object_id={object_id}')
         element = create_web_element(object_id, self._connection_handler, by, value, attributes)
-        if iframe_context is not None and getattr(element, 'is_iframe', False):
-            routing_handler = iframe_context.session_handler or self._connection_handler
-            element._routing_session_handler = routing_handler  # type: ignore[attr-defined]
-            element._routing_session_id = iframe_context.session_id  # type: ignore[attr-defined]
-            element._routing_parent_frame_id = iframe_context.frame_id  # type: ignore[attr-defined]
-        if iframe_context is not None and not getattr(element, 'is_iframe', False):
-            element._iframe_context = iframe_context  # type: ignore[attr-defined]
+        self._apply_iframe_context_to_element(element, iframe_context)
         return element
 
     async def _find_elements(self, by: By, value: str, raise_exc: bool = True) -> list[WebElement]:
@@ -406,7 +401,8 @@ class FindElementsMixin:
         logger.debug(f'_find_elements(): by={by}, value={value}, raise_exc={raise_exc}')
         iframe_context = None
         if getattr(self, 'is_iframe', False):
-            iframe_context = await self.iframe_context  # type: ignore[attr-defined]
+            element_self = cast('WebElement', self)
+            iframe_context = await element_self.iframe_context
 
         if iframe_context:
             command = self._get_find_elements_command(
@@ -452,13 +448,7 @@ class FindElementsMixin:
             attributes.extend(['tag_name', tag_name])
 
             child = create_web_element(object_id, self._connection_handler, by, value, attributes)
-            if iframe_context is not None and getattr(child, 'is_iframe', False):
-                routing_handler = iframe_context.session_handler or self._connection_handler
-                child._routing_session_handler = routing_handler  # type: ignore[attr-defined]
-                child._routing_session_id = iframe_context.session_id  # type: ignore[attr-defined]
-                child._routing_parent_frame_id = iframe_context.frame_id  # type: ignore[attr-defined]
-            if iframe_context is not None and not getattr(child, 'is_iframe', False):
-                child._iframe_context = iframe_context  # type: ignore[attr-defined]
+            self._apply_iframe_context_to_element(child, iframe_context)
             elements.append(child)
         logger.debug(f'_find_elements() returning {len(elements)} elements')
         return elements
@@ -579,25 +569,44 @@ class FindElementsMixin:
         )
         return response['result']['node']
 
+    def _apply_iframe_context_to_element(
+        self, element: WebElement, iframe_context: _IFrameContext | None
+    ) -> None:
+        """
+        Propagate iframe context to the newly created element.
+        - If the element is also an iframe, configure session routing.
+        - Otherwise, inject the iframe's own context.
+        """
+        if not iframe_context:
+            return
+        if getattr(element, 'is_iframe', False):
+            routing_handler = iframe_context.session_handler or self._connection_handler
+            element._routing_session_handler = routing_handler
+            element._routing_session_id = iframe_context.session_id
+            element._routing_parent_frame_id = iframe_context.frame_id
+            return
+        element._iframe_context = iframe_context
+
+    def _resolve_routing(self) -> tuple[ConnectionHandler, Optional[str]]:
+        """
+        Resolve handler and sessionId for the current context (iframe routed or default).
+        """
+        iframe_context = getattr(self, '_iframe_context', None)
+        if iframe_context and getattr(iframe_context, 'session_handler', None):
+            return iframe_context.session_handler, getattr(iframe_context, 'session_id', None)
+        routing_handler = getattr(self, '_routing_session_handler', None)
+        if routing_handler is not None:
+            return routing_handler, getattr(self, '_routing_session_id', None)
+        return self._connection_handler, None
+
     async def _execute_command(
         self, command: Command[T_CommandParams, T_CommandResponse]
     ) -> T_CommandResponse:
-        """Execute CDP command via connection handler (60s timeout)."""
-        iframe_ctx = getattr(self, '_iframe_context', None)
-        if iframe_ctx and getattr(iframe_ctx, 'session_handler', None):
-            session_id = getattr(iframe_ctx, 'session_id', None)
-            if session_id:
-                command['sessionId'] = session_id  # type: ignore[index]
-            return await iframe_ctx.session_handler.execute_command(command, timeout=60)  # type: ignore[attr-defined]
-
-        routing_handler = getattr(self, '_routing_session_handler', None)
-        if routing_handler:
-            routing_session_id = getattr(self, '_routing_session_id', None)
-            if routing_session_id:
-                command['sessionId'] = routing_session_id  # type: ignore[index]
-            return await routing_handler.execute_command(command, timeout=60)  # type: ignore[attr-defined]
-
-        return await self._connection_handler.execute_command(command, timeout=60)
+        """Execute CDP command via resolved handler (60s timeout)."""
+        handler, session_id = self._resolve_routing()
+        if session_id:
+            command['sessionId'] = session_id
+        return await handler.execute_command(command, timeout=60)
 
     def _get_find_element_command(
         self,
