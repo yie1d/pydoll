@@ -15,6 +15,7 @@ from pydoll.commands import (
     InputCommands,
     PageCommands,
     RuntimeCommands,
+    TargetCommands,
 )
 from pydoll.connection import ConnectionHandler
 from pydoll.constants import (
@@ -60,6 +61,8 @@ class _IFrameContext:
     document_url: Optional[str] = None
     execution_context_id: Optional[int] = None
     document_object_id: Optional[str] = None
+    session_handler: Optional[ConnectionHandler] = None
+    session_id: Optional[str] = None
 
 
 if TYPE_CHECKING:
@@ -166,7 +169,6 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     @property
     async def inner_html(self) -> str:
-        """Element's HTML content (actually returns outerHTML)."""
         if self.is_iframe:
             iframe_context = await self.iframe_context
             if iframe_context is None:
@@ -179,6 +181,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 )
             )
             return response_evaluate['result']['result'].get('value', '')
+
+        iframe_ctx = getattr(self, '_iframe_context', None)
+        if iframe_ctx is not None:
+            response_cf: CallFunctionOnResponse = await self._execute_command(
+                RuntimeCommands.call_function_on(
+                    function_declaration='function(){ return this.outerHTML }',
+                    object_id=self._object_id,
+                    return_by_value=True,
+                )
+            )
+            return response_cf.get('result', {}).get('result', {}).get('value', '')
 
         command = DomCommands.get_outer_html(object_id=self._object_id)
         response_get_outer_html: GetOuterHTMLResponse = await self._execute_command(command)
@@ -667,49 +680,262 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         await self._ensure_iframe_context()
         return self._iframe_context
 
+    async def _get_frame_tree_for(self, handler: ConnectionHandler, session_id: Optional[str]) -> dict:
+        cmd = PageCommands.get_frame_tree()
+        if session_id:
+            cmd['sessionId'] = session_id  # type: ignore[index]
+        resp = await handler.execute_command(cmd)
+        return resp.get('result', {}).get('frameTree', {})  # type: ignore[return-value]
+
+    @staticmethod
+    def _walk_frames(tree: dict) -> list[dict]:
+        if not tree:
+            return []
+        frames = [tree.get('frame', {})]
+        for child in tree.get('childFrames', []) or []:
+            frames.extend(WebElement._walk_frames(child))
+        return [f for f in frames if f]
+
+    async def _owner_backend_for(self, handler: ConnectionHandler, session_id: Optional[str], frame_id: str) -> Optional[int]:
+        cmd = DomCommands.get_frame_owner(frame_id=frame_id)
+        if session_id:
+            cmd['sessionId'] = session_id  # type: ignore[index]
+        resp = await handler.execute_command(cmd)
+        return resp.get('result', {}).get('backendNodeId')
+
+    async def _find_frame_by_owner(self, handler: ConnectionHandler, session_id: Optional[str], backend_node_id: int) -> tuple[Optional[str], Optional[str]]:
+        tree = await self._get_frame_tree_for(handler, session_id)
+        for f in WebElement._walk_frames(tree):
+            fid = f.get('id', '')
+            if not fid:
+                continue
+            owner_backend = await self._owner_backend_for(handler, session_id, fid)
+            if owner_backend == backend_node_id:
+                return fid, f.get('url')
+        return None, None
+
+    @staticmethod
+    def _find_child_by_parent(tree: dict, parent_id: str) -> Optional[str]:
+        if not tree:
+            return None
+        for child in tree.get('childFrames', []) or []:
+            cframe = child.get('frame', {})
+            if cframe.get('parentId') == parent_id:
+                return cframe.get('id')
+            found = WebElement._find_child_by_parent(child, parent_id)
+            if found:
+                return found
+        return None
+
+    async def _resolve_oopif_by_parent(
+        self,
+        parent_frame_id: str,
+        backend_node_id: Optional[int],
+    ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
+        browser = ConnectionHandler(connection_port=self._connection_handler._connection_port)
+        targets_resp = await browser.execute_command(TargetCommands.get_targets())
+        infos = targets_resp.get('result', {}).get('targetInfos', [])
+
+        direct = [t for t in infos if t.get('type') in {'iframe', 'page'} and t.get('parentFrameId') == parent_frame_id]
+        if direct:
+            attach = await browser.execute_command(TargetCommands.attach_to_target(target_id=direct[0]['targetId'], flatten=True))
+            session_id = attach.get('result', {}).get('sessionId')
+            if session_id:
+                tree = await self._get_frame_tree_for(browser, session_id)
+                root = (tree or {}).get('frame', {})  # type: ignore[assignment]
+                return browser, session_id, root.get('id'), root.get('url')
+
+        for t in infos:
+            if t.get('type') not in {'iframe', 'page'}:
+                continue
+            attach = await browser.execute_command(TargetCommands.attach_to_target(target_id=t.get('targetId', ''), flatten=True))
+            sess = attach.get('result', {}).get('sessionId')
+            if not sess:
+                continue
+            tree = await self._get_frame_tree_for(browser, sess)
+            candidate = WebElement._find_child_by_parent(tree, parent_frame_id)
+            if candidate:
+                return browser, sess, candidate, None
+            root_id = (tree or {}).get('frame', {}).get('id', '')
+            if root_id and backend_node_id is not None:
+                owner = await self._owner_backend_for(self._connection_handler, None, root_id)
+                if owner == backend_node_id:
+                    return browser, sess, root_id, None
+        return None, None, None, None
+
     async def _ensure_iframe_context(self) -> None:
         """
         Initialize and cache context information for iframe elements.
 
         Populates frame id, document URL, execution context and document object id.
         """
-        node_description = await self._describe_node(object_id=self._object_id)
-        content_document = node_description.get('contentDocument') or {}
-        frame_id = content_document.get('frameId') or node_description.get('frameId')
+        node = await self._describe_node(object_id=self._object_id)
+        content_doc = node.get('contentDocument') or {}
+        parent_frame_id = node.get('frameId')
+        backend_node_id = node.get('backendNodeId')
+        frame_id = content_doc.get('frameId')
         document_url = (
-            content_document.get('documentURL')
-            or content_document.get('baseURL')
-            or node_description.get('documentURL')
-            or node_description.get('baseURL')
+            content_doc.get('documentURL')
+            or content_doc.get('baseURL')
+            or node.get('documentURL')
+            or node.get('baseURL')
         )
+        handler_for_tree = getattr(self, '_routing_session_handler', None) or self._connection_handler
+        routing_session_id = getattr(self, '_routing_session_id', None)
+        routing_parent_frame_id = getattr(self, '_routing_parent_frame_id', None)
+
+        if not frame_id and backend_node_id:
+            owner_frame_id, owner_url = await self._find_frame_by_owner(handler_for_tree, routing_session_id, backend_node_id)  # type: ignore[arg-type]
+            if owner_frame_id:
+                frame_id = owner_frame_id
+                document_url = owner_url or document_url
+
+        # Fallback: OOPIF por parentFrameId -> pega target do filho e usa o frame root desse target
+        pending_session_handler: Optional[ConnectionHandler] = None
+        pending_session_id: Optional[str] = None
+        if not frame_id and parent_frame_id:
+            browser_ch = ConnectionHandler(connection_port=self._connection_handler._connection_port)
+            targets_resp = await browser_ch.execute_command(TargetCommands.get_targets())
+            target_infos = targets_resp.get('result', {}).get('targetInfos', [])
+            candidates = [t for t in target_infos if t.get('parentFrameId') == parent_frame_id and t.get('type') in {'iframe', 'page'}]
+            if candidates:
+                target_id = candidates[0]['targetId']
+                attach_resp = await browser_ch.execute_command(TargetCommands.attach_to_target(target_id=target_id, flatten=True))
+                session_id = attach_resp.get('result', {}).get('sessionId')
+                if session_id:
+                    get_tree_cmd = PageCommands.get_frame_tree()
+                    get_tree_cmd['sessionId'] = session_id
+                    tree_resp = await browser_ch.execute_command(get_tree_cmd)
+                    target_root = (tree_resp.get('result', {}) or {}).get('frameTree', {}).get('frame', {})
+                    frame_id = target_root.get('id')
+                    document_url = target_root.get('url') or document_url
+                    pending_session_handler = browser_ch
+                    pending_session_id = session_id
+            else:
+                for t in target_infos:
+                    if t.get('type') not in {'iframe', 'page'}:
+                        continue
+                    attach = await browser_ch.execute_command(
+                        TargetCommands.attach_to_target(target_id=t.get('targetId', ''), flatten=True)
+                    )
+                    sess = attach.get('result', {}).get('sessionId')
+                    if not sess:
+                        continue
+                    get_tree_cmd = PageCommands.get_frame_tree()
+                    get_tree_cmd['sessionId'] = sess
+                    tree_resp = await browser_ch.execute_command(get_tree_cmd)
+                    tree = tree_resp.get('result', {}).get('frameTree', {})
+                    def find_child_by_parent(node_dict: dict, pid: str) -> Optional[str]:
+                        if not node_dict:
+                            return None
+                        for child in node_dict.get('childFrames', []) or []:
+                            cframe = child.get('frame', {})
+                            if cframe.get('parentId') == pid:
+                                return cframe.get('id')
+                            found = find_child_by_parent(child, pid)
+                            if found:
+                                return found
+                        return None
+                    candidate_frame_id = find_child_by_parent(tree, parent_frame_id)
+                    if candidate_frame_id:
+                        frame_id = candidate_frame_id
+                        pending_session_handler = browser_ch
+                        pending_session_id = sess
+                        break
+                    # Owner check: o owner do root frame deve ser o nosso iframe (backend_node_id)
+                    root_frame_id = (tree or {}).get('frame', {}).get('id', '')
+                    if root_frame_id and backend_node_id:
+                        owner = await self._connection_handler.execute_command(
+                            DomCommands.get_frame_owner(frame_id=root_frame_id)
+                        )
+                        owner_backend = owner.get('result', {}).get('backendNodeId')
+                        if owner_backend == backend_node_id:
+                            frame_id = root_frame_id
+                            pending_session_handler = browser_ch
+                            pending_session_id = sess
+                            break
 
         if not frame_id:
             raise InvalidIFrame('Unable to resolve frameId for the iframe element')
 
         self._iframe_context = _IFrameContext(frame_id=frame_id, document_url=document_url)
+        if hasattr(self, '_routing_session_handler'):
+            delattr(self, '_routing_session_handler')
+        if hasattr(self, '_routing_session_id'):
+            delattr(self, '_routing_session_id')
 
-        if self._iframe_context.execution_context_id is None:
-            response: CreateIsolatedWorldResponse = await self._execute_command(
-                PageCommands.create_isolated_world(
-                    frame_id=frame_id,
-                    world_name=f'pydoll::iframe::{frame_id}',
-                    grant_universal_access=True,
-                )
-            )
-            self._iframe_context.execution_context_id = response['result']['executionContextId']
+        if pending_session_handler and pending_session_id:
+            self._iframe_context.session_handler = pending_session_handler
+            self._iframe_context.session_id = pending_session_id
 
-        if self._iframe_context.document_object_id is None:
-            document_response: EvaluateResponse = await self._execute_command(
-                RuntimeCommands.evaluate(
-                    expression='document.documentElement',
-                    context_id=self._iframe_context.execution_context_id,
-                )
+        handler = getattr(self, '_routing_session_handler', None) or self._connection_handler
+        create_cmd = PageCommands.create_isolated_world(
+            frame_id=frame_id,
+            world_name=f'pydoll::iframe::{frame_id}',
+            grant_universal_access=True,
+        )
+        if routing_session_id:
+            create_cmd['sessionId'] = routing_session_id
+        resp: CreateIsolatedWorldResponse = await handler.execute_command(create_cmd)
+        exec_ctx_id = resp.get('result', {}).get('executionContextId')
+
+        if not exec_ctx_id:
+            browser = ConnectionHandler(connection_port=self._connection_handler._connection_port)
+            targets = await browser.execute_command(TargetCommands.get_targets())
+            infos = targets.get('result', {}).get('targetInfos', [])
+            matched_session_id = None
+            for t in infos:
+                if t.get('type') not in {'page', 'iframe'}:
+                    continue
+                attach = await browser.execute_command(TargetCommands.attach_to_target(target_id=t.get('targetId', ''), flatten=True))
+                sess = attach.get('result', {}).get('sessionId')
+                if not sess:
+                    continue
+                ft_cmd = PageCommands.get_frame_tree()
+                ft_cmd['sessionId'] = sess
+                ft = await browser.execute_command(ft_cmd)
+                def contains(node_dict: dict, fid: str) -> bool:
+                    if not node_dict:
+                        return False
+                    fr = node_dict.get('frame', {})
+                    if fr.get('id') == fid:
+                        return True
+                    for ch in node_dict.get('childFrames', []) or []:
+                        if contains(ch, fid):
+                            return True
+                    return False
+                if contains(ft.get('result', {}).get('frameTree', {}), frame_id):
+                    self._iframe_context.session_handler = browser
+                    self._iframe_context.session_id = sess
+                    matched_session_id = sess
+                    break
+            if not matched_session_id:
+                raise InvalidIFrame('OOPIF target not found for iframe')
+            create2 = PageCommands.create_isolated_world(
+                frame_id=frame_id,
+                world_name=f'pydoll::iframe::{frame_id}',
+                grant_universal_access=True,
             )
-            result_payload = document_response.get('result', {}).get('result', {})
-            object_id = result_payload.get('objectId')
-            if not object_id:
-                raise InvalidIFrame('Unable to obtain document reference for iframe')
-            self._iframe_context.document_object_id = object_id
+            create2['sessionId'] = matched_session_id
+            resp = await self._iframe_context.session_handler.execute_command(create2)  # type: ignore[arg-type]
+            exec_ctx_id = resp.get('result', {}).get('executionContextId')
+            if not exec_ctx_id:
+                raise InvalidIFrame('Unable to create isolated world in matched target')
+
+        self._iframe_context.execution_context_id = exec_ctx_id
+
+        eval_cmd = RuntimeCommands.evaluate(
+            expression='document.documentElement',
+            context_id=self._iframe_context.execution_context_id,
+        )
+        if self._iframe_context.session_id:
+            eval_cmd['sessionId'] = self._iframe_context.session_id
+        evaluate_resp: EvaluateResponse = await (self._iframe_context.session_handler or self._connection_handler).execute_command(eval_cmd)
+        result_obj = evaluate_resp.get('result', {}).get('result', {})
+        object_id = result_obj.get('objectId')
+        if not object_id:
+            raise InvalidIFrame('Unable to obtain document reference for iframe')
+        self._iframe_context.document_object_id = object_id
 
     async def is_visible(self):
         """Check if element is visible using comprehensive JavaScript visibility test."""
