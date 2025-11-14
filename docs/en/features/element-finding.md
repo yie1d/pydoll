@@ -593,28 +593,15 @@ asyncio.run(practical_example())
 
 iFrames present a special challenge in browser automation because they have separate DOM contexts. Pydoll makes iframe interaction seamless:
 
-### iFrame Context Isolation
-
 ```mermaid
 flowchart TB
-    subgraph MainPage[Main Page Context]
-        MainDOM[Main Page DOM]
-        IFrameTag[iframe element]
-        MainDOM --> IFrameTag
-    end
-    
-    subgraph IFrameContext[iFrame - Separate DOM]
-        IFrameDOM[iFrame DOM]
-        IFrameElements[Elements inside iFrame]
-        IFrameDOM --> IFrameElements
-    end
-    
-    IFrameTag -.->|get_frame method| IFrameContext
-    
-    MainPage --> MainSearch[tab.find - Main DOM]
-    IFrameContext --> IFrameSearch[frame.find - iFrame DOM]
-```
+    Main[tab]
+    Frame["iframe WebElement"]
+    Content["elements inside iframe"]
 
+    Main -->|"find('iframe')"| Frame
+    Frame -->|"find('button#submit')"| Content
+```
 ```python
 import asyncio
 from pydoll.browser.chromium import Chrome
@@ -623,29 +610,25 @@ async def iframe_interaction():
     async with Chrome() as browser:
         tab = await browser.start()
         await tab.go_to('https://example.com/page-with-iframe')
-        
-        # Find the iframe element
-        iframe_element = await tab.query("iframe.embedded-content", timeout=10)
-        
-        # Get a Tab instance for the iframe's content
-        frame = await tab.get_frame(iframe_element)
-        
-        # Now use all Tab methods within the iframe context
-        iframe_button = await frame.find(tag_name="button", class_name="submit")
+
+        iframe = await tab.query("iframe.embedded-content", timeout=10)
+
+        # WebElement helpers run inside the iframe automatically
+        iframe_button = await iframe.find(tag_name="button", class_name="submit")
         await iframe_button.click()
-        
-        iframe_input = await frame.find(id="captcha-input")
+
+        iframe_input = await iframe.find(id="captcha-input")
         await iframe_input.type_text("verification-code")
-        
-        # Query within iframe
-        iframe_links = await frame.query("a", find_all=True)
-        print(f"Found {len(iframe_links)} links in iframe")
+
+        # Nested iframe? Keep chaining
+        inner_iframe = await iframe.find(tag_name="iframe")
+        download_link = await inner_iframe.find(text="Download PDF")
+        await download_link.click()
 
 asyncio.run(iframe_interaction())
 ```
-
-!!! note "iFrame Targets and Screenshots"
-    When working inside an iframe, some methods like `tab.take_screenshot()` won't work because Chrome's CDP can't capture screenshots of subtargets directly. Use `element.take_screenshot()` instead, which works inside iframes.
+!!! note "Screenshots in iframes"
+    `tab.take_screenshot()` only works on the top-level target. Capture iframe content by targeting an element inside the frame and calling `element.take_screenshot()`.
 
 ## Error Handling Strategies
 

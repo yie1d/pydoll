@@ -301,17 +301,13 @@ async def safe_screenshot():
         
         # IFrame截图限制
         iframe_element = await tab.find(tag_name='iframe')
-        frame = await tab.get_frame(iframe_element)
-        
-        try:
-            # 这对iframe不起作用
-            await frame.take_screenshot('iframe.png')
-        except TopLevelTargetRequired:
-            print("对iframe内容使用element.take_screenshot()")
-            
-            # 正确方法
-            content = await frame.find(id='content')
-            await content.take_screenshot('iframe-content.jpeg')
+
+        # 仍然无效：顶层截图不会包含 iframe 内容
+        # await tab.take_screenshot('frame.png')
+
+        # 选择 iframe 内部的元素进行截图
+        content = await iframe_element.find(id='content')
+        await content.take_screenshot('iframe-content.png')
 ```
 
 ## 了解更多

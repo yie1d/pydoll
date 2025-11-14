@@ -409,6 +409,10 @@ class Tab(FindElementsMixin):
 
     async def get_frame(self, frame: 'WebElement') -> IFrame:
         """
+        .. deprecated:: ?.?.?
+            Use iframe `WebElement` instances directly; this method will be removed in
+            a future version.
+
         Get Tab object for interacting with iframe content.
 
         Args:
@@ -422,6 +426,12 @@ class Tab(FindElementsMixin):
             InvalidIFrame: If iframe lacks valid src attribute.
             IFrameNotFound: If iframe target not found in browser.
         """
+        warnings.warn(
+            'Tab.get_frame() is deprecated and will be removed in a future version. '
+            'Interact with iframe WebElements directly.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         logger.debug(f'Resolving iframe: tag={frame.tag_name}')
         if not frame.tag_name == 'iframe':
             raise NotAnIFrame
