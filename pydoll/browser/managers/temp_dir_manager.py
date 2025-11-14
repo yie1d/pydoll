@@ -88,6 +88,9 @@ class TempDirectoryManager:
             '/cache/',
             'no_vary_search',
             'journal.baj',
+            '\\network\\cookies',
+            '/network/cookies',
+            'cookies-journal',
         ]
         exc_type, exc_value, _ = exc_info
 
@@ -123,3 +126,23 @@ class TempDirectoryManager:
         for temp_dir in self._temp_dirs:
             logger.info(f'Cleaning up temp directory: {temp_dir.name}')
             shutil.rmtree(temp_dir.name, onerror=self.handle_cleanup_error)
+            remaining = Path(temp_dir.name)
+            if not remaining.exists():
+                return
+
+            for attempt in range(10):
+                time.sleep(0.2)
+                try:
+                    shutil.rmtree(temp_dir.name, onerror=self.handle_cleanup_error)
+                except Exception:  # noqa: BLE001 - best-effort cleanup
+                    pass
+                if not remaining.exists():
+                    logger.debug(
+                        f'Temp directory removed after retry #{attempt + 1}: {temp_dir.name}'
+                    )
+                    break
+            if remaining.exists():
+                logger.warning(
+                    f'Temp directory still present after retries (leftover files may remain): '
+                    f'{temp_dir.name}'
+                )

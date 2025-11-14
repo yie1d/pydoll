@@ -214,7 +214,7 @@ class Browser(ABC):  # noqa: PLR0904
         await self._execute_command(BrowserCommands.close())
         self._browser_process_manager.stop_process()
         await self._connection_handler.close()
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5 if os.name == 'nt' else 0.1)
         self._temp_directory_manager.cleanup()
         logger.info('Browser process stopped and resources cleaned up')
 
