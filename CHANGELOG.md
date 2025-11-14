@@ -1,3 +1,24 @@
+## 2.12.1 (2025-11-14)
+
+### Fix
+
+- continue cleanup process if temporary directory still exists
+- adjust sleep duration for Windows and enhance temp dir cleanup
+- enhance error handling for locked files on Windows systems
+- remove unnecessary retry_times parameter in file processing
+- ensure temp directory cleanup handles Chromium locked files
+- enhance element selection and text extraction for better stability
+- handle oopif targets
+- change way to interact with iframes
+
+### Refactor
+
+- refactor iframe context handling in FindElementsMixin class
+
+### Perf
+
+- update Chrome options for better memory management and stability
+
 ## 2.12.0 (2025-11-04)
 
 ### Feat
