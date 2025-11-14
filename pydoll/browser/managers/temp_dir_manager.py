@@ -80,16 +80,19 @@ class TempDirectoryManager:
             Handles Chromium-specific locked files like CrashpadMetrics.
         """
         matches = ['CrashpadMetrics-active.pma']
+        match_substrings = ['Safe Browsing', 'Safe Browsing Cookies']
         exc_type, exc_value, _ = exc_info
 
         if exc_type is PermissionError:
-            if Path(path).name in matches:
+            filename = Path(path).name
+            # Known Chromium files that may remain locked briefly on Windows
+            if filename in matches or any(substr in path for substr in match_substrings):
                 try:
-                    self.retry_process_file(func, path)
+                    self.retry_process_file(func, path, retry_times=50)
                     return
                 except PermissionError:
-                    logger.warning(f'Failed retrying cleanup for locked file: {path}')
-                    raise exc_value
+                    logger.warning(f'Ignoring locked Chrome file during cleanup: {path}')
+                    return
         elif exc_type is OSError:
             return
         raise exc_value
