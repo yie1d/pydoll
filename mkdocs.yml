@@ -42,6 +42,7 @@ nav:
           - Chrome DevTools Protocol: deep-dive/fundamentals/cdp.md
           - Connection Layer: deep-dive/fundamentals/connection-layer.md
           - Python Type System: deep-dive/fundamentals/typing-system.md
+          - Iframes & Contexts: deep-dive/fundamentals/iframes-and-contexts.md
       - Internal Architecture:
           - Overview: deep-dive/architecture/index.md
           - Browser Domain: deep-dive/architecture/browser-domain.md
