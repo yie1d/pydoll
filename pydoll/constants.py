@@ -86,10 +86,16 @@ class Scripts:
 
     CLICK_OPTION_TAG = """
     function() {
-    this.selected = true;
-    var select = this.parentElement.closest('select');
-    var event = new Event('change', { bubbles: true });
-    select.dispatchEvent(event);
+        var select = this && this.parentElement ? this.parentElement.closest('select') : null;
+        if (!select) { return false; }
+        for (var i = 0; i < select.options.length; i++) {
+            select.options[i].selected = false;
+        }
+        this.selected = true;
+        select.value = this.value;
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
     }
     """
 
@@ -156,6 +162,26 @@ class Scripts:
         function() {
             return this.querySelectorAll("{selector}");
         }
+    """
+
+    GET_TEXT_BY_XPATH = """
+        (() => {
+            const node = document.evaluate(
+                "{escaped_value}",
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            ).singleNodeValue;
+            return node ? (node.textContent || "") : "";
+        })()
+    """
+
+    GET_TEXT_BY_CSS = """
+        (() => {
+            const el = document.querySelector("{selector}");
+            return el ? (el.textContent || "") : "";
+        })()
     """
 
     GET_PARENT_NODE = """
@@ -413,6 +439,12 @@ new Promise((resolve) => {{
         }
 
         return false;
+    }
+    """
+
+    IS_OPTION_TAG = """
+    function() {
+        return !!(this && this.tagName && this.tagName.toLowerCase() === 'option');
     }
     """
 

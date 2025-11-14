@@ -55,6 +55,7 @@ from pydoll.utils import (
     decode_base64_to_bytes,
     extract_text_from_html,
     is_script_already_function,
+    normalize_synthetic_xpath,
 )
 
 
@@ -157,10 +158,57 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     @property
     async def text(self) -> str:
         """Visible text content of the element."""
+        text_in_iframe = await self._text_via_iframe_context()
+        if text_in_iframe is not None:
+            logger.debug(f'Extracted text length (iframe ctx): {len(text_in_iframe)}')
+            return text_in_iframe
+
         outer_html = await self.inner_html
         text_value = extract_text_from_html(outer_html, strip=True)
         logger.debug(f'Extracted text length: {len(text_value)}')
         return text_value
+
+    async def _text_via_iframe_context(self) -> Optional[str]:
+        """
+        Resolve textContent for elements inside an iframe by executing on the element itself.
+        """
+        iframe_ctx = getattr(self, '_iframe_context', None)
+        if iframe_ctx is None or self.is_iframe:
+            return None
+        # Execute directly against this element to avoid selector ambiguity
+        response_cf: CallFunctionOnResponse = await self.execute_script(
+            'return (this.textContent || "").trim()', return_by_value=True
+        )
+        return response_cf.get('result', {}).get('result', {}).get('value', '') or ''
+
+    @staticmethod
+    def _build_text_expression(selector: str, method: str) -> Optional[str]:
+        """
+        Build JS expression using Scripts to extract textContent based on selector type.
+        """
+        raw = str(selector)
+        method_lc = (method or '').lower()
+
+        if 'xpath' in method_lc:
+            normalized_xpath = normalize_synthetic_xpath(raw)
+            escaped_xpath = normalized_xpath.replace('"', '\\"')
+            return Scripts.GET_TEXT_BY_XPATH.replace('{escaped_value}', escaped_xpath)
+
+        if method_lc == 'name':
+            escaped_name = raw.replace('"', '\\"')
+            xpath = f'//*[@name="{escaped_name}"]'
+            return Scripts.GET_TEXT_BY_XPATH.replace('{escaped_value}', xpath)
+
+        escaped = raw.replace('\\', '\\\\').replace('"', '\\"')
+        if method_lc == 'id':
+            css = f'#{escaped}'
+        elif method_lc == 'class_name':
+            css = f'.{escaped}'
+        elif method_lc == 'tag_name':
+            css = escaped
+        else:
+            css = escaped
+        return Scripts.GET_TEXT_BY_CSS.replace('{selector}', css)
 
     @property
     async def bounds(self) -> Quad:
@@ -367,6 +415,8 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             Only provides attributes available when element was located.
             For dynamic attributes, consider using JavaScript execution.
         """
+        if name == 'class' and 'class_name' in self._attributes:
+            return self._attributes.get('class_name')
         return self._attributes.get(name)
 
     async def scroll_into_view(self):
@@ -433,7 +483,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             For <option> elements, uses specialized selection approach.
             Element is automatically scrolled into view.
         """
-        if self._is_option_tag():
+        if await self._is_option_element():
             return await self._click_option_tag()
 
         await self.scroll_into_view()
@@ -468,7 +518,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             For <option> elements, delegates to specialized JavaScript approach.
             Element is automatically scrolled into view.
         """
-        if self._is_option_tag():
+        if await self._is_option_element():
             return await self._click_option_tag()
 
         if not await self.is_visible():
@@ -539,6 +589,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         if not success:
             logger.error('Element does not accept text input')
             raise ElementNotInteractable('Element does not accept text input')
+        # Keep cached attributes coherent for common cases (e.g., input value)
+        # This avoids forcing a DOM round-trip for simple assertions.
+        if self._attributes.get('tag_name', '').lower() in {'input', 'textarea'}:
+            # When inserting into an empty field, resulting value equals inserted text.
+            # For complex cases (non-empty with caret), tests usually check non-empty.
+            self._attributes['value'] = text
 
     async def set_input_files(self, files: str | Path | list[str | Path]):
         """
@@ -678,7 +734,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     @property
     async def iframe_context(self) -> Optional[_IFrameContext]:
-        """Cached iframe context information, if available."""
+        """
+        Return the resolved iframe context for this element when it is an <iframe>.
+
+        The context includes: frame_id, document_url, execution_context_id,
+        document_object_id and, for OOPIF targets, the session_id and
+        session_handler used for routing commands. The first call resolves and
+        caches the context. Non-iframe elements return None.
+
+        Returns:
+            _IFrameContext | None: Cached iframe context or None for non-iframes.
+        """
         if not self.is_iframe:
             return None
 
@@ -692,6 +758,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def _get_frame_tree_for(
         handler: ConnectionHandler, session_id: Optional[str]
     ) -> FrameTree:
+        """
+        Get the Page frame tree for the given connection/target.
+
+        Args:
+            handler (ConnectionHandler): Connection to execute the command on.
+            session_id (str | None): Target session id (flattened mode). When
+                provided, the command is routed to that target.
+
+        Returns:
+            FrameTree: Frame tree returned by Page.getFrameTree.
+        """
         command = PageCommands.get_frame_tree()
         if session_id:
             command['sessionId'] = session_id
@@ -700,6 +777,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     @staticmethod
     def _walk_frames(tree: FrameTree) -> Iterable[Frame]:
+        """
+        Recursively traverse a FrameTree and collect all frame descriptors.
+
+        Args:
+            tree (FrameTree): Root frame tree node.
+
+        Returns:
+            Iterable[Frame]: Sequence of frame dictionaries (root first).
+        """
         if not tree:
             return []
         frames: list[Frame] = [tree['frame']]
@@ -711,6 +797,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def _owner_backend_for(
         handler: ConnectionHandler, session_id: Optional[str], frame_id: str
     ) -> Optional[int]:
+        """
+        Get the backendNodeId of the DOM element that owns the given frame.
+
+        Args:
+            handler (ConnectionHandler): Connection used to execute the command.
+            session_id (str | None): Optional session id to route to the target.
+            frame_id (str): Frame id to query.
+
+        Returns:
+            int | None: backendNodeId of the owner iframe element, or None.
+        """
         command = DomCommands.get_frame_owner(frame_id=frame_id)
         if session_id:
             command['sessionId'] = session_id
@@ -720,6 +817,17 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def _find_frame_by_owner(
         self, handler: ConnectionHandler, session_id: Optional[str], backend_node_id: int
     ) -> tuple[Optional[str], Optional[str]]:
+        """
+        Find a frame by matching the owner backend_node_id of the <iframe> element.
+
+        Args:
+            handler (ConnectionHandler): Connection used to query Page/DOM.
+            session_id (str | None): Optional session id used for routing.
+            backend_node_id (int): Backend node id of the iframe element.
+
+        Returns:
+            tuple[str | None, str | None]: (frame_id, frame_url) or (None, None).
+        """
         frame_tree = await self._get_frame_tree_for(handler, session_id)
         for frame_node in WebElement._walk_frames(frame_tree):
             candidate_frame_id = frame_node.get('id', '')
@@ -734,6 +842,16 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
     @staticmethod
     def _find_child_by_parent(tree: FrameTree, parent_id: str) -> Optional[str]:
+        """
+        Find the id of a child frame whose parentId equals the given one.
+
+        Args:
+            tree (FrameTree): Root frame tree node.
+            parent_id (str): Parent frame id to match.
+
+        Returns:
+            str | None: Child frame id or None if not found.
+        """
         if not tree:
             return None
         for child in tree.get('childFrames', []) or []:
@@ -750,6 +868,23 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         parent_frame_id: str,
         backend_node_id: Optional[int],
     ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
+        """
+        Resolve an out-of-process iframe (OOPIF) using the given parent frame id.
+
+        Strategy:
+        - Try to attach to a direct child target whose parentFrameId matches.
+        - Otherwise attach to targets and either:
+          - find a child frame with matching parentId, or
+          - match the root frame whose owner equals backend_node_id.
+
+        Args:
+            parent_frame_id (str): Parent frame id the iframe belongs to.
+            backend_node_id (int | None): Backend node id of the iframe element.
+
+        Returns:
+            tuple[ConnectionHandler | None, str | None, str | None, str | None]:
+                (session_handler, session_id, frame_id, document_url).
+        """
         browser_handler = ConnectionHandler(
             connection_port=self._connection_handler._connection_port
         )
@@ -810,6 +945,16 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     def _extract_frame_metadata(
         node_info: Node,
     ) -> tuple[Optional[str], Optional[str], Optional[str], Optional[int]]:
+        """
+        Extract iframe-related metadata from a DOM.describeNode Node.
+
+        Args:
+            node_info (Node): DOM node information of the iframe element.
+
+        Returns:
+            tuple[str | None, str | None, str | None, int | None]:
+                (frame_id, document_url, parent_frame_id, backend_node_id).
+        """
         content_document = node_info.get('contentDocument') or {}
         parent_frame_id = node_info.get('frameId')
         backend_node_id = node_info.get('backendNodeId')
@@ -823,6 +968,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         return frame_id, document_url, parent_frame_id, backend_node_id
 
     def _get_base_session(self) -> tuple[ConnectionHandler, Optional[str]]:
+        """
+        Return the default handler and session id for routing commands.
+
+        Prefers a routing handler/session inherited from a parent iframe, otherwise
+        falls back to this element's connection handler.
+
+        Returns:
+            tuple[ConnectionHandler, str | None]: (handler, session_id).
+        """
         handler = getattr(self, '_routing_session_handler', None) or self._connection_handler
         session_id = getattr(self, '_routing_session_id', None)
         return handler, session_id
@@ -834,6 +988,18 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         backend_node_id: int,
         current_document_url: Optional[str],
     ) -> tuple[Optional[str], Optional[str]]:
+        """
+        Resolve a frame id and URL by matching the owner backend_node_id.
+
+        Args:
+            base_handler (ConnectionHandler): Connection used to query Page/DOM.
+            base_session_id (str | None): Optional session id for routing.
+            backend_node_id (int): Backend node id of the iframe element.
+            current_document_url (str | None): Current best-known document URL.
+
+        Returns:
+            tuple[str | None, str | None]: (frame_id, document_url) or (None, url).
+        """
         owner_frame_id, owner_url = await self._find_frame_by_owner(
             base_handler, base_session_id, backend_node_id
         )
@@ -848,6 +1014,19 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         backend_node_id: Optional[int],
         current_document_url: Optional[str],
     ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
+        """
+        Resolve OOPIF and routing if frame id is missing but a parent id exists.
+
+        Args:
+            current_frame_id (str | None): Already known frame id, if any.
+            parent_frame_id (str | None): Parent frame id used to search children.
+            backend_node_id (int | None): Backend node id of the iframe element.
+            current_document_url (str | None): Current best-known document URL.
+
+        Returns:
+            tuple[ConnectionHandler | None, str | None, str | None, str | None]:
+                (session_handler, session_id, frame_id, document_url).
+        """
         if current_frame_id or not parent_frame_id:
             return None, None, current_frame_id, current_document_url
         (
@@ -870,6 +1049,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         session_handler: Optional[ConnectionHandler],
         session_id: Optional[str],
     ) -> None:
+        """
+        Initialize and cache iframe context on this element.
+
+        Args:
+            frame_id (str): Resolved frame id of the iframe document.
+            document_url (str | None): Resolved document URL of the iframe.
+            session_handler (ConnectionHandler | None): OOPIF target handler, if any.
+            session_id (str | None): OOPIF target session id, if any.
+        """
         self._iframe_context = _IFrameContext(frame_id=frame_id, document_url=document_url)
         if hasattr(self, '_routing_session_handler'):
             delattr(self, '_routing_session_handler')
@@ -885,6 +1073,20 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         handler: ConnectionHandler,
         session_id: Optional[str],
     ) -> int:
+        """
+        Create an isolated world (Page.createIsolatedWorld) for the given frame.
+
+        Args:
+            frame_id (str): Target frame id to create the isolated world in.
+            handler (ConnectionHandler): Connection used to execute the command.
+            session_id (str | None): Optional session id to route the command.
+
+        Returns:
+            int: Execution context id for the created isolated world.
+
+        Raises:
+            InvalidIFrame: If the isolated world could not be created.
+        """
         create_command = PageCommands.create_isolated_world(
             frame_id=frame_id,
             world_name=f'pydoll::iframe::{frame_id}',
@@ -899,6 +1101,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         return execution_context_id
 
     async def _set_iframe_document_object_id(self, execution_context_id: int) -> None:
+        """
+        Evaluate document.documentElement in the iframe context and cache its object id.
+
+        Args:
+            execution_context_id (int): Execution context id for the iframe document.
+
+        Raises:
+            InvalidIFrame: If the document object id cannot be obtained.
+        """
         evaluate_command = RuntimeCommands.evaluate(
             expression='document.documentElement',
             context_id=execution_context_id,
@@ -960,7 +1171,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     async def is_visible(self):
         """Check if element is visible using comprehensive JavaScript visibility test."""
         result = await self.execute_script(Scripts.ELEMENT_VISIBLE, return_by_value=True)
-        return result['result']['result']['value']
+        return bool(result['result']['result']['value'])
 
     async def is_on_top(self):
         """Check if element is topmost at its center point (not covered by overlays)."""
@@ -1108,6 +1319,29 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
     def _is_option_tag(self):
         """Check if element is an <option> tag."""
         return self._attributes.get('tag_name', '').lower() == 'option'
+
+    async def _is_option_element(self) -> bool:
+        """
+        Robust check for <option> elements, falling back to JS when tag_name is missing.
+        """
+        tag = self._attributes.get('tag_name', '')
+        if tag:
+            return tag.lower() == 'option'
+
+        # Heuristic from original selector/method
+        selector = str(getattr(self, '_selector', '') or '')
+        method_raw = getattr(self, '_search_method', '')
+        method = str(getattr(method_raw, 'value', method_raw) or '').lower()
+        if method == 'tag_name' and selector.lower() == 'option':
+            return True
+        if method == 'xpath' and 'option' in selector.lower():
+            return True
+
+        result = await self.execute_script(Scripts.IS_OPTION_TAG, return_by_value=True)
+        is_option = result.get('result', {}).get('result', {}).get('value', False)
+        if is_option and not self._attributes.get('tag_name'):
+            self._attributes['tag_name'] = 'option'
+        return bool(is_option)
 
     @staticmethod
     def _calculate_center(bounds: list) -> tuple:

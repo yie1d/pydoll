@@ -458,6 +458,10 @@ class FindElementsMixin:
         Get attributes of a DOM node.
         """
         node_description = await self._describe_node(object_id=object_id)
+        if not node_description:
+            # If the node couldn't be described (e.g., object id doesn't reference a Node),
+            # return minimal attributes to keep the flow stable.
+            return ['tag_name', '']
         attributes = node_description.get('attributes', [])
         tag_name = node_description.get('nodeName', '').lower()
         attributes.extend(['tag_name', tag_name])
@@ -483,6 +487,11 @@ class FindElementsMixin:
             f'_get_by_and_value(): id={id}, class_name={class_name}, name={name}, '
             f'tag_name={tag_name}, text={text}, attrs={attributes}'
         )
+        xpath_raw = attributes.get('xpath')
+        if isinstance(xpath_raw, str) and xpath_raw:
+            logger.debug(f'Explicit XPath provided; using raw expression: {xpath_raw}')
+            return By.XPATH, xpath_raw
+
         simple_selectors = {
             'id': id,
             'class_name': class_name,
@@ -567,7 +576,11 @@ class FindElementsMixin:
         response: DescribeNodeResponse = await self._execute_command(
             DomCommands.describe_node(object_id=object_id)
         )
-        return response['result']['node']
+        if 'error' in response:
+            # Return empty node structure when CDP reports that the objectId
+            # doesn't reference a Node or any other describe error occurs.
+            return {}
+        return response.get('result', {}).get('node', {})
 
     def _apply_iframe_context_to_element(
         self, element: WebElement, iframe_context: _IFrameContext | None
