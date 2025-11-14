@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import time
 from pathlib import Path
@@ -81,12 +82,27 @@ class TempDirectoryManager:
         """
         matches = ['CrashpadMetrics-active.pma']
         match_substrings = ['Safe Browsing', 'Safe Browsing Cookies']
+        # Extra patterns commonly locked on Windows; compare case-insensitively
+        windows_locked_substrings = [
+            '\\cache\\',
+            '/cache/',
+            'no_vary_search',
+            'journal.baj',
+        ]
         exc_type, exc_value, _ = exc_info
 
         if exc_type is PermissionError:
             filename = Path(path).name
             # Known Chromium files that may remain locked briefly on Windows
-            if filename in matches or any(substr in path for substr in match_substrings):
+            path_lc = path.lower()
+            windows_match = os.name == 'nt' and any(
+                substr in path_lc for substr in windows_locked_substrings
+            )
+            if (
+                filename in matches
+                or any(substr in path for substr in match_substrings)
+                or windows_match
+            ):
                 try:
                     self.retry_process_file(func, path)
                     return
