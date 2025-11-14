@@ -1091,6 +1091,52 @@ class TestWebElementUtilityMethods:
             expected_command, timeout=60
         )
 
+class TestBuildTextExpression:
+    """Unit tests for WebElement._build_text_expression."""
+
+    def test_build_text_expression_with_xpath(self):
+        expr = WebElement._build_text_expression('//p[@id="x"]', 'xpath')
+        assert isinstance(expr, str)
+        assert 'XPathResult.FIRST_ORDERED_NODE_TYPE' in expr
+        assert '@id' in expr
+        assert 'p' in expr
+
+    def test_build_text_expression_with_name(self):
+        expr = WebElement._build_text_expression('fieldName', 'name')
+        assert isinstance(expr, str)
+        assert '//*[@name="fieldName"]' in expr
+
+    def test_build_text_expression_with_id_css(self):
+        expr = WebElement._build_text_expression('main', 'id')
+        assert 'document.querySelector' in expr
+        assert '#main' in expr
+
+    def test_build_text_expression_with_class_css(self):
+        expr = WebElement._build_text_expression('item', 'class_name')
+        assert 'document.querySelector' in expr
+        assert '.item' in expr
+
+    def test_build_text_expression_with_tag_css(self):
+        expr = WebElement._build_text_expression('button', 'tag_name')
+        assert 'document.querySelector' in expr
+        assert 'button' in expr
+
+class TestIsOptionElementHeuristics:
+    """Unit tests for heuristics inside WebElement._is_option_element."""
+
+    @pytest.mark.asyncio
+    async def test_is_option_element_by_tag_attribute(self, option_element):
+        assert await option_element._is_option_element() is True
+
+    @pytest.mark.asyncio
+    async def test_is_option_element_by_method_and_selector_tag_name(self, mock_connection_handler):
+        dummy = WebElement('dummy', mock_connection_handler, method='tag_name', selector='option', attributes_list=[])
+        assert await dummy._is_option_element() is True
+
+    @pytest.mark.asyncio
+    async def test_is_option_element_by_xpath_selector_contains_option(self, mock_connection_handler):
+        dummy = WebElement('dummy', mock_connection_handler, method='xpath', selector='//OPTION[@value=\"x\"]', attributes_list=[])
+        assert await dummy._is_option_element() is True
     @pytest.mark.asyncio
     async def test_execute_script_with_this_syntax(self, web_element):
         """Test execute_script method with 'this' syntax."""
