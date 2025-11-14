@@ -37,7 +37,7 @@
 - **属性节点**：元素属性，如 `id`、`class`、`src`
 - **文档节点**：树的根节点
 
-'''mermaid
+```mermaid
 graph TD
     Document[文档] --> HTML[html 元素]
     HTML --> Head[head 元素]
@@ -49,7 +49,7 @@ graph TD
     Iframe --> IframeDoc[iframe 的文档]
     IframeDoc --> IframeBody[iframe body]
     IframeBody --> IframeContent[iframe 内容...]
-'''
+```
 
 ### DOM 树属性
 
@@ -76,13 +76,13 @@ graph TD
 - 自己的 CSS 样式（除非明确共享）
 - 不同的导航历史
 
-'''html
+```html
 <body>
   <h1>父页面</h1>
   <iframe src="https://example.com/embedded.html" id="content-frame"></iframe>
   <p>更多父页面内容</p>
 </body>
-'''
+```
 
 ### 常见用例
 
@@ -113,7 +113,7 @@ graph TD
 
 现代 Chromium 使用**站点隔离 (site isolation)** 来提高安全性和稳定性。这意味着不同的源 (origin) 可能会在单独的操作系统进程中渲染。来自不同源的 iframe 会成为**跨进程 Iframe (OOPIF)**。
 
-'''mermaid
+```mermaid
 graph LR
     subgraph "进程 1: example.com"
         MainPage[主页面 DOM]
@@ -124,7 +124,7 @@ graph LR
     end
     
     MainPage -.进程边界.-> IframeDOM
-'''
+```
 
 ### 为什么 OOPIFs 使自动化复杂化
 
@@ -140,7 +140,7 @@ graph LR
 
 没有复杂的处理，自动化 OOPIFs 需要：
 
-'''python
+```python
 # 其他工具的传统（手动）方法
 main_page = browser.get_page()
 iframe_element = main_page.find_element_by_id("iframe-id")
@@ -154,7 +154,7 @@ button.click()
 
 # 必须手动切换回来
 driver.switch_to.default_content()
-'''
+```
 
 **这种方法的问题：**
 
@@ -168,7 +168,7 @@ driver.switch_to.default_content()
 
 Pydoll 通过自动解析 iframe 上下文来消除手动上下文切换：
 
-'''python
+```python
 # Pydoll 方法（无手动切换）
 iframe = await tab.find(id="iframe-id")
 button = await iframe.find(id="button-in-iframe")
@@ -179,7 +179,7 @@ outer = await tab.find(id="outer-iframe")
 inner = await outer.find(tag_name="iframe")
 button = await inner.find(text="Submit")
 await button.click()
-'''
+```
 
 复杂性在内部处理。让我们来探究一下是如何做到的。
 
@@ -198,7 +198,7 @@ await button.click()
 **关键方法：**
 
 - `Page.getFrameTree()`：返回页面中所有 frames 的层级结构
-  '''json
+  ```json
   {
     "frameTree": {
       "frame": {
@@ -218,18 +218,18 @@ await button.click()
       ]
     }
   }
-  '''
+  ```
 
 - `Page.createIsolatedWorld(frameId, worldName)`：在特定 frame 中创建一个新的 JavaScript 执行上下文
-  '''json
+  ```json
   {
     "executionContextId": 42
   }
-  '''
+  ```
 
 **Pydoll 用法：**
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 @staticmethod
 async def _get_frame_tree_for(
@@ -241,7 +241,7 @@ async def _get_frame_tree_for(
         command['sessionId'] = session_id
     response: GetFrameTreeResponse = await handler.execute_command(command)
     return response['result']['frameTree']
-'''
+```
 
 #### 2. **DOM 域**
 
@@ -250,7 +250,7 @@ async def _get_frame_tree_for(
 **关键方法：**
 
 - `DOM.describeNode(objectId)`：返回有关 DOM 节点的详细信息
-  '''json
+  ```json
   {
     "node": {
       "nodeId": 123,
@@ -263,18 +263,18 @@ async def _get_frame_tree_for(
       }
     }
   }
-  '''
+  ```
 
 - `DOM.getFrameOwner(frameId)`：返回拥有某个 frame 的 `<iframe>` 元素的 `backendNodeId`
-  '''json
+  ```json
   {
     "backendNodeId": 456
   }
-  '''
+  ```
 
 **Pydoll 用法：**
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 @staticmethod
 async def _owner_backend_for(
@@ -286,7 +286,7 @@ async def _owner_backend_for(
         command['sessionId'] = session_id
     response: GetFrameOwnerResponse = await handler.execute_command(command)
     return response.get('result', {}).get('backendNodeId')
-'''
+```
 
 #### 3. **Target 域**
 
@@ -295,7 +295,7 @@ async def _owner_backend_for(
 **关键方法：**
 
 - `Target.getTargets()`：列出所有可用的目标
-  '''json
+  ```json
   {
     "targetInfos": [
       {
@@ -313,7 +313,7 @@ async def _owner_backend_for(
       }
     ]
   }
-  '''
+  ```
 
 - `Target.attachToTarget(targetId, flatten)`：附加到一个目标以进行调试
   - 当 `flatten=true` 时：返回一个 `sessionId` 用于在扁平化模式下路由命令
@@ -321,7 +321,7 @@ async def _owner_backend_for(
 
 **Pydoll 用法：**
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py (简化版)
 async def _resolve_oopif_by_parent(self, parent_frame_id: str, ...):
     """使用父 frame id 解析 OOPIF。"""
@@ -346,7 +346,7 @@ async def _resolve_oopif_by_parent(self, parent_frame_id: str, ...):
         )
         attached_session_id = attach_response.get('result', {}).get('sessionId')
         # ... 对后续命令使用 session_id
-'''
+```
 
 #### 4. **Runtime 域**
 
@@ -359,7 +359,7 @@ async def _resolve_oopif_by_parent(self, parent_frame_id: str, ...):
 
 **Pydoll 用于 iframe 文档访问的用法：**
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 async def _set_iframe_document_object_id(self, execution_context_id: int):
     """在 iframe 上下文中评估 document.documentElement 并缓存其 object id。"""
@@ -378,7 +378,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int):
     document_object_id = evaluate_response.get('result', {}).get('result', {}).get('objectId')
     if self._iframe_context:
         self._iframe_context.document_object_id = document_object_id
-'''
+```
 
 ---
 
@@ -400,7 +400,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int):
 1. **主世界 (main world)（默认上下文）**：页面自己的 JavaScript 运行的地方
 2. **隔离世界 (isolated worlds)**：共享相同 DOM 但具有不同 JavaScript 全局作用域的独立上下文
 
-'''mermaid
+```mermaid
 graph TB
     Frame[Frame: example.com/page]
     Frame --> MainWorld[主世界<br/>页面的 JavaScript]
@@ -414,7 +414,7 @@ graph TB
     
     MainWorld -.无法访问.-> IsolatedWorld1
     MainWorld -.无法访问.-> IsolatedWorld2
-'''
+```
 
 ### 什么是隔离世界？
 
@@ -441,7 +441,7 @@ graph TB
 
 **实现：**
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 @staticmethod
 async def _create_isolated_world_for_frame(
@@ -465,7 +465,7 @@ async def _create_isolated_world_for_frame(
     if not execution_context_id:
         raise InvalidIFrame('无法为 iframe 创建隔离世界')
     return execution_context_id
-'''
+```
 
 `grant_universal_access=True` 参数允许隔离世界：
 
@@ -495,7 +495,7 @@ async def _create_isolated_world_for_frame(
 
 以下是 iframe 解析期间标识符之间的关系：
 
-'''
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         解析流程                                        │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -517,7 +517,7 @@ async def _create_isolated_world_for_frame(
                                                              │
 6. 获取文档 ────────────[Runtime.evaluate]───────────────┘
    └─ objectId: obj-999
-'''
+```
 
 **关键转换点：**
 
@@ -530,7 +530,7 @@ async def _create_isolated_world_for_frame(
 
 ### Pydoll 中的代码表示
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 @dataclass
 class _IFrameContext:
@@ -541,7 +541,7 @@ class _IFrameContext:
     document_object_id: Optional[str] = None        # objectId: document.documentElement
     session_handler: Optional[ConnectionHandler] = None  # 用于 OOPIF 目标
     session_id: Optional[str] = None                # sessionId: 将命令路由到 OOPIF
-'''
+```
 
 这个 dataclass 被缓存在代表 iframe 的每个 `WebElement` 上，实现了所有后续操作的自动路由。
 
@@ -553,7 +553,7 @@ class _IFrameContext:
 
 ### 高级流程
 
-'''mermaid
+```mermaid
 sequenceDiagram
     participant User as 用户
     participant WebElement
@@ -597,7 +597,7 @@ sequenceDiagram
     
     WebElement->>WebElement: 使用缓存的上下文进行 find()
     WebElement-->>用户: 按钮元素 (带上下文)
-'''
+```
 
 ### 步骤深度解析
 
@@ -616,7 +616,7 @@ sequenceDiagram
 
 **代码**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 async def _ensure_iframe_context(self) -> None:
     """初始化并缓存 iframe 元素的上下文信息。"""
@@ -626,11 +626,11 @@ async def _ensure_iframe_context(self) -> None:
         node_info
     )
     # ... 继续解析
-'''
+```
 
 **辅助方法**：
 
-'''python
+```python
 @staticmethod
 def _extract_frame_metadata(
     node_info: Node,
@@ -647,7 +647,7 @@ def _extract_frame_metadata(
         or node_info.get('baseURL')
     )
     return frame_id, document_url, parent_frame_id, backend_node_id
-'''
+```
 
 **结果**：
 
@@ -669,7 +669,7 @@ def _extract_frame_metadata(
 
 **代码**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 async def _resolve_frame_by_owner(
     self,
@@ -701,7 +701,7 @@ async def _find_frame_by_owner(
         if owner_backend_id == backend_node_id:
             return candidate_frame_id, frame_node.get('url')
     return None, None
-'''
+```
 
 **为什么这是必要的**：
 
@@ -739,7 +739,7 @@ async def _find_frame_by_owner(
 
 **代码**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 async def _resolve_oopif_by_parent(
     self,
@@ -810,7 +810,7 @@ async def _resolve_oopif_by_parent(
             return browser_handler, attached_session_id, root_frame_id, None
     
     return None, None, None, None
-'''
+```
 
 **结果**：
 
@@ -834,7 +834,7 @@ async def _resolve_oopif_by_parent(
 
 **代码**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 @staticmethod
 async def _create_isolated_world_for_frame(
@@ -855,7 +855,7 @@ async def _create_isolated_world_for_frame(
     if not execution_context_id:
         raise InvalidIFrame('无法为 iframe 创建隔离世界')
     return execution_context_id
-'''
+```
 
 **为什么需要隔离世界**：
 
@@ -880,7 +880,7 @@ async def _create_isolated_world_for_frame(
 
 **代码**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 async def _set_iframe_document_object_id(self, execution_context_id: int) -> None:
     """在 iframe 上下文中评估 document.documentElement 并缓存其 object id。"""
@@ -900,7 +900,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int) -> Non
         raise InvalidIFrame('无法获取 iframe 的文档引用')
     if self._iframe_context:
         self._iframe_context.document_object_id = document_object_id
-'''
+```
 
 **结果**：`_IFrameContext` 现在已完全填充并缓存在 `WebElement` 上。
 
@@ -912,7 +912,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int) -> Non
 
 **缓存**：
 
-'''python
+```python
 # 源自 pydoll/elements/web_element.py
 def _init_iframe_context(
     self,
@@ -932,11 +932,11 @@ def _init_iframe_context(
     if session_handler and session_id:
         self._iframe_context.session_handler = session_handler
         self._iframe_context.session_id = session_id
-'''
+```
 
 **传播**（在 iframe 内部查找元素时）：
 
-'''python
+```python
 # 源自 pydoll/elements/mixins/find_elements_mixin.py
 def _apply_iframe_context_to_element(
     self, element: WebElement, iframe_context: _IFrameContext | None
@@ -956,7 +956,7 @@ def _apply_iframe_context_to_element(
     
     # 否则，注入父 iframe 的上下文
     element._iframe_context = iframe_context
-'''
+```
 
 **为什么传播很重要**：
 
@@ -972,7 +972,7 @@ def _apply_iframe_context_to_element(
 
 正如在 [深度解析 → 基础 → CDP](./cdp.md) 中讨论的，传统的 CDP 对每个目标使用单独的 WebSocket 连接。**扁平化模式 (Flattened mode)** 是一种优化，所有目标共享一个 WebSocket 连接，命令使用 `sessionId` 进行路由。
 
-'''mermaid
+```mermaid
 graph TB
     subgraph "传统模式"
         WS1[WebSocket 1] --> MainPage[主页面目标]
@@ -986,26 +986,26 @@ graph TB
         Router -->|sessionId: session-1| Iframe3[OOPIF 目标 1]
         Router -->|sessionId: session-2| Iframe4[OOPIF 目标 2]
     end
-'''
+```
 
 ### 会话路由如何工作
 
 **附加到 OOPIF 时**：
 
-'''python
+```python
 response = await handler.execute_command(
     TargetCommands.attach_to_target(targetId="iframe-target-id", flatten=True)
 )
 session_id = response['result']['sessionId']  # 例如 "8E6C...-1234"
-'''
+```
 
 **向该 OOPIF 发送命令时**：
 
-'''python
+```python
 command = PageCommands.get_frame_tree()
 command['sessionId'] = 'session-1'  # 路由到 OOPIF
 response = await handler.execute_command(command)
-'''
+```
 
 浏览器的 CDP 实现会根据 `sessionId` 将命令路由到正确的目标。
 
@@ -1013,7 +1013,7 @@ response = await handler.execute_command(command)
 
 Pydoll 元素发送的每个命令都会自动路由到正确的目标：
 
-'''python
+```python
 # 源自 pydoll/elements/mixins/find_elements_mixin.py
 def _resolve_routing(self) -> tuple[ConnectionHandler, Optional[str]]:
     """为当前上下文解析 handler 和 sessionId。"""
@@ -1038,7 +1038,7 @@ async def _execute_command(
     if session_id:
         command['sessionId'] = session_id
     return await handler.execute_command(command, timeout=60)
-'''
+```
 
 **路由逻辑**：
 
@@ -1050,7 +1050,7 @@ async def _execute_command(
 
 为了使 `sessionId` 类型安全，Pydoll 扩展了 `Command` TypedDict：
 
-'''python
+```python
 # 源自 pydoll/protocol/base.py
 class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
     """所有命令的基础结构。"""
@@ -1058,7 +1058,7 @@ class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
     method: str
     params: NotRequired[T_CommandParams]
     sessionId: NotRequired[str]  # 为扁平化会话路由添加
-'''
+```
 
 这允许类型检查器将 `command['sessionId'] = '...'` 识别为有效，而无需抑制类型警告。
 
@@ -1089,7 +1089,7 @@ class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
 
 在 `_resolve_oopif_by_parent` 中，Pydoll 首先按 `parentFrameId` 检查直接子节点：
 
-'''python
+```python
 direct_children = [
     target_info
     for target_info in target_infos
@@ -1098,7 +1098,7 @@ direct_children = [
 ]
 if direct_children:
     # 立即附加，跳过扫描所有目标
-'''
+```
 
 **为什么这有帮助**：
 
@@ -1110,7 +1110,7 @@ if direct_children:
 
 目前，frame 所有者匹配是顺序的（逐个检查每个 frame）。未来的优化可以并行化：
 
-'''python
+```python
 # 当前（顺序）
 for frame_node in frames:
     owner = await self._owner_backend_for(...)
@@ -1125,7 +1125,7 @@ results = await asyncio.gather(*(
 for i, owner in enumerate(results):
     if owner == backend_node_id:
         return frames[i]['id']
-'''
+```
 
 这将把延迟从 `N * RTT` 减少到 `RTT`（其中 RTT = 往返时间）。
 
@@ -1151,7 +1151,7 @@ for i, owner in enumerate(results):
 
 **调试**：
 
-'''python
+```python
 try:
     iframe = await tab.find(id='problem-iframe')
     context = await iframe.iframe_context
@@ -1163,7 +1163,7 @@ except InvalidIFrame as e:
     # 手动检查 frame 树
     frame_tree = await WebElement._get_frame_tree_for(tab._connection_handler, None)
     print(f"Frame 树: {frame_tree}")
-'''
+```
 
 #### 2. **InvalidIFrame: 无法创建隔离世界**
 
@@ -1179,11 +1179,11 @@ except InvalidIFrame as e:
 
 **调试**：
 
-'''python
+```python
 # 清除缓存并重试
 iframe._iframe_context = None
 context = await iframe.iframe_context
-'''
+```
 
 #### 3. **InvalidIFrame: 无法获取文档引用**
 
@@ -1211,7 +1211,7 @@ context = await iframe.iframe_context
 
 **调试**：
 
-'''python
+```python
 # 检查会话是否仍然有效
 targets = await handler.execute_command(TargetCommands.get_targets())
 active_sessions = [t['targetId'] for t in targets['result']['targetInfos']]
@@ -1219,24 +1219,24 @@ print(f"活动目标: {active_sessions}")
 
 if iframe._iframe_context and iframe._iframe_context.session_id:
     print(f"我们的会话: {iframe._iframe_context.session_id}")
-'''
+```
 
 ### 诊断工具
 
 #### 启用 CDP 日志记录
 
-'''python
+```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('pydoll')
 logger.setLevel(logging.DEBUG)
-'''
+```
 
 这将记录所有 CDP 命令和响应，有助于追踪 iframe 解析步骤。
 
 #### 检查 iframe 上下文
 
-'''python
+```python
 iframe = await tab.find(id='my-iframe')
 ctx = await iframe.iframe_context
 
@@ -1246,7 +1246,7 @@ print(f"执行上下文 ID: {ctx.execution_context_id}")
 print(f"文档对象 ID: {ctx.document_object_id}")
 print(f"会话 ID (OOPIF): {ctx.session_id}")
 print(f"会话 Handler: {ctx.session_handler}")
-'''
+```
 
 ---
 
@@ -1265,11 +1265,11 @@ Pydoll 的 iframe 处理代表了对 CDP frame 管理能力的复杂实现。通
 
 您就能理解为什么 Pydoll 消除了手动上下文切换。这种复杂性是真实存在的，但 Pydoll 将其抽象在一个简单、直观的 API 背后：
 
-'''python
+```python
 iframe = await tab.find(id='login-frame')
 username = await iframe.find(name='username')
 await username.type_text('user@example.com')
-'''
+```
 
 三行代码。没有上下文切换。没有目标附加。没有会话管理。它就是能用。
 

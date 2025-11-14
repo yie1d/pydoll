@@ -37,7 +37,7 @@ O **Modelo de Objeto de Documento** (Document Object Model) é uma interface de 
 - **Nós de atributo**: Atributos de elemento como `id`, `class`, `src`
 - **Nó do documento**: A raiz da árvore
 
-'''mermaid
+```mermaid
 graph TD
     Document[Documento] --> HTML[elemento html]
     HTML --> Head[elemento head]
@@ -49,7 +49,7 @@ graph TD
     Iframe --> IframeDoc[documento do iframe]
     IframeDoc --> IframeBody[body do iframe]
     IframeBody --> IframeContent[conteúdo do iframe...]
-'''
+```
 
 ### Propriedades da Árvore DOM
 
@@ -76,13 +76,13 @@ Um **iframe** (quadro em linha) é um elemento HTML (`<iframe>`) que incorpora o
 - Estilização CSS própria (a menos que explicitamente compartilhada)
 - Histórico de navegação distinto
 
-'''html
+```html
 <body>
   <h1>Página Pai</h1>
   <iframe src="https://example.com/embedded.html" id="content-frame"></iframe>
   <p>Mais conteúdo do pai</p>
 </body>
-'''
+```
 
 ### Casos de Uso Comuns
 
@@ -113,7 +113,7 @@ Essa barreira de segurança é o motivo pelo qual ferramentas de automação pre
 
 O Chromium moderno usa **isolamento de site** (site isolation) para segurança e estabilidade. Isso significa que origens diferentes podem ser renderizadas em processos separados do SO. Um iframe de uma origem diferente torna-se um **Iframe Fora de Processo (OOPIF)**.
 
-'''mermaid
+```mermaid
 graph LR
     subgraph "Processo 1: example.com"
         MainPage[DOM da Página Principal]
@@ -124,7 +124,7 @@ graph LR
     end
     
     MainPage -.Fronteira do Processo.-> IframeDOM
-'''
+```
 
 ### Por que OOPIFs Complicam a Automação
 
@@ -140,7 +140,7 @@ graph LR
 
 Sem um manuseio sofisticado, automatizar OOPIFs requer:
 
-'''python
+```python
 # Abordagem tradicional (manual) com outras ferramentas
 main_page = browser.get_page()
 iframe_element = main_page.find_element_by_id("iframe-id")
@@ -154,7 +154,7 @@ button.click()
 
 # Deve trocar manualmente de volta
 driver.switch_to.default_content()
-'''
+```
 
 **Problemas com esta abordagem:**
 
@@ -168,7 +168,7 @@ driver.switch_to.default_content()
 
 O Pydoll elimina a troca manual de contexto resolvendo os contextos de iframe automaticamente:
 
-'''python
+```python
 # Abordagem Pydoll (sem troca manual)
 iframe = await tab.find(id="iframe-id")
 button = await iframe.find(id="button-in-iframe")
@@ -179,7 +179,7 @@ outer = await tab.find(id="outer-iframe")
 inner = await outer.find(tag_name="iframe")
 button = await inner.find(text="Submit")
 await button.click()
-'''
+```
 
 A complexidade é tratada internamente. Vamos explorar como.
 
@@ -198,7 +198,7 @@ Gerencia o ciclo de vida da página, frames e navegação.
 **Métodos principais:**
 
 - `Page.getFrameTree()`: Retorna a estrutura hierárquica de todos os frames em uma página
-  '''json
+  ```json
   {
     "frameTree": {
       "frame": {
@@ -218,18 +218,18 @@ Gerencia o ciclo de vida da página, frames e navegação.
       ]
     }
   }
-  '''
+  ```
 
 - `Page.createIsolatedWorld(frameId, worldName)`: Cria um novo contexto de execução JavaScript em um frame específico
-  '''json
+  ```json
   {
     "executionContextId": 42
   }
-  '''
+  ```
 
 **Uso no Pydoll:**
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 @staticmethod
 async def _get_frame_tree_for(
@@ -241,7 +241,7 @@ async def _get_frame_tree_for(
         command['sessionId'] = session_id
     response: GetFrameTreeResponse = await handler.execute_command(command)
     return response['result']['frameTree']
-'''
+```
 
 #### 2. **Domínio DOM**
 
@@ -250,7 +250,7 @@ Fornece acesso à estrutura do DOM.
 **Métodos principais:**
 
 - `DOM.describeNode(objectId)`: Retorna informação detalhada sobre um nó DOM
-  '''json
+  ```json
   {
     "node": {
       "nodeId": 123,
@@ -263,18 +263,18 @@ Fornece acesso à estrutura do DOM.
       }
     }
   }
-  '''
+  ```
 
 - `DOM.getFrameOwner(frameId)`: Retorna o `backendNodeId` do elemento `<iframe>` que possui um frame
-  '''json
+  ```json
   {
     "backendNodeId": 456
   }
-  '''
+  ```
 
 **Uso no Pydoll:**
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 @staticmethod
 async def _owner_backend_for(
@@ -286,7 +286,7 @@ async def _owner_backend_for(
         command['sessionId'] = session_id
     response: GetFrameOwnerResponse = await handler.execute_command(command)
     return response.get('result', {}).get('backendNodeId')
-'''
+```
 
 #### 3. **Domínio Target**
 
@@ -295,7 +295,7 @@ Gerencia alvos (targets) do navegador (páginas, iframes, workers, etc.).
 **Métodos principais:**
 
 - `Target.getTargets()`: Lista todos os alvos disponíveis
-  '''json
+  ```json
   {
     "targetInfos": [
       {
@@ -313,7 +313,7 @@ Gerencia alvos (targets) do navegador (páginas, iframes, workers, etc.).
       }
     ]
   }
-  '''
+  ```
 
 - `Target.attachToTarget(targetId, flatten)`: Anexa a um alvo para depuração
   - Quando `flatten=true`: Retorna um `sessionId` para rotear comandos no modo "flattened"
@@ -321,7 +321,7 @@ Gerencia alvos (targets) do navegador (páginas, iframes, workers, etc.).
 
 **Uso no Pydoll:**
 
-'''python
+```python
 # De pydoll/elements/web_element.py (simplificado)
 async def _resolve_oopif_by_parent(self, parent_frame_id: str, ...):
     """Resolve um OOPIF usando o ID do frame pai."""
@@ -346,7 +346,7 @@ async def _resolve_oopif_by_parent(self, parent_frame_id: str, ...):
         )
         attached_session_id = attach_response.get('result', {}).get('sessionId')
         # ... usa session_id para comandos subsequentes
-'''
+```
 
 #### 4. **Domínio Runtime**
 
@@ -359,7 +359,7 @@ Executa JavaScript e gerencia contextos de execução.
 
 **Uso no Pydoll para acesso ao documento do iframe:**
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 async def _set_iframe_document_object_id(self, execution_context_id: int):
     """Avalia document.documentElement no contexto do iframe e cacheia seu object id."""
@@ -378,7 +378,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int):
     document_object_id = evaluate_response.get('result', {}).get('result', {}).get('objectId')
     if self._iframe_context:
         self._iframe_context.document_object_id = document_object_id
-'''
+```
 
 ---
 
@@ -400,7 +400,7 @@ Um único frame pode ter múltiplos contextos de execução:
 1. **Mundo principal (contexto padrão)**: Onde o JavaScript da própria página roda
 2. **Mundos isolados**: Contextos separados que share o mesmo DOM mas têm escopos globais JavaScript diferentes
 
-'''mermaid
+```mermaid
 graph TB
     Frame[Frame: example.com/page]
     Frame --> MainWorld[Mundo Principal<br/>JavaScript da Página]
@@ -414,7 +414,7 @@ graph TB
     
     MainWorld -.não pode acessar.-> IsolatedWorld1
     MainWorld -.não pode acessar.-> IsolatedWorld2
-'''
+```
 
 ### O que é um Mundo Isolado?
 
@@ -441,7 +441,7 @@ Quando o Pydoll interage com o conteúdo de um iframe, ele cria um mundo isolado
 
 **Implementação:**
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 @staticmethod
 async def _create_isolated_world_for_frame(
@@ -465,7 +465,7 @@ async def _create_isolated_world_for_frame(
     if not execution_context_id:
         raise InvalidIFrame('Incapaz de criar mundo isolado para o iframe')
     return execution_context_id
-'''
+```
 
 O parâmetro `grant_universal_access=True` permite ao mundo isolado:
 
@@ -495,7 +495,7 @@ Entender os identificadores do CDP é crucial para o manuseio de iframes. Aqui e
 
 Veja como os identificadores se relacionam durante a resolução do iframe:
 
-'''
+```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         Fluxo de Resolução                              │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -517,7 +517,7 @@ Veja como os identificadores se relacionam durante a resolução do iframe:
                                                              │
 6. Obter Documento ─────────[Runtime.evaluate]───────────────┘
    └─ objectId: obj-999
-'''
+```
 
 **Pontos chave de transformação:**
 
@@ -530,7 +530,7 @@ Veja como os identificadores se relacionam durante a resolução do iframe:
 
 ### Representação no Código do Pydoll
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 @dataclass
 class _IFrameContext:
@@ -541,7 +541,7 @@ class _IFrameContext:
     document_object_id: Optional[str] = None        # objectId: document.documentElement
     session_handler: Optional[ConnectionHandler] = None  # para alvos OOPIF
     session_id: Optional[str] = None                # sessionId: roteia comandos para OOPIF
-'''
+```
 
 Este dataclass é cacheado em cada `WebElement` representando um iframe, permitindo o roteamento automático de todas as operações subsequentes.
 
@@ -553,7 +553,7 @@ Quando você acessa um iframe no Pydoll (ex: `await iframe.find(...)`), um elabo
 
 ### Fluxo de Alto Nível
 
-'''mermaid
+```mermaid
 sequenceDiagram
     participant User as Usuário
     participant WebElement
@@ -597,7 +597,7 @@ sequenceDiagram
     
     WebElement->>WebElement: Usa contexto cacheado para find()
     WebElement-->>Usuário: Elemento Button (com contexto)
-'''
+```
 
 ### Análise Aprofundada Passo a Passo
 
@@ -616,7 +616,7 @@ sequenceDiagram
 
 **Código**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 async def _ensure_iframe_context(self) -> None:
     """Inicializa e cacheia informação de contexto para elementos iframe."""
@@ -626,11 +626,11 @@ async def _ensure_iframe_context(self) -> None:
         node_info
     )
     # ... continua resolução
-'''
+```
 
 **Auxiliar**:
 
-'''python
+```python
 @staticmethod
 def _extract_frame_metadata(
     node_info: Node,
@@ -647,7 +647,7 @@ def _extract_frame_metadata(
         or node_info.get('baseURL')
     )
     return frame_id, document_url, parent_frame_id, backend_node_id
-'''
+```
 
 **Resultado**:
 
@@ -669,7 +669,7 @@ def _extract_frame_metadata(
 
 **Código**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 async def _resolve_frame_by_owner(
     self,
@@ -701,7 +701,7 @@ async def _find_frame_by_owner(
         if owner_backend_id == backend_node_id:
             return candidate_frame_id, frame_node.get('url')
     return None, None
-'''
+```
 
 **Por que isso é necessário**:
 
@@ -739,7 +739,7 @@ async def _find_frame_by_owner(
 
 **Código**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 async def _resolve_oopif_by_parent(
     self,
@@ -810,7 +810,7 @@ async def _resolve_oopif_by_parent(
             return browser_handler, attached_session_id, root_frame_id, None
     
     return None, None, None, None
-'''
+```
 
 **Resultado**:
 
@@ -834,7 +834,7 @@ async def _resolve_oopif_by_parent(
 
 **Código**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 @staticmethod
 async def _create_isolated_world_for_frame(
@@ -855,7 +855,7 @@ async def _create_isolated_world_for_frame(
     if not execution_context_id:
         raise InvalidIFrame('Incapaz de criar mundo isolado para o iframe')
     return execution_context_id
-'''
+```
 
 **Por que mundo isolado**:
 
@@ -880,7 +880,7 @@ async def _create_isolated_world_for_frame(
 
 **Código**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 async def _set_iframe_document_object_id(self, execution_context_id: int) -> None:
     """Avalia document.documentElement no contexto do iframe e cacheia seu object id."""
@@ -900,7 +900,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int) -> Non
         raise InvalidIFrame('Incapaz de obter referência do documento para o iframe')
     if self._iframe_context:
         self._iframe_context.document_object_id = document_object_id
-'''
+```
 
 **Resultado**: O `_IFrameContext` está agora totalmente populado e cacheado no `WebElement`.
 
@@ -912,7 +912,7 @@ async def _set_iframe_document_object_id(self, execution_context_id: int) -> Non
 
 **Cacheando**:
 
-'''python
+```python
 # De pydoll/elements/web_element.py
 def _init_iframe_context(
     self,
@@ -932,11 +932,11 @@ def _init_iframe_context(
     if session_handler and session_id:
         self._iframe_context.session_handler = session_handler
         self._iframe_context.session_id = session_id
-'''
+```
 
 **Propagação** (ao encontrar elementos dentro do iframe):
 
-'''python
+```python
 # De pydoll/elements/mixins/find_elements_mixin.py
 def _apply_iframe_context_to_element(
     self, element: WebElement, iframe_context: _IFrameContext | None
@@ -956,7 +956,7 @@ def _apply_iframe_context_to_element(
     
     # Caso contrário, injeta o contexto do iframe pai
     element._iframe_context = iframe_context
-'''
+```
 
 **Por que propagação importa**:
 
@@ -972,7 +972,7 @@ def _apply_iframe_context_to_element(
 
 Como discutido em [Análise Aprofundada → Fundamentos → CDP](./cdp.md), o CDP tradicional usa conexões WebSocket separadas para cada alvo. O **Modo "Flattened"** (unificado) é uma otimização onde todos os alvos compartilham uma única conexão WebSocket, com comandos roteados usando um `sessionId`.
 
-'''mermaid
+```mermaid
 graph TB
     subgraph "Modo Tradicional"
         WS1[WebSocket 1] --> MainPage[Alvo Página Principal]
@@ -986,26 +986,26 @@ graph TB
         Router -->|sessionId: session-1| Iframe3[Alvo OOPIF 1]
         Router -->|sessionId: session-2| Iframe4[Alvo OOPIF 2]
     end
-'''
+```
 
 ### Como Funciona o Roteamento de Sessão
 
 **Ao anexar a um OOPIF**:
 
-'''python
+```python
 response = await handler.execute_command(
     TargetCommands.attach_to_target(targetId="iframe-target-id", flatten=True)
 )
 session_id = response['result']['sessionId']  # ex: "8E6C...-1234"
-'''
+```
 
 **Ao enviar um comando para aquele OOPIF**:
 
-'''python
+```python
 command = PageCommands.get_frame_tree()
 command['sessionId'] = 'session-1'  # Roteia para o OOPIF
 response = await handler.execute_command(command)
-'''
+```
 
 A implementação CDP do navegador roteia o comando para o alvo correto baseado no `sessionId`.
 
@@ -1013,7 +1013,7 @@ A implementação CDP do navegador roteia o comando para o alvo correto baseado 
 
 Todo comando enviado por elementos Pydoll é automaticamente roteado para o alvo correto:
 
-'''python
+```python
 # De pydoll/elements/mixins/find_elements_mixin.py
 def _resolve_routing(self) -> tuple[ConnectionHandler, Optional[str]]:
     """Resolve handler e sessionId para o contexto atual."""
@@ -1038,7 +1038,7 @@ async def _execute_command(
     if session_id:
         command['sessionId'] = session_id
     return await handler.execute_command(command, timeout=60)
-'''
+```
 
 **Lógica de roteamento**:
 
@@ -1050,7 +1050,7 @@ async def _execute_command(
 
 Para tornar `sessionId` seguro em termos de tipo (type-safe), o Pydoll estendeu o `Command` TypedDict:
 
-'''python
+```python
 # De pydoll/protocol/base.py
 class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
     """Estrutura base para todos os comandos."""
@@ -1058,7 +1058,7 @@ class Command(TypedDict, Generic[T_CommandParams, T_CommandResponse]):
     method: str
     params: NotRequired[T_CommandParams]
     sessionId: NotRequired[str]  # Adicionado para roteamento de sessão flattened
-'''
+```
 
 Isso permite que checadores de tipo (type-checkers) reconheçam `command['sessionId'] = '...'` como válido sem suprimir avisos de tipo.
 
@@ -1089,7 +1089,7 @@ Isso permite que checadores de tipo (type-checkers) reconheçam `command['sessio
 
 Em `_resolve_oopif_by_parent`, o Pydoll primeiro checa por filhos diretos por `parentFrameId`:
 
-'''python
+```python
 direct_children = [
     target_info
     for target_info in target_infos
@@ -1098,7 +1098,7 @@ direct_children = [
 ]
 if direct_children:
     # Anexa hatchery, pula o escaneamento de todos os alvos
-'''
+```
 
 **Por que isso ajuda**:
 
@@ -1110,7 +1110,7 @@ if direct_children:
 
 Atualmente, a correspondência de dono de frame é sequencial (checa cada frame um por um). Uma otimização futura poderia paralelizar:
 
-'''python
+```python
 # Atual (sequencial)
 for frame_node in frames:
     owner = await self._owner_backend_for(...)
@@ -1125,7 +1125,7 @@ results = await asyncio.gather(*(
 for i, owner in enumerate(results):
     if owner == backend_node_id:
         return frames[i]['id']
-'''
+```
 
 Isso reduziria a latência de `N * RTT` para `RTT` (onde RTT = tempo de ida e volta).
 
@@ -1151,7 +1151,7 @@ Isso reduziria a latência de `N * RTT` para `RTT` (onde RTT = tempo de ida e vo
 
 **Depuração**:
 
-'''python
+```python
 try:
     iframe = await tab.find(id='problem-iframe')
     context = await iframe.iframe_context
@@ -1163,7 +1163,7 @@ except InvalidIFrame as e:
     # Checa árvore de frames manualmente
     frame_tree = await WebElement._get_frame_tree_for(tab._connection_handler, None)
     print(f"Árvore de frames: {frame_tree}")
-'''
+```
 
 #### 2. **InvalidIFrame: Incapaz de criar mundo isolado**
 
@@ -1179,11 +1179,11 @@ except InvalidIFrame as e:
 
 **Depuração**:
 
-'''python
+```python
 # Limpa cache e retenta
 iframe._iframe_context = None
 context = await iframe.iframe_context
-'''
+```
 
 #### 3. **InvalidIFrame: Incapaz de obter referência do documento**
 
@@ -1211,7 +1211,7 @@ context = await iframe.iframe_context
 
 **Depuração**:
 
-'''python
+```python
 # Checa se sessão ainda é válida
 targets = await handler.execute_command(TargetCommands.get_targets())
 active_sessions = [t['targetId'] for t in targets['result']['targetInfos']]
@@ -1219,24 +1219,24 @@ print(f"Alvos ativos: {active_sessions}")
 
 if iframe._iframe_context and iframe._iframe_context.session_id:
     print(f"Nossa sessão: {iframe._iframe_context.session_id}")
-'''
+```
 
 ### Ferramentas de Diagnóstico
 
 #### Habilitar logs do CDP
 
-'''python
+```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('pydoll')
 logger.setLevel(logging.DEBUG)
-'''
+```
 
 Isso registra todos os comandos e respostas CDP, útil para rastrear os passos de resolução do iframe.
 
 #### Inspecionar contexto do iframe
 
-'''python
+```python
 iframe = await tab.find(id='my-iframe')
 ctx = await iframe.iframe_context
 
@@ -1246,7 +1246,7 @@ print(f"Execution Context ID: {ctx.execution_context_id}")
 print(f"Document Object ID: {ctx.document_object_id}")
 print(f"Session ID (OOPIF): {ctx.session_id}")
 print(f"Session Handler: {ctx.session_handler}")
-'''
+```
 
 ---
 
@@ -1265,11 +1265,11 @@ O manuseio de iframes do Pydoll representa uma implementação sofisticada das c
 
 você pode apreciar por que a troca manual de contexto é eliminada. A complexidade é real, mas o Pydoll a abstrai por trás de uma API simples e intuitiva:
 
-'''python
+```python
 iframe = await tab.find(id='login-frame')
 username = await iframe.find(name='username')
 await username.type_text('user@example.com')
-'''
+```
 
 Três linhas. Sem troca de contexto. Sem anexar alvos. Sem gerenciamento de sessão. Apenas funciona.
 

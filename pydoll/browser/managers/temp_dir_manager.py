@@ -91,6 +91,12 @@ class TempDirectoryManager:
             '\\network\\cookies',
             '/network/cookies',
             'cookies-journal',
+            '\\local storage\\',
+            '/local storage/',
+            '\\local storage\\leveldb\\',
+            '/local storage/leveldb/',
+            'leveldb',
+            'indexeddb',
         ]
         exc_type, exc_value, _ = exc_info
 
