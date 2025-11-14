@@ -129,28 +129,6 @@ def iframe_element(mock_connection_handler):
     )
 
 
-@pytest.fixture
-def ci_chrome_options():
-    """Chrome options optimized for CI environments."""
-    options = Options()
-    options.headless = True
-    options.start_timeout = 30
-
-    # CI-specific arguments
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--disable-background-timer-throttling')
-    options.add_argument('--disable-backgrounding-occluded-windows')
-    options.add_argument('--disable-renderer-backgrounding')
-    options.add_argument('--disable-default-apps')
-
-    # Memory optimization
-    options.add_argument('--memory-pressure-off')
-    options.add_argument('--max_old_space_size=4096')
-
-    return options
 
 
 class TestWebElementInitialization:
@@ -1800,3 +1778,1143 @@ class TestWebElementGetChildren:
         # Should raise ElementNotFound when script returns no objectId
         with pytest.raises(ElementNotFound):
             await element.get_siblings_elements(raise_exc=True)
+
+
+"""
+Tests for WebElement iframe edge cases and uncovered code paths.
+
+This test suite focuses on covering edge cases in iframe resolution and context handling,
+including:
+- inner_html edge cases for iframes and iframe context elements
+- Frame tree traversal and owner resolution
+- OOPIF resolution scenarios
+- Isolated world creation failures
+- Document object resolution failures
+"""
+
+import pytest
+import pytest_asyncio
+from unittest.mock import AsyncMock, patch
+
+from pydoll.elements.web_element import WebElement, _IFrameContext
+from pydoll.connection import ConnectionHandler
+from pydoll.exceptions import InvalidIFrame
+
+
+@pytest_asyncio.fixture
+async def mock_connection_handler():
+    """Mock connection handler for WebElement tests."""
+    with patch('pydoll.connection.ConnectionHandler', autospec=True) as mock:
+        handler = mock.return_value
+        handler.execute_command = AsyncMock()
+        handler._connection_port = 9222
+        yield handler
+
+
+@pytest.fixture
+def iframe_element(mock_connection_handler):
+    """Iframe element fixture for iframe-related tests."""
+    attributes_list = ['id', 'test-iframe', 'tag_name', 'iframe']
+    return WebElement(
+        object_id='iframe-object-id',
+        connection_handler=mock_connection_handler,
+        method='css',
+        selector='iframe#test-iframe',
+        attributes_list=attributes_list,
+    )
+
+
+@pytest.fixture
+def element_in_iframe(mock_connection_handler):
+    """Element inside an iframe (has _iframe_context set)."""
+    attributes_list = ['id', 'button-in-iframe', 'tag_name', 'button']
+    element = WebElement(
+        object_id='button-object-id',
+        connection_handler=mock_connection_handler,
+        method='css',
+        selector='button',
+        attributes_list=attributes_list,
+    )
+    # Set iframe context to simulate element inside iframe
+    element._iframe_context = _IFrameContext(
+        frame_id='frame-123',
+        document_url='https://example.com/iframe.html',
+        execution_context_id=42,
+        document_object_id='doc-obj-id',
+    )
+    return element
+
+
+class TestInnerHtmlEdgeCases:
+    """Test inner_html property edge cases for iframe scenarios."""
+
+    @pytest.mark.asyncio
+    async def test_inner_html_iframe_element_with_context(self, iframe_element):
+        """Test inner_html on iframe element uses Runtime.evaluate in iframe context."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'DOM.describeNode':
+                return {
+                    'result': {
+                        'node': {
+                            'frameId': 'parent-frame',
+                            'backendNodeId': 999,
+                            'contentDocument': {
+                                'frameId': 'iframe-123',
+                                'documentURL': 'https://example.com/frame.html',
+                            },
+                        }
+                    }
+                }
+            if method == 'Page.createIsolatedWorld':
+                return {'result': {'executionContextId': 77}}
+            if method == 'Runtime.evaluate':
+                expression = command['params']['expression']
+                if expression == 'document.documentElement':
+                    return {
+                        'result': {
+                            'result': {
+                                'type': 'object',
+                                'objectId': 'doc-element-id',
+                            }
+                        }
+                    }
+                if expression == 'document.documentElement.outerHTML':
+                    return {
+                        'result': {
+                            'result': {
+                                'type': 'string',
+                                'value': '<html><body>Iframe content</body></html>',
+                            }
+                        }
+                    }
+            raise AssertionError(f'Unexpected method {method}')
+
+        iframe_element._connection_handler.execute_command.side_effect = side_effect
+
+        # Get inner HTML of iframe element
+        html = await iframe_element.inner_html
+
+        # Should return iframe's document HTML
+        assert html == '<html><body>Iframe content</body></html>'
+
+        # Verify Runtime.evaluate was called with correct context
+        evaluate_calls = [
+            call
+            for call in iframe_element._connection_handler.execute_command.await_args_list
+            if call.args[0]['method'] == 'Runtime.evaluate'
+        ]
+        # Should have two calls: one for document.documentElement, one for outerHTML
+        assert len(evaluate_calls) == 2
+        outer_html_call = evaluate_calls[1]
+        assert (
+            outer_html_call.args[0]['params']['expression']
+            == 'document.documentElement.outerHTML'
+        )
+        assert outer_html_call.args[0]['params']['contextId'] == 77
+
+    @pytest.mark.asyncio
+    async def test_inner_html_element_in_iframe_uses_call_function_on(self, element_in_iframe):
+        """Test inner_html on element inside iframe uses Runtime.callFunctionOn."""
+        element_in_iframe._connection_handler.execute_command.return_value = {
+            'result': {
+                'result': {
+                    'type': 'string',
+                    'value': '<button id="button-in-iframe">Click me</button>',
+                }
+            }
+        }
+
+        html = await element_in_iframe.inner_html
+
+        # Should use callFunctionOn with this.outerHTML
+        assert html == '<button id="button-in-iframe">Click me</button>'
+        element_in_iframe._connection_handler.execute_command.assert_called_once()
+        call_args = element_in_iframe._connection_handler.execute_command.call_args[0][0]
+        assert call_args['method'] == 'Runtime.callFunctionOn'
+        assert call_args['params']['objectId'] == 'button-object-id'
+        assert 'this.outerHTML' in call_args['params']['functionDeclaration']
+
+    @pytest.mark.asyncio
+    async def test_inner_html_element_in_iframe_empty_response(self, element_in_iframe):
+        """Test inner_html on element inside iframe when response is empty."""
+        element_in_iframe._connection_handler.execute_command.return_value = {
+            'result': {}  # Empty result
+        }
+
+        html = await element_in_iframe.inner_html
+
+        # Should return empty string when result is missing
+        assert html == ''
+
+    @pytest.mark.asyncio
+    async def test_inner_html_regular_element_fallback(self, mock_connection_handler):
+        """Test inner_html falls back to DOM.getOuterHTML for regular elements."""
+        attributes_list = ['id', 'regular-div', 'tag_name', 'div']
+        element = WebElement(
+            object_id='div-object-id',
+            connection_handler=mock_connection_handler,
+            attributes_list=attributes_list,
+        )
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'outerHTML': '<div id="regular-div">Content</div>'}
+        }
+
+        html = await element.inner_html
+
+        # Should use DOM.getOuterHTML for regular elements
+        assert html == '<div id="regular-div">Content</div>'
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert call_args['method'] == 'DOM.getOuterHTML'
+
+
+class TestFrameTreeHelpers:
+    """Test frame tree traversal and helper methods."""
+
+    @pytest.mark.asyncio
+    async def test_get_frame_tree_for_without_session_id(self, mock_connection_handler):
+        """Test _get_frame_tree_for without session_id."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {
+                'frameTree': {
+                    'frame': {
+                        'id': 'main-frame',
+                        'url': 'https://example.com',
+                    },
+                    'childFrames': [],
+                }
+            }
+        }
+
+        frame_tree = await WebElement._get_frame_tree_for(mock_connection_handler, None)
+
+        assert frame_tree['frame']['id'] == 'main-frame'
+        # Should NOT have sessionId in command when session_id is None
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert 'sessionId' not in call_args
+
+    @pytest.mark.asyncio
+    async def test_get_frame_tree_for_with_session_id(self, mock_connection_handler):
+        """Test _get_frame_tree_for WITH session_id (coverage for line 718)."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {
+                'frameTree': {
+                    'frame': {
+                        'id': 'oopif-frame',
+                        'url': 'https://other-origin.com',
+                    },
+                    'childFrames': [],
+                }
+            }
+        }
+
+        frame_tree = await WebElement._get_frame_tree_for(
+            mock_connection_handler, 'session-abc-123'
+        )
+
+        assert frame_tree['frame']['id'] == 'oopif-frame'
+        # Should HAVE sessionId in command
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert call_args['sessionId'] == 'session-abc-123'
+
+    def test_walk_frames_single_frame(self):
+        """Test _walk_frames with single frame (no children)."""
+        frame_tree = {
+            'frame': {
+                'id': 'single-frame',
+                'url': 'https://example.com',
+            },
+            'childFrames': [],
+        }
+
+        frames = list(WebElement._walk_frames(frame_tree))
+
+        assert len(frames) == 1
+        assert frames[0]['id'] == 'single-frame'
+
+    def test_walk_frames_nested_frames(self):
+        """Test _walk_frames with nested frames."""
+        frame_tree = {
+            'frame': {
+                'id': 'main-frame',
+                'url': 'https://example.com',
+            },
+            'childFrames': [
+                {
+                    'frame': {
+                        'id': 'child-frame-1',
+                        'url': 'https://example.com/child1',
+                    },
+                    'childFrames': [
+                        {
+                            'frame': {
+                                'id': 'nested-frame',
+                                'url': 'https://example.com/nested',
+                            },
+                            'childFrames': [],
+                        }
+                    ],
+                },
+                {
+                    'frame': {
+                        'id': 'child-frame-2',
+                        'url': 'https://example.com/child2',
+                    },
+                    'childFrames': [],
+                },
+            ],
+        }
+
+        frames = list(WebElement._walk_frames(frame_tree))
+
+        assert len(frames) == 4
+        frame_ids = [f['id'] for f in frames]
+        assert 'main-frame' in frame_ids
+        assert 'child-frame-1' in frame_ids
+        assert 'nested-frame' in frame_ids
+        assert 'child-frame-2' in frame_ids
+
+    def test_walk_frames_empty_tree(self):
+        """Test _walk_frames with empty/None tree."""
+        frames = list(WebElement._walk_frames(None))
+        assert len(frames) == 0
+
+        frames = list(WebElement._walk_frames({}))
+        assert len(frames) == 0
+
+    def test_walk_frames_filters_none_frames(self):
+        """Test _walk_frames filters out None frames."""
+        frame_tree = {
+            'frame': {
+                'id': 'valid-frame',
+                'url': 'https://example.com',
+            },
+            'childFrames': [
+                None,  # Should be filtered out
+                {
+                    'frame': None,  # Should be filtered out
+                    'childFrames': [],
+                },
+                {
+                    'frame': {
+                        'id': 'another-valid-frame',
+                        'url': 'https://example.com/valid',
+                    },
+                    'childFrames': [],
+                },
+            ],
+        }
+
+        frames = list(WebElement._walk_frames(frame_tree))
+
+        # Should only include valid frames
+        frame_ids = [f['id'] for f in frames if f]
+        assert 'valid-frame' in frame_ids
+        assert 'another-valid-frame' in frame_ids
+        assert len(frame_ids) == 2
+
+    @pytest.mark.asyncio
+    async def test_owner_backend_for_without_session_id(self, mock_connection_handler):
+        """Test _owner_backend_for without session_id."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'backendNodeId': 456}
+        }
+
+        backend_id = await WebElement._owner_backend_for(
+            mock_connection_handler, None, 'frame-123'
+        )
+
+        assert backend_id == 456
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert 'sessionId' not in call_args
+
+    @pytest.mark.asyncio
+    async def test_owner_backend_for_with_session_id(self, mock_connection_handler):
+        """Test _owner_backend_for WITH session_id (coverage for line 757)."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'backendNodeId': 789}
+        }
+
+        backend_id = await WebElement._owner_backend_for(
+            mock_connection_handler, 'session-xyz-789', 'frame-456'
+        )
+
+        assert backend_id == 789
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert call_args['sessionId'] == 'session-xyz-789'
+
+    @pytest.mark.asyncio
+    async def test_owner_backend_for_missing_result(self, mock_connection_handler):
+        """Test _owner_backend_for when result is missing."""
+        mock_connection_handler.execute_command.return_value = {}
+
+        backend_id = await WebElement._owner_backend_for(
+            mock_connection_handler, None, 'frame-999'
+        )
+
+        assert backend_id is None
+
+
+class TestFindFrameByOwner:
+    """Test _find_frame_by_owner method."""
+
+    @pytest.mark.asyncio
+    async def test_find_frame_by_owner_found(self, iframe_element, mock_connection_handler):
+        """Test _find_frame_by_owner successfully finds matching frame."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'Page.getFrameTree':
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'id': 'main', 'url': 'https://example.com'},
+                            'childFrames': [
+                                {
+                                    'frame': {'id': 'target-frame', 'url': 'https://other.com'},
+                                    'childFrames': [],
+                                }
+                            ],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                frame_id = command['params']['frameId']
+                if frame_id == 'target-frame':
+                    return {'result': {'backendNodeId': 999}}  # Matches
+                return {'result': {'backendNodeId': 111}}  # Doesn't match
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+
+        frame_id, frame_url = await iframe_element._find_frame_by_owner(
+            mock_connection_handler, None, 999
+        )
+
+        assert frame_id == 'target-frame'
+        assert frame_url == 'https://other.com'
+
+    @pytest.mark.asyncio
+    async def test_find_frame_by_owner_not_found(self, iframe_element, mock_connection_handler):
+        """Test _find_frame_by_owner when no matching frame exists."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'Page.getFrameTree':
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'id': 'main', 'url': 'https://example.com'},
+                            'childFrames': [
+                                {
+                                    'frame': {'id': 'frame-1', 'url': 'https://other.com'},
+                                    'childFrames': [],
+                                }
+                            ],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                return {'result': {'backendNodeId': 111}}  # Never matches
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+
+        frame_id, frame_url = await iframe_element._find_frame_by_owner(
+            mock_connection_handler, None, 999
+        )
+
+        assert frame_id is None
+        assert frame_url is None
+
+    @pytest.mark.asyncio
+    async def test_find_frame_by_owner_skips_frames_without_id(
+        self, iframe_element, mock_connection_handler
+    ):
+        """Test _find_frame_by_owner skips frames without ID."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'Page.getFrameTree':
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'url': 'https://example.com'},  # Missing 'id'
+                            'childFrames': [
+                                {
+                                    'frame': {'id': '', 'url': 'https://other.com'},  # Empty ID
+                                    'childFrames': [],
+                                },
+                                {
+                                    'frame': {'id': 'valid-frame', 'url': 'https://valid.com'},
+                                    'childFrames': [],
+                                },
+                            ],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                return {'result': {'backendNodeId': 999}}
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+
+        frame_id, frame_url = await iframe_element._find_frame_by_owner(
+            mock_connection_handler, None, 999
+        )
+
+        # Should find the valid frame
+        assert frame_id == 'valid-frame'
+        assert frame_url == 'https://valid.com'
+
+
+class TestFindChildByParent:
+    """Test _find_child_by_parent static method."""
+
+    def test_find_child_by_parent_direct_child(self):
+        """Test finding direct child by parent ID."""
+        frame_tree = {
+            'frame': {'id': 'main', 'url': 'https://example.com'},
+            'childFrames': [
+                {
+                    'frame': {'id': 'child-1', 'parentId': 'main', 'url': 'https://child1.com'},
+                    'childFrames': [],
+                },
+                {
+                    'frame': {'id': 'child-2', 'parentId': 'main', 'url': 'https://child2.com'},
+                    'childFrames': [],
+                },
+            ],
+        }
+
+        child_id = WebElement._find_child_by_parent(frame_tree, 'main')
+
+        # Should find first matching child
+        assert child_id == 'child-1'
+
+    def test_find_child_by_parent_nested_child(self):
+        """Test finding nested child by parent ID."""
+        frame_tree = {
+            'frame': {'id': 'main', 'url': 'https://example.com'},
+            'childFrames': [
+                {
+                    'frame': {'id': 'child-1', 'parentId': 'main', 'url': 'https://child1.com'},
+                    'childFrames': [
+                        {
+                            'frame': {
+                                'id': 'nested',
+                                'parentId': 'child-1',
+                                'url': 'https://nested.com',
+                            },
+                            'childFrames': [],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        nested_id = WebElement._find_child_by_parent(frame_tree, 'child-1')
+
+        assert nested_id == 'nested'
+
+    def test_find_child_by_parent_not_found(self):
+        """Test when no child matches parent ID."""
+        frame_tree = {
+            'frame': {'id': 'main', 'url': 'https://example.com'},
+            'childFrames': [
+                {
+                    'frame': {'id': 'child-1', 'parentId': 'other', 'url': 'https://child1.com'},
+                    'childFrames': [],
+                }
+            ],
+        }
+
+        child_id = WebElement._find_child_by_parent(frame_tree, 'nonexistent')
+
+        assert child_id is None
+
+    def test_find_child_by_parent_empty_tree(self):
+        """Test with empty tree."""
+        child_id = WebElement._find_child_by_parent(None, 'any-id')
+        assert child_id is None
+
+        child_id = WebElement._find_child_by_parent({}, 'any-id')
+        assert child_id is None
+
+
+class TestResolveOOPIFByParent:
+    """Test _resolve_oopif_by_parent method."""
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_direct_child_success(self, iframe_element):
+        """Test OOPIF resolution via direct child target."""
+        with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
+            browser_handler = AsyncMock()
+            browser_handler.execute_command = AsyncMock()
+            browser_handler._connection_port = 9222
+            mock_handler_class.return_value = browser_handler
+
+            async def side_effect(command, timeout=60):
+                method = command['method']
+                if method == 'Target.getTargets':
+                    return {
+                        'result': {
+                            'targetInfos': [
+                                {
+                                    'targetId': 'main-target',
+                                    'type': 'page',
+                                    'url': 'https://example.com',
+                                },
+                                {
+                                    'targetId': 'iframe-target',
+                                    'type': 'iframe',
+                                    'url': 'https://other-origin.com',
+                                    'parentFrameId': 'parent-frame-123',  # Matches
+                                },
+                            ]
+                        }
+                    }
+                if method == 'Target.attachToTarget':
+                    return {'result': {'sessionId': 'session-oopif-456'}}
+                if method == 'Page.getFrameTree':
+                    return {
+                        'result': {
+                            'frameTree': {
+                                'frame': {
+                                    'id': 'oopif-root-frame',
+                                    'url': 'https://other-origin.com',
+                                },
+                                'childFrames': [],
+                            }
+                        }
+                    }
+                raise AssertionError(f'Unexpected method {method}')
+
+            browser_handler.execute_command.side_effect = side_effect
+
+            handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
+                'parent-frame-123', 999
+            )
+
+            assert handler == browser_handler
+            assert session_id == 'session-oopif-456'
+            assert frame_id == 'oopif-root-frame'
+            assert url == 'https://other-origin.com'
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_scan_all_targets_find_child(self, iframe_element):
+        """Test OOPIF resolution by scanning all targets and finding child."""
+        with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
+            browser_handler = AsyncMock()
+            browser_handler.execute_command = AsyncMock()
+            browser_handler._connection_port = 9222
+            mock_handler_class.return_value = browser_handler
+
+            call_count = 0
+
+            async def side_effect(command, timeout=60):
+                nonlocal call_count
+                method = command['method']
+
+                if method == 'Target.getTargets':
+                    return {
+                        'result': {
+                            'targetInfos': [
+                                {
+                                    'targetId': 'target-1',
+                                    'type': 'page',
+                                    'url': 'https://example.com',
+                                    # No parentFrameId - will trigger scan
+                                },
+                            ]
+                        }
+                    }
+                if method == 'Target.attachToTarget':
+                    call_count += 1
+                    return {'result': {'sessionId': f'session-{call_count}'}}
+                if method == 'Page.getFrameTree':
+                    # Return tree with child matching parent
+                    return {
+                        'result': {
+                            'frameTree': {
+                                'frame': {'id': 'root', 'url': 'https://example.com'},
+                                'childFrames': [
+                                    {
+                                        'frame': {
+                                            'id': 'matching-child',
+                                            'parentId': 'parent-frame-123',  # Matches
+                                            'url': 'https://child.com',
+                                        },
+                                        'childFrames': [],
+                                    }
+                                ],
+                            }
+                        }
+                    }
+                raise AssertionError(f'Unexpected method {method}')
+
+            browser_handler.execute_command.side_effect = side_effect
+
+            handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
+                'parent-frame-123', 999
+            )
+
+            assert handler == browser_handler
+            assert session_id == 'session-1'
+            assert frame_id == 'matching-child'
+            assert url is None  # URL not resolved in this path
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_scan_all_targets_match_root_owner(self, iframe_element):
+        """Test OOPIF resolution by matching root frame owner."""
+        with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
+            browser_handler = AsyncMock()
+            browser_handler.execute_command = AsyncMock()
+            browser_handler._connection_port = 9222
+            mock_handler_class.return_value = browser_handler
+
+            call_count = 0
+
+            async def side_effect(command, timeout=60):
+                nonlocal call_count
+                method = command['method']
+
+                if method == 'Target.getTargets':
+                    return {
+                        'result': {
+                            'targetInfos': [
+                                {
+                                    'targetId': 'target-1',
+                                    'type': 'iframe',
+                                    'url': 'https://oopif.com',
+                                },
+                            ]
+                        }
+                    }
+                if method == 'Target.attachToTarget':
+                    call_count += 1
+                    return {'result': {'sessionId': f'session-{call_count}'}}
+                if method == 'Page.getFrameTree':
+                    return {
+                        'result': {
+                            'frameTree': {
+                                'frame': {
+                                    'id': 'oopif-root',
+                                    'url': 'https://oopif.com',
+                                },
+                                'childFrames': [],
+                            }
+                        }
+                    }
+                if method == 'DOM.getFrameOwner':
+                    # Return matching backend node ID
+                    return {'result': {'backendNodeId': 999}}  # Matches
+                raise AssertionError(f'Unexpected method {method}')
+
+            browser_handler.execute_command.side_effect = side_effect
+            # Mock também o _connection_handler do iframe_element para DOM.getFrameOwner
+            iframe_element._connection_handler.execute_command.side_effect = side_effect
+
+            handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
+                'parent-frame-123', 999
+            )
+
+            assert handler == browser_handler
+            assert session_id == 'session-1'
+            assert frame_id == 'oopif-root'
+            assert url is None
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_not_found(self, iframe_element):
+        """Test OOPIF resolution when no matching target found."""
+        with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
+            browser_handler = AsyncMock()
+            browser_handler.execute_command = AsyncMock()
+            browser_handler._connection_port = 9222
+            mock_handler_class.return_value = browser_handler
+
+            async def side_effect(command, timeout=60):
+                method = command['method']
+                if method == 'Target.getTargets':
+                    return {'result': {'targetInfos': []}}  # No targets
+                raise AssertionError(f'Unexpected method {method}')
+
+            browser_handler.execute_command.side_effect = side_effect
+
+            handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
+                'parent-frame-123', 999
+            )
+
+            assert handler is None
+            assert session_id is None
+            assert frame_id is None
+            assert url is None
+
+
+class TestResolveFrameByOwner:
+    """Test _resolve_frame_by_owner method."""
+
+    @pytest.mark.asyncio
+    async def test_resolve_frame_by_owner_success(self, iframe_element, mock_connection_handler):
+        """Test successful frame resolution by owner."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'Page.getFrameTree':
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'id': 'main', 'url': 'https://example.com'},
+                            'childFrames': [
+                                {
+                                    'frame': {'id': 'target', 'url': 'https://resolved.com'},
+                                    'childFrames': [],
+                                }
+                            ],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                if command['params']['frameId'] == 'target':
+                    return {'result': {'backendNodeId': 456}}
+                return {'result': {'backendNodeId': 999}}
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+
+        frame_id, doc_url = await iframe_element._resolve_frame_by_owner(
+            mock_connection_handler, None, 456, 'https://fallback.com'
+        )
+
+        assert frame_id == 'target'
+        assert doc_url == 'https://resolved.com'
+
+    @pytest.mark.asyncio
+    async def test_resolve_frame_by_owner_not_found_returns_fallback(
+        self, iframe_element, mock_connection_handler
+    ):
+        """Test frame resolution returns fallback URL when not found."""
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'Page.getFrameTree':
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'id': 'main', 'url': 'https://example.com'},
+                            'childFrames': [],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                # Return non-matching backend node ID
+                return {'result': {'backendNodeId': 999}}
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+
+        frame_id, doc_url = await iframe_element._resolve_frame_by_owner(
+            mock_connection_handler, None, 456, 'https://fallback.com'
+        )
+
+        assert frame_id is None
+        assert doc_url == 'https://fallback.com'  # Falls back to provided URL
+
+
+class TestResolveOOPIFIfNeeded:
+    """Test _resolve_oopif_if_needed method."""
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_if_needed_already_has_frame_id(self, iframe_element):
+        """Test OOPIF resolution skipped when frame_id already exists."""
+        handler, session_id, frame_id, url = await iframe_element._resolve_oopif_if_needed(
+            'existing-frame-id', 'parent-frame', 999, 'https://example.com'
+        )
+
+        # Should return early without resolution
+        assert handler is None
+        assert session_id is None
+        assert frame_id == 'existing-frame-id'
+        assert url == 'https://example.com'
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_if_needed_no_parent_frame_id(self, iframe_element):
+        """Test OOPIF resolution skipped when no parent frame ID."""
+        handler, session_id, frame_id, url = await iframe_element._resolve_oopif_if_needed(
+            None, None, 999, 'https://example.com'
+        )
+
+        # Should return early without resolution
+        assert handler is None
+        assert session_id is None
+        assert frame_id is None
+        assert url == 'https://example.com'
+
+    @pytest.mark.asyncio
+    async def test_resolve_oopif_if_needed_triggers_resolution(self, iframe_element):
+        """Test OOPIF resolution is triggered when frame_id missing but parent exists."""
+        with patch.object(
+            iframe_element, '_resolve_oopif_by_parent', new=AsyncMock()
+        ) as mock_resolve:
+            mock_resolve.return_value = (
+                'mock-handler',
+                'mock-session',
+                'resolved-frame',
+                'https://resolved.com',
+            )
+
+            handler, session_id, frame_id, url = await iframe_element._resolve_oopif_if_needed(
+                None,  # No frame_id
+                'parent-frame-123',  # Has parent
+                999,
+                'https://original.com',
+            )
+
+            # Should call resolution
+            mock_resolve.assert_called_once_with('parent-frame-123', 999)
+            assert handler == 'mock-handler'
+            assert session_id == 'mock-session'
+            assert frame_id == 'resolved-frame'
+            assert url == 'https://resolved.com'
+
+
+class TestInitIframeContext:
+    """Test _init_iframe_context method."""
+
+    def test_init_iframe_context_basic(self, iframe_element):
+        """Test basic iframe context initialization."""
+        iframe_element._init_iframe_context(
+            'frame-123', 'https://example.com', None, None
+        )
+
+        assert iframe_element._iframe_context is not None
+        assert iframe_element._iframe_context.frame_id == 'frame-123'
+        assert iframe_element._iframe_context.document_url == 'https://example.com'
+        assert iframe_element._iframe_context.session_handler is None
+        assert iframe_element._iframe_context.session_id is None
+
+    def test_init_iframe_context_with_oopif_routing(self, iframe_element):
+        """Test iframe context initialization with OOPIF routing."""
+        mock_handler = AsyncMock()
+
+        iframe_element._init_iframe_context(
+            'frame-456', 'https://oopif.com', mock_handler, 'session-789'
+        )
+
+        assert iframe_element._iframe_context is not None
+        assert iframe_element._iframe_context.frame_id == 'frame-456'
+        assert iframe_element._iframe_context.session_handler == mock_handler
+        assert iframe_element._iframe_context.session_id == 'session-789'
+
+    def test_init_iframe_context_cleans_routing_attributes(self, iframe_element):
+        """Test iframe context init removes routing attributes."""
+        # Set routing attributes
+        iframe_element._routing_session_handler = AsyncMock()
+        iframe_element._routing_session_id = 'old-session'
+
+        iframe_element._init_iframe_context(
+            'frame-new', 'https://example.com', None, None
+        )
+
+        # Routing attributes should be removed
+        assert not hasattr(iframe_element, '_routing_session_handler')
+        assert not hasattr(iframe_element, '_routing_session_id')
+
+
+class TestCreateIsolatedWorldForFrame:
+    """Test _create_isolated_world_for_frame method."""
+
+    @pytest.mark.asyncio
+    async def test_create_isolated_world_without_session_id(self, mock_connection_handler):
+        """Test isolated world creation without session_id."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'executionContextId': 42}
+        }
+
+        context_id = await WebElement._create_isolated_world_for_frame(
+            'frame-123', mock_connection_handler, None
+        )
+
+        assert context_id == 42
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert 'sessionId' not in call_args
+        assert call_args['params']['frameId'] == 'frame-123'
+        assert 'pydoll::iframe::frame-123' in call_args['params']['worldName']
+
+    @pytest.mark.asyncio
+    async def test_create_isolated_world_with_session_id(self, mock_connection_handler):
+        """Test isolated world creation WITH session_id (coverage for line 1040)."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'executionContextId': 99}
+        }
+
+        context_id = await WebElement._create_isolated_world_for_frame(
+            'frame-456', mock_connection_handler, 'session-abc-789'
+        )
+
+        assert context_id == 99
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert call_args['sessionId'] == 'session-abc-789'
+        assert call_args['params']['frameId'] == 'frame-456'
+
+    @pytest.mark.asyncio
+    async def test_create_isolated_world_missing_execution_context_id(
+        self, mock_connection_handler
+    ):
+        """Test isolated world creation failure (no executionContextId)."""
+        mock_connection_handler.execute_command.return_value = {
+            'result': {}  # Missing executionContextId
+        }
+
+        with pytest.raises(
+            InvalidIFrame, match='Unable to create isolated world for iframe'
+        ):
+            await WebElement._create_isolated_world_for_frame(
+                'frame-fail', mock_connection_handler, None
+            )
+
+
+class TestSetIframeDocumentObjectId:
+    """Test _set_iframe_document_object_id method."""
+
+    @pytest.mark.asyncio
+    async def test_set_iframe_document_object_id_with_session_id(self, iframe_element):
+        """Test document object ID setting with session_id (coverage for line 1062)."""
+        # Set up iframe context with session_id
+        mock_session_handler = AsyncMock()
+        iframe_element._iframe_context = _IFrameContext(
+            frame_id='frame-123',
+            execution_context_id=42,
+            session_handler=mock_session_handler,
+            session_id='session-abc',
+        )
+
+        mock_session_handler.execute_command.return_value = {
+            'result': {
+                'result': {
+                    'type': 'object',
+                    'objectId': 'doc-object-123',
+                }
+            }
+        }
+
+        await iframe_element._set_iframe_document_object_id(42)
+
+        # Should use session_handler and add sessionId to command
+        mock_session_handler.execute_command.assert_called_once()
+        call_args = mock_session_handler.execute_command.call_args[0][0]
+        assert call_args['sessionId'] == 'session-abc'
+        assert call_args['params']['expression'] == 'document.documentElement'
+        assert call_args['params']['contextId'] == 42
+
+        # Should set document_object_id
+        assert iframe_element._iframe_context.document_object_id == 'doc-object-123'
+
+    @pytest.mark.asyncio
+    async def test_set_iframe_document_object_id_without_session_id(
+        self, iframe_element, mock_connection_handler
+    ):
+        """Test document object ID setting without session_id."""
+        # Set up iframe context without session_id
+        iframe_element._iframe_context = _IFrameContext(
+            frame_id='frame-456',
+            execution_context_id=77,
+        )
+
+        mock_connection_handler.execute_command.return_value = {
+            'result': {
+                'result': {
+                    'type': 'object',
+                    'objectId': 'doc-object-456',
+                }
+            }
+        }
+
+        await iframe_element._set_iframe_document_object_id(77)
+
+        # Should use main connection_handler
+        mock_connection_handler.execute_command.assert_called_once()
+        call_args = mock_connection_handler.execute_command.call_args[0][0]
+        assert 'sessionId' not in call_args
+        assert iframe_element._iframe_context.document_object_id == 'doc-object-456'
+
+    @pytest.mark.asyncio
+    async def test_set_iframe_document_object_id_missing_object_id(
+        self, iframe_element, mock_connection_handler
+    ):
+        """Test document object ID setting failure (no objectId)."""
+        iframe_element._iframe_context = _IFrameContext(
+            frame_id='frame-fail',
+            execution_context_id=99,
+        )
+
+        mock_connection_handler.execute_command.return_value = {
+            'result': {'result': {}}  # Missing objectId
+        }
+
+        with pytest.raises(
+            InvalidIFrame, match='Unable to obtain document reference for iframe'
+        ):
+            await iframe_element._set_iframe_document_object_id(99)
+
+
+class TestEnsureIframeContext:
+    """Test _ensure_iframe_context method."""
+
+    @pytest.mark.asyncio
+    async def test_ensure_iframe_context_fails_without_frame_id(
+        self, iframe_element, mock_connection_handler
+    ):
+        """Test _ensure_iframe_context raises error when frame_id cannot be resolved."""
+        from unittest.mock import AsyncMock, patch
+
+        # Create a mock browser_handler
+        mock_browser_handler = AsyncMock()
+        mock_browser_handler._connection_port = 9222
+
+        async def side_effect(command, timeout=60):
+            method = command['method']
+            if method == 'DOM.describeNode':
+                # Return node info without frame_id and with backend_node_id
+                return {
+                    'result': {
+                        'node': {
+                            'frameId': 'parent-frame',
+                            'backendNodeId': 789,
+                            'contentDocument': {},  # No frameId here
+                        }
+                    }
+                }
+            if method == 'Page.getFrameTree':
+                # Return empty tree (no frames to match)
+                return {
+                    'result': {
+                        'frameTree': {
+                            'frame': {'id': 'main', 'url': 'https://example.com'},
+                            'childFrames': [],
+                        }
+                    }
+                }
+            if method == 'DOM.getFrameOwner':
+                # Return non-matching backend node ID so frame resolution fails
+                return {'result': {'backendNodeId': 999}}
+            if method == 'Target.getTargets':
+                # Return empty targets list so OOPIF resolution fails
+                return {'result': {'targetInfos': []}}
+            raise AssertionError(f'Unexpected method {method}')
+
+        mock_connection_handler.execute_command.side_effect = side_effect
+        mock_browser_handler.execute_command.side_effect = side_effect
+
+        # Mock ConnectionHandler instantiation to return our mock
+        with patch(
+            'pydoll.elements.web_element.ConnectionHandler',
+            return_value=mock_browser_handler,
+        ):
+            # Should raise InvalidIFrame when frame_id cannot be resolved
+            with pytest.raises(
+                InvalidIFrame, match='Unable to resolve frameId for the iframe element'
+            ):
+                await iframe_element._ensure_iframe_context()
+
