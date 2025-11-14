@@ -17,14 +17,14 @@ def ci_chrome_options():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
     options.add_argument('--disable-extensions')
-    
-    # Stability improvements
-    options.add_argument('--disable-software-rasterizer')
-    options.add_argument('--disable-setuid-sandbox')
-    
-    # Allow local file access for test HTMLs
-    options.add_argument('--allow-file-access-from-files')
-    options.add_argument('--enable-local-file-accesses')
+    options.add_argument('--disable-background-timer-throttling')
+    options.add_argument('--disable-backgrounding-occluded-windows')
+    options.add_argument('--disable-renderer-backgrounding')
+    options.add_argument('--disable-default-apps')
+
+    # Memory optimization
+    options.add_argument('--memory-pressure-off')
+    options.add_argument('--max_old_space_size=4096')
 
     return options
 
