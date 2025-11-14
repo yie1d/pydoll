@@ -88,7 +88,7 @@ class TempDirectoryManager:
             # Known Chromium files that may remain locked briefly on Windows
             if filename in matches or any(substr in path for substr in match_substrings):
                 try:
-                    self.retry_process_file(func, path, retry_times=50)
+                    self.retry_process_file(func, path)
                     return
                 except PermissionError:
                     logger.warning(f'Ignoring locked Chrome file during cleanup: {path}')
