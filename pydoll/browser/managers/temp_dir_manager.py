@@ -128,7 +128,7 @@ class TempDirectoryManager:
             shutil.rmtree(temp_dir.name, onerror=self.handle_cleanup_error)
             remaining = Path(temp_dir.name)
             if not remaining.exists():
-                return
+                continue
 
             for attempt in range(10):
                 time.sleep(0.2)
