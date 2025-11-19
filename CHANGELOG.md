@@ -1,3 +1,9 @@
+## 2.12.2 (2025-11-19)
+
+### Fix
+
+- adjust find_elements_mixin.py to refine return types and defaults
+
 ## 2.12.1 (2025-11-14)
 
 ### Fix
