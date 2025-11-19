@@ -79,6 +79,20 @@ class FindElementsMixin:
         tag_name: Optional[str] = ...,
         text: Optional[str] = ...,
         timeout: int = ...,
+        find_all: Literal[False] = False,
+        raise_exc: Literal[False] = False,
+        **attributes,
+    ) -> Optional[WebElement]: ...
+
+    @overload
+    async def find(
+        self,
+        id: Optional[str] = ...,
+        class_name: Optional[str] = ...,
+        name: Optional[str] = ...,
+        tag_name: Optional[str] = ...,
+        text: Optional[str] = ...,
+        timeout: int = ...,
         find_all: Literal[True] = True,
         raise_exc: Literal[True] = True,
         **attributes,
@@ -97,20 +111,6 @@ class FindElementsMixin:
         raise_exc: Literal[False] = False,
         **attributes,
     ) -> Optional[list[WebElement]]: ...
-
-    @overload
-    async def find(
-        self,
-        id: Optional[str] = ...,
-        class_name: Optional[str] = ...,
-        name: Optional[str] = ...,
-        tag_name: Optional[str] = ...,
-        text: Optional[str] = ...,
-        timeout: int = ...,
-        find_all: Literal[False] = False,
-        raise_exc: Literal[False] = False,
-        **attributes,
-    ) -> Optional[WebElement]: ...
 
     @overload
     async def find(
