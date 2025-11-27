@@ -1,3 +1,9 @@
+## 2.12.3 (2025-11-27)
+
+### Fix
+
+- improve frame retrieval logic for better session handling
+
 ## 2.12.2 (2025-11-19)
 
 ### Fix
