@@ -2450,7 +2450,11 @@ class TestResolveOOPIFByParent:
 
     @pytest.mark.asyncio
     async def test_resolve_oopif_scan_all_targets_find_child(self, iframe_element):
-        """Test OOPIF resolution by scanning all targets and finding child."""
+        """Test OOPIF resolution by scanning all targets and finding child.
+        
+        This tests the fallback path where the root frame owner doesn't match,
+        so the code falls back to finding a child frame by parentId.
+        """
         with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
             browser_handler = AsyncMock()
             browser_handler.execute_command = AsyncMock()
@@ -2498,9 +2502,14 @@ class TestResolveOOPIFByParent:
                             }
                         }
                     }
+                if method == 'DOM.getFrameOwner':
+                    # Return non-matching backend node ID to trigger child fallback
+                    return {'result': {'backendNodeId': 888}}  # Does NOT match 999
                 raise AssertionError(f'Unexpected method {method}')
 
             browser_handler.execute_command.side_effect = side_effect
+            # Mock the connection handler for DOM.getFrameOwner calls
+            iframe_element._connection_handler.execute_command.side_effect = side_effect
 
             handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
                 'parent-frame-123', 999
@@ -2509,11 +2518,16 @@ class TestResolveOOPIFByParent:
             assert handler == browser_handler
             assert session_id == 'session-1'
             assert frame_id == 'matching-child'
-            assert url is None  # URL not resolved in this path
+            assert url is None  # URL not resolved in child path
 
     @pytest.mark.asyncio
     async def test_resolve_oopif_scan_all_targets_match_root_owner(self, iframe_element):
-        """Test OOPIF resolution by matching root frame owner."""
+        """Test OOPIF resolution by matching root frame owner.
+        
+        This is the primary path for OOPIF resolution: when the root frame
+        of the OOPIF target is owned by our iframe element (matching backend_node_id).
+        The URL should be returned from the root frame.
+        """
         with patch('pydoll.elements.web_element.ConnectionHandler') as mock_handler_class:
             browser_handler = AsyncMock()
             browser_handler.execute_command = AsyncMock()
@@ -2569,7 +2583,7 @@ class TestResolveOOPIFByParent:
             assert handler == browser_handler
             assert session_id == 'session-1'
             assert frame_id == 'oopif-root'
-            assert url is None
+            assert url == 'https://oopif.com'  # URL is now correctly returned
 
     @pytest.mark.asyncio
     async def test_resolve_oopif_not_found(self, iframe_element):

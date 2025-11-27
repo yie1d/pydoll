@@ -928,17 +928,25 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             if not attached_session_id:
                 continue
             frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
+            root_frame = (frame_tree or {}).get('frame', {})
+            root_frame_id = root_frame.get('id', '')
+
+            if root_frame_id and backend_node_id is not None:
+                owner_backend_id = await self._owner_backend_for(
+                    self._connection_handler, None, root_frame_id
+                )
+                if owner_backend_id == backend_node_id:
+                    return (
+                        browser_handler,
+                        attached_session_id,
+                        root_frame_id,
+                        root_frame.get('url'),
+                    )
+
             child_frame_id = WebElement._find_child_by_parent(frame_tree, parent_frame_id)
             if child_frame_id:
                 return browser_handler, attached_session_id, child_frame_id, None
-            root_frame_id = (frame_tree or {}).get('frame', {}).get('id', '')
-            if not root_frame_id or backend_node_id is None:
-                continue
-            owner_backend_id = await self._owner_backend_for(
-                self._connection_handler, None, root_frame_id
-            )
-            if owner_backend_id == backend_node_id:
-                return browser_handler, attached_session_id, root_frame_id, None
+
         return None, None, None, None
 
     @staticmethod
