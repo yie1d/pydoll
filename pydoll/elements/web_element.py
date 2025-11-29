@@ -914,17 +914,15 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
             root_frame = (frame_tree or {}).get('frame', {})
             root_frame_id = root_frame.get('id', '')
-            if not root_frame_id:
-                continue
 
             is_matching_owner = False
-            if backend_node_id is not None:
+            if root_frame_id and backend_node_id is not None:
                 owner_backend_id = await self._owner_backend_for(
                     self._connection_handler, None, root_frame_id
                 )
                 is_matching_owner = owner_backend_id == backend_node_id
 
-            if is_matching_owner or is_single_child:
+            if is_matching_owner or (backend_node_id is None and is_single_child and root_frame_id):
                 return (
                     browser_handler,
                     attached_session_id,
@@ -934,6 +932,8 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
 
         for target_info in target_infos:
             if target_info.get('type') not in {'iframe', 'page'}:
+                continue
+            if backend_node_id is None:
                 continue
             attach_response = await browser_handler.execute_command(
                 TargetCommands.attach_to_target(
@@ -947,7 +947,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             root_frame = (frame_tree or {}).get('frame', {})
             root_frame_id = root_frame.get('id', '')
 
-            if root_frame_id and backend_node_id is not None:
+            if root_frame_id:
                 owner_backend_id = await self._owner_backend_for(
                     self._connection_handler, None, root_frame_id
                 )
@@ -958,10 +958,6 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                         root_frame_id,
                         root_frame.get('url'),
                     )
-
-            child_frame_id = WebElement._find_child_by_parent(frame_tree, parent_frame_id)
-            if child_frame_id:
-                return browser_handler, attached_session_id, child_frame_id, None
 
         return None, None, None, None
 
@@ -1039,11 +1035,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         current_document_url: Optional[str],
     ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
         """
-        Resolve OOPIF and routing. Always checks for OOPIF targets even if frame_id exists.
+        Resolve OOPIF and routing when needed.
 
         For cross-origin iframes (OOPIFs), commands must be routed to the OOPIF's
-        target using a sessionId, even if the frame_id is known from the parent's
-        frame tree.
+        target using a sessionId. For same-origin iframes, use the frame_id directly.
 
         Args:
             current_frame_id (str | None): Already known frame id, if any.
@@ -1057,18 +1052,23 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         """
         if not parent_frame_id:
             return None, None, current_frame_id, current_document_url
+
         (
             session_handler,
             session_id,
             resolved_frame_id,
             resolved_url,
         ) = await self._resolve_oopif_by_parent(parent_frame_id, backend_node_id)
-        return (
-            session_handler,
-            session_id,
-            resolved_frame_id or current_frame_id,
-            resolved_url or current_document_url,
-        )
+
+        if session_handler and session_id:
+            return (
+                session_handler,
+                session_id,
+                resolved_frame_id or current_frame_id,
+                resolved_url or current_document_url,
+            )
+
+        return None, None, current_frame_id, current_document_url
 
     def _init_iframe_context(
         self,
