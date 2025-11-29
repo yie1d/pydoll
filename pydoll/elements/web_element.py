@@ -903,9 +903,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         is_single_child = len(direct_children) == 1
         for child_target in direct_children:
             attach_response: AttachToTargetResponse = await browser_handler.execute_command(
-                TargetCommands.attach_to_target(
-                    target_id=child_target['targetId'], flatten=True
-                )
+                TargetCommands.attach_to_target(target_id=child_target['targetId'], flatten=True)
             )
             attached_session_id = attach_response.get('result', {}).get('sessionId')
             if not attached_session_id:
@@ -1075,7 +1073,12 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
                 resolved_url or current_document_url,
             )
 
-        return None, None, current_frame_id or resolved_frame_id, current_document_url or resolved_url
+        return (
+            None,
+            None,
+            current_frame_id or resolved_frame_id,
+            current_document_url or resolved_url,
+        )
 
     def _init_iframe_context(
         self,
