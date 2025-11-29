@@ -899,22 +899,39 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             if target_info.get('type') in {'iframe', 'page'}
             and target_info.get('parentFrameId') == parent_frame_id
         ]
-        if direct_children:
+
+        is_single_child = len(direct_children) == 1
+        for child_target in direct_children:
             attach_response: AttachToTargetResponse = await browser_handler.execute_command(
-                TargetCommands.attach_to_target(
-                    target_id=direct_children[0]['targetId'], flatten=True
-                )
+                TargetCommands.attach_to_target(target_id=child_target['targetId'], flatten=True)
             )
             attached_session_id = attach_response.get('result', {}).get('sessionId')
-            if attached_session_id:
-                frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
-                root_frame = (frame_tree or {}).get('frame', {})
+            if not attached_session_id:
+                continue
+
+            frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
+            root_frame = (frame_tree or {}).get('frame', {})
+            root_frame_id = root_frame.get('id', '')
+
+            if is_single_child and root_frame_id and backend_node_id is None:
                 return (
                     browser_handler,
                     attached_session_id,
-                    root_frame.get('id'),
+                    root_frame_id,
                     root_frame.get('url'),
                 )
+
+            if root_frame_id and backend_node_id is not None:
+                owner_backend_id = await self._owner_backend_for(
+                    self._connection_handler, None, root_frame_id
+                )
+                if owner_backend_id == backend_node_id:
+                    return (
+                        browser_handler,
+                        attached_session_id,
+                        root_frame_id,
+                        root_frame.get('url'),
+                    )
 
         for target_info in target_infos:
             if target_info.get('type') not in {'iframe', 'page'}:
@@ -954,7 +971,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         node_info: Node,
     ) -> tuple[Optional[str], Optional[str], Optional[str], Optional[int]]:
         """
-        Extract iframe-related metadata from a DOM.describeNode Node.
+        Extract iframe-related metadata from a DOM.describeNode Node.task
 
         Args:
             node_info (Node): DOM node information of the iframe element.
@@ -1023,7 +1040,10 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         current_document_url: Optional[str],
     ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
         """
-        Resolve OOPIF and routing if frame id is missing but a parent id exists.
+        Resolve OOPIF and routing when needed.
+
+        For cross-origin iframes (OOPIFs), commands must be routed to the OOPIF's
+        target using a sessionId. For same-origin iframes, use the frame_id directly.
 
         Args:
             current_frame_id (str | None): Already known frame id, if any.
@@ -1035,19 +1055,29 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             tuple[ConnectionHandler | None, str | None, str | None, str | None]:
                 (session_handler, session_id, frame_id, document_url).
         """
-        if current_frame_id or not parent_frame_id:
+        if not parent_frame_id or (current_frame_id and backend_node_id is None):
             return None, None, current_frame_id, current_document_url
+
         (
             session_handler,
             session_id,
             resolved_frame_id,
             resolved_url,
         ) = await self._resolve_oopif_by_parent(parent_frame_id, backend_node_id)
+
+        if session_handler and session_id and resolved_url:
+            return (
+                session_handler,
+                session_id,
+                resolved_frame_id or current_frame_id,
+                resolved_url or current_document_url,
+            )
+
         return (
-            session_handler,
-            session_id,
-            resolved_frame_id or current_frame_id,
-            resolved_url or current_document_url,
+            None,
+            None,
+            current_frame_id or resolved_frame_id,
+            current_document_url or resolved_url,
         )
 
     def _init_iframe_context(

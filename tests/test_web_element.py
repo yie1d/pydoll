@@ -1904,8 +1904,10 @@ class TestInnerHtmlEdgeCases:
                 return {
                     'result': {
                         'node': {
+                            # Simula um iframe de mesma origem já com frameId
+                            # resolvido; não precisamos de backendNodeId aqui,
+                            # pois não queremos acionar a resolução OOPIF.
                             'frameId': 'parent-frame',
-                            'backendNodeId': 999,
                             'contentDocument': {
                                 'frameId': 'iframe-123',
                                 'documentURL': 'https://example.com/frame.html',
@@ -2435,9 +2437,14 @@ class TestResolveOOPIFByParent:
                             }
                         }
                     }
+                if method == 'DOM.getFrameOwner':
+                    # For direct-child success, owner _does_ match backend_node_id
+                    return {'result': {'backendNodeId': 999}}
                 raise AssertionError(f'Unexpected method {method}')
 
             browser_handler.execute_command.side_effect = side_effect
+            # Route DOM.getFrameOwner calls from _owner_backend_for to the same side_effect
+            iframe_element._connection_handler.execute_command.side_effect = side_effect
 
             handler, session_id, frame_id, url = await iframe_element._resolve_oopif_by_parent(
                 'parent-frame-123', 999
@@ -2687,9 +2694,9 @@ class TestResolveOOPIFIfNeeded:
 
     @pytest.mark.asyncio
     async def test_resolve_oopif_if_needed_already_has_frame_id(self, iframe_element):
-        """Test OOPIF resolution skipped when frame_id already exists."""
+        """Test OOPIF resolution skipped when frame_id already exists and no backend_node_id."""
         handler, session_id, frame_id, url = await iframe_element._resolve_oopif_if_needed(
-            'existing-frame-id', 'parent-frame', 999, 'https://example.com'
+            'existing-frame-id', 'parent-frame', None, 'https://example.com'
         )
 
         # Should return early without resolution

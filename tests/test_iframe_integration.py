@@ -660,6 +660,180 @@ class TestIframeElementInteraction:
             assert 'Item 3' in texts[2]
 
 
+class TestMultipleIframesSelection:
+    """Integration tests for selecting the correct iframe when multiple iframes exist."""
+
+    @pytest.mark.asyncio
+    async def test_find_specific_iframe_by_id_among_multiple(self, ci_chrome_options):
+        """Test finding a specific iframe by ID when multiple iframes exist on the page."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # Find all iframes
+            all_iframes = await tab.find(tag_name='iframe', find_all=True)
+            assert len(all_iframes) == 3, "Should have 3 iframes on the page"
+
+            # Find specific iframe by ID
+            login_iframe = await tab.find(id='login-iframe')
+            assert login_iframe is not None
+            assert login_iframe.is_iframe
+            assert login_iframe.get_attribute('id') == 'login-iframe'
+
+            # Verify we can access content in the correct iframe
+            iframe_context = await login_iframe.iframe_context
+            assert iframe_context is not None
+            assert iframe_context.frame_id is not None
+
+    @pytest.mark.asyncio
+    async def test_find_elements_in_correct_iframe_among_multiple(self, ci_chrome_options):
+        """Test that elements are found in the correct iframe when multiple exist."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # Get the login iframe specifically
+            login_iframe = await tab.find(id='login-iframe')
+            
+            # Find elements inside the login iframe
+            heading = await login_iframe.find(id='iframe-heading', timeout=5)
+            assert heading is not None
+            
+            text = await heading.text
+            assert 'Iframe Content' in text
+
+            # Verify we can find multiple elements
+            buttons = await login_iframe.find(class_name='action-btn', find_all=True)
+            assert len(buttons) >= 2
+
+    @pytest.mark.asyncio
+    async def test_different_iframes_have_different_contexts(self, ci_chrome_options):
+        """Test that different iframes have distinct frame contexts even with same content."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # Get two different iframes
+            cookie_iframe = await tab.find(id='cookie-iframe')
+            login_iframe = await tab.find(id='login-iframe')
+
+            # Both should be iframes
+            assert cookie_iframe.is_iframe
+            assert login_iframe.is_iframe
+
+            # Get their contexts
+            cookie_ctx = await cookie_iframe.iframe_context
+            login_ctx = await login_iframe.iframe_context
+
+            # Frame IDs should be different (distinct iframe contexts)
+            assert cookie_ctx.frame_id != login_ctx.frame_id
+
+            # Both should be able to find elements in their respective content
+            cookie_heading = await cookie_iframe.find(id='iframe-heading')
+            login_heading = await login_iframe.find(id='iframe-heading')
+            
+            assert cookie_heading is not None
+            assert login_heading is not None
+            
+            # The element object IDs should be different (different DOM instances)
+            assert cookie_heading._object_id != login_heading._object_id
+
+    @pytest.mark.asyncio
+    async def test_iframe_selection_by_data_attribute(self, ci_chrome_options):
+        """Test selecting iframe by custom data attribute."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # Find iframe by data-purpose attribute using xpath
+            login_iframe = await tab.find(xpath='//iframe[@data-purpose="login"]')
+            assert login_iframe is not None
+            assert login_iframe.get_attribute('id') == 'login-iframe'
+
+            # Verify we can interact with it
+            form = await login_iframe.find(id='iframe-form')
+            assert form is not None
+
+    @pytest.mark.asyncio
+    async def test_iterate_over_multiple_iframes(self, ci_chrome_options):
+        """Test iterating over multiple iframes and accessing each one's content."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # Find all iframes
+            all_iframes = await tab.find(tag_name='iframe', find_all=True)
+            assert len(all_iframes) == 3
+
+            # Each iframe should have accessible content
+            for iframe in all_iframes:
+                assert iframe.is_iframe
+                
+                # Get context for each iframe
+                ctx = await iframe.iframe_context
+                assert ctx is not None
+                assert ctx.frame_id is not None
+                
+                # Each should have an iframe-heading
+                heading = await iframe.find(id='iframe-heading', raise_exc=False)
+                # At least the content iframes should have the heading
+                if heading:
+                    text = await heading.text
+                    assert len(text) > 0
+
+    @pytest.mark.asyncio
+    async def test_find_in_iframe_after_finding_in_another(self, ci_chrome_options):
+        """Test finding elements in one iframe after finding in another."""
+        test_file = Path(__file__).parent / 'pages' / 'test_multiple_iframes.html'
+        file_url = f'file://{test_file.absolute()}'
+
+        async with Chrome(options=ci_chrome_options) as browser:
+            tab = await browser.start()
+            await tab.go_to(file_url)
+            await asyncio.sleep(1)
+
+            # First, find element in cookie iframe
+            cookie_iframe = await tab.find(id='cookie-iframe')
+            cookie_heading = await cookie_iframe.find(id='iframe-heading')
+            cookie_text = await cookie_heading.text
+
+            # Then, find element in login iframe
+            login_iframe = await tab.find(id='login-iframe')
+            login_heading = await login_iframe.find(id='iframe-heading')
+            login_text = await login_heading.text
+
+            # Both should work independently
+            assert 'Iframe Content' in cookie_text
+            assert 'Iframe Content' in login_text
+
+            # Now find in analytics iframe
+            analytics_iframe = await tab.find(id='analytics-iframe')
+            analytics_heading = await analytics_iframe.find(id='iframe-heading')
+            analytics_text = await analytics_heading.text
+
+            assert 'Iframe Content' in analytics_text
+
+
 class TestIframeEdgeCases:
     """Integration tests for edge cases in iframe handling."""
 

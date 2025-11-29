@@ -717,25 +717,38 @@ async def _find_frame_by_owner(
 
 #### **步骤 3：通过父 Frame 解析 OOPIF**
 
-**目标**：对于跨进程 Iframes，找到目标，附加到它，并从该目标的 frame 树中获取 `frameId`。
+**目标**：对于跨进程 Iframes，找到正确的目标，附加到它，并从该目标的 frame 树中获取 `frameId`（以及必要时用于路由的 `sessionId`）。
+
+**何时会进入此步骤**：
+
+- 已经有 `frameId` 且**没有** `backendNodeId` 的同源 / 进程内 iframe 会跳过此步骤（直接使用 `frameId`）。
+- 具有 `backendNodeId` 的跨域 / OOPIF iframe，或在步骤 2 中仍无法解析 `frameId` 的 iframe，会进入此步骤。
 
 **策略**：
 
-**3a. 直接子目标查找**：
+**3a. 直接子目标查找（快速路径）**：
 
-1. 调用 `Target.getTargets()` 列出所有调试目标
-2. 筛选 `type` 为 `"iframe"` 或 `"page"` 且 `parentFrameId` 与我们的父 frame 匹配的目标
-3. 如果找到，使用 `Target.attachToTarget(targetId, flatten=true)` 附加到该目标
-4. 响应包含一个 `sessionId`
-5. 为该目标获取 `Page.getFrameTree(sessionId)`
-6. 此树的根 frame 就是我们 iframe 的 frame
+1. 调用 `Target.getTargets()` 列出所有调试目标。
+2. 筛选 `type` 为 `"iframe"` 或 `"page"` 且 `parentFrameId` 与我们的父 frame 匹配的目标。
+3. 如果只有**一个**匹配的子目标且**没有 `backendNodeId`**，则直接使用 `Target.attachToTarget(targetId, flatten=true)` 附加到该目标。
+4. 为该目标获取 `Page.getFrameTree(sessionId)`；此树的根 frame 就是我们 iframe 的 frame。
 
-**3b. 备用方案：扫描所有目标**：
+当存在**多个**直接子目标或我们有 `backendNodeId`（典型 OOPIF 情况）时，Pydoll 会对每个子目标执行以下流程：
 
-1. 遍历所有 iframe/page 目标
-2. 附加到每个目标并获取其 frame 树
-3. 查找 `parentId` 与我们父 frame 匹配的子 frame
-4. **或者** 检查根 frame 的所有者（通过 `DOM.getFrameOwner`）是否与我们 iframe 的 `backendNodeId` 匹配
+1. 使用 `Target.attachToTarget(flatten=true)` 附加。
+2. 获取 `Page.getFrameTree(sessionId)` 并读取根 `frame.id`。
+3. 在**主连接**上调用 `DOM.getFrameOwner(frameId=root_id)`。
+4. 将返回的 `backendNodeId` 与 iframe 元素自身的 `backendNodeId` 比较。
+5. 根所有者匹配的那个子目标被选为正确的 OOPIF 目标。
+
+**3b. 备用方案：扫描所有目标（根所有者 + 子节点查找）**：
+
+如果没有找到合适的直接子目标（或 `parentFrameId` 信息不完整），Pydoll 会退回到扫描**所有** iframe/page 目标：
+
+1. 遍历所有 iframe/page 目标。
+2. 附加到每个目标并获取其 frame 树。
+3. 先尝试通过 `DOM.getFrameOwner(root_frame_id)` 将**根 frame 的所有者**与 iframe 的 `backendNodeId` 进行匹配。
+4. 如果仍不匹配，则查找 `parentId` 等于我们的 `parent_frame_id` 的**子 frame**（覆盖 OOPIF 由中间 frame 间接承载的情况）。
 
 **代码**：
 
@@ -754,32 +767,53 @@ async def _resolve_oopif_by_parent(
         TargetCommands.get_targets()
     )
     target_infos = targets_response.get('result', {}).get('targetInfos', [])
-    
-    # 策略 3a: 直接子节点
+
+    # 策略 3a：直接子目标（快速路径）
     direct_children = [
         target_info
         for target_info in target_infos
         if target_info.get('type') in {'iframe', 'page'}
         and target_info.get('parentFrameId') == parent_frame_id
     ]
-    if direct_children:
+
+    is_single_child = len(direct_children) == 1
+    for child_target in direct_children:
         attach_response: AttachToTargetResponse = await browser_handler.execute_command(
             TargetCommands.attach_to_target(
-                target_id=direct_children[0]['targetId'], flatten=True
+                target_id=child_target['targetId'], flatten=True
             )
         )
         attached_session_id = attach_response.get('result', {}).get('sessionId')
-        if attached_session_id:
-            frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
-            root_frame = (frame_tree or {}).get('frame', {})
+        if not attached_session_id:
+            continue
+
+        frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
+        root_frame = (frame_tree or {}).get('frame', {})
+        root_frame_id = root_frame.get('id', '')
+
+        # 简单 / 同源场景：只有一个子目标且没有 backend_node_id
+        if is_single_child and root_frame_id and backend_node_id is None:
             return (
                 browser_handler,
                 attached_session_id,
-                root_frame.get('id'),
+                root_frame_id,
                 root_frame.get('url'),
             )
-    
-    # 策略 3b: 扫描所有目标
+
+        # OOPIF 场景：通过 DOM.getFrameOwner 确认所有权
+        if root_frame_id and backend_node_id is not None:
+            owner_backend_id = await self._owner_backend_for(
+                self._connection_handler, None, root_frame_id
+            )
+            if owner_backend_id == backend_node_id:
+                return (
+                    browser_handler,
+                    attached_session_id,
+                    root_frame_id,
+                    root_frame.get('url'),
+                )
+
+    # 策略 3b：扫描所有目标（根所有者 + 子节点查找）
     for target_info in target_infos:
         if target_info.get('type') not in {'iframe', 'page'}:
             continue
@@ -791,24 +825,29 @@ async def _resolve_oopif_by_parent(
         attached_session_id = attach_response.get('result', {}).get('sessionId')
         if not attached_session_id:
             continue
-        
+
         frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
-        
-        # 检查是否有匹配 parentId 的子节点
+        root_frame = (frame_tree or {}).get('frame', {})
+        root_frame_id = root_frame.get('id', '')
+
+        # 优先尝试根据 backend_node_id 匹配根 frame 的所有者
+        if root_frame_id and backend_node_id is not None:
+            owner_backend_id = await self._owner_backend_for(
+                self._connection_handler, None, root_frame_id
+            )
+            if owner_backend_id == backend_node_id:
+                return (
+                    browser_handler,
+                    attached_session_id,
+                    root_frame_id,
+                    root_frame.get('url'),
+                )
+
+        # 备用：查找 parentId 等于 parent_frame_id 的子 frame
         child_frame_id = WebElement._find_child_by_parent(frame_tree, parent_frame_id)
         if child_frame_id:
             return browser_handler, attached_session_id, child_frame_id, None
-        
-        # 检查根 frame 的所有者是否匹配我们的 backendNodeId
-        root_frame_id = (frame_tree or {}).get('frame', {}).get('id', '')
-        if not root_frame_id or backend_node_id is None:
-            continue
-        owner_backend_id = await self._owner_backend_for(
-            self._connection_handler, None, root_frame_id
-        )
-        if owner_backend_id == backend_node_id:
-            return browser_handler, attached_session_id, root_frame_id, None
-    
+
     return None, None, None, None
 ```
 
