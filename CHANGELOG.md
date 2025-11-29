@@ -1,3 +1,11 @@
+## 2.12.4 (2025-11-29)
+
+### Fix
+
+- optimize iframe resolution logic by adjusting backend node ID checks and enhancing child frame handling
+- refine OOPIF resolution and frame attachment logic for improved handling of backend node IDs
+- enhance OOPIF target attachment logic for improved session handling
+
 ## 2.12.3 (2025-11-27)
 
 ### Fix
