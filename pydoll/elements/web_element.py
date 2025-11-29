@@ -899,20 +899,36 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             if target_info.get('type') in {'iframe', 'page'}
             and target_info.get('parentFrameId') == parent_frame_id
         ]
-        if direct_children:
+
+        is_single_child = len(direct_children) == 1
+        for child_target in direct_children:
             attach_response: AttachToTargetResponse = await browser_handler.execute_command(
                 TargetCommands.attach_to_target(
-                    target_id=direct_children[0]['targetId'], flatten=True
+                    target_id=child_target['targetId'], flatten=True
                 )
             )
             attached_session_id = attach_response.get('result', {}).get('sessionId')
-            if attached_session_id:
-                frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
-                root_frame = (frame_tree or {}).get('frame', {})
+            if not attached_session_id:
+                continue
+
+            frame_tree = await self._get_frame_tree_for(browser_handler, attached_session_id)
+            root_frame = (frame_tree or {}).get('frame', {})
+            root_frame_id = root_frame.get('id', '')
+            if not root_frame_id:
+                continue
+
+            is_matching_owner = False
+            if backend_node_id is not None:
+                owner_backend_id = await self._owner_backend_for(
+                    self._connection_handler, None, root_frame_id
+                )
+                is_matching_owner = owner_backend_id == backend_node_id
+
+            if is_matching_owner or is_single_child:
                 return (
                     browser_handler,
                     attached_session_id,
-                    root_frame.get('id'),
+                    root_frame_id,
                     root_frame.get('url'),
                 )
 
@@ -1023,7 +1039,11 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
         current_document_url: Optional[str],
     ) -> tuple[Optional[ConnectionHandler], Optional[str], Optional[str], Optional[str]]:
         """
-        Resolve OOPIF and routing if frame id is missing but a parent id exists.
+        Resolve OOPIF and routing. Always checks for OOPIF targets even if frame_id exists.
+
+        For cross-origin iframes (OOPIFs), commands must be routed to the OOPIF's
+        target using a sessionId, even if the frame_id is known from the parent's
+        frame tree.
 
         Args:
             current_frame_id (str | None): Already known frame id, if any.
@@ -1035,7 +1055,7 @@ class WebElement(FindElementsMixin):  # noqa: PLR0904
             tuple[ConnectionHandler | None, str | None, str | None, str | None]:
                 (session_handler, session_id, frame_id, document_url).
         """
-        if current_frame_id or not parent_frame_id:
+        if not parent_frame_id:
             return None, None, current_frame_id, current_document_url
         (
             session_handler,
