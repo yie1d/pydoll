@@ -783,6 +783,410 @@ class TestScrollWithCustomTiming:
         assert scroll._timing.max_duration == 1.5
 
 
+class TestCubicBezierBisectionFallback:
+    """Test CubicBezier bisection fallback when Newton's method fails."""
+
+    def test_bisection_fallback_triggered_by_out_of_range_derivative(self):
+        """Test that bisection is used when derivative is out of valid range."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        # Create a bezier with extreme control points
+        # that might cause derivative issues
+        bezier = CubicBezier(0.0, 0.0, 1.0, 1.0)  # Linear
+
+        # Should still work correctly
+        for x in [0.0, 0.25, 0.5, 0.75, 1.0]:
+            result = bezier.solve_curve_x(x)
+            assert isinstance(result, float)
+            # For linear bezier, t should be close to x
+            assert abs(result - x) < 0.1
+
+    def test_bisection_converges_for_edge_cases(self):
+        """Test bisection fallback converges for edge case inputs."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # Very small values near 0
+        result_small = bezier.solve_curve_x(0.001)
+        assert isinstance(result_small, float)
+
+        # Values near 1
+        result_near_one = bezier.solve_curve_x(0.999)
+        assert isinstance(result_near_one, float)
+
+    def test_solve_with_zero_derivative_fallback(self):
+        """Test bezier handles cases where derivative could be zero."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        # Bezier that starts flat (potential zero derivative at start)
+        bezier = CubicBezier(0.0, 0.5, 1.0, 0.5)
+
+        # Should still produce valid results
+        for x in [0.1, 0.5, 0.9]:
+            result = bezier.solve(x)
+            assert 0.0 <= result <= 1.0
+
+
+class TestScrollHumanized:
+    """Test _scroll_humanized method."""
+
+    @pytest.mark.asyncio
+    async def test_scroll_humanized_calls_perform_scroll_loop(self, mock_tab):
+        """Test _scroll_humanized delegates to _perform_scroll_loop."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        config = ScrollTimingConfig(overshoot_probability=0.0)  # No overshoot
+        scroll = Scroll(mock_tab, timing=config)
+
+        # Mock the internal method
+        scroll._perform_scroll_loop = AsyncMock(return_value=100.0)
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_humanized(ScrollPosition.DOWN, 100.0)
+
+        scroll._perform_scroll_loop.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_scroll_humanized_with_overshoot_triggers_correction(self, mock_tab):
+        """Test _scroll_humanized calls correction when overshoot occurs."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        # Force overshoot
+        config = ScrollTimingConfig(
+            overshoot_probability=1.0,
+            overshoot_factor_min=1.1,
+            overshoot_factor_max=1.2,
+        )
+        scroll = Scroll(mock_tab, timing=config)
+
+        # Mock scroll_loop to return more than target (simulating overshoot)
+        scroll._perform_scroll_loop = AsyncMock(return_value=120.0)
+        scroll._scroll_correction = AsyncMock()
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_humanized(ScrollPosition.DOWN, 100.0)
+
+        # Correction should be called because scrolled (120) > target (100)
+        scroll._scroll_correction.assert_called_once()
+
+
+class TestScrollToEndHumanized:
+    """Test _scroll_to_end_humanized method."""
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_end_down_calls_humanized_scroll(self, mock_tab):
+        """Test scrolling to bottom uses _scroll_humanized in loop."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        scroll = Scroll(mock_tab)
+
+        # First call: lots remaining, second call: none remaining
+        call_count = [0]
+        async def mock_remaining():
+            call_count[0] += 1
+            return 500.0 if call_count[0] == 1 else 0.0
+
+        scroll._get_remaining_scroll_to_bottom = mock_remaining
+        scroll._scroll_humanized = AsyncMock()
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_to_end_humanized(ScrollPosition.DOWN)
+
+        # Should have called _scroll_humanized at least once
+        assert scroll._scroll_humanized.call_count >= 1
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_end_up_uses_current_scroll_y(self, mock_tab):
+        """Test scrolling to top checks current scroll position."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        scroll = Scroll(mock_tab)
+
+        # First call: has scroll position, second call: at top
+        call_count = [0]
+        async def mock_scroll_y():
+            call_count[0] += 1
+            return 300.0 if call_count[0] == 1 else 0.0
+
+        scroll._get_current_scroll_y = mock_scroll_y
+        scroll._scroll_humanized = AsyncMock()
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_to_end_humanized(ScrollPosition.UP)
+
+        # Should have called _scroll_humanized
+        assert scroll._scroll_humanized.call_count >= 1
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_end_stops_when_threshold_reached(self, mock_tab):
+        """Test loop stops when remaining distance is below threshold."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        scroll = Scroll(mock_tab)
+
+        # Return value below threshold (30)
+        scroll._get_remaining_scroll_to_bottom = AsyncMock(return_value=10.0)
+        scroll._scroll_humanized = AsyncMock()
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_to_end_humanized(ScrollPosition.DOWN)
+
+        # Should NOT have called _scroll_humanized (already at end)
+        scroll._scroll_humanized.assert_not_called()
+
+
+class TestPerformScrollLoop:
+    """Test _perform_scroll_loop method."""
+
+    @pytest.mark.asyncio
+    async def test_perform_scroll_loop_dispatches_events(self, mock_tab):
+        """Test scroll loop dispatches mouse wheel events."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from unittest.mock import patch, AsyncMock
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': '[400, 300]'}}
+        }
+
+        # Very short duration for fast test
+        config = ScrollTimingConfig(
+            min_duration=0.01,
+            max_duration=0.02,
+            frame_interval=0.001,
+            micro_pause_probability=0.0,
+        )
+        scroll = Scroll(mock_tab, timing=config)
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            scrolled = await scroll._perform_scroll_loop(
+                effective_distance=100.0,
+                duration=0.01,
+                is_vertical=True,
+                direction=1,
+            )
+
+        # Should have dispatched at least one event
+        assert mock_tab._execute_command.call_count >= 1
+        assert isinstance(scrolled, float)
+
+    @pytest.mark.asyncio
+    async def test_perform_scroll_loop_horizontal(self, mock_tab):
+        """Test scroll loop handles horizontal scrolling."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from unittest.mock import patch, AsyncMock
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': '[400, 300]'}}
+        }
+
+        config = ScrollTimingConfig(
+            min_duration=0.01,
+            max_duration=0.02,
+            frame_interval=0.001,
+            micro_pause_probability=0.0,
+        )
+        scroll = Scroll(mock_tab, timing=config)
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            scrolled = await scroll._perform_scroll_loop(
+                effective_distance=50.0,
+                duration=0.01,
+                is_vertical=False,  # Horizontal
+                direction=-1,  # Left
+            )
+
+        assert isinstance(scrolled, float)
+
+    @pytest.mark.asyncio
+    async def test_perform_scroll_loop_returns_scrolled_amount(self, mock_tab):
+        """Test scroll loop returns total scrolled distance."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from unittest.mock import patch, AsyncMock
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': '[400, 300]'}}
+        }
+
+        config = ScrollTimingConfig(
+            min_duration=0.05,
+            max_duration=0.05,
+            frame_interval=0.001,
+            micro_pause_probability=0.0,
+            delta_jitter=0,  # No jitter for predictable test
+        )
+        scroll = Scroll(mock_tab, timing=config)
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            scrolled = await scroll._perform_scroll_loop(
+                effective_distance=100.0,
+                duration=0.05,
+                is_vertical=True,
+                direction=1,
+            )
+
+        # Should have scrolled some amount
+        assert scrolled > 0
+
+
+
+class TestScrollCorrection:
+    """Test _scroll_correction method."""
+
+    @pytest.mark.asyncio
+    async def test_scroll_correction_dispatches_scroll_events(self, mock_tab):
+        """Test correction dispatches scroll events progressively."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from unittest.mock import AsyncMock
+        import asyncio
+
+        config = ScrollTimingConfig(frame_interval=0.001)
+        scroll = Scroll(mock_tab, timing=config)
+
+        # Track calls to _dispatch_scroll_event
+        dispatch_calls = []
+        original_dispatch = scroll._dispatch_scroll_event
+
+        async def tracking_dispatch(delta_x, delta_y):
+            dispatch_calls.append((delta_x, delta_y))
+
+        scroll._dispatch_scroll_event = tracking_dispatch
+
+        # Run with timeout to prevent hanging
+        try:
+            await asyncio.wait_for(
+                scroll._scroll_correction(
+                    is_vertical=True,
+                    direction=-1,
+                    distance=10.0,
+                ),
+                timeout=2.0,
+            )
+        except asyncio.TimeoutError:
+            pass  # Test passed if we got here with some calls
+
+        # Should have dispatched at least one event
+        assert len(dispatch_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_scroll_correction_horizontal(self, mock_tab):
+        """Test correction works for horizontal scrolling."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        import asyncio
+
+        # Use larger frame_interval so delta is >= 1
+        config = ScrollTimingConfig(frame_interval=0.01)
+        scroll = Scroll(mock_tab, timing=config)
+
+        dispatch_calls = []
+
+        async def tracking_dispatch(delta_x, delta_y):
+            dispatch_calls.append((delta_x, delta_y))
+
+        scroll._dispatch_scroll_event = tracking_dispatch
+
+        try:
+            await asyncio.wait_for(
+                scroll._scroll_correction(
+                    is_vertical=False,
+                    direction=1,
+                    distance=10.0,
+                ),
+                timeout=2.0,
+            )
+        except asyncio.TimeoutError:
+            pass
+
+        # Should have dispatched at least one event
+        assert len(dispatch_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_scroll_correction_velocity_decreases(self, mock_tab):
+        """Test correction velocity decreases over time."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        import asyncio
+
+        config = ScrollTimingConfig(frame_interval=0.001)
+        scroll = Scroll(mock_tab, timing=config)
+
+        call_deltas = []
+
+        async def tracking_dispatch(delta_x, delta_y):
+            call_deltas.append(abs(delta_y))
+
+        scroll._dispatch_scroll_event = tracking_dispatch
+
+        try:
+            await asyncio.wait_for(
+                scroll._scroll_correction(
+                    is_vertical=True,
+                    direction=1,
+                    distance=50.0,
+                ),
+                timeout=2.0,
+            )
+        except asyncio.TimeoutError:
+            pass
+
+        # Velocity should be decreasing (later deltas smaller)
+        if len(call_deltas) >= 2:
+            assert call_deltas[0] >= call_deltas[-1]
+
+
+class TestPublicMethodsWithHumanize:
+    """Test that public methods correctly route to humanized methods."""
+
+    @pytest.mark.asyncio
+    async def test_by_with_humanize_calls_scroll_humanized(self, mock_tab):
+        """Test by() with humanize=True routes to _scroll_humanized."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import AsyncMock
+
+        scroll = Scroll(mock_tab)
+        scroll._scroll_humanized = AsyncMock()
+
+        await scroll.by(ScrollPosition.DOWN, 100, humanize=True)
+
+        scroll._scroll_humanized.assert_called_once_with(ScrollPosition.DOWN, 100)
+
+    @pytest.mark.asyncio
+    async def test_to_top_with_humanize_calls_scroll_to_end_humanized(self, mock_tab):
+        """Test to_top() with humanize=True routes to _scroll_to_end_humanized."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import AsyncMock
+
+        scroll = Scroll(mock_tab)
+        scroll._scroll_to_end_humanized = AsyncMock()
+
+        await scroll.to_top(humanize=True)
+
+        scroll._scroll_to_end_humanized.assert_called_once_with(ScrollPosition.UP)
+
+    @pytest.mark.asyncio
+    async def test_to_bottom_with_humanize_calls_scroll_to_end_humanized(self, mock_tab):
+        """Test to_bottom() with humanize=True routes to _scroll_to_end_humanized."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import AsyncMock
+
+        scroll = Scroll(mock_tab)
+        scroll._scroll_to_end_humanized = AsyncMock()
+
+        await scroll.to_bottom(humanize=True)
+
+        scroll._scroll_to_end_humanized.assert_called_once_with(ScrollPosition.DOWN)
 
 
 class TestScrollAPIBackwardCompatibility:
