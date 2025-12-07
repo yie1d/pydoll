@@ -25,9 +25,9 @@ class TestKeyboardAPIInitialization:
     """Test KeyboardAPI initialization."""
 
     def test_initialization(self, mock_tab):
-        """Test KeyboardAPI is properly initialized with tab."""
+        """Test KeyboardAPI is properly initialized with executor."""
         keyboard_api = KeyboardAPI(mock_tab)
-        assert keyboard_api._tab == mock_tab
+        assert keyboard_api._executor == mock_tab
 
 
 class TestKeyboardAPIDown:
@@ -302,10 +302,10 @@ class TestKeyboardAPIIntegrationWithTab:
         # Verify tab's _execute_command was called
         assert mock_tab._execute_command.called
 
-    def test_keyboard_api_stores_tab_reference(self, mock_tab):
-        """Test that KeyboardAPI stores reference to tab."""
+    def test_keyboard_api_stores_executor_reference(self, mock_tab):
+        """Test that KeyboardAPI stores reference to executor."""
         keyboard_api = KeyboardAPI(mock_tab)
-        assert keyboard_api._tab is mock_tab
+        assert keyboard_api._executor is mock_tab
 
 
 class TestKeyboardAPIEdgeCases:
