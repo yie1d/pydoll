@@ -633,19 +633,20 @@ class TestScrollHumanizedMethods:
     async def test_calculate_duration_increases_with_distance(self, mock_tab):
         """Test that longer distances result in longer durations."""
         from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+        from unittest.mock import patch
 
         config = ScrollTimingConfig(min_duration=0.5, max_duration=1.5)
         scroll = Scroll(mock_tab, timing=config)
 
-        # Run multiple times to account for randomness
-        short_durations = [scroll._calculate_duration(100.0) for _ in range(10)]
-        long_durations = [scroll._calculate_duration(2000.0) for _ in range(10)]
+        # Patch random.uniform to return a constant base duration
+        # This ensures we are testing only the distance scaling logic
+        with patch('random.uniform', return_value=1.0):
+            short_duration = scroll._calculate_duration(100.0)
+            long_duration = scroll._calculate_duration(5000.0)
 
-        avg_short = sum(short_durations) / len(short_durations)
-        avg_long = sum(long_durations) / len(long_durations)
-
-        # Average of long distances should be greater
-        assert avg_long > avg_short
+        # With constant base duration, the formula ensures longer distance -> longer duration
+        # Formula: base_duration * (1 + 0.2 * (distance / 1000))
+        assert long_duration > short_duration
 
     @pytest.mark.asyncio
     async def test_get_viewport_center(self, mock_tab):
