@@ -356,3 +356,440 @@ class TestScrollAPIAwaitPromise:
 
         assert command['params']['awaitPromise'] is True
 
+
+class TestScrollTimingConfig:
+    """Test ScrollTimingConfig dataclass."""
+
+    def test_default_values(self):
+        """Test default configuration values."""
+        from pydoll.interactions.scroll import ScrollTimingConfig
+
+        config = ScrollTimingConfig()
+
+        assert config.min_duration == 0.5
+        assert config.max_duration == 1.5
+        assert config.bezier_points == (0.645, 0.045, 0.355, 1.0)
+        assert config.frame_interval == 0.012
+        assert config.delta_jitter == 3
+        assert config.micro_pause_probability == 0.05
+        assert config.micro_pause_min == 0.02
+        assert config.micro_pause_max == 0.05
+        assert config.overshoot_probability == 0.15
+        assert config.overshoot_factor_min == 1.02
+        assert config.overshoot_factor_max == 1.08
+
+    def test_custom_values(self):
+        """Test custom configuration values."""
+        from pydoll.interactions.scroll import ScrollTimingConfig
+
+        config = ScrollTimingConfig(
+            min_duration=0.3,
+            max_duration=2.0,
+            bezier_points=(0.5, 0.0, 0.5, 1.0),
+            frame_interval=0.016,
+            delta_jitter=5,
+            micro_pause_probability=0.1,
+            overshoot_probability=0.2,
+        )
+
+        assert config.min_duration == 0.3
+        assert config.max_duration == 2.0
+        assert config.bezier_points == (0.5, 0.0, 0.5, 1.0)
+        assert config.frame_interval == 0.016
+        assert config.delta_jitter == 5
+        assert config.micro_pause_probability == 0.1
+        assert config.overshoot_probability == 0.2
+
+    def test_frozen_dataclass(self):
+        """Test that config is immutable (frozen)."""
+        from pydoll.interactions.scroll import ScrollTimingConfig
+
+        config = ScrollTimingConfig()
+
+        with pytest.raises(AttributeError):
+            config.min_duration = 1.0
+
+
+class TestCubicBezier:
+    """Test CubicBezier curve solver."""
+
+    def test_initialization(self):
+        """Test CubicBezier initialization with control points."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # Verify coefficients are calculated
+        assert hasattr(bezier, 'coefficient_a_x')
+        assert hasattr(bezier, 'coefficient_b_x')
+        assert hasattr(bezier, 'coefficient_c_x')
+        assert hasattr(bezier, 'coefficient_a_y')
+        assert hasattr(bezier, 'coefficient_b_y')
+        assert hasattr(bezier, 'coefficient_c_y')
+
+    def test_sample_curve_x_at_zero(self):
+        """Test sample_curve_x returns 0 at t=0."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        assert bezier.sample_curve_x(0.0) == 0.0
+
+    def test_sample_curve_x_at_one(self):
+        """Test sample_curve_x returns 1 at t=1."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        assert abs(bezier.sample_curve_x(1.0) - 1.0) < 1e-10
+
+    def test_sample_curve_y_at_zero(self):
+        """Test sample_curve_y returns 0 at t=0."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        assert bezier.sample_curve_y(0.0) == 0.0
+
+    def test_sample_curve_y_at_one(self):
+        """Test sample_curve_y returns 1 at t=1."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        assert abs(bezier.sample_curve_y(1.0) - 1.0) < 1e-10
+
+    def test_sample_curve_derivative_x(self):
+        """Test sample_curve_derivative_x returns derivative."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # Derivative at t=0 should equal coefficient_c_x
+        assert bezier.sample_curve_derivative_x(0.0) == bezier.coefficient_c_x
+
+    def test_solve_curve_x_finds_t_for_x(self):
+        """Test solve_curve_x finds t value for given x."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # For x=0, t should be 0
+        assert abs(bezier.solve_curve_x(0.0)) < 1e-6
+
+        # For x=1, t should be 1
+        assert abs(bezier.solve_curve_x(1.0) - 1.0) < 1e-6
+
+    def test_solve_returns_y_for_given_x(self):
+        """Test solve returns y value for given x (time)."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # At x=0, y should be 0
+        assert abs(bezier.solve(0.0)) < 1e-6
+
+        # At x=1, y should be 1
+        assert abs(bezier.solve(1.0) - 1.0) < 1e-6
+
+    def test_solve_returns_values_between_0_and_1(self):
+        """Test solve returns values in valid range for valid inputs."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.645, 0.045, 0.355, 1.0)
+
+        for x in [0.1, 0.25, 0.5, 0.75, 0.9]:
+            y = bezier.solve(x)
+            assert 0.0 <= y <= 1.0, f"y={y} out of range for x={x}"
+
+    def test_solve_curve_x_with_out_of_range_values(self):
+        """Test solve_curve_x behavior with out of range values."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        bezier = CubicBezier(0.25, 0.1, 0.25, 1.0)
+
+        # Newton's method will try to find t even for out-of-range x values
+        # Just verify it returns a numeric result without crashing
+        result_negative = bezier.solve_curve_x(-0.5)
+        assert isinstance(result_negative, float)
+
+        result_over_one = bezier.solve_curve_x(1.5)
+        assert isinstance(result_over_one, float)
+
+    def test_ease_in_out_bezier(self):
+        """Test standard ease-in-out bezier curve."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        # Standard CSS ease-in-out
+        bezier = CubicBezier(0.42, 0.0, 0.58, 1.0)
+
+        # At midpoint (x=0.5), y should be approximately 0.5
+        y_at_half = bezier.solve(0.5)
+        assert 0.4 <= y_at_half <= 0.6
+
+    def test_linear_bezier(self):
+        """Test linear bezier curve (identity)."""
+        from pydoll.interactions.scroll import CubicBezier
+
+        # Linear: control points on the diagonal
+        bezier = CubicBezier(0.0, 0.0, 1.0, 1.0)
+
+        # Should be approximately linear
+        for x in [0.1, 0.3, 0.5, 0.7, 0.9]:
+            y = bezier.solve(x)
+            assert abs(y - x) < 0.1, f"Expected y≈{x}, got {y}"
+
+
+class TestScrollHumanizedMethods:
+    """Test humanized scroll methods."""
+
+    @pytest.mark.asyncio
+    async def test_scroll_by_with_humanize_true(self, mock_tab):
+        """Test scroll.by with humanize=True calls _scroll_humanized."""
+        from pydoll.interactions.scroll import Scroll
+
+        scroll = Scroll(mock_tab)
+
+        # Mock _scroll_humanized
+        scroll._scroll_humanized = AsyncMock()
+
+        await scroll.by(ScrollPosition.DOWN, 500, humanize=True)
+
+        scroll._scroll_humanized.assert_called_once_with(ScrollPosition.DOWN, 500)
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_top_with_humanize_true(self, mock_tab):
+        """Test scroll.to_top with humanize=True calls _scroll_to_end_humanized."""
+        from pydoll.interactions.scroll import Scroll
+
+        scroll = Scroll(mock_tab)
+
+        # Mock _scroll_to_end_humanized
+        scroll._scroll_to_end_humanized = AsyncMock()
+
+        await scroll.to_top(humanize=True)
+
+        scroll._scroll_to_end_humanized.assert_called_once_with(ScrollPosition.UP)
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_bottom_with_humanize_true(self, mock_tab):
+        """Test scroll.to_bottom with humanize=True calls _scroll_to_end_humanized."""
+        from pydoll.interactions.scroll import Scroll
+
+        scroll = Scroll(mock_tab)
+
+        # Mock _scroll_to_end_humanized
+        scroll._scroll_to_end_humanized = AsyncMock()
+
+        await scroll.to_bottom(humanize=True)
+
+        scroll._scroll_to_end_humanized.assert_called_once_with(ScrollPosition.DOWN)
+
+    @pytest.mark.asyncio
+    async def test_calculate_effective_distance_without_overshoot(self, mock_tab):
+        """Test _calculate_effective_distance without overshoot."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        # Config with 0% overshoot probability
+        config = ScrollTimingConfig(overshoot_probability=0.0)
+        scroll = Scroll(mock_tab, timing=config)
+
+        distance = scroll._calculate_effective_distance(100.0)
+
+        assert distance == 100.0
+
+    @pytest.mark.asyncio
+    async def test_calculate_effective_distance_with_overshoot(self, mock_tab):
+        """Test _calculate_effective_distance with overshoot."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        # Config with 100% overshoot probability
+        config = ScrollTimingConfig(
+            overshoot_probability=1.0,
+            overshoot_factor_min=1.1,
+            overshoot_factor_max=1.2,
+        )
+        scroll = Scroll(mock_tab, timing=config)
+
+        distance = scroll._calculate_effective_distance(100.0)
+
+        # Should be between 110 and 120
+        assert 110.0 <= distance <= 120.0
+
+    @pytest.mark.asyncio
+    async def test_calculate_duration(self, mock_tab):
+        """Test _calculate_duration returns value in expected range."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        config = ScrollTimingConfig(min_duration=0.5, max_duration=1.5)
+        scroll = Scroll(mock_tab, timing=config)
+
+        duration = scroll._calculate_duration(500.0)
+
+        # Should be between min_duration and capped max (3.0)
+        assert 0.5 <= duration <= 3.0
+
+    @pytest.mark.asyncio
+    async def test_calculate_duration_increases_with_distance(self, mock_tab):
+        """Test that longer distances result in longer durations."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        config = ScrollTimingConfig(min_duration=0.5, max_duration=1.5)
+        scroll = Scroll(mock_tab, timing=config)
+
+        # Run multiple times to account for randomness
+        short_durations = [scroll._calculate_duration(100.0) for _ in range(10)]
+        long_durations = [scroll._calculate_duration(2000.0) for _ in range(10)]
+
+        avg_short = sum(short_durations) / len(short_durations)
+        avg_long = sum(long_durations) / len(long_durations)
+
+        # Average of long distances should be greater
+        assert avg_long > avg_short
+
+    @pytest.mark.asyncio
+    async def test_get_viewport_center(self, mock_tab):
+        """Test _get_viewport_center returns coordinates."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': '[800, 600]'}}
+        }
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_viewport_center()
+
+        assert result == (800, 600)
+
+    @pytest.mark.asyncio
+    async def test_get_viewport_center_fallback(self, mock_tab):
+        """Test _get_viewport_center returns fallback on error."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': 'invalid'}}
+        }
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_viewport_center()
+
+        # Should return fallback values
+        assert result == (400, 300)
+
+    @pytest.mark.asyncio
+    async def test_get_viewport_center_empty_response(self, mock_tab):
+        """Test _get_viewport_center handles empty response."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {}
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_viewport_center()
+
+        assert result == (400, 300)
+
+    @pytest.mark.asyncio
+    async def test_get_current_scroll_y(self, mock_tab):
+        """Test _get_current_scroll_y returns scroll position."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': 250}}
+        }
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_current_scroll_y()
+
+        assert result == 250.0
+
+    @pytest.mark.asyncio
+    async def test_get_current_scroll_y_default(self, mock_tab):
+        """Test _get_current_scroll_y returns 0 on missing value."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {}
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_current_scroll_y()
+
+        assert result == 0.0
+
+    @pytest.mark.asyncio
+    async def test_get_remaining_scroll_to_bottom(self, mock_tab):
+        """Test _get_remaining_scroll_to_bottom returns remaining distance."""
+        from pydoll.interactions.scroll import Scroll
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': 1500}}
+        }
+
+        scroll = Scroll(mock_tab)
+        result = await scroll._get_remaining_scroll_to_bottom()
+
+        assert result == 1500.0
+
+    @pytest.mark.asyncio
+    async def test_dispatch_scroll_event(self, mock_tab):
+        """Test _dispatch_scroll_event sends mouse wheel event."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.protocol.input.types import MouseEventType
+
+        mock_tab._execute_command.return_value = {
+            'result': {'result': {'value': '[400, 300]'}}
+        }
+
+        scroll = Scroll(mock_tab)
+        await scroll._dispatch_scroll_event(delta_x=0, delta_y=100)
+
+        # Should have called execute_command twice:
+        # 1. _get_viewport_center
+        # 2. dispatch_mouse_event
+        assert mock_tab._execute_command.call_count == 2
+
+        # Check the second call (dispatch_mouse_event)
+        second_call = mock_tab._execute_command.call_args_list[1]
+        command = second_call[0][0]
+        assert command['method'] == 'Input.dispatchMouseEvent'
+        assert command['params']['type'] == MouseEventType.MOUSE_WHEEL
+        assert command['params']['deltaY'] == 100
+
+
+class TestScrollWithCustomTiming:
+    """Test Scroll with custom timing configuration."""
+
+    def test_scroll_with_custom_timing(self, mock_tab):
+        """Test Scroll accepts custom timing configuration."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        custom_timing = ScrollTimingConfig(
+            min_duration=1.0,
+            max_duration=2.0,
+        )
+
+        scroll = Scroll(mock_tab, timing=custom_timing)
+
+        assert scroll._timing == custom_timing
+        assert scroll._timing.min_duration == 1.0
+        assert scroll._timing.max_duration == 2.0
+
+    def test_scroll_uses_default_timing(self, mock_tab):
+        """Test Scroll uses default timing if none provided."""
+        from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
+
+        scroll = Scroll(mock_tab)
+
+        # Should use default values
+        assert scroll._timing.min_duration == 0.5
+        assert scroll._timing.max_duration == 1.5
+
+
+
+
+class TestScrollAPIBackwardCompatibility:
+    """Test backward compatibility alias."""
+
+    def test_scroll_api_alias(self):
+        """Test ScrollAPI is an alias for Scroll."""
+        from pydoll.interactions.scroll import Scroll, ScrollAPI
+
+        assert ScrollAPI is Scroll
