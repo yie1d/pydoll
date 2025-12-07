@@ -206,6 +206,13 @@ class Scroll:
         """
         max_flick_distance = random.uniform(600, 1200)
         min_remaining_threshold = 30
+        min_stuck_threshold = 5
+        min_flick_distance = 100
+
+        # Failsafe for stuck scroll
+        last_remaining = float('inf')
+        stuck_counter = 0
+        max_stuck_attempts = 10
 
         while True:
             if position == ScrollPosition.DOWN:
@@ -216,7 +223,23 @@ class Scroll:
             if remaining <= min_remaining_threshold:
                 break
 
+            # Check if we are stuck
+            has_progressed = abs(remaining - last_remaining) >= min_stuck_threshold
+
+            if has_progressed:
+                stuck_counter = 0
+
+            if not has_progressed:
+                stuck_counter += 1
+                if stuck_counter >= max_stuck_attempts:
+                    break
+
+            last_remaining = remaining
+
             flick_distance = min(remaining, max_flick_distance)
+            if flick_distance < min_flick_distance and remaining > min_flick_distance:
+                flick_distance = min_flick_distance
+
             await self._scroll_humanized(position, flick_distance)
 
             pause = random.uniform(0.05, 0.15)
@@ -403,11 +426,11 @@ class Scroll:
         if position in {ScrollPosition.UP, ScrollPosition.DOWN}:
             axis = 'top'
             scroll_distance = -distance if position == ScrollPosition.UP else distance
-            return axis, scroll_distance * 10
+            return axis, scroll_distance
 
         axis = 'left'
         scroll_distance = -distance if position == ScrollPosition.LEFT else distance
-        return axis, scroll_distance * 10
+        return axis, scroll_distance
 
     @staticmethod
     def _get_behavior(smooth: bool) -> str:
