@@ -1,3 +1,9 @@
+## 2.13.0 (2025-12-07)
+
+### Feat
+
+- Implement humanized keyboard typing and physics-based scroll, and add iframe interaction support.
+
 ## 2.12.4 (2025-11-29)
 
 ### Fix
