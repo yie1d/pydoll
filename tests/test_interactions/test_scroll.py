@@ -49,7 +49,7 @@ class TestScrollAPIBy:
 
         # Verify the script contains expected values
         script = command['params']['expression']
-        assert 'top: 5000' in script  # 500 * 10
+        assert 'top: 500' in script
         assert "behavior: 'smooth'" in script
 
     @pytest.mark.asyncio
@@ -61,7 +61,7 @@ class TestScrollAPIBy:
         command = call_args[0][0]
         script = command['params']['expression']
 
-        assert 'top: -3000' in script  # -300 * 10
+        assert 'top: -300' in script
         assert "behavior: 'smooth'" in script
 
     @pytest.mark.asyncio
@@ -73,7 +73,7 @@ class TestScrollAPIBy:
         command = call_args[0][0]
         script = command['params']['expression']
 
-        assert 'left: 2000' in script  # 200 * 10
+        assert 'left: 200' in script
         assert "behavior: 'smooth'" in script
 
     @pytest.mark.asyncio
@@ -85,7 +85,7 @@ class TestScrollAPIBy:
         command = call_args[0][0]
         script = command['params']['expression']
 
-        assert 'left: -1500' in script  # -150 * 10
+        assert 'left: -150' in script
         assert "behavior: 'smooth'" in script
 
     @pytest.mark.asyncio
@@ -97,7 +97,7 @@ class TestScrollAPIBy:
         command = call_args[0][0]
         script = command['params']['expression']
 
-        assert 'top: 10000' in script  # 1000 * 10
+        assert 'top: 1000' in script
         assert "behavior: 'auto'" in script
 
     @pytest.mark.asyncio
@@ -109,7 +109,7 @@ class TestScrollAPIBy:
         command = call_args[0][0]
         script = command['params']['expression']
 
-        assert 'top: 2505.0' in script  # 250.5 * 10
+        assert 'top: 250.5' in script
 
 
 class TestScrollAPIToTop:
@@ -183,25 +183,25 @@ class TestScrollAPIHelperMethods:
         """Test _get_axis_and_distance for DOWN direction."""
         axis, distance = scroll_api._get_axis_and_distance(ScrollPosition.DOWN, 100)
         assert axis == 'top'
-        assert distance == 1000  # 100 * 10
+        assert distance == 100
 
     def test_get_axis_and_distance_up(self, scroll_api):
         """Test _get_axis_and_distance for UP direction."""
         axis, distance = scroll_api._get_axis_and_distance(ScrollPosition.UP, 100)
         assert axis == 'top'
-        assert distance == -1000  # -100 * 10
+        assert distance == -100
 
     def test_get_axis_and_distance_right(self, scroll_api):
         """Test _get_axis_and_distance for RIGHT direction."""
         axis, distance = scroll_api._get_axis_and_distance(ScrollPosition.RIGHT, 50)
         assert axis == 'left'
-        assert distance == 500  # 50 * 10
+        assert distance == 50
 
     def test_get_axis_and_distance_left(self, scroll_api):
         """Test _get_axis_and_distance for LEFT direction."""
         axis, distance = scroll_api._get_axis_and_distance(ScrollPosition.LEFT, 50)
         assert axis == 'left'
-        assert distance == -500  # -50 * 10
+        assert distance == -50
 
     def test_get_behavior_smooth(self, scroll_api):
         """Test _get_behavior with smooth=True."""
@@ -945,6 +945,27 @@ class TestScrollToEndHumanized:
 
         # Should NOT have called _scroll_humanized (already at end)
         scroll._scroll_humanized.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_scroll_to_end_stops_when_stuck(self, mock_tab):
+        """Test loop stops when scroll progress is stuck."""
+        from pydoll.interactions.scroll import Scroll
+        from pydoll.constants import ScrollPosition
+        from unittest.mock import patch, AsyncMock
+
+        scroll = Scroll(mock_tab)
+
+        # Always return same remaining distance (stuck)
+        scroll._get_remaining_scroll_to_bottom = AsyncMock(return_value=500.0)
+        scroll._scroll_humanized = AsyncMock()
+
+        with patch('asyncio.sleep', new_callable=AsyncMock):
+            await scroll._scroll_to_end_humanized(ScrollPosition.DOWN)
+
+        # Should have tried a few times then given up
+        # We set max_stuck_attempts = 10, so it should be around 10 calls
+        assert scroll._scroll_humanized.call_count >= 10
+        assert scroll._scroll_humanized.call_count < 20  # Should not loop infinitely
 
 
 class TestPerformScrollLoop:
