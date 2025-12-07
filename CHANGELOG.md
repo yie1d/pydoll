@@ -1,3 +1,9 @@
+## 2.13.1 (2025-12-07)
+
+### Fix
+
+- add stuck scroll detection and minimum flick distance to humanized scroll, and correct scroll distance calculation.
+
 ## 2.13.0 (2025-12-07)
 
 ### Feat
