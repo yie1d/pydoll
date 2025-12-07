@@ -954,13 +954,12 @@ class TestPerformScrollLoop:
     async def test_perform_scroll_loop_dispatches_events(self, mock_tab):
         """Test scroll loop dispatches mouse wheel events."""
         from pydoll.interactions.scroll import Scroll, ScrollTimingConfig
-        from unittest.mock import patch, AsyncMock
+        from unittest.mock import patch, AsyncMock, MagicMock
 
         mock_tab._execute_command.return_value = {
             'result': {'result': {'value': '[400, 300]'}}
         }
 
-        # Very short duration for fast test
         config = ScrollTimingConfig(
             min_duration=0.01,
             max_duration=0.02,
@@ -969,13 +968,19 @@ class TestPerformScrollLoop:
         )
         scroll = Scroll(mock_tab, timing=config)
 
-        with patch('asyncio.sleep', new_callable=AsyncMock):
-            scrolled = await scroll._perform_scroll_loop(
-                effective_distance=100.0,
-                duration=0.01,
-                is_vertical=True,
-                direction=1,
-            )
+        # Mock time to advance in steps
+        # Start at 0, then 0.005 (halfway), then 0.02 (end)
+        mock_loop = MagicMock()
+        mock_loop.time.side_effect = [0.0, 0.005, 0.02]
+
+        with patch('asyncio.get_running_loop', return_value=mock_loop):
+            with patch('asyncio.sleep', new_callable=AsyncMock):
+                scrolled = await scroll._perform_scroll_loop(
+                    effective_distance=100.0,
+                    duration=0.01,
+                    is_vertical=True,
+                    direction=1,
+                )
 
         # Should have dispatched at least one event
         assert mock_tab._execute_command.call_count >= 1
