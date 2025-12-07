@@ -39,11 +39,11 @@ pip install pydoll-python
 ```
 That's it. No `webdrivers`. No external dependencies.
 
-<details>
-<summary><b>🆕 What's New</b></summary>
-<br>
+## 🆕 What's New
 
-### Humanized Keyboard Input (`humanize=True`)
+<details>
+<summary><b>Humanized Keyboard Input (<code>humanize=True</code>)</b></summary>
+<br>
 
 Pydoll now includes a **humanized typing engine** that simulates realistic human typing behavior:
 
@@ -58,10 +58,11 @@ await element.type_text("hello", interval=0.1)
 # New way (human-like, anti-bot)
 await element.type_text("hello", humanize=True)
 ```
+</details>
 
----
-
-### Humanized Scroll with Physics Engine (`humanize=True`)
+<details>
+<summary><b>Humanized Scroll with Physics Engine (<code>humanize=True</code>)</b></summary>
+<br>
 
 The scroll API now features a **Cubic Bezier curve physics engine** for realistic scrolling:
 
@@ -86,7 +87,6 @@ await tab.scroll.to_bottom(humanize=True)
 | **Humanized** | `humanize=True` | **Anti-bot evasion** |
 
 [**📖 Human-Like Interactions Docs**](https://pydoll.tech/docs/features/automation/human-interactions/)
-
 </details>
 
 ## 🚀 Getting Started in 60 Seconds
