@@ -4,8 +4,10 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, cast
 
-from pydoll.protocol.page.events import JavascriptDialogOpeningEvent
-from pydoll.protocol.page.events import JavascriptDialogOpeningEventParams
+from pydoll.protocol.page.events import (
+    JavascriptDialogOpeningEvent,
+    JavascriptDialogOpeningEventParams,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable
