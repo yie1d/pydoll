@@ -357,6 +357,9 @@ class Browser(ABC):  # noqa: PLR0904
         )
         return existing_tabs + new_tabs
 
+    async def get_tab_by_target(self, target: TargetInfo) -> Tab:
+            return Tab(self, **self._get_tab_kwargs(target['targetId']))
+
     async def set_download_path(self, path: str, browser_context_id: Optional[str] = None):
         """Set download directory path (convenience method for set_download_behavior)."""
         logger.info(f'Setting download path: {path} (context={browser_context_id})')

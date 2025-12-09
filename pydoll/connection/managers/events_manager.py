@@ -5,13 +5,13 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 from pydoll.protocol.page.events import JavascriptDialogOpeningEvent
+from pydoll.protocol.page.events import JavascriptDialogOpeningEventParams
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
     from pydoll.protocol.base import CDPEvent
     from pydoll.protocol.network.events import RequestWillBeSentEvent
-    from pydoll.protocol.page.events import JavascriptDialogOpeningEventParams
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class EventsManager:
         self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
         self.network_logs: list[RequestWillBeSentEvent] = []
-        self.dialog = JavascriptDialogOpeningEvent(method='')
+        self.dialog = JavascriptDialogOpeningEvent()
         logger.info('EventsManager initialized')
         logger.debug('Initial state: callbacks=0, logs=0, dialog=empty')
 
@@ -96,7 +96,7 @@ class EventsManager:
             )
 
         if 'Page.javascriptDialogClosed' in event_name:
-            self.dialog = JavascriptDialogOpeningEvent(method='')
+            self.dialog = JavascriptDialogOpeningEvent()
 
         await self._trigger_callbacks(event_name, event_data)
 
