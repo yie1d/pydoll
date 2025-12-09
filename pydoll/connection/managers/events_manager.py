@@ -31,7 +31,7 @@ class EventsManager:
         self._event_callbacks: dict[int, dict] = {}
         self._callback_id = 0
         self.network_logs: list[RequestWillBeSentEvent] = []
-        self.dialog = JavascriptDialogOpeningEvent()
+        self.dialog = JavascriptDialogOpeningEvent() # type: ignore
         logger.info('EventsManager initialized')
         logger.debug('Initial state: callbacks=0, logs=0, dialog=empty')
 
@@ -98,7 +98,7 @@ class EventsManager:
             )
 
         if 'Page.javascriptDialogClosed' in event_name:
-            self.dialog = JavascriptDialogOpeningEvent()
+            self.dialog = JavascriptDialogOpeningEvent() # type: ignore
 
         await self._trigger_callbacks(event_name, event_data)
 
