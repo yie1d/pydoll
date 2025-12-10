@@ -1,3 +1,15 @@
+## 2.14.0 (2025-12-10)
+
+### Feat
+
+- get_tab_by_target method added
+- get_tab_by_target method added
+
+### Fix
+
+- adding type: ignore in JavascriptDialogOpeningEvent object
+- adding type: ignore in JavascriptDialogOpeningEvent object
+
 ## 2.13.1 (2025-12-07)
 
 ### Fix
