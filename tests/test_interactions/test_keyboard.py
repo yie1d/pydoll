@@ -482,15 +482,23 @@ class TestKeyboardTypeText:
         """Test basic text typing."""
         await keyboard_api.type_text("ab")
 
-        # Should call execute_command for each character
-        assert mock_tab._execute_command.call_count == 2
+        # Should call execute_command for each character (KEY_DOWN + KEY_UP)
+        assert mock_tab._execute_command.call_count == 4
 
-        # Verify characters are typed
+        # Verify characters are typed (checking KEY_DOWN events)
+        # Call 0: 'a' KEY_DOWN
         first_call = mock_tab._execute_command.call_args_list[0]
         assert first_call[0][0]['params']['text'] == 'a'
+        assert first_call[0][0]['params']['type'] == KeyEventType.KEY_DOWN
 
+        # Call 1: 'a' KEY_UP
         second_call = mock_tab._execute_command.call_args_list[1]
-        assert second_call[0][0]['params']['text'] == 'b'
+        assert second_call[0][0]['params']['type'] == KeyEventType.KEY_UP
+
+        # Call 2: 'b' KEY_DOWN
+        third_call = mock_tab._execute_command.call_args_list[2]
+        assert third_call[0][0]['params']['text'] == 'b'
+        assert third_call[0][0]['params']['type'] == KeyEventType.KEY_DOWN
 
     @pytest.mark.asyncio
     async def test_type_text_with_humanize_calls_humanized_method(self, mock_tab):
@@ -519,15 +527,24 @@ class TestKeyboardTypeText:
 
     @pytest.mark.asyncio
     async def test_type_char(self, keyboard_api, mock_tab):
-        """Test _type_char sends CHAR event."""
+        """Test _type_char sends KEY_DOWN and KEY_UP events."""
         await keyboard_api._type_char("x")
 
-        call_args = mock_tab._execute_command.call_args
-        command = call_args[0][0]
+        # Should call execute_command twice (down + up)
+        assert mock_tab._execute_command.call_count == 2
 
-        assert command['method'] == 'Input.dispatchKeyEvent'
-        assert command['params']['type'] == KeyEventType.CHAR
-        assert command['params']['text'] == 'x'
+        # Verify KEY_DOWN
+        first_call = mock_tab._execute_command.call_args_list[0]
+        command_down = first_call[0][0]
+        assert command_down['method'] == 'Input.dispatchKeyEvent'
+        assert command_down['params']['type'] == KeyEventType.KEY_DOWN
+        assert command_down['params']['text'] == 'x'
+
+        # Verify KEY_UP
+        second_call = mock_tab._execute_command.call_args_list[1]
+        command_up = second_call[0][0]
+        assert command_up['method'] == 'Input.dispatchKeyEvent'
+        assert command_up['params']['type'] == KeyEventType.KEY_UP
 
     @pytest.mark.asyncio
     async def test_type_backspace(self, keyboard_api, mock_tab):
@@ -695,10 +712,13 @@ class TestKeyboardTypoHandling:
         """Test _do_skip_typo hesitates then types normally."""
         await keyboard_api._do_skip_typo('a')
 
-        # Should just type 'a'
-        assert mock_tab._execute_command.call_count == 1
-        call_args = mock_tab._execute_command.call_args
-        assert call_args[0][0]['params']['text'] == 'a'
+        # Should just type 'a' (KEY_DOWN + KEY_UP)
+        assert mock_tab._execute_command.call_count == 2
+        
+        # Verify KEY_DOWN
+        first_call = mock_tab._execute_command.call_args_list[0]
+        assert first_call[0][0]['params']['text'] == 'a'
+        assert first_call[0][0]['params']['type'] == KeyEventType.KEY_DOWN
 
     @pytest.mark.asyncio
     async def test_do_missed_space_typo(self, keyboard_api, mock_tab):
@@ -852,7 +872,7 @@ class TestKeyboardProcessCharWithTypo:
             result = await keyboard._process_char_with_typo('a', 'b')
 
         assert result is False  # Should not skip next
-        assert mock_tab._execute_command.call_count == 1
+        assert mock_tab._execute_command.call_count == 2
 
     @pytest.mark.asyncio
     async def test_process_char_with_typo(self, mock_tab):
