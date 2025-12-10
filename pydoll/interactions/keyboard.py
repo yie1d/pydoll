@@ -233,11 +233,17 @@ class Keyboard:
 
     async def _type_char(self, char: str):
         """Type a single character."""
-        command = InputCommands.dispatch_key_event(
-            type=KeyEventType.CHAR,
+        command_down = InputCommands.dispatch_key_event(
+            type=KeyEventType.KEY_DOWN,
             text=char,
+            unmodified_text=char,
         )
-        await self._executor._execute_command(command)
+        await self._executor._execute_command(command_down)
+
+        command_up = InputCommands.dispatch_key_event(
+            type=KeyEventType.KEY_UP,
+        )
+        await self._executor._execute_command(command_up)
 
     async def _type_backspace(self):
         """Send backspace keypress."""
