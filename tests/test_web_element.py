@@ -303,8 +303,8 @@ class TestWebElementMethods:
         with patch('asyncio.sleep') as mock_sleep:
             await input_element.type_text(test_text, interval=0.05)
 
-        # Should call execute_command for each character
-        assert input_element._connection_handler.execute_command.call_count == len(test_text)
+        # Should call execute_command for each character (KEY_DOWN + KEY_UP)
+        assert input_element._connection_handler.execute_command.call_count == len(test_text) * 2
         assert input_element.click.call_count == 1
 
         # Verify sleep was called between characters
