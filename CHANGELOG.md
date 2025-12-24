@@ -1,3 +1,14 @@
+## 2.15.0 (2025-12-24)
+
+### Feat
+
+- Implement incognito mode cookie retrieval for `tab.get_cookies()` and update related documentation
+
+### Fix
+
+- inconsistence in type checking
+- Dispatch `KEY_DOWN` and `KEY_UP` events for character typing
+
 ## 2.14.0 (2025-12-10)
 
 ### Feat
