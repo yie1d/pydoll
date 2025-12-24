@@ -24,6 +24,18 @@ Forget broken `webdrivers`, compatibility issues, or being blocked by `navigator
 
 It's designed for modern scraping, combining an **intuitive high-level API** (for productivity) with **deep-level control** over the network and browser behavior (for evasion), allowing you to bypass complex anti-bot defenses.
 
+### Sponsors
+
+<a href="https://www.thordata.com/?ls=github&lk=pydoll">
+<img alt="Thordata" src="public/images/thordata.png" />
+</a>
+
+Pydoll is proudly sponsored by **[Thordata](https://www.thordata.com/?ls=github&lk=pydoll)**: a residential proxy network built for serious web scraping and automation. With **190+ real residential and ISP locations**, fully encrypted connections, and infrastructure optimized for high-performance workflows, Thordata is an excellent choice for scaling your Pydoll automations.
+
+**[Sign up through our link](https://www.thordata.com/?ls=github&lk=pydoll)** to support the project and get **1GB free** to get started.
+
+---
+
 ### The Pydoll Philosophy
 
 * **Stealth-by-Design:** Pydoll is built for evasion. Our [human-like interactions](https://pydoll.tech/docs/features/automation/human-interactions/) simulate real user clicks, typing, and scrolling to pass behavioral analysis, while granular [Browser Preferences](https://pydoll.tech/docs/features/configuration/browser-preferences/) control lets you patch your browser fingerprint.
