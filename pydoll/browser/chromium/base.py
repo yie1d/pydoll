@@ -414,7 +414,12 @@ class Browser(ABC):  # noqa: PLR0904
         return await self._execute_command(StorageCommands.set_cookies(cookies, browser_context_id))
 
     async def get_cookies(self, browser_context_id: Optional[str] = None) -> list[Cookie]:
-        """Get all cookies from browser or context."""
+        """Get all cookies from browser or context.
+
+        Note:
+            This method does not work with native incognito mode (--incognito flag).
+            For incognito mode, use ``tab.get_cookies()`` instead.
+        """
         response: GetCookiesResponse = await self._execute_command(
             StorageCommands.get_cookies(browser_context_id)
         )
