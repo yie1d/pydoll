@@ -256,6 +256,11 @@ O apoio dos patrocinadores é essencial para manter o projeto vivo, em constante
   
 </a>
 
+<a href="https://dashboard.capsolver.com/passport/register?inviteCode=WPhTbOsbXEpc" target="_blank" rel="noopener nofollow sponsored">
+  <img src="../resources/images/capsolver-logo.png" alt="CapSolver" width="200" height="45" />
+  
+</a>
+
 <p>
   <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener">Become a sponsor</a>
 </p>

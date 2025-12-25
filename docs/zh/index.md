@@ -258,6 +258,11 @@ bs4 = "^0.0.2"
   
 </a>
 
+<a href="https://dashboard.capsolver.com/passport/register?inviteCode=WPhTbOsbXEpc" target="_blank" rel="noopener nofollow sponsored">
+  <img src="../resources/images/capsolver-logo.png" alt="CapSolver" width="200" height="45" />
+  
+</a>
+
 <p>
   <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" style="display:inline-block;padding:6px 10px;border:1px solid #94a3b8;border-radius:6px;text-decoration:none;color:#e2e8f0;background:#0f172a;">成为赞助商</a>
 </p>
