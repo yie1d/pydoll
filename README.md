@@ -36,6 +36,17 @@ Pydoll is proudly sponsored by **[Thordata](https://www.thordata.com/?ls=github&
 
 ---
 
+
+<a href="https://dashboard.capsolver.com/passport/register?inviteCode=WPhTbOsbXEpc">
+<img alt="CapSolver" src="public/images/capsolver.jpeg" />
+</a>
+
+Pydoll excels at behavioral evasion, but it doesn't solve captchas. That's where **[CapSolver](https://dashboard.capsolver.com/passport/register?inviteCode=WPhTbOsbXEpc)** comes in. An AI-powered service that handles reCAPTCHA, Cloudflare challenges, and more, seamlessly integrating with your automation workflows.
+
+**[Register with our invite code](https://dashboard.capsolver.com/passport/register?inviteCode=WPhTbOsbXEpc)** and use code **PYDOLL** to get an extra **6% balance bonus**.
+
+---
+
 ### The Pydoll Philosophy
 
 * **Stealth-by-Design:** Pydoll is built for evasion. Our [human-like interactions](https://pydoll.tech/docs/features/automation/human-interactions/) simulate real user clicks, typing, and scrolling to pass behavioral analysis, while granular [Browser Preferences](https://pydoll.tech/docs/features/configuration/browser-preferences/) control lets you patch your browser fingerprint.
