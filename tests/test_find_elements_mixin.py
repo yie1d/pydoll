@@ -728,3 +728,38 @@ class TestUnderscoreConversionWithGetByAndValue:
         assert '@id="main-btn"' in value
         assert '@data-testid="submit"' in value
         assert '@aria-label="Submit"' in value
+
+
+class TestFindElementsSymbolFiltering:
+    """Test that Symbol properties are filtered from element query results."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.mixin = MockFindElementsMixin()
+
+    @pytest.mark.asyncio
+    async def test_find_elements_filters_symbol_properties(self):
+        """Test that Symbol properties are excluded from results."""
+        find_response = {'result': {'result': {'objectId': 'arr'}}}
+        properties_response = {
+            'result': {
+                'result': [
+                    {'name': '0', 'value': {'type': 'object', 'objectId': 'el-1'}},
+                    {'name': '1', 'value': {'type': 'object', 'objectId': 'el-2'}},
+                    {'name': 'Symbol(Symbol.unscopables)', 'value': {'type': 'object', 'objectId': 'sym'}},
+                    {'name': 'length', 'value': {'type': 'number', 'value': 2}},
+                ]
+            }
+        }
+        describe_response = {'result': {'node': {'nodeName': 'A', 'attributes': []}}}
+
+        self.mixin._connection_handler.execute_command.side_effect = [
+            find_response,
+            properties_response,
+            describe_response,
+            describe_response,
+        ]
+
+        elements = await self.mixin._find_elements(By.CSS_SELECTOR, 'a')
+
+        assert len(elements) == 2
