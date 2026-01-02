@@ -463,9 +463,9 @@ class FindElementsMixin:
         )
         response: list[str] = []
         for query in query_response['result']['result']:
-            query_value = query.get('value', {})
-            if query_value and query_value['type'] == 'object':
-                response.append(query_value['objectId'])
+            if not (query['name'].isdigit() and 'objectId' in query['value']):
+                continue
+            response.append(query['value']['objectId'])
 
         elements = []
         for object_id in response:

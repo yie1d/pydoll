@@ -1358,8 +1358,8 @@ class TestWebElementFindMethods:
         properties_response = {
             'result': {
                 'result': [
-                    {'value': {'type': 'object', 'objectId': 'child-1'}},
-                    {'value': {'type': 'object', 'objectId': 'child-2'}},
+                    {'name': '0', 'value': {'type': 'object', 'objectId': 'child-1'}},
+                    {'name': '1', 'value': {'type': 'object', 'objectId': 'child-2'}},
                 ]
             }
         }
