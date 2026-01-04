@@ -1,3 +1,9 @@
+## 2.15.1 (2026-01-04)
+
+### Fix
+
+- filter Symbol properties from element query results
+
 ## 2.15.0 (2025-12-24)
 
 ### Feat
