@@ -1,2235 +1,714 @@
-
-<!doctype html>
-<html lang="en" class="no-js">
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      
-      
-      
-        <link rel="canonical" href="https://autoscrape-labs.github.io/pydoll/">
-      
-      
-      
-        <link rel="next" href="features/">
-      
-      
-      <link rel="icon" href="images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
-    
-    
-      
-        <title>Pydoll - Async Web Automation Library</title>
-      
-    
-    
-      <link rel="stylesheet" href="assets/stylesheets/main.7e37652d.min.css">
-      
-        
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
-      
-      
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1220" />
+    <title>Pydoll - scraping, the easier way</title>
+    <meta name="description" content="Pydoll is a Python browser automation library built on CDP with zero configuration, async performance, intuitive API, and full type safety. Simple, powerful web automation." />
+    <meta name="keywords" content="pydoll, browser automation, web automation, web scraping, scraping, data scraping, data extraction, crawler, crawling, headless browser, headless chrome, chrome devtools protocol, devtools protocol, cdp, python cdp, chrome cdp, async python, asyncio, network interception, request interception, browser context requests, http requests browser context, humanized interactions, human-like interactions, automation library, scraping framework, type safety, zero configuration, concurrent automation, browser preferences, downloads, python automation, modern web scraping" />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://pydoll.tech/" />
 
+    <!-- Open Graph -->
+    <meta property="og:title" content="Pydoll - scraping, the easier way" />
+    <meta property="og:description" content="Python browser automation with zero configuration, async performance, intuitive API, and full type safety. Simple, powerful web automation." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://pydoll.tech/images/logo.png" />
+    <meta property="og:url" content="https://pydoll.tech/" />
+    <meta property="og:site_name" content="Pydoll" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="pt_BR" />
 
-    
-    
-      
-    
-    
-      
-        
-        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-      
-    
-    
-      <link rel="stylesheet" href="assets/_mkdocstrings.css">
-    
-      <link rel="stylesheet" href="stylesheets/termynal.css">
-    
-      <link rel="stylesheet" href="stylesheets/extra.css">
-    
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-    
-      
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pydoll - scraping, the easier way" />
+    <meta name="twitter:description" content="Python browser automation with zero configuration, async performance, intuitive API, and full type safety." />
+    <meta name="twitter:image" content="https://pydoll.tech/images/logo.png" />
 
-    
-    
-    
+    <!-- Performance hints -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://pydoll.tech/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/images/favicon.png" sizes="48x48 32x32 16x16" />
+    <link rel="shortcut icon" type="image/png" href="/images/favicon.png" />
+    <link rel="apple-touch-icon" href="/images/favicon.png" />
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Schema.org: SoftwareApplication / SoftwareSourceCode -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://pydoll.tech/#org",
+            "name": "Pydoll",
+            "url": "https://pydoll.tech/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://pydoll.tech/images/logo.png"
+            },
+            "sameAs": [
+              "https://pypi.org/project/pydoll-python/"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://pydoll.tech/#website",
+            "name": "Pydoll",
+            "url": "https://pydoll.tech/",
+            "publisher": { "@id": "https://pydoll.tech/#org" },
+            "inLanguage": "en",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://pydoll.tech/docs/search/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://pydoll.tech/#webpage",
+            "url": "https://pydoll.tech/",
+            "name": "Pydoll - scraping, the easier way",
+            "isPartOf": { "@id": "https://pydoll.tech/#website" },
+            "about": { "@id": "https://pydoll.tech/#software" },
+            "description": "Pydoll is a Python CDP browser automation library for web scraping, with zero configuration, async performance, and intuitive API."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://pydoll.tech/#software",
+            "name": "Pydoll",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Windows, macOS, Linux",
+            "programmingLanguage": "Python",
+            "url": "https://pydoll.tech/",
+            "image": "https://pydoll.tech/images/logo.png",
+            "description": "Python library for browser automation via Chrome DevTools Protocol (CDP), with zero configuration, async performance, intuitive API, and full type safety.",
+            "publisher": { "@id": "https://pydoll.tech/#org" },
+            "offers": {
+              "@type": "Offer",
+              "price": 0,
+              "priceCurrency": "USD"
+            },
+            "codeRepository": "https://github.com/autoscrape-labs/pydoll",
+            "sameAs": [
+              "https://pypi.org/project/pydoll-python/"
+            ],
+            "keywords": [
+              "Pydoll",
+              "browser automation",
+              "web scraping",
+              "Chrome DevTools Protocol",
+              "async Python",
+              "type safety",
+              "zero configuration",
+              "concurrent automation"
+            ],
+            "mainEntityOfPage": {"@id":"https://pydoll.tech/#webpage"}
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://pydoll.tech/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Pydoll and why doesn't it use WebDriver?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Pydoll is a Python library that controls the browser via the Chrome DevTools Protocol (CDP), eliminating WebDrivers. This reduces layers, improves reliability and gives direct access to page events, network interception and JavaScript execution in the real tab context."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What makes Pydoll's setup so simple compared to other automation tools?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Just 'pip install pydoll-python' and you're ready. No WebDriver downloads, no PATH configuration, no version matching issues. Pydoll connects directly to Chrome via CDP, eliminating the entire driver layer that causes most automation headaches."
+                }
+              }
+            ]
+          }
+        ]
+      }
+      </script>
+      
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                200: '#c7d2fe',
+                300: '#a5b4fc',
+                400: '#818cf8',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca',
+                800: '#3730a3',
+                900: '#312e81'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Prism.js (syntax highlight) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-twilight.min.css" />
+    <style>
+      /* Harmonize code block background with Tailwind bg-slate-950 */
+      :root { --code-bg: #020617; }
+      html { scroll-behavior: smooth; }
+      /* Reveal on scroll */
+      .reveal { opacity: 0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease; will-change: transform, opacity; }
+      .revealed { opacity: 1; transform: none; }
+      /* Tilt base */
+      .tilt-card { transform-style: preserve-3d; transform: perspective(1000px); transition: transform .18s ease, box-shadow .18s ease; }
+      .tilt-card:hover { transition: transform .06s ease; }
+      pre[class*="language-"], code[class*="language-"] {
+        background: var(--code-bg) !important;
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+      }
+      pre[class*="language-"] { 
+        border: 1px solid rgba(255,255,255,0.1); 
+        border-radius: 8px;
+        margin: 0;
+        overflow-x: auto;
+        overflow-y: hidden; /* avoid vertical scrollbar differences (Chrome vs Firefox) */
+      }
+      /* Remove inner padding from code so pre controls spacing */
+      pre[class*="language-"] > code { 
+        background: transparent !important; 
+        padding: 0;
+      }
+      /* Ensure syntax highlighting works */
+      .token.keyword { color: #c792ea !important; }
+      .token.string { color: #c3e88d !important; }
+      .token.function { color: #82aaff !important; }
+      .token.comment { color: #546e7a !important; }
+      .token.operator { color: #89ddff !important; }
+      .token.punctuation { color: #89ddff !important; }
+      .token.builtin { color: #ffcb6b !important; }
+      .token.class-name { color: #ffcb6b !important; }
+    </style>
   </head>
-  
-  
-    
-    
-      
-    
-    
-    
-    
-    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo">
-  
-    
-    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
-    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
-    <div data-md-component="skip">
-      
-        
-        <a href="#welcome-to-pydoll" class="md-skip">
-          Skip to content
-        </a>
-      
-    </div>
-    <div data-md-component="announce">
-      
-    </div>
-    
-    
-      
-
-  
-
-<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Pydoll - Async Web Automation Library" class="md-header__button md-logo" aria-label="Pydoll - Async Web Automation Library" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 15H6l7-14v8h5l-7 14z"/></svg>
-
-    </a>
-    <label class="md-header__button md-icon" for="__drawer">
-      
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
-    </label>
-    <div class="md-header__title" data-md-component="header-title">
-      <div class="md-header__ellipsis">
-        <div class="md-header__topic">
-          <span class="md-ellipsis">
-            Pydoll - Async Web Automation Library
-          </span>
+  <body class="bg-slate-950 text-slate-100 antialiased">
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+          <a href="/" class="flex items-center gap-3">
+            <img src="https://pydoll.tech/images/logo.png" alt="Pydoll" class="h-8 w-auto" />
+          </a>
+          <!-- Desktop nav -->
+          <nav class="hidden items-center gap-2 sm:flex sm:gap-3">
+            <a href="https://pydoll.tech/docs/" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Docs</a>
+            <a href="#install" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Install</a>
+            <a href="#sponsors" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Sponsors</a>
+            <a href="#faq" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">FAQ</a>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="px-3 py-2 text-sm font-medium text-slate-200 hover:text-white">Sponsor</a>
+            <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" aria-label="Star on GitHub" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-yellow-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 22 12 18 5 22 7 14 2 9 9 9 12 2"/></svg>
+              Star
+              <span id="starCount" class="hidden rounded px-2 py-0.5 text-slate-900 sm:inline-block">...</span>
+            </a>
+          </nav>
+          <!-- Mobile toggle -->
+          <button id="mobileMenuButton" aria-controls="mobileMenu" aria-expanded="false" class="inline-flex items-center justify-center rounded-md p-2 text-slate-200 hover:text-white hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-500 sm:hidden" type="button">
+            <span class="sr-only">Open main menu</span>
+            <svg id="iconMenu" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <svg id="iconClose" xmlns="http://www.w3.org/2000/svg" class="hidden h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
-        <div class="md-header__topic" data-md-component="header-topic">
-          <span class="md-ellipsis">
-            
-              Pydoll
-            
-          </span>
+        <!-- Mobile menu panel -->
+        <div id="mobileMenu" class="hidden sm:hidden">
+          <div class="space-y-1 border-t border-white/10 py-3">
+            <a href="https://pydoll.tech/docs/" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Docs</a>
+            <a href="#install" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Install</a>
+            <a href="#sponsors" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Sponsors</a>
+            <a href="#faq" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">FAQ</a>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5">Sponsor</a>
+            <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-yellow-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 22 12 18 5 22 7 14 2 9 9 9 12 2"/></svg> Star</a>
+          </div>
         </div>
       </div>
-    </div>
-    
-      
-        <form class="md-header__option" data-md-component="palette">
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Dark Mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Dark Mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Light Mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Light Mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
-      </label>
-    
-  
-</form>
-      
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
-    
-    
-      <div class="md-header__option">
-  <div class="md-select">
-    
-    <button class="md-header__button md-icon" aria-label="Select language">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
-    </button>
-    <div class="md-select__inner">
-      <ul class="md-select__list">
-        
-          <li class="md-select__item">
-            <a href="/pydoll/" hreflang="en" class="md-select__link">
-              English
+    </header>
+
+    <!-- Hero -->
+    <section id="hero" class="relative overflow-hidden">
+      <div id="heroGradient" class="pointer-events-none absolute inset-0 -z-10 h-full bg-gradient-to-b from-indigo-600/30 via-fuchsia-600/10 to-transparent blur-3xl"></div>
+      <div id="cursorGlow" aria-hidden="true" class="pointer-events-none absolute -z-10 hidden h-72 w-72 rounded-full bg-gradient-to-tr from-brand-500/25 via-fuchsia-500/15 to-transparent blur-3xl sm:block" style="left:0;top:0;"></div>
+      <div class="mx-auto max-w-7xl px-4 pb-12 pt-16 sm:pb-16 sm:pt-24 lg:flex lg:items-start lg:gap-12 lg:px-8">
+        <div class="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
+          <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+            Pydoll: scraping, the easier way
+          </h1>
+          <p class="mt-6 text-lg leading-8 text-slate-300">
+            Built from scratch with zero configuration complexity, Pydoll connects directly to the Chrome DevTools Protocol. 
+            No WebDrivers, no setup headaches - just async performance, intuitive API, and full type safety.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-md bg-yellow-500 px-5 py-3 text-base font-semibold text-slate-900 shadow hover:bg-yellow-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 22 12 18 5 22 7 14 2 9 9 9 12 2"/></svg>
+              Star on GitHub
             </a>
-          </li>
-        
-          <li class="md-select__item">
-            <a href="/pydoll/zh/" hreflang="zh" class="md-select__link">
-              中文
+            <a href="https://pydoll.tech/docs/" class="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-5 py-3 text-base font-semibold text-white/90 hover:bg-white/5">
+              📖 View Documentation
             </a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-</div>
-    
-    
-      
-      
-        <label class="md-header__button md-icon" for="__search">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        </label>
-        <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-        <div class="md-search__suggest" data-md-component="search-suggest"></div>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
+            <a href="#install" class="inline-flex items-center justify-center gap-2 rounded-md bg-slate-800 px-5 py-3 text-base font-semibold text-white/90 hover:bg-slate-700">
+              ⬇️ Install via pip
+            </a>
           </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
+          
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-      
-    
-    
-      <div class="md-header__source">
-        <a href="https://github.com/autoscrape-labs/pydoll" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-  </div>
-  <div class="md-source__repository">
-    autoscrape-labs/pydoll
-  </div>
-</a>
-      </div>
-    
-  </nav>
-  
-    
-      
-<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
-  <div class="md-grid">
-    <ul class="md-tabs__list">
-      
-        
-  
-  
-  
-    
-  
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
-        
-  
-  
-    
-  
-  Pydoll
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="features/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Features
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="deep-dive/" class="md-tabs__link">
-          
-  
-  
-    
-  
-  Deep Dive
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="api/" class="md-tabs__link">
-          
-  
-  
-    
-  
-  API Reference
-
-        </a>
-      </li>
-    
-  
-
-      
-    </ul>
-  </div>
-</nav>
-    
-  
-</header>
-    
-    <div class="md-container" data-md-component="container">
-      
-      
-        
-      
-      <main class="md-main" data-md-component="main">
-        <div class="md-main__inner md-grid">
-          
-            
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-
-  
-
-
-<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
-  <label class="md-nav__title" for="__drawer">
-    <a href="." title="Pydoll - Async Web Automation Library" class="md-nav__button md-logo" aria-label="Pydoll - Async Web Automation Library" data-md-component="logo">
-      
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 15H6l7-14v8h5l-7 14z"/></svg>
-
-    </a>
-    Pydoll - Async Web Automation Library
-  </label>
-  
-    <div class="md-nav__source">
-      <a href="https://github.com/autoscrape-labs/pydoll" title="Go to repository" class="md-source" data-md-component="source">
-  <div class="md-source__icon md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
-  </div>
-  <div class="md-source__repository">
-    autoscrape-labs/pydoll
-  </div>
-</a>
-    </div>
-  
-  <ul class="md-nav__list" data-md-scrollfix>
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Pydoll
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    Pydoll
-    
-  </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-pydoll" class="md-nav__link">
-    <span class="md-ellipsis">
-      What is Pydoll?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-choose-pydoll" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why Choose Pydoll?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start-guide-a-simple-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start Guide: A simple example
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#extended-example-custom-browser-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extended Example: Custom Browser Configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#minimal-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Minimal Dependencies
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minimal Dependencies">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Core Dependencies
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      License
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="features/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Features
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="deep-dive/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    Deep Dive
-    
-  </span>
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            Deep Dive
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/cdp/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Chrome DevTools Protocol
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/connection-layer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The Connection Layer
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/browser-domain/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The Browser Domain
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/tab-domain/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The Tab Domain
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/find-elements-mixin/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The Find Elements Mixin
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/webelement-domain/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The WebElement Domain
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/event-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    The Event System
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="deep-dive/network-capabilities/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Network Capabilities
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="api/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    API Reference
-    
-  </span>
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            API Reference
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Browser
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_2">
-            <span class="md-nav__icon md-icon"></span>
-            Browser
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/browser/chrome/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Chrome
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/browser/edge/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Edge
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/browser/options/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Options
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/browser/tab/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Tab
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/browser/managers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Managers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Elements
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_3">
-            <span class="md-nav__icon md-icon"></span>
-            Elements
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/elements/web_element/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    WebElement
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/elements/mixins/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Mixins
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Connection
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
-            <span class="md-nav__icon md-icon"></span>
-            Connection
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/connection/connection/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Connection Handler
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/connection/managers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Managers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_5" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="api/commands/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    Commands
-    
-  </span>
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_5">
-            <span class="md-nav__icon md-icon"></span>
-            Commands
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/browser/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Browser
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/dom/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    DOM
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/input/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Input
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/network/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Network
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/page/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Page
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/runtime/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Runtime
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/storage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Storage
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/target/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Target
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/commands/fetch/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Fetch
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Protocol
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_6">
-            <span class="md-nav__icon md-icon"></span>
-            Protocol
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/protocol/commands/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Commands
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/protocol/events/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Events
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Core
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_7">
-            <span class="md-nav__icon md-icon"></span>
-            Core
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/core/constants/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Constants
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/core/exceptions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Exceptions
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="api/core/utils/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Utils
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-  </ul>
-</nav>
-                  </div>
-                </div>
+        <div class="mt-12 w-full lg:mt-0 lg:max-w-xl lg:flex-none reveal">
+          <div class="tilt-card relative overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 p-6 shadow-xl">
+            <div class="space-y-4">
+              <div class="flex items-center gap-3">
               </div>
-            
-            
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-pydoll" class="md-nav__link">
-    <span class="md-ellipsis">
-      What is Pydoll?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-choose-pydoll" class="md-nav__link">
-    <span class="md-ellipsis">
-      Why Choose Pydoll?
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start-guide-a-simple-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start Guide: A simple example
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#extended-example-custom-browser-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extended Example: Custom Browser Configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#minimal-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Minimal Dependencies
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Minimal Dependencies">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Core Dependencies
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      License
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
+              <div class="rounded-lg bg-slate-950 p-0">
+                <iframe 
+                  class="w-full aspect-video rounded-lg" 
+                  src="https://www.youtube.com/embed/sSw5dS3dQ8k" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
               </div>
-            
-          
-          
-            <div class="md-content" data-md-component="content">
-              <article class="md-content__inner md-typeset">
-                
-                  
-
-
-  
-  
-
-
-<p align="center">
-    <img src="./images/E2ECED-cinza-azulado.png" alt="Pydoll Logo" /> <br><br>
-</p>
-
-<p align="center">
-    <a href="https://codecov.io/gh/autoscrape-labs/pydoll">
-        <img src="https://codecov.io/gh/autoscrape-labs/pydoll/graph/badge.svg?token=40I938OGM9"/> 
-    </a>
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/tests.yml/badge.svg" alt="Tests">
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/ruff-ci.yml/badge.svg" alt="Ruff CI">
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/release.yml/badge.svg" alt="Release">
-    <img src="https://github.com/thalissonvs/pydoll/actions/workflows/mypy.yml/badge.svg" alt="MyPy CI">
-</p>
-
-<h1 id="welcome-to-pydoll">Welcome to Pydoll</h1>
-<p>Hey there! Thanks for checking out Pydoll, the next generation of browser automation for Python. If you're tired of wrestling with webdrivers and looking for a smoother, more reliable way to automate browsers, you're in the right place.</p>
-<h2 id="what-is-pydoll">What is Pydoll?</h2>
-<p>Pydoll is revolutionizing browser automation by <strong>eliminating the need for webdrivers</strong> completely! Unlike other solutions that rely on external dependencies, Pydoll connects directly to browsers using their DevTools Protocol, providing a seamless and reliable automation experience with native asynchronous performance.</p>
-<p>Whether you're scraping data, testing web applications, or automating repetitive tasks, Pydoll makes it surprisingly easy with its intuitive API and powerful features.</p>
-<h2 id="installation">Installation</h2>
-<p>Create and activate a <a href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a> first, then install Pydoll:</p>
-<div class="termy">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pydoll-python
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>---&gt;<span class="w"> </span><span class="m">100</span>%
-</span></code></pre></div>
-</div>
-
-<p>For the latest development version, you can install directly from GitHub:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/autoscrape-labs/pydoll.git
-</span></code></pre></div>
-<h2 id="why-choose-pydoll">Why Choose Pydoll?</h2>
-<ul>
-<li><strong>Genuine Simplicity</strong>: We don't want you wasting time configuring drivers or dealing with compatibility issues. With Pydoll, you install and you're ready to automate.</li>
-<li><strong>Truly Human Interactions</strong>: Our algorithms simulate real human behavior patterns - from timing between clicks to how the mouse moves across the screen.</li>
-<li><strong>Native Async Performance</strong>: Built from the ground up with <code>asyncio</code>, Pydoll doesn't just support asynchronous operations - it was designed for them.</li>
-<li><strong>Integrated Intelligence</strong>: Automatic bypass of Cloudflare Turnstile and reCAPTCHA v3 captchas, without external services or complex configurations.</li>
-<li><strong>Powerful Network Monitoring</strong>: Intercept, modify, and analyze all network traffic with ease, giving you complete control over requests.</li>
-<li><strong>Event-Driven Architecture</strong>: React to page events, network requests, and user interactions in real-time.</li>
-<li><strong>Intuitive Element Finding</strong>: Modern <code>find()</code> and <code>query()</code> methods that make sense and work as you'd expect.</li>
-<li><strong>Robust Type Safety</strong>: Comprehensive type system for better IDE support and error prevention.</li>
-</ul>
-<p>Ready to dive in? The following pages will guide you through installation, basic usage, and advanced features to help you get the most out of Pydoll.</p>
-<p>Let's start automating the web, the right way! 🚀</p>
-<h2 id="quick-start-guide-a-simple-example">Quick Start Guide: A simple example</h2>
-<p>Let's start with a practical example. The following script will open the Pydoll GitHub repository and star it:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydoll.browser.chromium</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chrome</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">Chrome</span><span class="p">()</span> <span class="k">as</span> <span class="n">browser</span><span class="p">:</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">tab</span> <span class="o">=</span> <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">go_to</span><span class="p">(</span><span class="s1">&#39;https://github.com/autoscrape-labs/pydoll&#39;</span><span class="p">)</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="n">star_button</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="n">tag_name</span><span class="o">=</span><span class="s1">&#39;button&#39;</span><span class="p">,</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="n">raise_exc</span><span class="o">=</span><span class="kc">False</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="p">)</span>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">star_button</span><span class="p">:</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ops! The button was not found.&quot;</span><span class="p">)</span>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>            <span class="k">return</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="k">await</span> <span class="n">star_button</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
-</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
-</span></code></pre></div>
-<p>This example demonstrates how to navigate to a website, wait for an element to appear, and interact with it. You can adapt this pattern to automate many different web tasks.</p>
-<details class="note">
-<summary>Or use without context manager...</summary>
-<p>If you prefer not to use the context manager pattern, you can manually manage the browser instance:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydoll.browser.chromium</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chrome</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">browser</span> <span class="o">=</span> <span class="n">Chrome</span><span class="p">()</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">tab</span> <span class="o">=</span> <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">go_to</span><span class="p">(</span><span class="s1">&#39;https://github.com/autoscrape-labs/pydoll&#39;</span><span class="p">)</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">star_button</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">tag_name</span><span class="o">=</span><span class="s1">&#39;button&#39;</span><span class="p">,</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="n">raise_exc</span><span class="o">=</span><span class="kc">False</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="p">)</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">star_button</span><span class="p">:</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ops! The button was not found.&quot;</span><span class="p">)</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span class="k">return</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="k">await</span> <span class="n">star_button</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
-</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
-</span></code></pre></div>
-<p>Note that when not using the context manager, you'll need to explicitly call <code>browser.stop()</code> to release resources.</p>
-</details>
-<h2 id="extended-example-custom-browser-configuration">Extended Example: Custom Browser Configuration</h2>
-<p>For more advanced usage scenarios, Pydoll allows you to customize your browser configuration using the <code>ChromiumOptions</code> class. This is useful when you need to:</p>
-<ul>
-<li>Run in headless mode (no visible browser window)</li>
-<li>Specify a custom browser executable path</li>
-<li>Configure proxies, user agents, or other browser settings</li>
-<li>Set window dimensions or startup arguments</li>
-</ul>
-<p>Here's an example showing how to use custom options for Chrome:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydoll.browser.chromium</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chrome</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydoll.browser.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChromiumOptions</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">options</span> <span class="o">=</span> <span class="n">ChromiumOptions</span><span class="p">()</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="hll">    <span class="n">options</span><span class="o">.</span><span class="n">binary_location</span> <span class="o">=</span> <span class="s1">&#39;/usr/bin/google-chrome-stable&#39;</span>
-</span></span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="hll">    <span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--headless=new&#39;</span><span class="p">)</span>
-</span></span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="hll">    <span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--start-maximized&#39;</span><span class="p">)</span>
-</span></span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="hll">    <span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-notifications&#39;</span><span class="p">)</span>
-</span></span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="hll">
-</span></span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">Chrome</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">browser</span><span class="p">:</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">tab</span> <span class="o">=</span> <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">go_to</span><span class="p">(</span><span class="s1">&#39;https://github.com/autoscrape-labs/pydoll&#39;</span><span class="p">)</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="n">star_button</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>            <span class="n">tag_name</span><span class="o">=</span><span class="s1">&#39;button&#39;</span><span class="p">,</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>            <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="n">raise_exc</span><span class="o">=</span><span class="kc">False</span>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="p">)</span>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">star_button</span><span class="p">:</span>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ops! The button was not found.&quot;</span><span class="p">)</span>
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>            <span class="k">return</span>
-</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
-</span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>        <span class="k">await</span> <span class="n">star_button</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
-</span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-</span><span id="__span-4-28"><a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>
-</span><span id="__span-4-29"><a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>        <span class="n">screenshot_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;pydoll_repo.png&#39;</span><span class="p">)</span>
-</span><span id="__span-4-30"><a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="hll">        <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">take_screenshot</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">screenshot_path</span><span class="p">)</span>
-</span></span><span id="__span-4-31"><a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="hll">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Screenshot saved to: </span><span class="si">{</span><span class="n">screenshot_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></span><span id="__span-4-32"><a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="hll">
-</span></span><span id="__span-4-33"><a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>        <span class="n">base64_screenshot</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">take_screenshot</span><span class="p">(</span><span class="n">as_base64</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-4-34"><a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="hll">
-</span></span><span id="__span-4-35"><a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="hll">        <span class="n">repo_description_element</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tab</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
-</span></span><span id="__span-4-36"><a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a><span class="hll">            <span class="n">class_name</span><span class="o">=</span><span class="s1">&#39;f4.my-3&#39;</span>
-</span></span><span id="__span-4-37"><a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="hll">        <span class="p">)</span>
-</span></span><span id="__span-4-38"><a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="hll">        <span class="n">repo_description</span> <span class="o">=</span> <span class="k">await</span> <span class="n">repo_description_element</span><span class="o">.</span><span class="n">text</span>
-</span></span><span id="__span-4-39"><a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Repository description: </span><span class="si">{</span><span class="n">repo_description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-4-40"><a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>
-</span><span id="__span-4-41"><a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-</span><span id="__span-4-42"><a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
-</span></code></pre></div>
-<p>This extended example demonstrates:</p>
-<ol>
-<li>Creating and configuring browser options</li>
-<li>Setting a custom Chrome binary path</li>
-<li>Enabling headless mode for invisible operation</li>
-<li>Setting additional browser flags</li>
-<li>Taking screenshots (especially useful in headless mode)</li>
-</ol>
-<details class="info">
-<summary>About Chromium Options</summary>
-<p>The <code>options.add_argument()</code> method allows you to pass any Chromium command-line argument to customize browser behavior. There are hundreds of available options to control everything from networking to rendering behavior.</p>
-<p>Common Chrome Options</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Performance &amp; Behavior Options</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--headless=new&#39;</span><span class="p">)</span>         <span class="c1"># Run Chrome in headless mode</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-gpu&#39;</span><span class="p">)</span>          <span class="c1"># Disable GPU hardware acceleration</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--no-sandbox&#39;</span><span class="p">)</span>           <span class="c1"># Disable sandbox (use with caution)</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-dev-shm-usage&#39;</span><span class="p">)</span> <span class="c1"># Overcome limited resource issues</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Appearance Options</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--start-maximized&#39;</span><span class="p">)</span>      <span class="c1"># Start with maximized window</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--window-size=1920,1080&#39;</span><span class="p">)</span> <span class="c1"># Set specific window size</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hide-scrollbars&#39;</span><span class="p">)</span>      <span class="c1"># Hide scrollbars</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># Network Options</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--proxy-server=socks5://127.0.0.1:9050&#39;</span><span class="p">)</span> <span class="c1"># Use proxy</span>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-extensions&#39;</span><span class="p">)</span>   <span class="c1"># Disable extensions</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-notifications&#39;</span><span class="p">)</span> <span class="c1"># Disable notifications</span>
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="c1"># Privacy &amp; Security</span>
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--incognito&#39;</span><span class="p">)</span>            <span class="c1"># Run in incognito mode</span>
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-infobars&#39;</span><span class="p">)</span>     <span class="c1"># Disable infobars</span>
-</span></code></pre></div>
-<p>Complete Reference Guides</p>
-<p>For a comprehensive list of all available Chrome command-line arguments, refer to these resources:</p>
-<ul>
-<li><a href="https://peter.sh/experiments/chromium-command-line-switches/">Chromium Command Line Switches</a> - Complete reference list</li>
-<li><a href="chrome://flags">Chrome Flags</a> - Enter this in your Chrome browser address bar to see experimental features</li>
-<li><a href="https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_switches.cc">Chromium Source Code Flags</a> - Direct source code reference</li>
-</ul>
-<p>Remember that some options may behave differently across Chrome versions, so it's a good practice to test your configuration when upgrading Chrome.</p>
-</details>
-<p>With these configurations, you can run Pydoll in various environments, including CI/CD pipelines, servers without displays, or Docker containers.</p>
-<p>Continue reading the documentation to explore Pydoll's powerful features for handling captchas, working with multiple tabs, interacting with elements, and more.</p>
-<h2 id="minimal-dependencies">Minimal Dependencies</h2>
-<p>One of Pydoll's advantages is its lightweight footprint. Unlike other browser automation tools that require numerous dependencies, Pydoll is intentionally designed to be minimalist while maintaining powerful capabilities.</p>
-<h3 id="core-dependencies">Core Dependencies</h3>
-<p>Pydoll relies on just a few carefully selected packages:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python = &quot;^3.10&quot;
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>websockets = &quot;^13.1&quot;
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>aiohttp = &quot;^3.9.5&quot;
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>aiofiles = &quot;^23.2.1&quot;
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>bs4 = &quot;^0.0.2&quot;
-</span></code></pre></div>
-<p>That's it! This minimal dependency approach means:</p>
-<ul>
-<li><strong>Faster installation</strong> - No complex dependency tree to resolve</li>
-<li><strong>Fewer conflicts</strong> - Reduced chance of version conflicts with other packages</li>
-<li><strong>Smaller footprint</strong> - Lower disk space usage</li>
-<li><strong>Better security</strong> - Smaller attack surface and dependency-related vulnerabilities</li>
-<li><strong>Easier updates</strong> - Simpler maintenance and fewer breaking changes</li>
-</ul>
-<p>The small number of dependencies also contributes to Pydoll's reliability and performance, as there are fewer external factors that could impact its operation.</p>
-<h2 id="license">License</h2>
-<p>Pydoll is released under the MIT License, which gives you the freedom to use, modify, and distribute the code with minimal restrictions. This permissive license makes Pydoll suitable for both personal and commercial projects.</p>
-<details class="info">
-<summary>View Full MIT License Text</summary>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>MIT License
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Copyright (c) 2023 Pydoll Contributors
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Permission is hereby granted, free of charge, to any person obtaining a copy
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>of this software and associated documentation files (the &quot;Software&quot;), to deal
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>in the Software without restriction, including without limitation the rights
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>copies of the Software, and to permit persons to whom the Software is
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>furnished to do so, subject to the following conditions:
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>The above copyright notice and this permission notice shall be included in all
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>copies or substantial portions of the Software.
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>SOFTWARE.
-</span></code></pre></div>
-</details>
-
-
-
-
-
-
-
-
-
-
-
-
-                
-              </article>
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>✨ Simple, powerful, async</span>
+                <span>🚀 Ready in seconds</span>
+              </div>
             </div>
-          
-          
-<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Quick Intro / Features -->
+    <section class="mx-auto max-w-7xl px-4 pt-10 pb-6 sm:px-6 lg:px-8">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="cardZeroConfig" role="button" aria-controls="modalZeroConfig" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <line x1="5" y1="5" x2="19" y2="19"></line>
+            </svg>
+            <span>Zero Configuration</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">Install and automate immediately. No drivers, no PATH variables, no setup hell.</p>
+        </div>
+        <div id="cardAsync" role="button" aria-controls="modalAsync" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="8,7 4,12 8,17"></polyline>
+              <polyline points="16,7 20,12 16,17"></polyline>
+            </svg>
+            <span>Async by Design</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">Built for concurrent automation with true async/await support from day one.</p>
+        </div>
+        <div id="cardTypeSafety" role="button" aria-controls="modalTypeSafety" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 12l2 2 4-4"></path>
+              <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.7 0 3.28.47 4.64 1.28"></path>
+            </svg>
+            <span>Full Type Safety</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">Complete type annotations. Your IDE knows exactly what each method returns.</p>
+        </div>
+        <div id="cardRequests" role="button" aria-controls="modalRequests" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <ellipse cx="12" cy="12" rx="4" ry="9"></ellipse>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+            <span>Browser-context requests</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">Use <code>tab.request</code> to automatically inherit cookies, CORS and session state.</p>
+        </div>
+        <div id="cardIntuitive" role="button" aria-controls="modalIntuitive" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="6" x2="12" y2="18"></line>
+              <line x1="6" y1="12" x2="18" y2="12"></line>
+              <circle cx="12" cy="12" r="1.5"></circle>
+            </svg>
+            <span>Intuitive API</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">Element finding feels like natural language. Simple, readable automation code.</p>
+        </div>
+        <div id="cardEvents" role="button" aria-controls="modalEvents" class="reveal tilt-card cursor-pointer rounded-xl border border-white/10 bg-slate-900/40 p-6 transition-transform duration-200 hover:bg-white/5">
+          <h3 class="flex items-center gap-2 text-lg font-semibold">
+            <svg class="h-5 w-5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3,12 8,12 10,8 12,16 14,12 21,12"></polyline>
+            </svg>
+            <span>Event-driven automation</span>
+          </h3>
+          <p class="mt-2 text-sm text-slate-300">React to page, network and runtime events in real-time.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Modals -->
+    <div id="modalZeroConfig" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeZeroConfigModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Zero Configuration</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">Install and automate with a single command. No drivers, no PATH, no setup hell.</p>
+        <pre id="zeroConfigCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python">from pydoll.browser import Chrome
+
+async def run():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://example.com')
+</code></pre>
+      </div>
+    </div>
+
+    <div id="modalAsync" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeAsyncModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Async by Design</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">Run multiple tabs concurrently with true async/await.</p>
+        <pre id="asyncCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python">import asyncio
+from pydoll.browser import Chrome
+
+async def scrape(url, tab):
+    await tab.go_to(url)
+    return await tab.execute_script('return document.title')
+
+async def main():
+    browser = Chrome()
+    tab1 = await browser.start()
+    tab2 = await browser.new_tab()
+    titles = await asyncio.gather(
+        scrape('https://google.com', tab1),
+        scrape('https://github.com', tab2),
+    )
+    print(titles)
+</code></pre>
+      </div>
+    </div>
+
+    <div id="modalTypeSafety" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeTypeSafetyModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Full Type Safety</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">Your IDE knows exactly what each call returns.</p>
+        <pre id="typeSafetyCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python"># The IDE knows exactly what each call returns:
+await tab.find(id='username')                 # → WebElement
+await tab.find(id='username', find_all=True)  # → list[WebElement]
+await tab.find(id='username', raise_exc=False)  # → WebElement | None
+</code></pre>
+      </div>
+    </div>
+
+    <div id="modalRequests" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeRequestsModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Browser-context requests</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">Perform HTTP in the same context as the tab: cookies, session and CORS are inherited automatically.</p>
+        <pre id="requestsModalCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python">await tab.go_to('https://app.example.com/login')
+await (await tab.find(id='email')).type_text('user@example.com')
+await (await tab.find(id='password')).type_text('secret')
+await (await tab.find(type='submit')).click()
+
+response = await tab.request.get('https://app.example.com/api/user/profile')
+print(response.json())
+</code></pre>
+      </div>
+    </div>
+
+    <div id="modalIntuitive" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeIntuitiveModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Intuitive API</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">Readable element finding using attributes, CSS or XPath.</p>
+        <pre id="intuitiveCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python">button = await tab.find(tag_name='button', text='Submit', class_name='btn-primary')
+await button.click()
+
+el = await tab.query('div[data-testid="awesome-element"]')
+</code></pre>
+      </div>
+    </div>
+
+    <div id="modalEvents" class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 p-4">
+      <div class="relative w-full max-w-3xl rounded-xl border border-white/10 bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <button id="closeEventsModal" aria-label="Close" class="absolute right-3 top-3 rounded-full border border-white/10 bg-slate-800/80 p-1.5 text-slate-300 hover:bg-slate-700 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="mb-3 flex items-center justify-between pr-10">
+          <h4 class="text-lg font-semibold">Event-driven automation</h4>
+        </div>
+        <p class="mb-3 text-sm text-slate-300">React to page and network changes in real-time using the built-in event system.</p>
+        <pre id="eventsCode" class="language-python overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python"># Enable and listen to network events
+await tab.enable_network_events()
+
+async def on_response(params):
+    info = params.get('response', {})
+    print('status:', info.get('status'))
+
+await tab.on('Network.responseReceived', on_response)
+</code></pre>
+      </div>
+    </div>
+
+    <!-- Stars Goal Section -->
+    <section id="stars-goal" class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div class="reveal rounded-xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 transition-transform duration-200 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <h3 class="text-xl font-semibold">Help us reach 10k stars</h3>
+            <p class="mt-1 text-sm text-slate-300">🚀 Your star means more features, more contributors, and a stronger community.</p>
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span id="starsProgressLabel">0 / 10,000</span>
+                <span id="starsProgressPct">0%</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <div id="starsProgressBar" class="h-2 rounded-full bg-brand-500" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col items-start sm:items-end gap-3">
+            <div class="min-w-[220px]">
+              <p class="text-xs font-medium text-slate-300">Latest stargazers</p>
+              <ul id="stargazersList" class="mt-2 flex flex-wrap items-center gap-2">
+                <!-- Filled via JS -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Install CTA -->
+    <section id="install" class="overflow-x-hidden">
+      <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
+          <div class="min-w-0">
+            <h2 class="text-2xl font-bold tracking-tight">Install and get started in seconds</h2>
+            <p class="mt-3 text-slate-300">No complex setup. Install, import and automate.</p>
+            <div class="mt-6 rounded-lg border border-white/10 bg-slate-950 p-3 sm:p-4">
+              <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                <code id="installCmd" class="text-sm block max-w-full whitespace-nowrap overflow-x-auto">pip install pydoll-python</code>
+                <button id="copyBtn" class="shrink-0 rounded-md bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-slate-700">Copy</button>
+              </div>
+            </div>
+            <!-- Quick code example -->
+            <div class="mt-6">
+              <p class="mb-2 text-sm text-slate-300">Quick example:</p>
+              <pre class="language-python overflow-x-auto max-w-full rounded-lg border border-white/10 bg-slate-950 p-4"><code class="language-python">import asyncio
+from pydoll.browser import Chrome
+
+async def main():
+    async with Chrome() as browser:
+        tab = await browser.start()
+        await tab.go_to('https://google.com')
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
-  Back to top
-</button>
-        
-      </main>
-      
-        <footer class="md-footer">
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
-  
-  
-    Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
-    </a>
-  
-</div>
-      
-    </div>
-  </div>
-</footer>
-      
-    </div>
-    <div class="md-dialog" data-md-component="dialog">
-      <div class="md-dialog__inner md-typeset"></div>
-    </div>
+        search_box = await tab.find(name='q')
+        await search_box.type_text('Pydoll')
+        await search_box.press_keyboard_key('Enter')
+
+asyncio.run(main())
+</code></pre>
+            </div>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a href="https://pydoll.tech/docs/" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-200">Read the docs</a>
+              <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/5">Support the project</a>
+            </div>
+          </div>
+          <div class="reveal rounded-xl p-6 shadow-xl h-full flex flex-col justify-between">
+            <div class="space-y-6">
+              <div class="text-center space-y-4">
+                <div class="mx-auto h-16 w-16 rounded-full bg-brand-500/10 flex items-center justify-center">
+                  <svg class="h-8 w-8 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="8,7 4,12 8,17"></polyline>
+                    <polyline points="16,7 20,12 16,17"></polyline>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-200">Zero to automation in seconds</h3>
+                <p class="text-sm text-slate-300">Install once, automate forever.<br/>No drivers, no config, no headaches.</p>
+              </div>
+              
+              <div class="space-y-4 border border-white/10 pt-4 p-4 rounded-lg">
+                <div class="flex items-start gap-3">
+                  <div class="h-2 w-2 rounded-full bg-green-400 mt-1.5"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-slate-200">Async by design</h4>
+                    <p class="text-xs text-slate-400 mt-1">Built for concurrent automation with true async/await support</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="h-2 w-2 rounded-full bg-blue-400 mt-1.5"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-slate-200">Type safe</h4>
+                    <p class="text-xs text-slate-400 mt-1">Complete type annotations - your IDE knows exactly what each method returns</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="h-2 w-2 rounded-full bg-purple-400 mt-1.5"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-slate-200">CDP direct</h4>
+                    <p class="text-xs text-slate-400 mt-1">No WebDrivers, no compatibility issues - direct Chrome connection</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="h-2 w-2 rounded-full bg-yellow-400 mt-1.5"></div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-medium text-slate-200">Intuitive API</h4>
+                    <p class="text-xs text-slate-400 mt-1">Element finding feels like natural language - simple and readable</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Sponsors -->
+    <section id="sponsors" class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div class="reveal rounded-xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight">Sponsors</h2>
+            <p class="mt-1 text-sm text-slate-300">Companies and partners supporting Pydoll.</p>
+          </div>
+          <div>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-400">Become a sponsor</a>
+          </div>
+        </div>
+        <ul id="sponsorsGrid" class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 items-center"></ul>
+      </div>
+    </section>
+
+
+    <!-- FAQ (near footer) -->
+    <section id="faq" class="mx-auto max-w-7xl px-4 pt-4 pb-10 sm:px-6 lg:px-8">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold tracking-tight">Frequently asked questions</h2>
+          <p class="mt-1 text-sm text-slate-300">Top questions about Pydoll, its features and use cases.</p>
+        </div>
+        <div class="grid gap-3 sm:gap-4 ">
+          <details class="group rounded-lg border border-white/10 bg-slate-900/40 p-4 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+            <summary class="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-200">
+              <svg class="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              What is Pydoll and why doesn't it use WebDriver?
+            </summary>
+            <p class="mt-2 text-sm text-slate-300">Pydoll is a Python library that controls the browser via the <strong>Chrome DevTools Protocol (CDP)</strong>, eliminating WebDrivers. This reduces layers, improves reliability and gives direct access to advanced capabilities like page events, network interception and JavaScript execution in the real tab context.</p>
+          </details>
+          <details class="group rounded-lg border border-white/10 bg-slate-900/40 p-4 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+            <summary class="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-200">
+              <svg class="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              How does Pydoll's type safety work in practice?
+            </summary>
+            <p class="mt-2 text-sm text-slate-300">Every method is fully typed with precise return annotations. Your IDE knows that <code>await tab.find(id='btn')</code> returns <code>WebElement</code>, <code>find_all=True</code> returns <code>list[WebElement]</code>, and <code>raise_exc=False</code> returns <code>WebElement | None</code>. This eliminates guesswork and catches errors before runtime.</p>
+          </details>
+          <details class="group rounded-lg border border-white/10 bg-slate-900/40 p-4 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+            <summary class="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-200">
+              <svg class="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              What are “browser‑context requests” and when to use them?
+            </summary>
+            <p class="mt-2 text-sm text-slate-300">With <code>tab.request</code> you perform HTTP in the <strong>same context</strong> as the tab: cookies, session, headers and CORS are automatically inherited. Ideal for hybrid automation: log in via UI and then call the app's authenticated APIs with simplicity and speed.</p>
+          </details>
+          <details class="group rounded-lg border border-white/10 bg-slate-900/40 p-4 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+            <summary class="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-200">
+              <svg class="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              What makes Pydoll's setup so simple compared to other tools?
+            </summary>
+            <p class="mt-2 text-sm text-slate-300">Just <code>pip install pydoll-python</code> and you're ready. No WebDriver downloads, no PATH configuration, no version matching hell. Pydoll connects directly to Chrome via CDP, eliminating the entire driver layer that causes most automation headaches.</p>
+          </details>
+          <details class="group rounded-lg border border-white/10 bg-slate-900/40 p-4 hover:shadow-[0_10px_30px_rgba(99,102,241,0.15)]">
+            <summary class="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-200">
+              <svg class="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              How does concurrent automation work with multiple tabs?
+            </summary>
+            <p class="mt-2 text-sm text-slate-300">Pydoll is async-first, so you can run multiple tabs simultaneously with <code>asyncio.gather</code>. Create tabs with <code>await browser.new_tab()</code>, then process them in parallel. Each tab maintains its own session and state, giving you true concurrent automation without complexity.</p>
+          </details>
+        </div>
+      </section>
     
-    
-    
-      
-      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.expand", "navigation.path", "navigation.top", "toc.follow", "content.code.copy", "content.code.select", "content.tooltips", "search.highlight", "search.suggest"], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
-    
-    
-      <script src="assets/javascripts/bundle.50899def.min.js"></script>
-      
-        <script src="scripts/termynal.js"></script>
-      
-        <script src="scripts/extra.js"></script>
-      
-        <script src="https://unpkg.com/mermaid@10.0.0/dist/mermaid.min.js"></script>
-      
-    
+    <!-- Final CTA (full width) -->
+    <section class="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <div class="reveal rounded-xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+          <h4 class="text-lg font-semibold">Enjoying Pydoll?</h4>
+          <p class="mt-1 text-sm text-slate-200/90">Star it, contribute to the repo or sponsor the development.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-400">⭐ Star</a>
+            <a href="https://github.com/autoscrape-labs/pydoll/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-white/90 hover:bg-white/5">👩‍💻 Contribute</a>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-400">💖 Sponsor</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10">
+      <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div class="flex items-center gap-3">
+            <img src="https://pydoll.tech/images/logo.png" alt="Pydoll" class="h-6 w-auto" />
+            <p class="text-sm text-slate-400">Pydoll - making web automation simple and powerful</p>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-slate-400">
+            <a href="https://github.com/autoscrape-labs/pydoll" target="_blank" rel="noopener" class="hover:text-white">GitHub</a>
+            <span aria-hidden="true">·</span>
+            <a href="https://pydoll.tech/docs/" class="hover:text-white">Docs</a>
+            <span aria-hidden="true">·</span>
+            <a href="https://github.com/sponsors/thalissonvs" target="_blank" rel="noopener" class="hover:text-white">Sponsor</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+    <script>
+      // Force Prism highlighting after DOM load
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Prism !== 'undefined') {
+          Prism.highlightAll();
+        }
+      });
+    </script>
+    <script src="./script.js" defer></script>
   </body>
-</html>
+  </html>
+
+
